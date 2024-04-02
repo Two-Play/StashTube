@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_settings_ui/flutter_settings_ui.dart';
+import 'package:stash_app_mobile/functions/storage.dart';
 import 'package:theme_manager/theme_manager.dart';
-
 
 class SettingsPage extends StatefulWidget {
   const SettingsPage({super.key});
@@ -17,7 +18,7 @@ class _MyHomePageState extends State<SettingsPage> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Theme Manager'),
+        title: const Text('Settings'),
         centerTitle: true,
       ),
       body: Center(
@@ -55,11 +56,15 @@ class _MyHomePageState extends State<SettingsPage> {
                     .setBrightness(BrightnessPreference.dark),
                 child: const Text('Dark'),
               ),
+              ElevatedButton(onPressed: () => (removeKey("url")), child: const Text('remove key')),
             ],
           ),
         ),
       ),
-      floatingActionButton: FloatingActionButton(
+
+
+
+        floatingActionButton: FloatingActionButton(
         onPressed: () {
           ThemePickerDialog.show(context, (preference) {
             ThemeManager.of(context).setBrightness(preference);

@@ -1,12 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:stash_app_mobile/functions/storage.dart';
 import 'package:stash_app_mobile/screens/home.dart';
+import 'package:stash_app_mobile/screens/login.dart';
 import 'package:stash_app_mobile/screens/settings.dart';
 import 'package:stash_app_mobile/screens/performers.dart';
 import 'package:stash_app_mobile/screens/scenes.dart';
 
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:theme_manager/theme_manager.dart';
+import 'package:flutter_settings_ui/flutter_settings_ui.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized(); // Required
@@ -34,7 +37,7 @@ class MyApp extends StatelessWidget {
       },
       themedBuilder: (BuildContext context, ThemeState state) {
         return MaterialApp(
-          title: 'Theme Manager Demo',
+          title: 'Stash',
           theme: state.themeData,
           home: const NavigationExample(),
         );
@@ -45,18 +48,18 @@ class MyApp extends StatelessWidget {
 
 
 
-class NavigationBarApp extends StatelessWidget {
-  const NavigationBarApp({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      theme: ThemeData(useMaterial3: true),
-      home: const NavigationExample(),
-      title: "Stash",
-    );
-  }
-}
+// class NavigationBarApp extends StatelessWidget {
+//   const NavigationBarApp({super.key});
+//
+//   @override
+//   Widget build(BuildContext context) {
+//     return MaterialApp(
+//       theme: ThemeData(useMaterial3: true),
+//       home: const NavigationExample(),
+//       title: "Stash",
+//     );
+//   }
+// }
 
 
 class NavigationExample extends StatefulWidget {
@@ -69,6 +72,33 @@ class NavigationExample extends StatefulWidget {
 class _NavigationExampleState extends State<NavigationExample> {
   int currentPageIndex = 0;
 
+  Future<void> _checkLogin() async {
+    // if key url emtpy, go to login use readkey function
+    final prefs = await SharedPreferences.getInstance();
+    if (prefs.getString('url') == null) {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => const LoginPage()),
+      );
+    }
+  }
+
+// init state
+  @override
+  void initState() {
+    super.initState();
+    _checkLogin();
+
+// SharedPreferences.getInstance().then((prefs) {
+//       if (prefs.getString('url') == null) {
+//         Navigator.push(
+//           context,
+//           MaterialPageRoute(builder: (context) => const LoginPage()),
+//         );
+//       }
+//    });
+  }
+
   @override
   Widget build(BuildContext context) {
     final ThemeData theme = Theme.of(context);
@@ -78,6 +108,10 @@ class _NavigationExampleState extends State<NavigationExample> {
           setState(() {
             currentPageIndex = index;
             HapticFeedback.mediumImpact();
+
+            // if key url emtpy, push over to login page, no back button
+            _checkLogin();
+
           });
         },
         //indicatorColor: Colors.amber,
