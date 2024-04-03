@@ -14,7 +14,11 @@ class _LoginPageState extends State<LoginPage> {
 
   // validate the url with regex
   bool _validateUrl(String url) {
-    return Uri.parse(url).isAbsolute;
+    try {
+      return Uri.parse(url).isAbsolute;
+    } catch (e) {
+      return false;
+    }
   }
 
 
@@ -22,6 +26,12 @@ class _LoginPageState extends State<LoginPage> {
   void initState() {
     super.initState();
     _urlController.text = "";
+  }
+
+  @override
+  void dispose() {
+    _urlController.dispose();
+    super.dispose();
   }
 
   @override
@@ -55,7 +65,6 @@ class _LoginPageState extends State<LoginPage> {
                       saveKey("url", _urlController.text);
                       Navigator.pushReplacementNamed(context, '/');
                     } else {
-
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(
                           // red snackbar with invalid url message

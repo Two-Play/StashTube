@@ -56,7 +56,26 @@ class _MyHomePageState extends State<SettingsPage> {
                     .setBrightness(BrightnessPreference.dark),
                 child: const Text('Dark'),
               ),
-              ElevatedButton(onPressed: () => (removeKey("url")), child: const Text('remove key')),
+              ElevatedButton(onPressed: () => {
+                removeKey("url"),
+              showDialog(
+              context: context,
+              builder: (BuildContext context) {
+              return AlertDialog(
+              title: const Text('Error'),
+              content: const Text("REMOVED URL KEY"),
+              actions: <Widget>[
+              TextButton(
+              onPressed: () {
+              Navigator.of(context).pop();
+              },
+              child: const Text('OK'),
+              ),
+              ],
+              );
+              },
+              )
+              }, child: const Text('remove key')),
             ],
           ),
         ),

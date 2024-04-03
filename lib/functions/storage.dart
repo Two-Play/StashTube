@@ -6,7 +6,7 @@ Future<bool> saveKey(String key, String value) async {
   // write key
   await prefs.setString(key, value);
   if (kDebugMode) {
-    print(prefs.get(key));
+    print("Saved key: ${prefs.get(key)}");
   }
   return true;
 }
