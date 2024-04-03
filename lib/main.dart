@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:graphql_flutter/graphql_flutter.dart';
 import 'package:stash_app_mobile/functions/storage.dart';
 import 'package:stash_app_mobile/screens/home.dart';
 import 'package:stash_app_mobile/screens/login.dart';
@@ -11,11 +12,26 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:theme_manager/theme_manager.dart';
 import 'package:flutter_settings_ui/flutter_settings_ui.dart';
 
-void main() {
+void main() async {
   WidgetsFlutterBinding.ensureInitialized(); // Required
+
+  await initHiveForFlutter();
+
   //runApp(const NavigationBarApp());
   runApp(const MyApp());
 }
+
+final HttpLink httpLink = HttpLink(
+  'http://192.168.44.5:9999/graphql',
+);
+
+ValueNotifier<GraphQLClient> client = ValueNotifier(
+  GraphQLClient(
+    link: httpLink,
+    // The default store is the InMemoryStore, which does NOT persist to disk
+    cache: GraphQLCache(store: HiveStore()),
+  ),
+);
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
@@ -36,10 +52,13 @@ class MyApp extends StatelessWidget {
         // Could post updates to a state manager here.
       },
       themedBuilder: (BuildContext context, ThemeState state) {
-        return MaterialApp(
-          title: 'Stash',
-          theme: state.themeData,
-          home: const NavigationExample(),
+        return GraphQLProvider(
+          client: client,
+          child: MaterialApp(
+            title: 'Stash',
+            theme: state.themeData,
+            home: const NavigationExample(),
+          ),
         );
       },
     );
@@ -67,10 +86,13 @@ class NavigationExample extends StatefulWidget {
 
   @override
   State<NavigationExample> createState() => _NavigationExampleState();
+
 }
 
 class _NavigationExampleState extends State<NavigationExample> {
   int currentPageIndex = 0;
+  late PageController _pageController;
+  int pageIndex = 0;
 
   Future<void> _checkLogin() async {
     // if key url emtpy, go to login use readkey function
@@ -87,6 +109,7 @@ class _NavigationExampleState extends State<NavigationExample> {
   @override
   void initState() {
     super.initState();
+    _pageController = PageController(initialPage: pageIndex, keepPage: true);
     _checkLogin();
 
 // SharedPreferences.getInstance().then((prefs) {
@@ -99,9 +122,16 @@ class _NavigationExampleState extends State<NavigationExample> {
 //    });
   }
 
+  final List<Widget> _pages = <Widget>[
+    const ScenesPage(),
+    const HomePage(),
+    const PerformersPage(),
+    const SettingsPage(),
+  ];
+
   @override
   Widget build(BuildContext context) {
-    final ThemeData theme = Theme.of(context);
+    //final ThemeData theme = Theme.of(context);
     return Scaffold(
       bottomNavigationBar: NavigationBar(
         onDestinationSelected: (int index) {
@@ -109,6 +139,7 @@ class _NavigationExampleState extends State<NavigationExample> {
             currentPageIndex = index;
             HapticFeedback.mediumImpact();
 
+            _pageController.jumpToPage(index);
             // if key url emtpy, push over to login page, no back button
             _checkLogin();
 
@@ -140,12 +171,11 @@ class _NavigationExampleState extends State<NavigationExample> {
           ),
         ],
       ),
-      body: <Widget>[
-        const ScenesPage(),
-        const HomePage(),
-        const PerformersPage(),
-        const SettingsPage(),
-      ][currentPageIndex],
+      body: PageView(
+        physics: const NeverScrollableScrollPhysics(),
+        controller: _pageController,
+        children: _pages,
+      ),
     );
   }
 }
