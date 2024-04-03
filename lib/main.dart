@@ -12,17 +12,25 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:theme_manager/theme_manager.dart';
 import 'package:flutter_settings_ui/flutter_settings_ui.dart';
 
+String graphqlUri = "";
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized(); // Required
 
   await initHiveForFlutter();
 
+  graphqlUri = (await readKey("url"))!;
+
   //runApp(const NavigationBarApp());
   runApp(const MyApp());
 }
 
+// final HttpLink httpLink = HttpLink(
+//   'http://192.168.44.5:9999/graphql',
+// );
+
 final HttpLink httpLink = HttpLink(
-  'http://192.168.44.5:9999/graphql',
+  '$graphqlUri/graphql',
 );
 
 ValueNotifier<GraphQLClient> client = ValueNotifier(
@@ -54,10 +62,17 @@ class MyApp extends StatelessWidget {
       themedBuilder: (BuildContext context, ThemeState state) {
         return GraphQLProvider(
           client: client,
-          child: MaterialApp(
-            title: 'Stash',
-            theme: state.themeData,
-            home: const NavigationExample(),
+          child: AnnotatedRegion<SystemUiOverlayStyle>(
+            value: SystemUiOverlayStyle(
+              statusBarColor: Colors.transparent,
+              statusBarIconBrightness: state.brightnessPreference == BrightnessPreference.light ? Brightness.dark : Brightness.light,
+              systemNavigationBarColor: BrightnessPreference.light == state.brightnessPreference ? Theme.of(context).colorScheme.onInverseSurface : const Color.fromRGBO(10, 10, 20, 10),
+            ),
+            child: MaterialApp(
+              title: 'Stash',
+              theme: state.themeData,
+              home: const NavigationExample(),
+            ),
           ),
         );
       },
@@ -92,7 +107,6 @@ class NavigationExample extends StatefulWidget {
 class _NavigationExampleState extends State<NavigationExample> {
   int currentPageIndex = 0;
   late PageController _pageController;
-  int pageIndex = 0;
 
   Future<void> _checkLogin() async {
     // if key url emtpy, go to login use readkey function
@@ -109,7 +123,7 @@ class _NavigationExampleState extends State<NavigationExample> {
   @override
   void initState() {
     super.initState();
-    _pageController = PageController(initialPage: pageIndex, keepPage: true);
+    _pageController = PageController(initialPage: currentPageIndex, keepPage: true);
     _checkLogin();
 
 // SharedPreferences.getInstance().then((prefs) {
@@ -139,7 +153,7 @@ class _NavigationExampleState extends State<NavigationExample> {
             currentPageIndex = index;
             HapticFeedback.mediumImpact();
 
-            _pageController.jumpToPage(index);
+            _pageController.animateToPage(index, duration: const Duration(milliseconds: 300), curve: Curves.ease);
             // if key url emtpy, push over to login page, no back button
             _checkLogin();
 
@@ -172,7 +186,12 @@ class _NavigationExampleState extends State<NavigationExample> {
         ],
       ),
       body: PageView(
-        physics: const NeverScrollableScrollPhysics(),
+        onPageChanged: (int index) {
+          setState(() {
+            currentPageIndex = index;
+          });
+        },
+        //physics: const NeverScrollableScrollPhysics(),
         controller: _pageController,
         children: _pages,
       ),
