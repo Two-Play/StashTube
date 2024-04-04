@@ -120,8 +120,7 @@ class _ScenesPageState extends State<ScenesPage> with AutomaticKeepAliveClientMi
               itemCount: sceneList.length,
               itemBuilder: (context, index) {
 
-                double dur = 70.0; //double.parse(sceneList[index]['files']['duration']);
-
+                double dur = (sceneList[index]['files'][0]['duration']+.0);
                 // filter non null performers to list
                 List<Performers> performers = [];
                 for (var performer in sceneList[index]['performers']) {
@@ -134,7 +133,7 @@ class _ScenesPageState extends State<ScenesPage> with AutomaticKeepAliveClientMi
                 if (performers.isEmpty) {
                   performers.add(const Performers(
                     name: "Unknown",
-                    image: "https://static.vecteezy.com/system/resources/thumbnails/009/292/244/small/default-avatar-icon-of-social-media-user-vector.jpg",
+                    image: "",
                     bio: "",
                   ));
                 }
@@ -154,7 +153,7 @@ class _ScenesPageState extends State<ScenesPage> with AutomaticKeepAliveClientMi
                   stars: 5,
                   studio: Studio(
                     name: "TEST",//sceneList[index]['studio']['name'],
-                    image: "https://www.google.com/images/branding/googlelogo/2x/googlelogo_light_color_92x30dp.png"//sceneList[index]['studio']['image_path'],
+                    image: "http://192.168.44.5:9999/studio/3/image?t=1641002641"
                     //url: sceneList[index]['studio']['url'],
                   ),
                   date: sceneList[index]['date']?? "date",

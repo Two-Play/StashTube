@@ -1,5 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:stash_app_mobile/screens/performers.dart';
 import 'package:stash_app_mobile/screens/studios.dart';
 
@@ -36,7 +37,10 @@ class VideoCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+
     const bool hasPadding = false;
+    const bool fitThumbnail = false;
+
     return GestureDetector(
       onTap: () {
         print("TAP");
@@ -54,7 +58,7 @@ class VideoCard extends StatelessWidget {
                   video.thumbnail,
                   height: 220.0,
                   width: double.infinity,
-                  fit: BoxFit.cover,
+                  fit: fitThumbnail ? BoxFit.scaleDown : BoxFit.cover,
                 ),
               ),
               // Video Duration
@@ -82,12 +86,12 @@ class VideoCard extends StatelessWidget {
                   child: Container(
                     padding: const EdgeInsets.all(8.0),
                     //color: Colors.black,
-                    child: FadeInImage.assetNetwork(
-                      placeholder: 'assets/images/default-avatar.jpg',
-                      image: video.studio.image,
+                    child: SvgPicture.network(
+                      video.studio.image,
                       //height: 30.0,
                       width: 80.0,
                       fit: BoxFit.cover,
+
                     ),
                   ),
                 ),
@@ -103,7 +107,11 @@ class VideoCard extends StatelessWidget {
                 GestureDetector(
                   onTap: () => print('Navigate to profile'),
                   child: CircleAvatar(
-                    foregroundImage: NetworkImage(video.performers[0].image),
+                    foregroundImage: (video.performers[0].image != "")?Image.network(
+                      video.performers[0].image,
+                      //fit: BoxFit.cover,
+                    ).image :
+                    const AssetImage("assets/images/default-avatar.jpg"),
                   ),
                 ),
                 const SizedBox(width: 8.0),

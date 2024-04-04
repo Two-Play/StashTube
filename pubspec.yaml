@@ -41,6 +41,7 @@ dependencies:
   graphql_flutter: ^5.1.2
   local_auth: ^2.2.0
   flutter_screen_lock: ^9.0.2
+  flutter_svg: ^2.0.9
 
 dev_dependencies:
   flutter_test:
