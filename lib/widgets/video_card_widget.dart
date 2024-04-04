@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
@@ -54,12 +55,15 @@ class VideoCard extends StatelessWidget {
                 padding: const EdgeInsets.symmetric(
                   horizontal: hasPadding ? 12.0 : 0,
                 ),
-                child: Image.network(
-                  video.thumbnail,
+                child: CachedNetworkImage(
+                  imageUrl: video.thumbnail,
+                  placeholder: (context, url) => const Center(
+                   child: CircularProgressIndicator(),
+                  ),
                   height: 220.0,
                   width: double.infinity,
                   fit: fitThumbnail ? BoxFit.scaleDown : BoxFit.cover,
-                  errorBuilder: (context, error, stackTrace) {
+                  errorWidget: (context, url, error) {
                     // error icon with text center overlay gray background min height
                     return Container(
                       height: 220.0,
@@ -134,10 +138,11 @@ class VideoCard extends StatelessWidget {
                 GestureDetector(
                   onTap: () => print('Navigate to profile'),
                   child: CircleAvatar(
-                    foregroundImage: (video.performers[0].image != "")?Image.network(
+                    foregroundImage: (video.performers[0].image != "") ?
+                    Image(image: CachedNetworkImageProvider(
                       video.performers[0].image,
                       //fit: BoxFit.cover,
-                    ).image :
+                    )).image :
                     const AssetImage("assets/images/default-avatar.jpg"),
                   ),
                 ),
