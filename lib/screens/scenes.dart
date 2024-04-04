@@ -1,10 +1,14 @@
+import 'dart:ffi';
+
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:graphql_flutter/graphql_flutter.dart';
 import 'package:stash_app_mobile/screens/login.dart';
+import 'package:stash_app_mobile/screens/performers.dart';
 
 import 'package:stash_app_mobile/screens/settings.dart';
+import 'package:stash_app_mobile/screens/studios.dart';
 import 'package:stash_app_mobile/widgets/video_card_widget.dart';
 
 
@@ -18,16 +22,33 @@ class ScenesPage extends StatefulWidget {
 class _ScenesPageState extends State<ScenesPage> with AutomaticKeepAliveClientMixin<ScenesPage>{
 
   final String scenesQuery = """
-    query {
+    query 
+    {
     sceneWall{
       title,
+      date,
+      rating100,
+      files{
+        duration,
+        width
+      }
+      studio
+      {
+        name,
+        url,
+        image_path
+      }
       paths {
-      screenshot,
-      stream,
-      preview
+        screenshot,
+        stream,
+        preview
+        }
+      performers{
+        name,
+        image_path
       }
     }
-  }
+}
   """;
 
   @override
@@ -94,10 +115,54 @@ class _ScenesPageState extends State<ScenesPage> with AutomaticKeepAliveClientMi
 
           final sceneList = result.data?['sceneWall'];
 
+
             return ListView.builder(
               itemCount: sceneList.length,
               itemBuilder: (context, index) {
-                return VideoCard(thumbnail: sceneList[index]['paths']['screenshot'], title: sceneList[index]['title'], performers: [sceneList],);
+
+                double dur = 70.0; //double.parse(sceneList[index]['files']['duration']);
+
+                // filter non null performers to list
+                List<Performers> performers = [];
+                for (var performer in sceneList[index]['performers']) {
+                    performers.add(Performers(
+                      name: performer['name'],
+                      image: performer['image_path'],
+                      bio: "bio",
+                    ));
+                }
+                if (performers.isEmpty) {
+                  performers.add(const Performers(
+                    name: "Unknown",
+                    image: "https://static.vecteezy.com/system/resources/thumbnails/009/292/244/small/default-avatar-icon-of-social-media-user-vector.jpg",
+                    bio: "",
+                  ));
+                }
+
+
+
+                return VideoCard(video:
+                Video(thumbnail: sceneList[index]['paths']['screenshot'],
+                  title: sceneList[index]['title'],
+                  performers: [
+                    Performers(name: performers[0].name,
+                        image: performers[0].image,
+                        bio: performers[0].bio
+                    ),
+                  ],
+
+                  stars: 5,
+                  studio: Studio(
+                    name: "TEST",//sceneList[index]['studio']['name'],
+                    image: "https://www.google.com/images/branding/googlelogo/2x/googlelogo_light_color_92x30dp.png"//sceneList[index]['studio']['image_path'],
+                    //url: sceneList[index]['studio']['url'],
+                  ),
+                  date: sceneList[index]['date']?? "date",
+                  //convert dur double seconds to duration minutes and seconds
+                  duration: "${(dur/60).floor()}m ${(dur%60).floor()}s",
+                  resolution: "resolution",
+                )
+                );
               },
             );
         },

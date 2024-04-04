@@ -25,13 +25,13 @@ void main() async {
   runApp(const MyApp());
 }
 
-// final HttpLink httpLink = HttpLink(
-//   'http://192.168.44.5:9999/graphql',
-// );
-
 final HttpLink httpLink = HttpLink(
-  '$graphqlUri/graphql',
+  'http://192.168.44.5:9999/graphql',
 );
+
+// final HttpLink httpLink = HttpLink(
+//   '$graphqlUri/graphql',
+// );
 
 ValueNotifier<GraphQLClient> client = ValueNotifier(
   GraphQLClient(
@@ -150,10 +150,16 @@ class _NavigationExampleState extends State<NavigationExample> {
       bottomNavigationBar: NavigationBar(
         onDestinationSelected: (int index) {
           setState(() {
+            // calculate the difference between the current page and the new page
+            int calc = currentPageIndex - index;
+            if (calc == 1 || calc == -1) {
+              _pageController.animateToPage(index, duration: const Duration(milliseconds: 300), curve: Curves.ease);
+            } else {
+              _pageController.jumpToPage(index);
+            }
             currentPageIndex = index;
-            HapticFeedback.mediumImpact();
+            //HapticFeedback.mediumImpact();
 
-            _pageController.animateToPage(index, duration: const Duration(milliseconds: 300), curve: Curves.ease);
             // if key url emtpy, push over to login page, no back button
             _checkLogin();
 
@@ -189,6 +195,7 @@ class _NavigationExampleState extends State<NavigationExample> {
         onPageChanged: (int index) {
           setState(() {
             currentPageIndex = index;
+            HapticFeedback.lightImpact();
           });
         },
         //physics: const NeverScrollableScrollPhysics(),
