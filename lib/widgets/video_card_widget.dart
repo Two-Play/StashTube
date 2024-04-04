@@ -1,10 +1,12 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:stash_app_mobile/screens/performers.dart';
 import 'package:stash_app_mobile/screens/studios.dart';
 
+import '../main.dart';
 import '../screens/settings.dart';
 
 class Video {
@@ -31,20 +33,21 @@ class Video {
 
 }
 
-class VideoCard extends StatelessWidget {
+class VideoCard extends ConsumerWidget {
   final Video video;
 
   const VideoCard({super.key, required this.video});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
 
     const bool hasPadding = false;
     const bool fitThumbnail = false;
 
     return GestureDetector(
       onTap: () {
-        print("TAP");
+        // Set the selected video to the video state
+        ref.read(selectedVideoProvider.notifier).state = video;
       },
       child: Column(
         children: [

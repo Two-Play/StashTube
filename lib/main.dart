@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:graphql_flutter/graphql_flutter.dart';
 import 'package:stash_app_mobile/functions/storage.dart';
 import 'package:stash_app_mobile/screens/home.dart';
@@ -9,20 +10,24 @@ import 'package:stash_app_mobile/screens/performers.dart';
 import 'package:stash_app_mobile/screens/scenes.dart';
 
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:stash_app_mobile/widgets/video_card_widget.dart';
 import 'package:theme_manager/theme_manager.dart';
 import 'package:flutter_settings_ui/flutter_settings_ui.dart';
 
 String graphqlUri = "";
+final selectedVideoProvider = StateProvider<Video?>((ref) => null);
 
 void main() async {
+  
   WidgetsFlutterBinding.ensureInitialized(); // Required
-
   await initHiveForFlutter();
-
   graphqlUri = (await readKey("url"))!;
 
   //runApp(const NavigationBarApp());
-  runApp(const MyApp());
+  runApp(const ProviderScope(
+      child: MyApp()
+  )
+  );
 }
 
 // final HttpLink httpLink = HttpLink(
@@ -68,11 +73,12 @@ class MyApp extends StatelessWidget {
               statusBarIconBrightness: state.brightnessPreference == BrightnessPreference.light ? Brightness.dark : Brightness.light,
               systemNavigationBarColor: BrightnessPreference.light == state.brightnessPreference ? Theme.of(context).colorScheme.onInverseSurface : const Color.fromRGBO(10, 10, 20, 10),
             ),
-            child: MaterialApp(
-              title: 'Stash',
-              theme: state.themeData,
-              home: const NavigationExample(),
-            ),
+              child: MaterialApp(
+                title: 'Stash',
+                theme: state.themeData,
+                home: const NavigationExample(),
+              ),
+
           ),
         );
       },
