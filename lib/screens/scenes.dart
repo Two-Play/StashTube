@@ -56,35 +56,24 @@ class _ScenesPageState extends State<ScenesPage> with AutomaticKeepAliveClientMi
     super.build(context);
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Welcome'),
+        title: const Text('Scenes'),
         centerTitle: true,
+        actions: <Widget>[
+          IconButton(
+            icon: const Icon(Icons.settings),
+            onPressed: () {
+              Navigator.push(context, CupertinoPageRoute(builder: (context) => const SettingsPage()));
+            },
+          ),
+          IconButton(
+            icon: const Icon(Icons.logout),
+            onPressed: () {
+              Navigator.pushReplacement(context, CupertinoPageRoute(builder: (context) => const LoginPage()));
+            },
+          ),
+        ],
       ),
 
-      // scroll view vertical with placeholder images and text for loop
-      // body: ListView.builder(
-      //   itemCount: 20,
-      //   itemBuilder: (context, index) {
-      //     return InkWell(
-      //       onTap: () {
-      //         Navigator.push(
-      //           context,
-      //           CupertinoPageRoute(
-      //             builder: (context) => const SettingsPage(),
-      //           ),
-      //         );
-      //       },
-      //       child: Card(
-      //         child: Column(
-      //           children: <Widget>[
-      //             //Image.asset('assets/images/placeholder.jpg'),
-      //             Image.network('https://picsum.photos/250?image=9'),
-      //             Text('Placeholder'),
-      //           ],
-      //         ),
-      //       ),
-      //     );
-      //   },
-      // ),
       
   // get scene list and return card widgets
       body: Query(

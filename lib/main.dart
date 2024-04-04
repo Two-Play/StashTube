@@ -25,13 +25,13 @@ void main() async {
   runApp(const MyApp());
 }
 
-final HttpLink httpLink = HttpLink(
-  'http://192.168.44.5:9999/graphql',
-);
-
 // final HttpLink httpLink = HttpLink(
-//   '$graphqlUri/graphql',
+//   'http://192.168.44.5:9999/graphql',
 // );
+
+final HttpLink httpLink = HttpLink(
+  '$graphqlUri/graphql',
+);
 
 ValueNotifier<GraphQLClient> client = ValueNotifier(
   GraphQLClient(

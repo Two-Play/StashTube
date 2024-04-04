@@ -59,6 +59,33 @@ class VideoCard extends StatelessWidget {
                   height: 220.0,
                   width: double.infinity,
                   fit: fitThumbnail ? BoxFit.scaleDown : BoxFit.cover,
+                  errorBuilder: (context, error, stackTrace) {
+                    // error icon with text center overlay gray background min height
+                    return Container(
+                      height: 220.0,
+                      color: Theme.of(context).brightness == Brightness.dark ? Colors.grey[800]: Colors.grey[200],
+                      child:  Center(
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Padding(
+                              padding: EdgeInsets.all(12.0),
+                              child: Icon(Icons.error, size: 40.0,
+                              color: Colors.red,),
+                            ),
+                            const Text('Error loading thumbnail'),
+                            Padding(
+                              padding: const EdgeInsets.all(20.0),
+                              child: Text(error.toString(),
+                                style: Theme.of(context).textTheme.bodySmall!.copyWith(color: Colors.red),
+                              ),
+                            )
+                          ],
+                        ),
+                      ),
+                    );
+
+                  },
                 ),
               ),
               // Video Duration
@@ -85,7 +112,7 @@ class VideoCard extends StatelessWidget {
                   onTap: () => print('Navigate to studio'),
                   child: Container(
                     padding: const EdgeInsets.all(8.0),
-                    //color: Colors.black,
+                    color: const Color.fromRGBO(100, 100, 100, 100),
                     child: SvgPicture.network(
                       video.studio.image,
                       //height: 30.0,
