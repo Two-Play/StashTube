@@ -78,7 +78,7 @@ class _ScenesPageState extends State<ScenesPage> with AutomaticKeepAliveClientMi
         ],
       ),
 
-      
+
   // get scene list and return card widgets
       body: Consumer(
         builder: (context, ref, _) {
@@ -86,89 +86,113 @@ class _ScenesPageState extends State<ScenesPage> with AutomaticKeepAliveClientMi
           if (kDebugMode) {
             print("SELECTED VIDEO: ${selectedVideo?.title}");
           }
-          return Query(
-            options: QueryOptions(
-              document: gql(scenesQuery),
-            ),
-            builder: (result, {fetchMore, refetch}) {
+          return ValueListenableBuilder(
+            valueListenable: client,
+            builder: (context, value, child) => child!,
+            child: Query(
+              options: QueryOptions(
+                document: gql(scenesQuery),
+              ),
+              builder: (result, {fetchMore, refetch}) {
 
-              if (result.hasException) {
-                if (kDebugMode) {
-                  print("LINK ERROR: ${result.exception!.linkException?.originalException.toString()}");
-                  print("ERROR: ${result.exception.toString()}");
-                }
-
-                if (result.exception!.linkException != null) {
-                  // alert dialog and push to login page
-                  //Navigator.pushReplacement(context, CupertinoPageRoute(builder: (context) => const LoginPage()));
-                }
-
-                return Text(result.exception.toString());
-              }
-
-              if (result.isLoading) {
-                return const Center(
-                  child: CircularProgressIndicator(),
-                );
-              }
-
-              final sceneList = result.data?['sceneWall'];
-
-
-              return ListView.builder(
-                itemCount: sceneList.length,
-                itemBuilder: (context, index) {
-
-                  double dur = (sceneList[index]['files'][0]['duration']+.0);
-                  // filter non null performers to list
-                  List<Performers> performers = [];
-                  for (var performer in sceneList[index]['performers']) {
-                    performers.add(Performers(
-                      name: performer['name'],
-                      image: performer['image_path'],
-                      bio: "bio",
-                    ));
-                  }
-                  if (performers.isEmpty) {
-                    performers.add(const Performers(
-                      name: "Unknown",
-                      image: "",
-                      bio: "",
-                    ));
+                if (result.hasException) {
+                  if (kDebugMode) {
+                    print("LINK ERROR: ${result.exception!.linkException?.originalException.toString()}");
+                    print("ERROR: ${result.exception.toString()}");
                   }
 
+                  if (result.exception!.linkException != null) {
+                    // alert dialog and push to login page
+                    WidgetsBinding.instance.addPostFrameCallback((_) {
+                      showDialog(
+                        context: context,
+                        builder: (context) {
+                          return AlertDialog(
+                            title: const Text('Error'),
+                            content: Text(result.exception!.linkException!.originalException.toString()),
+                            actions: <Widget>[
+                              TextButton(
+                                onPressed: () {
+                                  //Navigator.of(context).pop();
+                                  Navigator.of(context).pushAndRemoveUntil(CupertinoPageRoute(builder: (context) => const LoginPage()), (route) => false);
+                                },
+                                child: const Text('OK'),
+                              ),
+                            ],
+                          );
+                        },
+                      );
+                    });
 
+                  }
 
-                  return VideoCard(video:
-                  Video(thumbnail: sceneList[index]['paths']['screenshot'],
-                    title: sceneList[index]['title'],
-                    performers: [
-                      Performers(name: performers[0].name,
-                          image: performers[0].image,
-                          bio: performers[0].bio
-                      ),
-                    ],
+                  return Text(result.exception.toString());
+                }
 
-                    stars: 5,
-                    studio: Studio(
-                        name: "TEST",//sceneList[index]['studio']['name'],
-                        image: "http://192.168.44.5:9999/studio/3/image?t=1641002641"
-                      //url: sceneList[index]['studio']['url'],
-                    ),
-                    date: sceneList[index]['date']?? "date",
-                    //convert dur double seconds to duration minutes and seconds
-                    duration: "${(dur/60).floor()}m ${(dur%60).floor()}s",
-                    resolution: "resolution",
-                  )
+                if (result.isLoading) {
+                  return const Center(
+                    child: CircularProgressIndicator(),
                   );
-                },
-              );
-            },
+                }
+
+                final sceneList = result.data?['sceneWall'];
+
+
+                return ListView.builder(
+                  itemCount: sceneList.length,
+                  itemBuilder: (context, index) {
+
+                    double dur = (sceneList[index]['files'][0]['duration']+.0);
+                    // filter non null performers to list
+                    List<Performers> performers = [];
+                    for (var performer in sceneList[index]['performers']) {
+                      performers.add(Performers(
+                        name: performer['name'],
+                        image: performer['image_path'],
+                        bio: "bio",
+                      ));
+                    }
+                    if (performers.isEmpty) {
+                      performers.add(const Performers(
+                        name: "Unknown",
+                        image: "",
+                        bio: "",
+                      ));
+                    }
+
+
+
+                    return VideoCard(video:
+                    Video(thumbnail: sceneList[index]['paths']['screenshot'],
+                      title: sceneList[index]['title'],
+                      performers: [
+                        Performers(name: performers[0].name,
+                            image: performers[0].image,
+                            bio: performers[0].bio
+                        ),
+                      ],
+
+                      stars: 5,
+                      studio: Studio(
+                          name: "TEST",//sceneList[index]['studio']['name'],
+                          image: "http://192.168.44.5:9999/studio/3/image?t=1641002641"
+                        //url: sceneList[index]['studio']['url'],
+                      ),
+                      date: sceneList[index]['date']?? "date",
+                      //convert dur double seconds to duration minutes and seconds
+                      duration: dur,
+                      resolution: "resolution",
+                    )
+                    );
+                  },
+                );
+              },
+            ),
           );
         },
 
       ),
-      
+
     );
   }
   @override

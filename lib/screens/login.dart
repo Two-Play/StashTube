@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:graphql_flutter/graphql_flutter.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:stash_app_mobile/functions/storage.dart';
+import 'package:stash_app_mobile/main.dart';
 
 // create login page with wellcome title and login textfiel and button. save the url in the storage and navigate to the home page
 class LoginPage extends StatefulWidget {
@@ -11,7 +15,6 @@ class LoginPage extends StatefulWidget {
 
 class _LoginPageState extends State<LoginPage> {
   final TextEditingController _urlController = TextEditingController();
-
   // validate the url with regex
   bool _validateUrl(String url) {
     try {
@@ -23,9 +26,16 @@ class _LoginPageState extends State<LoginPage> {
 
 
   @override
-  void initState() {
+  void initState(){
     super.initState();
-    _urlController.text = "";
+
+    SharedPreferences.getInstance().then((prefs) {
+      String? value = prefs.getString('url');
+      // Do something with value
+      _urlController.text = value ?? "";
+    });
+
+
   }
 
   @override
@@ -61,10 +71,19 @@ class _LoginPageState extends State<LoginPage> {
                 ),
                 ElevatedButton(
                   onPressed: () {
+
                     if (_validateUrl(_urlController.text)) {
+                      client.value =
+                        GraphQLClient(
+                          link: HttpLink("${_urlController.text}/graphql"),
+                          // The default store is the InMemoryStore, which does NOT persist to disk
+                          cache: GraphQLCache(store: HiveStore()),
+                      );
                       saveKey("url", _urlController.text);
                       Navigator.pushReplacementNamed(context, '/');
+
                     } else {
+                      HapticFeedback.vibrate();
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(
                           // red snackbar with invalid url message

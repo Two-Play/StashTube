@@ -16,7 +16,7 @@ class Video {
   final int stars;
   final Studio studio;
   final String date;
-  final String duration;
+  final double duration;
   final String resolution;
 
   const Video({
@@ -103,7 +103,7 @@ class VideoCard extends ConsumerWidget {
                   padding: const EdgeInsets.all(4.0),
                   color: Colors.black,
                   child: Text(
-                    video.duration,
+                    "${(video.duration/60/60).floor()}h ${(video.duration/60%60).floor()}m ${(video.duration%60).floor()}s",
                     style: Theme.of(context)
                         .textTheme
                         .bodySmall!

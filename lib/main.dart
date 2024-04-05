@@ -1,7 +1,9 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:graphql_flutter/graphql_flutter.dart';
+import 'package:miniplayer/miniplayer.dart';
 import 'package:stash_app_mobile/functions/storage.dart';
 import 'package:stash_app_mobile/screens/home.dart';
 import 'package:stash_app_mobile/screens/login.dart';
@@ -15,7 +17,7 @@ import 'package:theme_manager/theme_manager.dart';
 import 'package:flutter_settings_ui/flutter_settings_ui.dart';
 
 String graphqlUri = "";
-final selectedVideoProvider = StateProvider<Video?>((ref) => null);
+final StateProvider<Video?> selectedVideoProvider = StateProvider<Video?>((ref) => null);
 
 void main() async {
   
@@ -152,8 +154,11 @@ class _NavigationExampleState extends State<NavigationExample> {
   @override
   Widget build(BuildContext context) {
     //final ThemeData theme = Theme.of(context);
+    const double _playerMinHeight = 80.0;
+    const bool isMiniplayerOpened = false;
+
     return Scaffold(
-      bottomNavigationBar: NavigationBar(
+      bottomNavigationBar: isMiniplayerOpened ? null : NavigationBar(
         onDestinationSelected: (int index) {
           setState(() {
             // calculate the difference between the current page and the new page
@@ -166,9 +171,8 @@ class _NavigationExampleState extends State<NavigationExample> {
             currentPageIndex = index;
             //HapticFeedback.mediumImpact();
 
-            // if key url emtpy, push over to login page, no back button
+            // if key url empty, push over to login page, no back button
             _checkLogin();
-
           });
         },
         //indicatorColor: Colors.amber,
@@ -197,17 +201,91 @@ class _NavigationExampleState extends State<NavigationExample> {
           ),
         ],
       ),
-      body: PageView(
-        onPageChanged: (int index) {
-          setState(() {
-            currentPageIndex = index;
-            HapticFeedback.lightImpact();
-          });
-        },
-        //physics: const NeverScrollableScrollPhysics(),
-        controller: _pageController,
-        children: _pages,
-      ),
+      body: Consumer(builder: (BuildContext context, WidgetRef ref, Widget? child) {
+
+        final selectedVideo = ref.watch(selectedVideoProvider);
+
+        return Stack(
+          children: <Widget>[PageView(
+            onPageChanged: (int index) {
+              setState(() {
+                currentPageIndex = index;
+                HapticFeedback.lightImpact();
+              });
+            },
+            //physics: const NeverScrollableScrollPhysics(),
+            controller: _pageController,
+            children: _pages,
+          ),
+            Offstage(
+              offstage: selectedVideo == null,
+              child: Miniplayer(
+                  minHeight: _playerMinHeight,
+                  maxHeight: MediaQuery.of(context).size.height,
+                  builder: (height, percentage) {
+                    if (selectedVideo == null) {
+                      return const SizedBox.shrink();
+                    }
+                    return Container(
+                      color: Theme.of(context).colorScheme.background,
+                      height: height,
+                      child: Column(
+                        children: [
+                          Row(
+                            children: [
+                              Padding(
+                                padding: const EdgeInsets.all(/*8.0*/ 0.0),
+                                child: Image.network(
+                                    selectedVideo.thumbnail,
+                                height: _playerMinHeight - 4.0,
+                                  width: 120.0,
+                                  fit: BoxFit.cover,
+                                )
+                                // child: VideoCard(video: Video(
+                                //   id: "1",
+                                //   title: "Title",
+                                //   thumbnail: "https://via.placeholder.com/150",
+                                //   duration: 0,
+                                //   views: 0,
+                                //   createdAt: DateTime.now(),
+                                //   updatedAt: DateTime.now(),
+                                // )),
+                              ),
+                              Expanded(
+                                child: Padding(
+                                  padding: const EdgeInsets.only(left: 10.0),
+                                  child: Text(
+                                    selectedVideo.title,
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                              ),
+                              IconButton(
+                                icon: const Icon(Icons.close),
+                                onPressed: () {
+                                  ref.read(selectedVideoProvider.notifier).state = null;
+                                },
+                              ),
+                            ],
+                          ),
+                          const LinearProgressIndicator(
+                            value: 0.4,
+                            valueColor: AlwaysStoppedAnimation<Color>(Colors.red),
+                          ),
+
+
+                        ]
+                      ),
+                    );
+                  }
+              ),
+            ),
+          ],
+        );
+      },
+
+      )
     );
   }
 }
