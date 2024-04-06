@@ -3,6 +3,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:miniplayer/miniplayer.dart';
 import 'package:stash_app_mobile/screens/performers.dart';
 import 'package:stash_app_mobile/screens/studios.dart';
 
@@ -48,6 +49,9 @@ class VideoCard extends ConsumerWidget {
       onTap: () {
         // Set the selected video to the video state
         ref.read(selectedVideoProvider.notifier).state = video;
+        ref.read(miniPlayerControllerProvider.notifier).state.animateToHeight(
+            state: PanelState.MAX
+        );
       },
       child: Column(
         children: [
@@ -163,7 +167,8 @@ class VideoCard extends ConsumerWidget {
                           style: Theme.of(context)
                               .textTheme
                               .bodyLarge!
-                              .copyWith(fontSize: 15.0),
+                              .copyWith(fontSize: 15.0,
+                              color: Theme.of(context).brightness == Brightness.dark ? Colors.white: Colors.black),
                         ),
                       ),
                       Flexible(
@@ -174,9 +179,10 @@ class VideoCard extends ConsumerWidget {
                           style: Theme.of(context)
                               .textTheme
                               .bodySmall!
-                              .copyWith(fontSize: 14.0),
+                              .copyWith(fontSize: 14.0,
+                              color: Theme.of(context).brightness == Brightness.dark ? Colors.grey[400]: Colors.grey[600]
                         ),
-                      ),
+                      ),),
                     ],
                   ),
                 ),

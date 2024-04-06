@@ -12,12 +12,16 @@ import 'package:stash_app_mobile/screens/performers.dart';
 import 'package:stash_app_mobile/screens/scenes.dart';
 
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:stash_app_mobile/screens/video_screen.dart';
 import 'package:stash_app_mobile/widgets/video_card_widget.dart';
 import 'package:theme_manager/theme_manager.dart';
 import 'package:flutter_settings_ui/flutter_settings_ui.dart';
 
 String graphqlUri = "";
 final StateProvider<Video?> selectedVideoProvider = StateProvider<Video?>((ref) => null);
+final miniPlayerControllerProvider = StateProvider.autoDispose<MiniplayerController>(
+        (ref) => MiniplayerController(),
+);
 
 void main() async {
   
@@ -154,8 +158,9 @@ class _NavigationExampleState extends State<NavigationExample> {
   @override
   Widget build(BuildContext context) {
     //final ThemeData theme = Theme.of(context);
-    const double _playerMinHeight = 80.0;
-    const bool isMiniplayerOpened = false;
+    const double _playerMinHeight = 60.0;
+    const bool _blockPanelSlide = false;
+    bool isMiniplayerOpened = false;
 
     return Scaffold(
       bottomNavigationBar: isMiniplayerOpened ? null : NavigationBar(
@@ -204,28 +209,40 @@ class _NavigationExampleState extends State<NavigationExample> {
       body: Consumer(builder: (BuildContext context, WidgetRef ref, Widget? child) {
 
         final selectedVideo = ref.watch(selectedVideoProvider);
+        final miniPlayerController = ref.watch(miniPlayerControllerProvider);
 
         return Stack(
           children: <Widget>[PageView(
             onPageChanged: (int index) {
               setState(() {
                 currentPageIndex = index;
+                ref.read(miniPlayerControllerProvider.notifier).state.animateToHeight(
+                    state: PanelState.MIN
+                );
                 HapticFeedback.lightImpact();
               });
             },
-            //physics: const NeverScrollableScrollPhysics(),
+            physics: _blockPanelSlide ? const NeverScrollableScrollPhysics() : null,
             controller: _pageController,
             children: _pages,
           ),
             Offstage(
               offstage: selectedVideo == null,
               child: Miniplayer(
+                  controller: miniPlayerController,
                   minHeight: _playerMinHeight,
                   maxHeight: MediaQuery.of(context).size.height,
                   builder: (height, percentage) {
                     if (selectedVideo == null) {
                       return const SizedBox.shrink();
                     }
+                    if (height >= _playerMinHeight + 10.0) {
+                      // not working
+                      isMiniplayerOpened = true;
+
+                        return VideoScreen();
+                    }
+
                     return Container(
                       color: Theme.of(context).colorScheme.background,
                       height: height,
@@ -253,13 +270,48 @@ class _NavigationExampleState extends State<NavigationExample> {
                               ),
                               Expanded(
                                 child: Padding(
-                                  padding: const EdgeInsets.only(left: 10.0),
-                                  child: Text(
-                                    selectedVideo.title,
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
+                                  padding: const EdgeInsets.all(8.0),
+                                  child: Column(
+                                    crossAxisAlignment:
+                                    CrossAxisAlignment.start,
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Flexible(
+                                        child: Text(
+                                          selectedVideo.title,
+                                          overflow:
+                                          TextOverflow.ellipsis,
+                                          style: Theme.of(context)
+                                              .textTheme
+                                              .bodyMedium!
+                                              .copyWith(
+                                            color: Theme.of(context).brightness == Brightness.dark ? Colors.white : Colors.black,
+                                            fontWeight:
+                                            FontWeight.w500,
+                                          ),
+                                        ),
+                                      ),
+                                      Flexible(
+                                        child: Text(
+                                          selectedVideo.performers[0].name,
+                                          overflow:
+                                          TextOverflow.ellipsis,
+                                          style: Theme.of(context)
+                                              .textTheme
+                                              .bodySmall!
+                                              .copyWith(
+                                            color: Theme.of(context).brightness == Brightness.dark ? Colors.white70 : Colors.black87,
+                                              fontWeight:
+                                              FontWeight.w400),
+                                        ),
+                                      ),
+                                    ],
                                   ),
                                 ),
+                              ),
+                              IconButton(
+                                icon: const Icon(Icons.play_arrow),
+                                onPressed: () {},
                               ),
                               IconButton(
                                 icon: const Icon(Icons.close),
