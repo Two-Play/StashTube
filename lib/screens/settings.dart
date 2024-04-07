@@ -11,75 +11,71 @@ class SettingsPage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<SettingsPage> {
+
+  bool t = false;
+
   @override
   Widget build(BuildContext context) {
     final brightnessPreference =
         ThemeManager.of(context).state.brightnessPreference;
+
 
     return Scaffold(
       appBar: AppBar(
         title: const Text('Settings'),
         centerTitle: true,
       ),
-      body: Center(
-        child: IntrinsicWidth(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: <Widget>[
-              ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor:
-                  brightnessPreference.isSystem ? Colors.red : Colors.blue,
-                ),
-                onPressed: () => ThemeManager.of(context)
-                    .setBrightness(BrightnessPreference.system),
-                child: const Text('System'),
+      body: SettingsList(
+sections: [
+          SettingsSection(
+            //margin: EdgeInsetsDirectional.all(50),
+            title: Text('Brightness'),
+            tiles: [
+              // switch tile witch switch between true and false on taping
+              SettingsTile.switchTile(
+                title: Text('Dark Mode'),
+                leading: Icon(Icons.nightlight_round),
+                onToggle: (bool value) {
+                  //t = !t;
+                  setState(() {
+                    t = value;
+                  });
+                  print(t);
+                }, initialValue: t,
               ),
-              const SizedBox(height: 12),
-              ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor:
-                  brightnessPreference.isSystem ? Colors.red : Colors.blue,
-                ),
-                onPressed: () => ThemeManager.of(context)
-                    .setBrightness(BrightnessPreference.light),
-                child: const Text('Light'),
-              ),
-              const SizedBox(height: 12),
-              ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor:
-                  brightnessPreference.isSystem ? Colors.red : Colors.blue,
-                ),
-                onPressed: () => ThemeManager.of(context)
-                    .setBrightness(BrightnessPreference.dark),
-                child: const Text('Dark'),
-              ),
-              ElevatedButton(onPressed: () => {
-                removeKey("url"),
-              showDialog(
-              context: context,
-              builder: (BuildContext context) {
-              return AlertDialog(
-              title: const Text('Error'),
-              content: const Text("REMOVED URL KEY"),
-              actions: <Widget>[
-              TextButton(
-              onPressed: () {
-              Navigator.of(context).pop();
-              },
-              child: const Text('OK'),
-              ),
-              ],
-              );
-              },
+              CustomSettingsTile(child:
+              // segment button with 3 options
+              SegmentedButton(
+                segments: [
+                  ButtonSegment(
+                    label: Text('Light'),
+                    value: BrightnessPreference.light,
+                  ),
+                  ButtonSegment(
+                    label: Text('System'),
+                    value: BrightnessPreference.system,
+                  ),
+                  ButtonSegment(
+                    label: Text('Dark'),
+                    value: BrightnessPreference.dark,
+                  ),
+                ], selected: {brightnessPreference},
+                onSelectionChanged: (Set<BrightnessPreference> value) {
+
+                  setState(() {
+                    // set the value of the segment button
+                    ThemeManager.of(context).setBrightness(value.first);
+                  });
+                },
               )
-              }, child: const Text('remove key')),
+              ),
+
+
             ],
           ),
-        ),
+        ],
       ),
+
 
 
 
