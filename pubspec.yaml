@@ -46,6 +46,7 @@ dependencies:
   flutter_riverpod: ^2.5.1
   riverpod_annotation: ^2.3.5
   miniplayer: ^1.0.1
+  country_flags: ^2.2.0
 
 dev_dependencies:
   flutter_test:
