@@ -40,13 +40,13 @@ void main() async {
 //   'http://192.168.44.5:9999/graphql',
 // );
 
-final HttpLink httpLink = HttpLink(
+final HttpLink _httpLink = HttpLink(
   '$graphqlUri/graphql',
 );
 
 ValueNotifier<GraphQLClient> client = ValueNotifier(
   GraphQLClient(
-    link: httpLink,
+    link: _httpLink,
     // The default store is the InMemoryStore, which does NOT persist to disk
     cache: GraphQLCache(store: HiveStore()),
   ),
@@ -117,7 +117,7 @@ class NavigationExample extends StatefulWidget {
 }
 
 class _NavigationExampleState extends State<NavigationExample> {
-  int currentPageIndex = 0;
+  int _currentPageIndex = 0;
   late PageController _pageController;
 
   Future<void> _checkLogin() async {
@@ -135,7 +135,7 @@ class _NavigationExampleState extends State<NavigationExample> {
   @override
   void initState() {
     super.initState();
-    _pageController = PageController(initialPage: currentPageIndex, keepPage: true);
+    _pageController = PageController(initialPage: _currentPageIndex, keepPage: true);
     _checkLogin();
 
 // SharedPreferences.getInstance().then((prefs) {
@@ -158,8 +158,8 @@ class _NavigationExampleState extends State<NavigationExample> {
   @override
   Widget build(BuildContext context) {
     //final ThemeData theme = Theme.of(context);
-    const double _playerMinHeight = 60.0;
-    const bool _blockPanelSlide = false;
+    const double playerMinHeight = 60.0;
+    const bool blockPanelSlide = false;
     bool isMiniplayerOpened = false;
 
     return Scaffold(
@@ -167,13 +167,13 @@ class _NavigationExampleState extends State<NavigationExample> {
         onDestinationSelected: (int index) {
           setState(() {
             // calculate the difference between the current page and the new page
-            int calc = currentPageIndex - index;
+            int calc = _currentPageIndex - index;
             if (calc == 1 || calc == -1) {
               _pageController.animateToPage(index, duration: const Duration(milliseconds: 300), curve: Curves.ease);
             } else {
               _pageController.jumpToPage(index);
             }
-            currentPageIndex = index;
+            _currentPageIndex = index;
             //HapticFeedback.mediumImpact();
 
             // if key url empty, push over to login page, no back button
@@ -181,7 +181,7 @@ class _NavigationExampleState extends State<NavigationExample> {
           });
         },
         //indicatorColor: Colors.amber,
-        selectedIndex: currentPageIndex,
+        selectedIndex: _currentPageIndex,
         destinations: const <Widget>[
           NavigationDestination(
             selectedIcon: Icon(Icons.play_arrow),
@@ -215,14 +215,14 @@ class _NavigationExampleState extends State<NavigationExample> {
           children: <Widget>[PageView(
             onPageChanged: (int index) {
               setState(() {
-                currentPageIndex = index;
+                _currentPageIndex = index;
                 ref.read(miniPlayerControllerProvider.notifier).state.animateToHeight(
                     state: PanelState.MIN
                 );
                 HapticFeedback.lightImpact();
               });
             },
-            physics: _blockPanelSlide ? const NeverScrollableScrollPhysics() : null,
+            physics: blockPanelSlide ? const NeverScrollableScrollPhysics() : null,
             controller: _pageController,
             children: _pages,
           ),
@@ -230,13 +230,13 @@ class _NavigationExampleState extends State<NavigationExample> {
               offstage: selectedVideo == null,
               child: Miniplayer(
                   controller: miniPlayerController,
-                  minHeight: _playerMinHeight,
+                  minHeight: playerMinHeight,
                   maxHeight: MediaQuery.of(context).size.height,
                   builder: (height, percentage) {
                     if (selectedVideo == null) {
                       return const SizedBox.shrink();
                     }
-                    if (height >= _playerMinHeight + 10.0) {
+                    if (height >= playerMinHeight + 10.0) {
                       // not working
                       isMiniplayerOpened = true;
 
@@ -254,7 +254,7 @@ class _NavigationExampleState extends State<NavigationExample> {
                                 padding: const EdgeInsets.all(/*8.0*/ 0.0),
                                 child: Image.network(
                                     selectedVideo.thumbnail,
-                                height: _playerMinHeight - 4.0,
+                                height: playerMinHeight - 4.0,
                                   width: 120.0,
                                   fit: BoxFit.cover,
                                 )

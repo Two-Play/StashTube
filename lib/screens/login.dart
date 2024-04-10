@@ -7,7 +7,7 @@ import 'package:stash_app_mobile/main.dart';
 
 // create login page with wellcome title and login textfiel and button. save the url in the storage and navigate to the home page
 class LoginPage extends StatefulWidget {
-  const LoginPage({Key? key}) : super(key: key);
+  const LoginPage({super.key});
 
   @override
   State createState() => _LoginPageState();
@@ -46,6 +46,70 @@ class _LoginPageState extends State<LoginPage> {
 
   @override
   Widget build(BuildContext context) {
+
+    Future<Map<String, dynamic>> sendGraphQLRequest(String request) async {
+      final QueryOptions options = QueryOptions(
+        document: gql(request),
+      );
+
+      final GraphQLClient _client = GraphQLClient(
+        cache: GraphQLCache(),
+        link: HttpLink('http://192.168.44.5:9999/graphql'),
+      );
+
+      final QueryResult result = await _client.query(options);
+
+      if (result.hasException) {
+        print(result.exception.toString());
+        return {};
+      }
+
+      print("HALLO Status: ${result.data!['systemStatus']['status']}");
+
+      return result.data!;
+    }
+
+
+    Future<bool> isRequestStatusOk(final GraphQLClient client) async{
+
+          const requestQuery = """
+          {
+            systemStatus
+            {
+              status
+            }
+          }
+          """;
+
+        // request to the server
+        final statusQueryResult =
+          QueryOptions(document: gql(requestQuery)
+        );
+          try {
+            final QueryResult result = await client.query(statusQueryResult);
+            if (result.hasException) {
+              //print(result.exception.toString());
+              return false;
+            }
+            return true;
+          } catch (e) {
+            //print(e);
+            return false;
+          }
+
+        // final result = statusQueryResult.result;
+        // if (result.hasException) {
+        //   return false;
+        // }
+        //
+        // if (result.data?['systemStatus']['status'] == 'ok') {
+        //   return true;
+        // }
+        // return false;
+
+    }
+
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Login'),
@@ -70,7 +134,7 @@ class _LoginPageState extends State<LoginPage> {
                   ),
                 ),
                 ElevatedButton(
-                  onPressed: () {
+                  onPressed: () async {
 
                     if (_validateUrl(_urlController.text)) {
                       client.value =
@@ -79,8 +143,26 @@ class _LoginPageState extends State<LoginPage> {
                           // The default store is the InMemoryStore, which does NOT persist to disk
                           cache: GraphQLCache(store: HiveStore()),
                       );
-                      saveKey("url", _urlController.text);
-                      Navigator.pushReplacementNamed(context, '/');
+
+                      //send request to the server
+                      // execute firt if response status ok
+                      if (await isRequestStatusOk(client.value)) {
+                        //TODO: reset global video state to null
+
+                        saveKey("url", _urlController.text);
+                        Navigator.pushReplacementNamed(context, '/');
+                      } else {
+                        HapticFeedback.vibrate();
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            // red snackbar with invalid url message
+                            backgroundColor: Colors.red,
+                            content: Text('Invalid URL'),
+                            duration: Duration(seconds: 1),
+                          ),
+                        );
+                      }
+
 
                     } else {
                       HapticFeedback.vibrate();

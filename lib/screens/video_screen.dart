@@ -9,8 +9,10 @@ import '../main.dart';
 import '../widgets/video_card_widget.dart';
 
 class VideoScreen extends StatefulWidget {
+  const VideoScreen({super.key});
+
   @override
-  _VideoScreenState createState() => _VideoScreenState();
+  State<VideoScreen> createState() => _VideoScreenState();
 }
 
 class _VideoScreenState extends State<VideoScreen> {
