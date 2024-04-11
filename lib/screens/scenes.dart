@@ -96,9 +96,9 @@ class _ScenesPageState extends State<ScenesPage> with AutomaticKeepAliveClientMi
             },
           ),
           IconButton(
-            icon: const Icon(Icons.logout),
+            icon: const Icon(Icons.search),
             onPressed: () {
-              Navigator.push(context, CupertinoPageRoute(builder: (context) => const LoginPage()));
+            print("search");
             },
           ),
         ],

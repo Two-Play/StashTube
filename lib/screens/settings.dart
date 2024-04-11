@@ -1,7 +1,9 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_settings_ui/flutter_settings_ui.dart';
 import 'package:stash_app_mobile/functions/storage.dart';
 import 'package:theme_manager/theme_manager.dart';
+
+import 'login.dart';
 
 class SettingsPage extends StatefulWidget {
   const SettingsPage({super.key});
@@ -25,55 +27,49 @@ class _MyHomePageState extends State<SettingsPage> {
         title: const Text('Settings'),
         centerTitle: true,
       ),
-      body: SettingsList(
-sections: [
-          SettingsSection(
-            //margin: EdgeInsetsDirectional.all(50),
-            title: Text('Brightness'),
-            tiles: [
-              // switch tile witch switch between true and false on taping
-              SettingsTile.switchTile(
-                title: Text('Dark Mode'),
-                leading: Icon(Icons.nightlight_round),
-                onToggle: (bool value) {
-                  //t = !t;
-                  setState(() {
-                    t = value;
-                  });
-                  print(t);
-                }, initialValue: t,
+      body: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 28.0),
+        child: ListView(
+        children: [
+                // segmented button with 3 options
+          SegmentedButton(
+            segments: [
+              ButtonSegment(
+                label: Text('Light'),
+                value: BrightnessPreference.light,
               ),
-              CustomSettingsTile(child:
-              // segment button with 3 options
-              SegmentedButton(
-                segments: [
-                  ButtonSegment(
-                    label: Text('Light'),
-                    value: BrightnessPreference.light,
-                  ),
-                  ButtonSegment(
-                    label: Text('System'),
-                    value: BrightnessPreference.system,
-                  ),
-                  ButtonSegment(
-                    label: Text('Dark'),
-                    value: BrightnessPreference.dark,
-                  ),
-                ], selected: {brightnessPreference},
-                onSelectionChanged: (Set<BrightnessPreference> value) {
-
-                  setState(() {
-                    // set the value of the segment button
-                    ThemeManager.of(context).setBrightness(value.first);
-                  });
-                },
-              )
+              ButtonSegment(
+                label: Text('System'),
+                value: BrightnessPreference.system,
               ),
+              ButtonSegment(
+                label: Text('Dark'),
+                value: BrightnessPreference.dark,
+              ),
+            ], selected: {brightnessPreference},
+            onSelectionChanged: (Set<BrightnessPreference> value) {
 
-
-            ],
+              setState(() {
+                // set the value of the segment button
+                ThemeManager.of(context).setBrightness(value.first);
+              });
+            },
           ),
-        ],
+
+          // logout button
+          ElevatedButton(
+            onPressed: () {
+              // navigate to the login page
+              Navigator.push(context, CupertinoPageRoute(builder: (context) => const LoginPage()));
+              // remove the token from the storage
+              //removeKey('url');
+            },
+            child: const Text('Logout'),
+          ),
+
+
+              ],
+            ),
       ),
 
 
