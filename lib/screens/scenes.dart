@@ -243,7 +243,7 @@ class _ScenesPageState extends State<ScenesPage> with AutomaticKeepAliveClientMi
                                     bio: performers[0].bio
                                 ),
                               ],
-
+                              stream: sceneList[index]['paths']['stream'],
                               stars: 5,
                               studio: Studio(
                                   name: "TEST",//sceneList[index]['studio']['name'],

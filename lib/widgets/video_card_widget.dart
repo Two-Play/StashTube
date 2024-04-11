@@ -19,6 +19,7 @@ class Video {
   final String date;
   final double duration;
   final String resolution;
+  final String stream;
 
   const Video({
     required this.thumbnail,
@@ -29,6 +30,7 @@ class Video {
     required this.date,
     required this.duration,
     required this.resolution,
+    required this.stream
   });
 
 

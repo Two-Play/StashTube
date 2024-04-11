@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:graphql_flutter/graphql_flutter.dart';
+import 'package:media_kit/media_kit.dart';
 import 'package:miniplayer/miniplayer.dart';
 import 'package:stash_app_mobile/functions/storage.dart';
 import 'package:stash_app_mobile/screens/home.dart';
@@ -15,7 +16,6 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:stash_app_mobile/screens/video_screen.dart';
 import 'package:stash_app_mobile/widgets/video_card_widget.dart';
 import 'package:theme_manager/theme_manager.dart';
-import 'package:flutter_settings_ui/flutter_settings_ui.dart';
 
 String graphqlUri = "";
 final StateProvider<Video?> selectedVideoProvider = StateProvider<Video?>((ref) => null);
@@ -24,8 +24,9 @@ final miniPlayerControllerProvider = StateProvider.autoDispose<MiniplayerControl
 );
 
 void main() async {
-  
-  WidgetsFlutterBinding.ensureInitialized(); // Required
+
+  WidgetsFlutterBinding.ensureInitialized();
+  MediaKit.ensureInitialized();
   await initHiveForFlutter();
   graphqlUri = (await readKey("url"))!;
 
