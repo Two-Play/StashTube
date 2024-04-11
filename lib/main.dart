@@ -149,8 +149,8 @@ class _NavigationExampleState extends State<NavigationExample> {
   }
 
   final List<Widget> _pages = <Widget>[
-    const ScenesPage(),
     const HomePage(),
+    const ScenesPage(),
     const PerformersPage(),
     const SettingsPage(),
   ];
@@ -161,6 +161,30 @@ class _NavigationExampleState extends State<NavigationExample> {
     const double playerMinHeight = 60.0;
     const bool blockPanelSlide = false;
     bool isMiniplayerOpened = false;
+
+    const NavigationDestination home = NavigationDestination(
+      selectedIcon: Icon(Icons.home),
+      icon: Icon(Icons.home_outlined),
+      label: 'Home',
+    );
+
+    const NavigationDestination scenes = NavigationDestination(
+      selectedIcon: Icon(Icons.play_arrow),
+      icon: Icon(Icons.play_arrow_outlined),
+      label: 'Scenes',
+    );
+
+    const NavigationDestination performers = NavigationDestination(
+      selectedIcon: Icon(Icons.person),
+      icon: Icon(Icons.person_outline),
+      label: 'Performers',
+    );
+
+    const NavigationDestination settings = NavigationDestination(
+      selectedIcon: Icon(Icons.settings),
+      icon: Icon(Icons.settings_outlined),
+      label: 'Settings',
+    );
 
     return Scaffold(
       bottomNavigationBar: isMiniplayerOpened ? null : NavigationBar(
@@ -183,27 +207,10 @@ class _NavigationExampleState extends State<NavigationExample> {
         //indicatorColor: Colors.amber,
         selectedIndex: _currentPageIndex,
         destinations: const <Widget>[
-          NavigationDestination(
-            selectedIcon: Icon(Icons.play_arrow),
-            icon: Icon(Icons.play_arrow_outlined),
-            label: 'Scenes',
-          ),
-          NavigationDestination(
-            selectedIcon: Icon(Icons.home),
-            icon: Icon(Icons.home_outlined),
-            label: 'Home',
-          ),
-          NavigationDestination(
-            icon: Badge(child: Icon(Icons.notifications_sharp)),
-            label: 'Notifications',
-          ),
-          NavigationDestination(
-            icon: Badge(
-              label: Text('2'),
-              child: Icon(Icons.messenger_sharp),
-            ),
-            label: 'Messages',
-          ),
+          home,
+          scenes,
+          performers,
+          settings,
         ],
       ),
       body: Consumer(builder: (BuildContext context, WidgetRef ref, Widget? child) {

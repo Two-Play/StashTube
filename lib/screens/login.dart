@@ -91,7 +91,11 @@ class _LoginPageState extends State<LoginPage> {
               //print(result.exception.toString());
               return false;
             }
-            return true;
+            if (result.data?['systemStatus']['status'] == 'OK') {
+                return true;
+              }
+            print("HALLO Status: ${result.data!['systemStatus']['status']}");
+            return false;
           } catch (e) {
             //print(e);
             return false;
@@ -150,7 +154,7 @@ class _LoginPageState extends State<LoginPage> {
                         //TODO: reset global video state to null
 
                         saveKey("url", _urlController.text);
-                        Navigator.pushReplacementNamed(context, '/');
+                        Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (context) => const MyApp()), (route) => false);
                       } else {
                         HapticFeedback.vibrate();
                         ScaffoldMessenger.of(context).showSnackBar(

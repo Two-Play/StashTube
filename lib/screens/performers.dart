@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/svg.dart';
 import 'package:graphql_flutter/graphql_flutter.dart';
 import 'package:stash_app_mobile/main.dart';
 
@@ -65,7 +66,7 @@ class _PerformersPageState extends State<PerformersPage>  with AutomaticKeepAliv
           options: QueryOptions(
             document: gql(performersQuery),
           ),
-          builder: (QueryResult result, { VoidCallback? refetch, FetchMore? fetchMore }) {
+          builder: (result, {fetchMore, refetch}) {
             if (result.hasException) {
               return Text(result.exception.toString());
             }
@@ -78,21 +79,60 @@ class _PerformersPageState extends State<PerformersPage>  with AutomaticKeepAliv
 
             final performers = result.data!['allPerformers'];
 
-            return ListView.builder(
-              itemCount: performers.length,
-              itemBuilder: (context, index) {
-                final performer = performers[index];
-                return PerformerCard(
-                  performer: Performers(
-                    name: performer['name'],
-                    image: performer['image_path'],
-                    country: performer['country'],
-                    // birthdate: performer['birthdate'],
-                    // rating: performer['rating100'],
-                    // favorite: performer['favorite']
-                  ),
-                );
+            if (performers.isEmpty) {
+              return RefreshIndicator(
+                  onRefresh: () async {
+                    await refetch!();
+                  },
+                  child: ListView(
+                    children: [
+                      // center heding title text and image
+                      Center(
+                        child: Column(
+                          children:  [
+                            Padding(
+                                padding: const EdgeInsets.symmetric(vertical: 88.0),
+                                child: Text('No performers found',
+                                  style: Theme.of(context)
+                                      .textTheme
+                                      .headlineMedium!
+                                      .copyWith(),
+                                )
+                            ),
+                            Padding(
+                              padding: const EdgeInsets.symmetric(horizontal: 58.0),
+                              child: SvgPicture.asset(
+                                height: 300.0,
+                                'assets/images/images.svg',
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ));
+            }
+
+            return RefreshIndicator(
+              onRefresh: () async {
+                await refetch!();
               },
+              child: ListView.builder(
+                itemCount: performers.length,
+                itemBuilder: (context, index) {
+                  final performer = performers[index];
+                  return PerformerCard(
+                    performer: Performers(
+                      name: performer['name'],
+                      image: performer['image_path'],
+                      country: performer['country'],
+                      // birthdate: performer['birthdate'],
+                      // rating: performer['rating100'],
+                      // favorite: performer['favorite']
+                    ),
+                  );
+                },
+              ),
             );
           }
       )
