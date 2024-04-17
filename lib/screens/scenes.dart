@@ -3,6 +3,7 @@ import 'dart:ffi';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:flutter_svg/svg.dart';
@@ -58,7 +59,8 @@ class _ScenesPageState extends State<ScenesPage> with AutomaticKeepAliveClientMi
         }
       performers{
         name,
-        image_path
+        image_path,
+        id
       }
       
     }
@@ -165,6 +167,7 @@ class _ScenesPageState extends State<ScenesPage> with AutomaticKeepAliveClientMi
                     return RefreshIndicator(
                         onRefresh: () async {
                           await refetch!();
+                          HapticFeedback.mediumImpact();
                         },
                         child: ListView(
                           children: [
@@ -198,6 +201,7 @@ class _ScenesPageState extends State<ScenesPage> with AutomaticKeepAliveClientMi
                   return RefreshIndicator(
                     onRefresh: () async {
                       await refetch!();
+                      HapticFeedback.mediumImpact();
                     },
                     child: ListView.builder(
                           //controller: _scrollController,
@@ -212,6 +216,7 @@ class _ScenesPageState extends State<ScenesPage> with AutomaticKeepAliveClientMi
                                 name: performer['name'],
                                 image: performer['image_path'],
                                 bio: "bio",
+                                id: int.parse(performer['id']),
                               ));
                             }
                             if (performers.isEmpty) {
@@ -219,6 +224,7 @@ class _ScenesPageState extends State<ScenesPage> with AutomaticKeepAliveClientMi
                                 name: "Unknown",
                                 image: "",
                                 bio: "",
+                                id: -1,
                               ));
                             }
 
@@ -240,7 +246,8 @@ class _ScenesPageState extends State<ScenesPage> with AutomaticKeepAliveClientMi
                               performers: [
                                 Performers(name: performers[0].name,
                                     image: performers[0].image,
-                                    bio: performers[0].bio
+                                    bio: performers[0].bio,
+                                    id: performers[0].id,
                                 ),
                               ],
                               stream: sceneList[index]['paths']['stream'],

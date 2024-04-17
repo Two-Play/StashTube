@@ -2,6 +2,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:country_flags/country_flags.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:stash_app_mobile/screens/performer_detail_view.dart';
 import 'package:stash_app_mobile/screens/scenes.dart';
 
 import '../screens/performers.dart';
@@ -27,7 +28,7 @@ class PerformerCard extends StatelessWidget {
           Navigator.push(
             context,
             MaterialPageRoute(
-              builder: (context) => ScenesPage(),
+              builder: (context) => PerformerDetailsPage(performerId: performer.id),
             ),
           );
         },
@@ -57,10 +58,13 @@ class PerformerCard extends StatelessWidget {
                     //
                   ),
                   //SizedBox(height: 16,),
-                  Column(children:[
-                    Text(performer.name, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
-                    Text('Subtitle')
-                  ])
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 10.0),
+                    child: Column(children:[
+                      Text(performer.name, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+                      Text('Subtitle')
+                    ]),
+                  )
                 ],
               ),
             ),

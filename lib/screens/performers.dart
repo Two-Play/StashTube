@@ -13,11 +13,13 @@ class Performers {
   final String birthdate;
   final int rating;
   final bool favorite;
+  final int id;
 
 
   const Performers({
     required this.name,
     required this.image,
+    required this.id,
     this.bio = "",
     this.country = "",
     this.birthdate = "",
@@ -126,6 +128,7 @@ class _PerformersPageState extends State<PerformersPage>  with AutomaticKeepAliv
                       name: performer['name'],
                       image: performer['image_path'],
                       country: performer['country'],
+                      id: int.parse(performer['id']),
                       // birthdate: performer['birthdate'],
                       // rating: performer['rating100'],
                       // favorite: performer['favorite']

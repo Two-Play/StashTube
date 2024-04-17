@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:miniplayer/miniplayer.dart';
+import 'package:stash_app_mobile/screens/performer_detail_view.dart';
 import 'package:stash_app_mobile/screens/performers.dart';
 import 'package:stash_app_mobile/screens/studios.dart';
 
@@ -145,7 +146,13 @@ class VideoCard extends ConsumerWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 GestureDetector(
-                  onTap: () => print('Navigate to profile'),
+                  onTap: () => {
+                    print('Navigate to profile ${video.performers[0].name}'),
+                    if(video.performers[0].id != -1) {
+                      Navigator.push(context, MaterialPageRoute(builder: (context) => PerformerDetailsPage(performerId: video.performers[0].id))),
+                    }
+
+                  },
                   child: CircleAvatar(
                     foregroundImage: (video.performers[0].image != "") ?
                     Image(image: CachedNetworkImageProvider(
