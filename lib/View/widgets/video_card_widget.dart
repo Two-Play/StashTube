@@ -4,11 +4,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:miniplayer/miniplayer.dart';
-import 'package:stash_app_mobile/screens/performer_detail_view.dart';
-import 'package:stash_app_mobile/screens/performers.dart';
-import 'package:stash_app_mobile/screens/studios.dart';
+import 'package:stash_app_mobile/View/screens/performer_detail_view.dart';
+import 'package:stash_app_mobile/View/screens/performers.dart';
+import 'package:stash_app_mobile/View/screens/studios.dart';
 
-import '../main.dart';
+import '../../main.dart';
 import '../screens/settings.dart';
 
 class Video {

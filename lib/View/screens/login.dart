@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:graphql_flutter/graphql_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:stash_app_mobile/functions/storage.dart';
+import 'package:stash_app_mobile/util/storage.dart';
 import 'package:stash_app_mobile/main.dart';
 
 // create login page with wellcome title and login textfiel and button. save the url in the storage and navigate to the home page

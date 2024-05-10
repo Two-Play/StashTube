@@ -5,16 +5,16 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:graphql_flutter/graphql_flutter.dart';
 import 'package:media_kit/media_kit.dart';
 import 'package:miniplayer/miniplayer.dart';
-import 'package:stash_app_mobile/functions/storage.dart';
-import 'package:stash_app_mobile/screens/home.dart';
-import 'package:stash_app_mobile/screens/login.dart';
-import 'package:stash_app_mobile/screens/settings.dart';
-import 'package:stash_app_mobile/screens/performers.dart';
-import 'package:stash_app_mobile/screens/scenes.dart';
+import 'package:stash_app_mobile/util/storage.dart';
+import 'package:stash_app_mobile/View/screens/home.dart';
+import 'package:stash_app_mobile/View/screens/login.dart';
+import 'package:stash_app_mobile/View/screens/settings.dart';
+import 'package:stash_app_mobile/View/screens/performers.dart';
+import 'package:stash_app_mobile/View/screens/scenes.dart';
 
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:stash_app_mobile/screens/video_screen.dart';
-import 'package:stash_app_mobile/widgets/video_card_widget.dart';
+import 'package:stash_app_mobile/View/screens/video_screen.dart';
+import 'package:stash_app_mobile/View/widgets/video_card_widget.dart';
 import 'package:theme_manager/theme_manager.dart';
 
 String graphqlUri = "";

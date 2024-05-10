@@ -2,8 +2,8 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:country_flags/country_flags.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:stash_app_mobile/screens/performer_detail_view.dart';
-import 'package:stash_app_mobile/screens/scenes.dart';
+import 'package:stash_app_mobile/View/screens/performer_detail_view.dart';
+import 'package:stash_app_mobile/View/screens/scenes.dart';
 
 import '../screens/performers.dart';
 

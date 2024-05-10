@@ -8,14 +8,14 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:graphql_flutter/graphql_flutter.dart';
-import 'package:stash_app_mobile/screens/login.dart';
-import 'package:stash_app_mobile/screens/performers.dart';
+import 'package:stash_app_mobile/View/screens/login.dart';
+import 'package:stash_app_mobile/View/screens/performers.dart';
 
-import 'package:stash_app_mobile/screens/settings.dart';
-import 'package:stash_app_mobile/screens/studios.dart';
-import 'package:stash_app_mobile/widgets/video_card_widget.dart';
+import 'package:stash_app_mobile/View/screens/settings.dart';
+import 'package:stash_app_mobile/View/screens/studios.dart';
+import 'package:stash_app_mobile/View/widgets/video_card_widget.dart';
 
-import '../main.dart';
+import '../../main.dart';
 
 
 class ScenesPage extends StatefulWidget {

@@ -1,6 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:stash_app_mobile/functions/storage.dart';
+import 'package:stash_app_mobile/util/storage.dart';
 import 'package:theme_manager/theme_manager.dart';
 
 import 'login.dart';
