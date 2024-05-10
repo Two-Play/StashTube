@@ -4,6 +4,7 @@ import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:media_kit_video/media_kit_video_controls/src/controls/methods/video_state.dart';
 import 'package:miniplayer/miniplayer.dart';
+import 'package:stash_app_mobile/Model/state.dart';
 import 'package:stash_app_mobile/View/screens/performers.dart';
 import 'package:stash_app_mobile/View/screens/studios.dart';
 
@@ -34,7 +35,7 @@ class _VideoScreenState extends ConsumerState<VideoScreen> {
   void initState() {
     super.initState();
     _scrollController = ScrollController();
-    final stream = ref.read(selectedVideoProvider)?.stream;
+    final stream = ref.read(VideoState.selectedVideoProvider)?.stream;
     player.open(Media(stream!));
 
   }
@@ -57,7 +58,7 @@ class _VideoScreenState extends ConsumerState<VideoScreen> {
       child: Scaffold(
         body:
             Consumer(builder: (context, watch, _) {
-              final selectedVideo = watch.watch(selectedVideoProvider);
+              final selectedVideo = watch.watch(VideoState.selectedVideoProvider);
               //print(watch.watch(miniPlayerControllerProvider).value?.height.toString());
 
               return
@@ -72,7 +73,7 @@ class _VideoScreenState extends ConsumerState<VideoScreen> {
                           iconSize: 30.0,
                           icon: const Icon(Icons.keyboard_arrow_down),
                           onPressed: () => watch
-                              .read(miniPlayerControllerProvider.notifier)
+                              .read(VideoState.miniPlayerControllerProvider.notifier)
                               .state
                               .animateToHeight(state: PanelState.MIN),
                         ),],

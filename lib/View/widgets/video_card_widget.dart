@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:miniplayer/miniplayer.dart';
+import 'package:stash_app_mobile/Model/state.dart';
 import 'package:stash_app_mobile/View/screens/performer_detail_view.dart';
 import 'package:stash_app_mobile/View/screens/performers.dart';
 import 'package:stash_app_mobile/View/screens/studios.dart';
@@ -51,8 +52,8 @@ class VideoCard extends ConsumerWidget {
     return GestureDetector(
       onTap: () {
         // Set the selected video to the video state
-        ref.read(selectedVideoProvider.notifier).state = video;
-        ref.read(miniPlayerControllerProvider.notifier).state.animateToHeight(
+        ref.read(VideoState.selectedVideoProvider.notifier).state = video;
+        ref.read(VideoState.miniPlayerControllerProvider.notifier).state.animateToHeight(
             state: PanelState.MAX
         );
       },

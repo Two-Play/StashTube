@@ -8,6 +8,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:graphql_flutter/graphql_flutter.dart';
+import 'package:stash_app_mobile/Model/state.dart';
 import 'package:stash_app_mobile/View/screens/login.dart';
 import 'package:stash_app_mobile/View/screens/performers.dart';
 
@@ -110,12 +111,12 @@ class _ScenesPageState extends State<ScenesPage> with AutomaticKeepAliveClientMi
   // get scene list and return card widgets
       body: Consumer(
         builder: (context, ref, _) {
-          final selectedVideo = ref.watch(selectedVideoProvider);
+          final selectedVideo = ref.watch(VideoState.selectedVideoProvider);
           if (kDebugMode) {
             print("SELECTED VIDEO: ${selectedVideo?.title}");
           }
           return ValueListenableBuilder(
-              valueListenable: client,
+              valueListenable: GraphQLState.client,
               builder: (context, value, child) => child!,
               child: Query(
                 options: QueryOptions(

@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:graphql_flutter/graphql_flutter.dart';
 import 'package:media_kit/media_kit.dart';
 import 'package:miniplayer/miniplayer.dart';
+import 'package:stash_app_mobile/Model/state.dart';
 import 'package:stash_app_mobile/util/storage.dart';
 import 'package:stash_app_mobile/View/screens/home.dart';
 import 'package:stash_app_mobile/View/screens/login.dart';
@@ -17,18 +18,14 @@ import 'package:stash_app_mobile/View/screens/video_screen.dart';
 import 'package:stash_app_mobile/View/widgets/video_card_widget.dart';
 import 'package:theme_manager/theme_manager.dart';
 
-String graphqlUri = "";
-final StateProvider<Video?> selectedVideoProvider = StateProvider<Video?>((ref) => null);
-final miniPlayerControllerProvider = StateProvider.autoDispose<MiniplayerController>(
-        (ref) => MiniplayerController(),
-);
 
 void main() async {
 
   WidgetsFlutterBinding.ensureInitialized();
   MediaKit.ensureInitialized();
   await initHiveForFlutter();
-  graphqlUri = (await readKey("url"))!;
+
+  GraphQLState();
 
   //runApp(const NavigationBarApp());
   runApp(const ProviderScope(
@@ -36,22 +33,6 @@ void main() async {
   )
   );
 }
-
-// final HttpLink httpLink = HttpLink(
-//   'http://192.168.44.5:9999/graphql',
-// );
-
-final HttpLink _httpLink = HttpLink(
-  '$graphqlUri/graphql',
-);
-
-ValueNotifier<GraphQLClient> client = ValueNotifier(
-  GraphQLClient(
-    link: _httpLink,
-    // The default store is the InMemoryStore, which does NOT persist to disk
-    cache: GraphQLCache(store: HiveStore()),
-  ),
-);
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
@@ -73,7 +54,7 @@ class MyApp extends StatelessWidget {
       },
       themedBuilder: (BuildContext context, ThemeState state) {
         return GraphQLProvider(
-          client: client,
+          client: GraphQLState.client,
           child: AnnotatedRegion<SystemUiOverlayStyle>(
             value: SystemUiOverlayStyle(
               statusBarColor: Colors.transparent,
@@ -216,15 +197,15 @@ class _NavigationExampleState extends State<NavigationExample> {
       ),
       body: Consumer(builder: (BuildContext context, WidgetRef ref, Widget? child) {
 
-        final selectedVideo = ref.watch(selectedVideoProvider);
-        final miniPlayerController = ref.watch(miniPlayerControllerProvider);
+        final selectedVideo = ref.watch(VideoState.selectedVideoProvider);
+        final miniPlayerController = ref.watch(VideoState.miniPlayerControllerProvider);
 
         return Stack(
           children: <Widget>[PageView(
             onPageChanged: (int index) {
               setState(() {
                 _currentPageIndex = index;
-                ref.read(miniPlayerControllerProvider.notifier).state.animateToHeight(
+                ref.read(VideoState.miniPlayerControllerProvider.notifier).state.animateToHeight(
                     state: PanelState.MIN
                 );
                 HapticFeedback.lightImpact();
@@ -324,7 +305,7 @@ class _NavigationExampleState extends State<NavigationExample> {
                               IconButton(
                                 icon: const Icon(Icons.close),
                                 onPressed: () {
-                                  ref.read(selectedVideoProvider.notifier).state = null;
+                                  ref.read(VideoState.selectedVideoProvider.notifier).state = null;
                                 },
                               ),
                             ],

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:graphql_flutter/graphql_flutter.dart';
+import 'package:stash_app_mobile/Model/state.dart';
 import 'package:stash_app_mobile/main.dart';
 
 import '../widgets/performer_card_widget.dart';
@@ -62,7 +63,7 @@ class _PerformersPageState extends State<PerformersPage>  with AutomaticKeepAliv
         title: Text('Performers'),
       ),
       body: ValueListenableBuilder(
-        valueListenable: client,
+        valueListenable: GraphQLState.client,
         builder: (context, value, child) => child!,
         child: Query(
           options: QueryOptions(

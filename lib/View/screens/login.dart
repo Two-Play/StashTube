@@ -2,8 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:graphql_flutter/graphql_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:stash_app_mobile/Model/state.dart';
 import 'package:stash_app_mobile/util/storage.dart';
 import 'package:stash_app_mobile/main.dart';
+import 'package:stash_app_mobile/util/validators.dart';
 
 // create login page with wellcome title and login textfiel and button. save the url in the storage and navigate to the home page
 class LoginPage extends StatefulWidget {
@@ -16,13 +18,7 @@ class LoginPage extends StatefulWidget {
 class _LoginPageState extends State<LoginPage> {
   final TextEditingController _urlController = TextEditingController();
   // validate the url with regex
-  bool _validateUrl(String url) {
-    try {
-      return Uri.parse(url).isAbsolute;
-    } catch (e) {
-      return false;
-    }
-  }
+
 
 
   @override
@@ -140,8 +136,8 @@ class _LoginPageState extends State<LoginPage> {
                 ElevatedButton(
                   onPressed: () async {
 
-                    if (_validateUrl(_urlController.text)) {
-                      client.value =
+                    if (Validators.validateUrl(_urlController.text)) {
+                      GraphQLState.client.value =
                         GraphQLClient(
                           link: HttpLink("${_urlController.text}/graphql"),
                           // The default store is the InMemoryStore, which does NOT persist to disk
@@ -150,7 +146,7 @@ class _LoginPageState extends State<LoginPage> {
 
                       //send request to the server
                       // execute firt if response status ok
-                      if (await isRequestStatusOk(client.value)) {
+                      if (await isRequestStatusOk(GraphQLState.client.value)) {
                         //TODO: reset global video state to null
 
                         saveKey("url", _urlController.text);

@@ -1,6 +1,13 @@
 
+import '../Controler/controller.dart';
 
-abstract class Observable {
+abstract class Observer {
+  void update(ObseverEvent event);
+}
+
+class ObseverEvent {}
+
+class Observable {
   List<Function> _listeners = [];
 
   void addListener(Function listener) {
@@ -12,8 +19,8 @@ abstract class Observable {
   }
 
   void notifyListeners() {
-    for (Function listener in _listeners) {
+    _listeners.forEach((Function listener) {
       listener();
-    }
+    });
   }
 }
