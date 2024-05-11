@@ -23,14 +23,7 @@ class _LoginPageState extends State<LoginPage> implements Observer{
   @override
   void initState(){
     super.initState();
-
-    SharedPreferences.getInstance().then((prefs) {
-      String? value = prefs.getString('url');
-      // Do something with value
-      _urlController.text = value ?? "";
-    });
-
-
+    _loginController.setCurrentUrlToTextField(_urlController);
   }
 
   @override

@@ -9,4 +9,8 @@ class LoginController {
     _loginModel.handleLogin(url, context);
   }
 
+  void setCurrentUrlToTextField(final TextEditingController controller) {
+    _loginModel.setCurrentUrlToTextField(controller);
+  }
+
 }

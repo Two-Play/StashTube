@@ -8,8 +8,8 @@ import '../../util/validators.dart';
 import '../state.dart';
 
 class LoginModel {
-  Future<bool> isRequestStatusOk(final GraphQLClient client) async{
 
+  Future<bool> _isRequestStatusOk(final GraphQLClient client) async {
     const requestQuery = """
           {
             systemStatus
@@ -21,8 +21,7 @@ class LoginModel {
 
     // request to the server
     final statusQueryResult =
-    QueryOptions(document: gql(requestQuery)
-    );
+    QueryOptions(document: gql(requestQuery));
     try {
       final QueryResult result = await client.query(statusQueryResult);
 
@@ -41,6 +40,12 @@ class LoginModel {
     }
   }
 
+  Future<void> setCurrentUrlToTextField(
+      final TextEditingController controller) async {
+    String? value = await Storage.readKey("url");
+    controller.text = value ?? "";
+  }
+
   void handleLogin(final String url, final BuildContext context) async {
 
     if (Validators.validateUrl(url)) {
@@ -49,11 +54,12 @@ class LoginModel {
 
       //send request to the server
       // execute firt if response status ok
-      if (await isRequestStatusOk(GraphQLState.client.value)) {
+      if (await _isRequestStatusOk(GraphQLState.client.value)) {
         //TODO: reset global video state to null
 
         Storage.saveKey("url", url);
-        Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (context) => const MyApp()), (route) => false);
+        Navigator.pushAndRemoveUntil(context, MaterialPageRoute(
+            builder: (context) => const MyApp()), (route) => false);
       } else {
         HapticFeedback.vibrate();
         ScaffoldMessenger.of(context).showSnackBar(
@@ -65,8 +71,6 @@ class LoginModel {
           ),
         );
       }
-
-
     } else {
       HapticFeedback.vibrate();
       ScaffoldMessenger.of(context).showSnackBar(

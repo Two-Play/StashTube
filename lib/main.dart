@@ -175,7 +175,8 @@ class _NavigationExampleState extends State<NavigationExample> {
             // calculate the difference between the current page and the new page
             int calc = _currentPageIndex - index;
             if (calc == 1 || calc == -1) {
-              _pageController.animateToPage(index, duration: const Duration(milliseconds: 300), curve: Curves.ease);
+              _pageController.animateToPage(index, duration: const Duration(
+                  milliseconds: 300), curve: Curves.ease);
             } else {
               _pageController.jumpToPage(index);
             }
