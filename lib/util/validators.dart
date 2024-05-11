@@ -1,23 +1,23 @@
 class Validators {
 
-  static String? emailValidator(String? value) {
+  static bool emailValidator(String? value) {
     if (value == null || value.isEmpty) {
-      return 'Please enter some text';
+      return false;
     }
     if (!RegExp(r"^[a-zA-Z0-9.a-zA-Z0-9.!#$%&'*+-/=?^_`{|}~]+@[a-zA-Z0-9]+\.[a-zA-Z]+").hasMatch(value)) {
-      return 'Please enter a valid email';
+      return false;
     }
-    return null;
+    return true;
   }
 
-  static String? passwordValidator(String? value) {
+  static bool passwordValidator(String? value) {
     if (value == null || value.isEmpty) {
-      return 'Please enter some text';
+      return false;
     }
     if (value.length < 6) {
-      return 'Password must be at least 6 characters long';
+      return false;
     }
-    return null;
+    return true;
   }
 
   static bool validateUrl(String url) {

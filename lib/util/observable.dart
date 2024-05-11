@@ -8,19 +8,20 @@ abstract class Observer {
 class ObseverEvent {}
 
 class Observable {
-  List<Function> _listeners = [];
+  List<Observer> _listeners = [];
+  List<Observer> get listeners => _listeners;
 
-  void addListener(Function listener) {
-    _listeners.add(listener);
+  void addListener(Observer observer) {
+    _listeners.add(observer);
   }
 
-  void removeListener(Function listener) {
-    _listeners.remove(listener);
+  void removeListener(Observer observer) {
+    _listeners.remove(observer);
   }
 
   void notifyListeners() {
-    _listeners.forEach((Function listener) {
-      listener();
-    });
+    for (var listener in _listeners) {
+      listener.update(ObseverEvent());
+    }
   }
 }

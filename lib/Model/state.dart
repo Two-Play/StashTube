@@ -16,26 +16,29 @@ class VideoState {
   static AutoDisposeStateProvider<MiniplayerController> get miniPlayerControllerProvider => _miniPlayerControllerProvider;
 }
 
+
+
 class GraphQLState {
   static late String _graphqlUri;
   static late ValueNotifier<GraphQLClient> _client;
+  static final GraphQLState _singleton = GraphQLState._internal();
+
+  static ValueNotifier<GraphQLClient> get client => _client;
 
   GraphQLState._internal() {
-    initClient();
+    initClientWithKeyStore();
   }
-
-  static final GraphQLState _singleton = GraphQLState._internal();
 
   factory GraphQLState() {
     return _singleton;
   }
 
-  Future<void> initClient() async {
-    _graphqlUri = (await readKey("url"))!;
-    _client = _initState();
+  static Future<void> initClientWithKeyStore() async {
+    _graphqlUri = (await Storage.readKey("url"))!;
+    _client = _initClientState();
   }
 
-  ValueNotifier<GraphQLClient> _initState() {
+  static ValueNotifier<GraphQLClient> _initClientState() {
     final HttpLink httpLink = HttpLink(
       '$_graphqlUri/graphql',
     );
@@ -50,9 +53,12 @@ class GraphQLState {
     return client;
   }
 
-  static ValueNotifier<GraphQLClient> get client => _client;
+  static ValueNotifier<GraphQLClient> setNewClientUrl(String url) {
+    _graphqlUri = url;
+    return _client = GraphQLState._initClientState();
+  }
 
-  Future<void> reconnect() async {
-    await initClient();
+  static Future<void> reconnect() async {
+    await initClientWithKeyStore();
   }
 }

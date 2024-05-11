@@ -1,9 +1,12 @@
-class LoginController {
-  final String _username = 'admin';
-  final String _password = 'admin';
+import 'package:flutter/cupertino.dart';
+import 'package:stash_app_mobile/Model/screens/login_model.dart';
 
-  Future<bool> login(String username, String password) async {
-    await Future.delayed(Duration(seconds: 1));
-    return username == _username && password == _password;
+class LoginController {
+
+  final LoginModel _loginModel = LoginModel();
+
+  void handleLogin (final String url, BuildContext context) {
+    _loginModel.handleLogin(url, context);
   }
+
 }
