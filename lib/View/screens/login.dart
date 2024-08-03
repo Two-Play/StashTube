@@ -1,12 +1,16 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:stash_app_mobile/Controler/login_controller.dart';
+import 'package:stash_app_mobile/Controler/screens/login_controller.dart';
 import 'package:stash_app_mobile/util/observable.dart';
+
+import '../../main.dart';
 
 
 LoginController _loginController = LoginController();
 
-// create login page with wellcome title and login textfiel and button. save the url in the storage and navigate to the home page
+// create login page with welcome title and login textfiel and button.
+// Save the url in the storage and navigate to the home page
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
 
@@ -14,20 +18,19 @@ class LoginPage extends StatefulWidget {
   State createState() => _LoginPageState();
 }
 
-class _LoginPageState extends State<LoginPage> implements Observer{
+class _LoginPageState extends State<LoginPage> implements Observer {
   final TextEditingController _urlController = TextEditingController();
-  // validate the url with regex
-
-
 
   @override
   void initState(){
     super.initState();
+    _loginController.addListener(this);
     _loginController.setCurrentUrlToTextField(_urlController);
   }
 
   @override
   void dispose() {
+    _loginController.removeListener(this);
     _urlController.dispose();
     super.dispose();
   }
@@ -73,7 +76,42 @@ class _LoginPageState extends State<LoginPage> implements Observer{
   }
 
   @override
-  void update(ObseverEvent event) {
+  void update(ObserverEvent event) {
     // TODO: implement update
+    switch (event){
+      // case ObserverEvent.loginSuccess:
+      //   Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (context) => const MyApp()), (route) => false);
+      //   break;
+      // case ObserverEvent.loginFailed:
+      //   ScaffoldMessenger.of(context).showSnackBar(
+      //     const SnackBar(
+      //       backgroundColor: Colors.red,
+      //       content: Text('Invalid URL'),
+      //       duration: Duration(seconds: 1),
+      //     ),
+      //   );
+      //   break;
+
+      case LoginEvents.login:
+        print("LoginEvent!!!!!!!");
+        break;
+      case LoginEvents.setTextfield:
+        print("setTextfield event");
+        break;
+      case LoginEvents.loginFailed:
+        HapticFeedback.vibrate();
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            // red snackbar with invalid url message
+            backgroundColor: Colors.red,
+            content: Text('Invalid URL'),
+          ),
+        );
+        break;
+      default:
+        print("default event");
+        break;
+
+    }
   }
 }

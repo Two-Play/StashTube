@@ -19,8 +19,13 @@ class VideoState {
 
 
 class GraphQLState {
-  static late String _graphqlUri;
-  static late ValueNotifier<GraphQLClient> _client;
+  static String _graphqlUri = '';
+  static ValueNotifier<GraphQLClient> _client = ValueNotifier(
+    GraphQLClient(
+      link: HttpLink(''),
+      cache: GraphQLCache(store: HiveStore()),
+    ),
+  );
   static final GraphQLState _singleton = GraphQLState._internal();
 
   static ValueNotifier<GraphQLClient> get client => _client;

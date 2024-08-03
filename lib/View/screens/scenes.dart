@@ -1,5 +1,3 @@
-import 'dart:ffi';
-
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -8,16 +6,17 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:graphql_flutter/graphql_flutter.dart';
+
 import 'package:stash_app_mobile/Model/state.dart';
 import 'package:stash_app_mobile/View/screens/login.dart';
 import 'package:stash_app_mobile/View/screens/performers.dart';
-
 import 'package:stash_app_mobile/View/screens/settings.dart';
 import 'package:stash_app_mobile/View/screens/studios.dart';
 import 'package:stash_app_mobile/View/widgets/video_card_widget.dart';
+import 'package:stash_app_mobile/util/navigator_shorter.dart';
 
-import '../../main.dart';
-
+import '../../Controler/screens/scenes_controller.dart';
+import '../../Model/screens/scenes_model.dart'; // Import ScenesModel
 
 class ScenesPage extends StatefulWidget {
   const ScenesPage({super.key});
@@ -30,63 +29,26 @@ class _ScenesPageState extends State<ScenesPage> with AutomaticKeepAliveClientMi
 
   bool _loaded = false;
   final _scrollController = ScrollController();
-  final String _scenesQuery = """
-    query 
-    {
-  findScenes(filter:{
-    sort:"date", 
-    direction:DESC,
-  })
-  {
-    scenes{
-      title,
-      date,
-      rating100,
-      files{
-        duration,
-        width,
-        basename
-      }
-      studio
-      {
-        name,
-        url,
-        image_path
-      }
-      paths {
-        screenshot,
-        stream,
-        preview
-        }
-      performers{
-        name,
-        image_path,
-        id
-      }
-      
-    }
+  final _scenesController = ScenesController();
+  final ScenesModel _scenesModel = ScenesModel(); // Create an instance of ScenesModel
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchScenes();
   }
 
-}
-  """;
-
-  // scroll method
-  void _scrollListener() {
-    if (_scrollController.position.pixels == _scrollController.position.maxScrollExtent) {
-    print('end of list');
-    }
+  Future<void> _fetchScenes() async {
+    await _scenesModel.fetchScenesAlt(GraphQLState.client.value);
+    setState(() {
+      _loaded = true;
+    });
   }
-
 
   @override
   Widget build(BuildContext context) {
     super.build(context);
 
-    // if (!_loaded) {
-    //   _loaded = true;
-    //   _scrollController.addListener(_scrollListener);
-    // }
-    
     return Scaffold(
       appBar: AppBar(
         title: const Text('Scenes'),
@@ -95,7 +57,7 @@ class _ScenesPageState extends State<ScenesPage> with AutomaticKeepAliveClientMi
           IconButton(
             icon: const Icon(Icons.settings),
             onPressed: () {
-              Navigator.push(context, CupertinoPageRoute(builder: (context) => const SettingsPage()));
+              NavigatorShorter.push(context, const SettingsPage());
             },
           ),
           IconButton(
@@ -107,8 +69,6 @@ class _ScenesPageState extends State<ScenesPage> with AutomaticKeepAliveClientMi
         ],
       ),
 
-
-  // get scene list and return card widgets
       body: Consumer(
         builder: (context, ref, _) {
           final selectedVideo = ref.watch(VideoState.selectedVideoProvider);
@@ -118,61 +78,29 @@ class _ScenesPageState extends State<ScenesPage> with AutomaticKeepAliveClientMi
           return ValueListenableBuilder(
               valueListenable: GraphQLState.client,
               builder: (context, value, child) => child!,
-              child: Query(
-                options: QueryOptions(
-                  document: gql(_scenesQuery),
-                ),
-                builder: (result, {fetchMore, refetch}) {
-
-                  if (result.hasException) {
-                    if (kDebugMode) {
-                      print("LINK ERROR: ${result.exception!.linkException?.originalException.toString()}");
-                      print("ERROR: ${result.exception.toString()}");
-                    }
-
-                    if (result.exception!.linkException != null) {
-                      // alert dialog and push to login page
-                      WidgetsBinding.instance.addPostFrameCallback((_) {
-                        showDialog(
-                          context: context,
-                          builder: (context) {
-                            return AlertDialog(
-                              title: const Text('Error'),
-                              content: Text(result.exception!.linkException!.originalException.toString()),
-                              actions: <Widget>[
-                                TextButton(
-                                  onPressed: () {
-                                    //Navigator.of(context).pop();
-                                    Navigator.of(context).pushAndRemoveUntil(CupertinoPageRoute(builder: (context) => const LoginPage()), (route) => false);
-                                  },
-                                  child: const Text('OK'),
-                                ),
-                              ],
-                            );
-                          },
-                        );
-                      });
-                    }
-                    return Text(result.exception.toString());
-                  }
-
-                  if (result.isLoading) {
+              child: _loaded ? FutureBuilder<List<dynamic>>(
+                future: _scenesModel.fetchScenesAlt(GraphQLState.client.value),
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
                     return const Center(
                       child: CircularProgressIndicator(),
                     );
                   }
 
-                  final sceneList = result.data?['findScenes']['scenes'];
+                  if (snapshot.hasError) {
+                    return Text(snapshot.error.toString());
+                  }
+
+                  final sceneList = snapshot.data ?? [];
 
                   if (sceneList.isEmpty) {
                     return RefreshIndicator(
                         onRefresh: () async {
-                          await refetch!();
+                          await _fetchScenes();
                           HapticFeedback.mediumImpact();
                         },
                         child: ListView(
                           children: [
-                            // center heding title text and image
                             Center(
                               child: Column(
                                 children:  [
@@ -201,16 +129,14 @@ class _ScenesPageState extends State<ScenesPage> with AutomaticKeepAliveClientMi
 
                   return RefreshIndicator(
                     onRefresh: () async {
-                      await refetch!();
+                      await _fetchScenes();
                       HapticFeedback.mediumImpact();
                     },
                     child: ListView.builder(
-                          //controller: _scrollController,
                           itemCount: sceneList.length,
                           itemBuilder: (context, index) {
 
                             double dur = (sceneList[index]['files'][0]['duration']+.0);
-                            // filter non null performers to list
                             List<Performers> performers = [];
                             for (var performer in sceneList[index]['performers']) {
                               performers.add(Performers(
@@ -229,18 +155,6 @@ class _ScenesPageState extends State<ScenesPage> with AutomaticKeepAliveClientMi
                               ));
                             }
 
-                            // fetchMore!(FetchMoreOptions(updateQuery: (existing, next) {
-                            //   // final List scenes = [
-                            //   //   ...existing?['findScenes']['scenes'],
-                            //   //   ...next?['findScenes']['scenes'],
-                            //   // ];
-                            //   // return existing
-                            //   //   ..['findScenes']['scenes'] = scenes;
-                            //   print("Fetch");
-                            //   return existing;
-                            // }));
-
-
                             return VideoCard(video:
                             Video(thumbnail: sceneList[index]['paths']['screenshot'],
                               title: sceneList[index]['title'],
@@ -254,31 +168,27 @@ class _ScenesPageState extends State<ScenesPage> with AutomaticKeepAliveClientMi
                               stream: sceneList[index]['paths']['stream'],
                               stars: 5,
                               studio: Studio(
-                                  name: "TEST",//sceneList[index]['studio']['name'],
+                                  name: "TEST",
                                   image: "http://192.168.44.5:9999/studio/3/image?t=1641002641"
-                                //url: sceneList[index]['studio']['url'],
                               ),
                               date: sceneList[index]['date']?? "date",
-                              //convert dur double seconds to duration minutes and seconds
                               duration: dur,
                               resolution: "resolution",
                             )
                             );
                           },
                         ),
-
                   );
                 },
+              ) : const Center(
+                child: CircularProgressIndicator(),
               ),
-
           );
         },
-
       ),
-
     );
   }
+
   @override
   bool get wantKeepAlive => true;
-
 }

@@ -2,10 +2,17 @@
 import '../Controler/controller.dart';
 
 abstract class Observer {
-  void update(ObseverEvent event);
+  void update(ObserverEvent event);
 }
 
-class ObseverEvent {}
+class ObserverEvent {}
+
+enum LoginEvents implements ObserverEvent {
+  login,
+  setTextfield,
+  loginFailed,
+  loginSuccess,
+}
 
 class Observable {
   List<Observer> _listeners = [];
@@ -19,9 +26,9 @@ class Observable {
     _listeners.remove(observer);
   }
 
-  void notifyListeners() {
+  void notifyListeners(ObserverEvent event) {
     for (var listener in _listeners) {
-      listener.update(ObseverEvent());
+      listener.update(event);
     }
   }
 }

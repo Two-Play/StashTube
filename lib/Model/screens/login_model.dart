@@ -1,13 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:graphql_flutter/graphql_flutter.dart';
+import 'package:stash_app_mobile/util/observable.dart';
 
 import '../../main.dart';
 import '../../util/storage.dart';
 import '../../util/validators.dart';
 import '../state.dart';
 
-class LoginModel {
+class LoginModel extends Observable {
 
   Future<bool> _isRequestStatusOk(final GraphQLClient client) async {
     const requestQuery = """
@@ -56,30 +57,13 @@ class LoginModel {
       // execute firt if response status ok
       if (await _isRequestStatusOk(GraphQLState.client.value)) {
         //TODO: reset global video state to null
-
         Storage.saveKey("url", url);
-        Navigator.pushAndRemoveUntil(context, MaterialPageRoute(
-            builder: (context) => const MyApp()), (route) => false);
+        Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (context) => const MyApp()), (route) => false);
       } else {
-        HapticFeedback.vibrate();
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            // red snackbar with invalid url message
-            backgroundColor: Colors.red,
-            content: Text('Invalid URL'),
-            duration: Duration(seconds: 1),
-          ),
-        );
+        notifyListeners(LoginEvents.loginFailed);
       }
     } else {
-      HapticFeedback.vibrate();
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          // red snackbar with invalid url message
-          backgroundColor: Colors.red,
-          content: Text('Invalid URL'),
-        ),
-      );
+      notifyListeners(LoginEvents.loginFailed);
     }
 
   }

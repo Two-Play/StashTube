@@ -6,7 +6,7 @@ class TestClass extends Observer {
   int updated = 0;
 
   @override
-  void update(ObseverEvent event) {
+  void update(ObserverEvent event) {
     updated++;
   }
 }
@@ -32,7 +32,7 @@ void main() {
 
   test('Test observable notify function', () {
     observable.addListener(observer);
-    observable.notifyListeners();
+    observable.notifyListeners(LoginEvents.login);
     expect(observer.updated, 1);
   });
 }
