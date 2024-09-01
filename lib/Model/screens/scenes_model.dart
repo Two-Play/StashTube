@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:graphql_flutter/graphql_flutter.dart';
 import 'package:stash_app_mobile/Model/graphql_manager.dart';
 import 'package:stash_app_mobile/Model/state.dart';
+import 'package:stash_app_mobile/util/ui_helper.dart';
 
 import '../../View/screens/login.dart';
 
@@ -18,9 +19,6 @@ final class ScenesResponseHandler implements GraphQLResponseHandler {
   void onError(dynamic error) {
     if (kDebugMode) {
       print(error);
-    }
-
-    if (kDebugMode) {
       print("LINK ERROR: ${error.exception!.linkException?.originalException.toString()}");
       print("ERROR: ${error.exception.toString()}");
     }
@@ -46,6 +44,11 @@ final class ScenesResponseHandler implements GraphQLResponseHandler {
             );
           },
         );
+      });
+    } else {
+      // snackbar
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        snackBarHelper(context, error.exception.toString());
       });
     }
   }

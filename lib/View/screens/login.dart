@@ -93,20 +93,7 @@ class _LoginPageState extends State<LoginPage> implements Observer {
       //   break;
 
       case LoginEvents.login:
-        print("LoginEvent!!!!!!!");
-        break;
-      case LoginEvents.setTextfield:
-        print("setTextfield event");
-        break;
-      case LoginEvents.loginFailed:
-        HapticFeedback.vibrate();
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            // red snackbar with invalid url message
-            backgroundColor: Colors.red,
-            content: Text('Invalid URL'),
-          ),
-        );
+        print("LoginEvent!");
         break;
       default:
         print("default event");

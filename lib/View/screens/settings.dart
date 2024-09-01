@@ -62,7 +62,7 @@ class _MyHomePageState extends State<SettingsPage> {
               // navigate to the login page
               Navigator.push(context, CupertinoPageRoute(builder: (context) => const LoginPage()));
               // remove the token from the storage
-              //removeKey('url');
+              Storage.removeKey('url');
             },
             child: const Text('Logout'),
           ),
