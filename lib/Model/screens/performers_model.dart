@@ -27,32 +27,54 @@ class Performers {
   });
 }
 
-final class PerformersResponseHandler implements GraphQLResponseHandler<List<Performers>, void> {
+List<Performers> _performers = <Performers>[];
+bool _isLinkException = false;
+String _errorMessage = "";
+
+final class PerformersResponseHandler implements GraphQLResponseHandler {
   @override
   List<Performers> onSuccess(QueryResult<Object?> result) {
     if (kDebugMode) {
       print(result);
     }
-    return result.data?['allPerformers']?.map<Performers>((performer) {
+    _performers = result.data?['allPerformers']?.map<Performers>((performer) {
+      // important to check for null values
       return Performers(
-        name: performer['name'],
-        image: performer['image_path'],
-        country: performer['country'],
-        id: int.parse(performer['id']),
-        birthdate: performer['birthdate'],
-        rating: performer['rating100'],
-        favorite: performer['favorite']
+        name: performer['name'] ?? '',
+        image: performer['image_path'] ?? '',
+        country: performer['country'] ?? '',
+        id: int.tryParse(performer['id'] ?? '0') ?? 0,
+        birthdate: performer['birthdate'] ?? '',
+        rating: performer['rating100'] ?? 0,
+        favorite: performer['favorite'] ?? false
       );
     }).toList() ?? <Performers>[];
+    return _performers;
   }
 
   @override
   void onError(dynamic error) {
-    print(error);
+    if (kDebugMode) {
+      //print(error);
+      print("LINK ERROR: ${error is OperationException ? error.linkException?.originalException.toString() : "N/A"}");
+      print("ERROR: ${error.toString()}");
+    }
+
+    if (error is OperationException && error.linkException != null) {
+      _isLinkException = true;
+      _errorMessage = error.linkException!.originalException.toString();
+    } else {
+      _isLinkException = false;
+      _errorMessage = error.exception.toString();
+    }
   }
 }
 
 class PerformersModel {
+  static List<Performers> get performers => _performers;
+  static bool get isLinkException => _isLinkException;
+  static String get errorMessage => _errorMessage;
+
   final String _performersQuery = """
     query 
     {
@@ -68,15 +90,13 @@ class PerformersModel {
   }
   """;
 
-  // Future<bool> fetchPerformers(GraphQLClient client, PerformersResponseHandler responseHandler) async {
-  //   return await GraphQLManager.fetchGraphQL(client, performersQuery, responseHandler);
-  // }
-  void fetchPerformers() {
-    GraphQLManager.fetchGraphQL(
+  Future<bool> fetchPerformers() async {
+    bool value = await GraphQLManager.fetchGraphQL(
       GraphQLState.client.value,
       _performersQuery,
       PerformersResponseHandler(),
     );
+    return value;
   }
 }
 
