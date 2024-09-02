@@ -6,9 +6,9 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:miniplayer/miniplayer.dart';
 import 'package:stash_app_mobile/Model/state.dart';
 import 'package:stash_app_mobile/View/screens/performer_detail_view.dart';
-import 'package:stash_app_mobile/View/screens/performers.dart';
 import 'package:stash_app_mobile/View/screens/studios.dart';
 
+import '../../Model/screens/performers_model.dart';
 import '../../main.dart';
 import '../screens/settings.dart';
 

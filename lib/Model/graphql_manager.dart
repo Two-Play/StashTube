@@ -13,7 +13,7 @@ class GraphQLManager {
   GraphQLManager._();
 
   /*
-   * Methode zum Ausführen von GraphQL-Queries
+   * Method to fetch GraphQL data
    *
    * @param client GraphQLClient
    * @param query String
@@ -26,7 +26,8 @@ class GraphQLManager {
        GraphQLResponseHandler responseHandler,
       ) async {
     final statusQueryResult =
-    QueryOptions(document: gql(query));
+    QueryOptions(document: gql(query), fetchPolicy: FetchPolicy.noCache
+    );
     try {
       final QueryResult result = await client.query(statusQueryResult);
 

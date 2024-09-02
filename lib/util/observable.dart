@@ -14,6 +14,18 @@ enum LoginEvents implements ObserverEvent {
   loginSuccess,
 }
 
+enum PerformersEvents implements ObserverEvent {
+  fetchPerformers,
+  fetchPerformersSuccess,
+  fetchPerformersFailed,
+}
+
+enum ScenesEvents implements ObserverEvent {
+  fetchScenes,
+  fetchScenesSuccess,
+  fetchScenesFailed,
+}
+
 class Observable {
   List<Observer> _listeners = [];
   List<Observer> get listeners => _listeners;

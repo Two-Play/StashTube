@@ -4,31 +4,8 @@ import 'package:graphql_flutter/graphql_flutter.dart';
 import 'package:stash_app_mobile/Model/state.dart';
 import 'package:stash_app_mobile/main.dart';
 
+import '../../Model/screens/performers_model.dart';
 import '../widgets/performer_card_widget.dart';
-
-class Performers {
-  final String name;
-  final String image;
-  final String bio;
-  final String country;
-  final String birthdate;
-  final int rating;
-  final bool favorite;
-  final int id;
-
-
-  const Performers({
-    required this.name,
-    required this.image,
-    required this.id,
-    this.bio = "",
-    this.country = "",
-    this.birthdate = "",
-    this.rating = 0,
-    this.favorite = false
-  });
-
-}
 
 class PerformersPage extends StatefulWidget {
 
@@ -40,28 +17,27 @@ class PerformersPage extends StatefulWidget {
 
 class _PerformersPageState extends State<PerformersPage>  with AutomaticKeepAliveClientMixin<PerformersPage>{
 
-  final String performersQuery = """
-    query 
-    {
-    allPerformers{
-      id,
-      name,
-      birthdate,
-      country,
-      favorite,
-      rating100,
-      image_path
-    }
-  }
-  """;
-
   @override
   Widget build(BuildContext context) {
     super.build(context);
+    const String performersQuery = '''
+      query {
+        allPerformers {
+          id
+          name
+          country
+          image_path
+          birthdate
+          rating100
+          favorite
+        }
+      }
+    ''';
     return Scaffold(
       appBar: AppBar(
-        title: Text('Performers'),
+        title: const Text('Performers'),
       ),
+
       body: ValueListenableBuilder(
         valueListenable: GraphQLState.client,
         builder: (context, value, child) => child!,

@@ -1,69 +1,53 @@
-
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:graphql_flutter/graphql_flutter.dart';
 import 'package:stash_app_mobile/Model/graphql_manager.dart';
 import 'package:stash_app_mobile/Model/state.dart';
+import 'package:stash_app_mobile/util/observable.dart';
 import 'package:stash_app_mobile/util/ui_helper.dart';
 
 import '../../View/screens/login.dart';
 
+List<dynamic> _scenes = <dynamic>[];
+bool _isLinkException = false;
+String _errorMessage = "";
+
 final class ScenesResponseHandler implements GraphQLResponseHandler {
 
-  List<dynamic> _scenes = [];
-
-  get context => null;
 
   @override
   void onError(dynamic error) {
     if (kDebugMode) {
       print(error);
-      print("LINK ERROR: ${error.exception!.linkException?.originalException.toString()}");
-      print("ERROR: ${error.exception.toString()}");
+      print("LINK ERROR: ${error.linkException?.originalException.toString()}");
+      print("ERROR: ${error.toString()}");
     }
 
-    if (error.exception!.linkException != null) {
-      // alert dialog and push to login page
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        showDialog(
-          context: context,
-          builder: (context) {
-            return AlertDialog(
-              title: const Text('Error'),
-              content: Text(error.exception!.linkException!.originalException.toString()),
-              actions: <Widget>[
-                TextButton(
-                  onPressed: () {
-                    //Navigator.of(context).pop();
-                    Navigator.of(context).pushAndRemoveUntil(CupertinoPageRoute(builder: (context) => const LoginPage()), (route) => false);
-                  },
-                  child: const Text('OK'),
-                ),
-              ],
-            );
-          },
-        );
-      });
+    if (error is OperationException && error.linkException != null) {
+     _isLinkException = true;
+     _errorMessage = error.linkException!.originalException.toString();
     } else {
-      // snackbar
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        snackBarHelper(context, error.exception.toString());
-      });
+      _isLinkException = false;
+      _errorMessage = error.exception.toString();
     }
   }
 
   @override
   Future<List<dynamic>> onSuccess(QueryResult<Object?> result) async {
     if (kDebugMode) {
-      print(result);
+      print("Scene_model: $result");
     }
-    return result.data?['findScenes']['scenes'] ?? <dynamic>[];
+    _scenes = result.data?['findScenes']['scenes'] ?? <dynamic>[];
+    return _scenes;
   }
 }
 
-
 class ScenesModel {
+  static bool get isLinkException => _isLinkException;
+  static String get errorMessage => _errorMessage;
+  static List<dynamic> get scenes => _scenes;
+
   final String _scenesQuery = """
     query 
     {
@@ -97,34 +81,33 @@ class ScenesModel {
         image_path,
         id
       }
-      
     }
   }
-
 }
   """;
 
-  Future<List<dynamic>> fetchScenesAlt(GraphQLClient client) async {
-    final QueryOptions options = QueryOptions(
-      document: gql(_scenesQuery),
-    );
+  // Future<List<dynamic>> fetchScenesAlt(GraphQLClient client) async {
+  //   final QueryOptions options = QueryOptions(
+  //     document: gql(_scenesQuery),
+  //   );
+  //
+  //   final QueryResult result = await client.query(options);
+  //
+  //   if (result.hasException) {
+  //     print(result.exception.toString());
+  //     return <dynamic>[];
+  //   }
+  //
+  //   return result.data?['findScenes']['scenes'] ?? <dynamic>[];
+  // }
 
-    final QueryResult result = await client.query(options);
-
-    if (result.hasException) {
-      print(result.exception.toString());
-      return <dynamic>[];
-    }
-
-    return result.data?['findScenes']['scenes'] ?? <dynamic>[];
-  }
-
-  void fetchScenes() {
-    GraphQLManager.fetchGraphQL(
+  Future<bool> fetchScenes() async {
+    bool value = await GraphQLManager.fetchGraphQL(
       GraphQLState.client.value,
       _scenesQuery,
       ScenesResponseHandler(),
     );
+    return value;
   }
 
   void scrollListener(ScrollController scrollController) {

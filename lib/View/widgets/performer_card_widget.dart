@@ -3,8 +3,8 @@ import 'package:country_flags/country_flags.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:stash_app_mobile/View/screens/performer_detail_view.dart';
-import 'package:stash_app_mobile/View/screens/scenes.dart';
 
+import '../../Model/screens/performers_model.dart';
 import '../screens/performers.dart';
 
 class PerformerCard extends StatelessWidget {

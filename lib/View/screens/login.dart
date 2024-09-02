@@ -4,9 +4,6 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:stash_app_mobile/Controler/screens/login_controller.dart';
 import 'package:stash_app_mobile/util/observable.dart';
 
-import '../../main.dart';
-
-
 LoginController _loginController = LoginController();
 
 // create login page with welcome title and login textfiel and button.

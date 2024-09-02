@@ -5,18 +5,20 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:flutter_svg/svg.dart';
-import 'package:graphql_flutter/graphql_flutter.dart';
 
 import 'package:stash_app_mobile/Model/state.dart';
-import 'package:stash_app_mobile/View/screens/login.dart';
-import 'package:stash_app_mobile/View/screens/performers.dart';
+
 import 'package:stash_app_mobile/View/screens/settings.dart';
 import 'package:stash_app_mobile/View/screens/studios.dart';
 import 'package:stash_app_mobile/View/widgets/video_card_widget.dart';
 import 'package:stash_app_mobile/util/navigator_shorter.dart';
 
 import '../../Controler/screens/scenes_controller.dart';
-import '../../Model/screens/scenes_model.dart'; // Import ScenesModel
+import '../../Model/screens/performers_model.dart';
+import '../../Model/screens/scenes_model.dart';
+import '../../util/observable.dart';
+import '../../util/ui_helper.dart';
+import 'login.dart'; // Import ScenesModel
 
 class ScenesPage extends StatefulWidget {
   const ScenesPage({super.key});
@@ -25,24 +27,24 @@ class ScenesPage extends StatefulWidget {
   State<ScenesPage> createState() => _ScenesPageState();
 }
 
-class _ScenesPageState extends State<ScenesPage> with AutomaticKeepAliveClientMixin<ScenesPage>{
+class _ScenesPageState extends State<ScenesPage> with
+    AutomaticKeepAliveClientMixin<ScenesPage> implements Observer {
 
   bool _loaded = false;
   final _scrollController = ScrollController();
   final _scenesController = ScenesController();
-  final ScenesModel _scenesModel = ScenesModel(); // Create an instance of ScenesModel
 
   @override
   void initState() {
     super.initState();
-    _fetchScenes();
+    _scenesController.addListener(this);
+    _scenesController.fetchScenes();
   }
 
-  Future<void> _fetchScenes() async {
-    await _scenesModel.fetchScenesAlt(GraphQLState.client.value);
-    setState(() {
-      _loaded = true;
-    });
+  @override
+  void dispose() {
+    _scenesController.removeListener(this);
+    super.dispose();
   }
 
   @override
@@ -76,113 +78,94 @@ class _ScenesPageState extends State<ScenesPage> with AutomaticKeepAliveClientMi
             print("SELECTED VIDEO: ${selectedVideo?.title}");
           }
           return ValueListenableBuilder(
-              valueListenable: GraphQLState.client,
-              builder: (context, value, child) => child!,
-              child: _loaded ? FutureBuilder<List<dynamic>>(
-                future: _scenesModel.fetchScenesAlt(GraphQLState.client.value),
-                builder: (context, snapshot) {
-                  if (snapshot.connectionState == ConnectionState.waiting) {
-                    return const Center(
-                      child: CircularProgressIndicator(),
-                    );
-                  }
+            valueListenable: GraphQLState.client,
+            builder: (context, value, child) => child!,
+            child: _loaded
+                ? _buildSceneList()
+                : const Center(child: CircularProgressIndicator()),
+          );
+          },),
+    );
+  }
 
-                  if (snapshot.hasError) {
-                    return Text(snapshot.error.toString());
-                  }
+  Widget _buildSceneList() {
+    final sceneList = ScenesModel.scenes;
 
-                  final sceneList = snapshot.data ?? [];
-
-                  if (sceneList.isEmpty) {
-                    return RefreshIndicator(
-                        onRefresh: () async {
-                          await _fetchScenes();
-                          HapticFeedback.mediumImpact();
-                        },
-                        child: ListView(
-                          children: [
-                            Center(
-                              child: Column(
-                                children:  [
-                                  Padding(
-                                    padding: const EdgeInsets.symmetric(vertical: 88.0),
-                                    child: Text('No scenes found',
-                                    style: Theme.of(context)
-                                        .textTheme
-                                        .headlineMedium!
-                                        .copyWith(),
-                                    )
-                                  ),
-                                  Padding(
-                                    padding: const EdgeInsets.symmetric(horizontal: 58.0),
-                                    child: SvgPicture.asset(
-                                      height: 300.0,
-                                      'assets/images/images.svg',
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ],
-                        ));
-                  }
-
-                  return RefreshIndicator(
-                    onRefresh: () async {
-                      await _fetchScenes();
-                      HapticFeedback.mediumImpact();
-                    },
-                    child: ListView.builder(
-                          itemCount: sceneList.length,
-                          itemBuilder: (context, index) {
-
-                            double dur = (sceneList[index]['files'][0]['duration']+.0);
-                            List<Performers> performers = [];
-                            for (var performer in sceneList[index]['performers']) {
-                              performers.add(Performers(
-                                name: performer['name'],
-                                image: performer['image_path'],
-                                bio: "bio",
-                                id: int.parse(performer['id']),
-                              ));
-                            }
-                            if (performers.isEmpty) {
-                              performers.add(const Performers(
-                                name: "Unknown",
-                                image: "",
-                                bio: "",
-                                id: -1,
-                              ));
-                            }
-
-                            return VideoCard(video:
-                            Video(thumbnail: sceneList[index]['paths']['screenshot'],
-                              title: sceneList[index]['title'],
-                              performers: [
-                                Performers(name: performers[0].name,
-                                    image: performers[0].image,
-                                    bio: performers[0].bio,
-                                    id: performers[0].id,
-                                ),
-                              ],
-                              stream: sceneList[index]['paths']['stream'],
-                              stars: 5,
-                              studio: Studio(
-                                  name: "TEST",
-                                  image: "http://192.168.44.5:9999/studio/3/image?t=1641002641"
-                              ),
-                              date: sceneList[index]['date']?? "date",
-                              duration: dur,
-                              resolution: "resolution",
-                            )
-                            );
-                          },
-                        ),
-                  );
-                },
-              ) : const Center(
-                child: CircularProgressIndicator(),
+    if (sceneList.isEmpty) {
+      return RefreshIndicator(
+        onRefresh: () async {
+          _scenesController.fetchScenes();
+          HapticFeedback.mediumImpact();
+        },
+        child: ListView(
+          children: [
+            Center(
+              child: Column(
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 88.0),
+                    child: Text(
+                      'No scenes found',
+                      style: Theme.of(context).textTheme.headlineMedium,
+                    ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 58.0),
+                    child: SvgPicture.asset(
+                      height: 300.0,
+                      'assets/images/images.svg',
+                    ),
+                  ),
+                ],
               ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    return RefreshIndicator(
+      onRefresh: () async {
+        _scenesController.fetchScenes();
+        HapticFeedback.mediumImpact();
+      },
+      child: ListView.builder(
+        itemCount: sceneList.length,
+        itemBuilder: (context, index) {
+          double dur = sceneList[index]['files'][0]['duration'] + .0;
+          List<Performers> performers = sceneList[index]['performers']
+              .map<Performers>((performer) => Performers(
+            name: performer['name'],
+            image: performer['image_path'],
+            bio: "bio",
+            id: int.parse(performer['id']),
+          ))
+              .toList();
+
+          if (performers.isEmpty) {
+            performers.add(const Performers(
+              name: "Unknown",
+              image: "",
+              bio: "",
+              id: -1,
+            ));
+          }
+
+          return VideoCard(
+            video: Video(
+              thumbnail: sceneList[index]['paths']['screenshot'],
+              title: sceneList[index]['title'],
+              performers: [performers[0]],
+              stream: sceneList[index]['paths']['stream'],
+              stars: 5,
+              studio: Studio(
+                name: "TEST",
+                image: "http://192.168.44.5:9999/studio/3/image?t=1641002641",
+              ),
+              date: sceneList[index]['date'] ?? "date",
+              duration: dur,
+              resolution: "resolution",
+            ),
           );
         },
       ),
@@ -191,4 +174,61 @@ class _ScenesPageState extends State<ScenesPage> with AutomaticKeepAliveClientMi
 
   @override
   bool get wantKeepAlive => true;
+
+  @override
+  void update(ObserverEvent event) {
+    print("UPDATE SCENES EVENT: $event");
+    switch (event){
+      case ScenesEvents.fetchScenes:
+        print("UPDATE Scenes: $ScenesModel.scenes");
+        setState(() {
+          _loaded = true;
+        });
+        break;
+
+      case ScenesEvents.fetchScenesSuccess:
+        print("UPDATE Scenes: $ScenesModel.scenes");
+        setState(() {
+          _loaded = true;
+        });
+        break;
+
+      case ScenesEvents.fetchScenesFailed:
+        if (ScenesModel.isLinkException) {
+          // alert dialog and push to login page
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            showDialog(
+              context: context,
+              builder: (context) {
+                return AlertDialog(
+                  title: const Text('Error'),
+                  content: Text(ScenesModel.errorMessage),
+                  actions: <Widget>[
+                    TextButton(
+                      onPressed: () {
+                        //Navigator.of(context).pop();
+                        Navigator.of(context).pushAndRemoveUntil(
+                            CupertinoPageRoute(builder: (context) => const LoginPage()),
+                                (route) => false);
+                      },
+                      child: const Text('OK'),
+                    ),
+                  ],
+                );
+              },
+            );
+          });
+        } else {
+          // snackbar
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            snackBarHelper(context, ScenesModel.errorMessage);
+          });
+        }
+        break;
+
+      default:
+        print("default event");
+        break;
+    }
+  }
 }
