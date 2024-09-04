@@ -39,6 +39,7 @@ class _ScenesPageState extends State<ScenesPage> with
     super.initState();
     _scenesController.addListener(this);
     _scenesController.fetchScenes();
+    _scrollController.addListener(() =>  ScenesController().scrollListener(_scrollController));
   }
 
   @override
@@ -130,9 +131,9 @@ class _ScenesPageState extends State<ScenesPage> with
         HapticFeedback.mediumImpact();
       },
       child: ListView.builder(
+        controller: _scrollController,
         itemCount: sceneList.length,
         itemBuilder: (context, index) {
-          double dur = sceneList[index]['files'][0]['duration'] + .0;
           List<Performers> performers = sceneList[index]['performers']
               .map<Performers>((performer) => Performers(
             name: performer['name'],
@@ -153,17 +154,17 @@ class _ScenesPageState extends State<ScenesPage> with
 
           return VideoCard(
             video: Video(
-              thumbnail: sceneList[index]['paths']['screenshot'],
-              title: sceneList[index]['title'],
+              thumbnail: ScenesModel.getThumbnail(index),
+              title: ScenesModel.getTitle(index),
               performers: [performers[0]],
-              stream: sceneList[index]['paths']['stream'],
+              stream: ScenesModel.getStream(index),
               stars: 5,
               studio: Studio(
                 name: "TEST",
                 image: "http://192.168.44.5:9999/studio/3/image?t=1641002641",
               ),
               date: sceneList[index]['date'] ?? "date",
-              duration: dur,
+              duration: ScenesModel.getDuration(index),
               resolution: "resolution",
             ),
           );

@@ -1,11 +1,18 @@
 
-import '../Controler/controller.dart';
+import '../Controler/main_controller.dart';
 
 abstract class Observer {
   void update(ObserverEvent event);
 }
 
 class ObserverEvent {}
+
+enum NetworkEvents implements ObserverEvent {
+  networkConnected,
+  networkDisconnected,
+  fetchFailed,
+  fetchSuccess,
+}
 
 enum LoginEvents implements ObserverEvent {
   login,
@@ -23,11 +30,28 @@ enum PerformersEvents implements ObserverEvent {
 enum ScenesEvents implements ObserverEvent {
   fetchScenes,
   fetchScenesSuccess,
-  fetchScenesFailed,
+  fetchScenesFailed, scrollListenerAdded,
+}
+
+enum SettingsEvents implements ObserverEvent {
+  changeTheme,
+}
+
+enum MainEvents implements ObserverEvent {
+  initFinished,
+  loginChecked,
+  loginSuccess,
+  loginFailed,
+  jumpToPage,
+  swipeToPage,
+  swiped,
+  swipeAnimation,
+  jumpAnimation,
+  pageChanged
 }
 
 class Observable {
-  List<Observer> _listeners = [];
+  final List<Observer> _listeners = [];
   List<Observer> get listeners => _listeners;
 
   void addListener(Observer observer) {

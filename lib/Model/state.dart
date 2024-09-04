@@ -12,6 +12,10 @@ class VideoState {
         (ref) => MiniplayerController(),
   );
 
+  static  void clearSelectedVideo(ProviderContainer container) {
+    container.read(_selectedVideoProvider.notifier).state = null;
+  }
+
   static StateProvider<Video?> get selectedVideoProvider => _selectedVideoProvider;
   static AutoDisposeStateProvider<MiniplayerController> get miniPlayerControllerProvider => _miniPlayerControllerProvider;
 }

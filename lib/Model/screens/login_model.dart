@@ -1,6 +1,8 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
+import 'package:flutter/widgets.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:stash_app_mobile/Model/state.dart';
 import 'package:graphql_flutter/graphql_flutter.dart';
 import 'package:stash_app_mobile/util/observable.dart';
 import 'package:http/http.dart' as http;
@@ -11,8 +13,12 @@ import '../../util/storage.dart';
 import '../../util/validators.dart';
 import '../state.dart';
 
-class LoginModel extends Observable {
+String _errorMessage = "";
 
+final class LoginModel {
+
+  static String get errorMessage => _errorMessage;
+  // TODO: correct url: http://stashapp:8080 works but http://stashapp:8080/ does not work
   Future<bool> _isRequestStatusOk(final GraphQLClient client) async {
     const requestQuery = """
           {
@@ -60,32 +66,30 @@ class LoginModel extends Observable {
     controller.text = value ?? "";
   }
 
-  void handleLogin(final String url, final BuildContext context) async {
+  Future<bool> loginSuccess(final String url, final WidgetRef ref) async {
     if (!Validators.validateUrl(url)) {
-      if (!context.mounted) return;
-      snackBarHelper(context, "Invalid URL");
-      return;
+      _errorMessage = "Invalid URL";
+      return false;
     }
 
     if (!await _canEstablishConnection(url)){
-      if (!context.mounted) return;
-      snackBarHelper(context, "Can't establish connection to the server");
-      return;
+      _errorMessage = "Can't establish connection to the server";
+      return false;
     }
 
     GraphQLState.setNewClientUrl(url);
     final isStatusOk = await _isRequestStatusOk(GraphQLState.client.value);
-    if (!context.mounted) return;
     // send request to server
     // execute first, if response status ok
     if (isStatusOk) {
-      //TODO: reset global video state to null
+      // reset global video state to null
+      ref.read(VideoState.selectedVideoProvider.notifier).state = null;
       Storage.saveKey("url", url);
-      Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (context) => const MyApp()), (route) => false);
+      return true;
     } else {
-      snackBarHelper(context, "Server response status is not OK");
+      _errorMessage = "Server response status is not OK";
+      return false;
     }
-
 
   }
 

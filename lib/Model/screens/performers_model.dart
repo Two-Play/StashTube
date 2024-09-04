@@ -70,7 +70,7 @@ final class PerformersResponseHandler implements GraphQLResponseHandler {
   }
 }
 
-class PerformersModel {
+final class PerformersModel {
   static List<Performers> get performers => _performers;
   static bool get isLinkException => _isLinkException;
   static String get errorMessage => _errorMessage;

@@ -3,18 +3,14 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:graphql_flutter/graphql_flutter.dart';
 import 'package:stash_app_mobile/Model/graphql_manager.dart';
-import 'package:stash_app_mobile/Model/state.dart';
-import 'package:stash_app_mobile/util/observable.dart';
-import 'package:stash_app_mobile/util/ui_helper.dart';
 
-import '../../View/screens/login.dart';
+import '../state.dart';
 
 List<dynamic> _scenes = <dynamic>[];
 bool _isLinkException = false;
 String _errorMessage = "";
 
 final class ScenesResponseHandler implements GraphQLResponseHandler {
-
 
   @override
   void onError(dynamic error) {
@@ -43,10 +39,29 @@ final class ScenesResponseHandler implements GraphQLResponseHandler {
   }
 }
 
-class ScenesModel {
+final class ScenesModel {
   static bool get isLinkException => _isLinkException;
   static String get errorMessage => _errorMessage;
   static List<dynamic> get scenes => _scenes;
+  
+  static String getThumbnail(int index) => _scenes[index]['paths']['screenshot'];
+  static String getStream(int index) => _scenes[index]['paths']['stream'];
+  static String getPreview(int index) => _scenes[index]['paths']['preview'];
+  static String getTitle(int index) => _scenes[index]['title'] == "" ? _scenes[index]['files'][0]['basename'] : _scenes[index]['title'];
+  static String getDuration(int index) {
+    double duration = _scenes[index]['files'][0]['duration'];
+    if (duration == 0) {
+      return "0:00";
+    }
+    String hours = (duration ~/ 3600).floor().toString();
+    String minutes = ((duration % 3600) ~/ 60).floor().toString();
+    String seconds = (duration % 60).floor().toString().padLeft(2, '0');
+    if (hours == "0") {
+      return "$minutes:$seconds";
+    }
+    minutes = minutes.padLeft(2, '0');
+    return "$hours:$minutes:$seconds";
+  }
 
   final String _scenesQuery = """
     query 
@@ -86,21 +101,6 @@ class ScenesModel {
 }
   """;
 
-  // Future<List<dynamic>> fetchScenesAlt(GraphQLClient client) async {
-  //   final QueryOptions options = QueryOptions(
-  //     document: gql(_scenesQuery),
-  //   );
-  //
-  //   final QueryResult result = await client.query(options);
-  //
-  //   if (result.hasException) {
-  //     print(result.exception.toString());
-  //     return <dynamic>[];
-  //   }
-  //
-  //   return result.data?['findScenes']['scenes'] ?? <dynamic>[];
-  // }
-
   Future<bool> fetchScenes() async {
     bool value = await GraphQLManager.fetchGraphQL(
       GraphQLState.client.value,
@@ -111,7 +111,7 @@ class ScenesModel {
   }
 
   void scrollListener(ScrollController scrollController) {
-    if (scrollController.position.pixels == scrollController.position.maxScrollExtent) {
+    if (scrollController.position.pixels >= scrollController.position.maxScrollExtent) {
       if (kDebugMode) {
         print('end of list');
       }

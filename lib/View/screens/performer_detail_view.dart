@@ -1,96 +1,112 @@
 import 'package:cached_network_image/cached_network_image.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:graphql_flutter/graphql_flutter.dart';
+import 'package:stash_app_mobile/Model/screens/performer_detail_view_model.dart';
+import 'package:stash_app_mobile/util/observable.dart';
+import 'package:stash_app_mobile/util/ui_helper.dart';
+import '../../Controler/screens/performer_detail_view_controller.dart';
 
-class PerformerDetailsPage extends StatelessWidget {
-  const PerformerDetailsPage({super.key, required this.performerId});
-
+class PerformerDetailsPage extends StatefulWidget {
   final int performerId;
 
+  const PerformerDetailsPage({super.key, required this.performerId});
+
+  @override
+  _PerformerDetailsPageState createState() => _PerformerDetailsPageState();
+}
+
+class _PerformerDetailsPageState extends State<PerformerDetailsPage> implements Observer {
+  dynamic performer;
+  late PerformerDetailViewController controller;
+
+  @override
+  void initState() {
+    super.initState();
+    controller = PerformerDetailViewController(widget.performerId);
+    controller.addListener(this);
+  }
 
   @override
   Widget build(BuildContext context) {
-
-    final perforemerQuery = """
-    query 
-    {
-      findPerformer(id: $performerId){
-        id,
-        name,
-        birthdate,
-        country,
-        favorite,
-        rating100,
-        image_path
-      }
-    }
-  """;
-
-    return Query(
-      options: QueryOptions(
-        document: gql(perforemerQuery),
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Performer Details'),
       ),
-      builder: (QueryResult result, {refetch, fetchMore}) {
-        if (result.hasException) {
-          return Text(result.exception.toString());
-        }
-
-        if (result.isLoading) {
-          return const Center(
-            child: CircularProgressIndicator(),
-          );
-        }
-
-        final performer = result.data!['findPerformer'];
-
-        return Scaffold(
-          appBar: AppBar(
-            title: Text(performer['name']),
-          ),
-          body: CustomScrollView(
-            slivers: [
-              SliverToBoxAdapter(
-                child: CachedNetworkImage(
-                  height: 550,
-                  //color: Colors.blue,
-                  imageUrl: performer['image_path'],
-                  placeholder: (context, url) => const Center(
-                    child: CircularProgressIndicator(),
+      body: FutureBuilder(
+        future: controller.fetchPerformer(),
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator());
+          } else if (snapshot.hasError) {
+            return Center(child: Text('Error: ${snapshot.error}'));
+          } else {
+            return CustomScrollView(
+              slivers: [
+                SliverToBoxAdapter(
+                  child: CachedNetworkImage(
+                    height: 550,
+                    imageUrl: performer?['image_path'] ?? '',
+                    placeholder: (context, url) => const Center(
+                      child: CircularProgressIndicator(),
+                    ),
+                    fit: BoxFit.cover,
                   ),
-                  fit: BoxFit.cover,
-
                 ),
-              ),
-              SliverList(
-                delegate: SliverChildListDelegate(
-                  [
-                    ListTile(
-                      title: Text('Performer ID: ${performer['id']}'),
-                    ),
-                    ListTile(
-                      title: Text('Performer Name: ${performer['name']}'),
-                    ),
-                    ListTile(
-                      title: Text('Performer Country: ${performer['country']}'),
-                    ),
-                    ListTile(
-                      title: Text('Performer Birthdate: ${performer['birthdate']}'),
-                    ),
-                    ListTile(
-                      title: Text('Performer Rating: ${performer['rating100']}'),
-                    ),
-                    ListTile(
-                      title: Text('Performer Favorite: ${performer['favorite']}'),
-                    ),
-                  ],
+                SliverList(
+                  delegate: SliverChildListDelegate(
+                    [
+                      ListTile(
+                        title: Text('Performer ID: ${performer?['id'] ?? ''}'),
+                      ),
+                      ListTile(
+                        title: Text('Performer Name: ${performer?['name'] ?? ''}'),
+                      ),
+                      ListTile(
+                        title: Text('Performer Country: ${performer?['country'] ?? ''}'),
+                      ),
+                      ListTile(
+                        title: Text('Performer Birthdate: ${performer?['birthdate'] ?? ''}'),
+                      ),
+                      ListTile(
+                        title: Text('Performer Rating: ${performer?['rating100'] ?? ''}'),
+                      ),
+                      ListTile(
+                        title: Text('Performer Favorite: ${performer?['favorite'] ?? ''}'),
+                      ),
+                    ],
+                  ),
                 ),
-              ),
-            ],
-          ),
-        );
-      },
-
+              ],
+            );
+          }
+        },
+      ),
     );
+  }
+
+  @override
+  void update(ObserverEvent event) {
+    switch (event) {
+      case NetworkEvents.fetchSuccess:
+        performer = PerformerDetailViewModel.performer;
+        break;
+      case NetworkEvents.fetchFailed:
+        alertDialogHelper(context, "Error", PerformerDetailViewModel.errorMessage,
+          [
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context);
+              },
+              child: const Text('OK'),
+            ),
+          ],
+        );
+        break;
+    }
+  }
+
+  @override
+  void dispose() {
+    controller.removeListener(this);
+    super.dispose();
   }
 }

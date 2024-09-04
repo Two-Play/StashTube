@@ -5,11 +5,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:media_kit_video/media_kit_video_controls/src/controls/methods/video_state.dart';
 import 'package:miniplayer/miniplayer.dart';
 import 'package:stash_app_mobile/Model/state.dart';
-import 'package:stash_app_mobile/View/screens/performers.dart';
-import 'package:stash_app_mobile/View/screens/studios.dart';
-
-import '../../main.dart';
-import '../widgets/video_card_widget.dart';
 
 import 'package:media_kit/media_kit.dart';// as media_kit;
 import 'package:media_kit_video/media_kit_video.dart' as media_kit_video;

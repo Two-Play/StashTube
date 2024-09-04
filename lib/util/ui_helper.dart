@@ -14,7 +14,7 @@ void snackBarHelper(BuildContext context, String message, { bool hapticFeedback=
   );
 }
 
-Future<void> alertDialogHelper(BuildContext context, String title, String content, {Function? onOk, Function? onCancel}) async {
+Future<void> alertDialogHelperA(BuildContext context, String title, String content, {Function? onOk, Function? onCancel}) async {
   return showDialog<void>(
     context: context,
     barrierDismissible: false,
@@ -42,6 +42,21 @@ Future<void> alertDialogHelper(BuildContext context, String title, String conten
             child: const Text('OK'),
           ),
         ],
+      );
+    },
+  );
+}
+
+// dialog alert with n buttons
+void alertDialogHelper(BuildContext context, String title, String content, List<Widget> buttons, {bool barrierDismissible = false}) async {
+  return showDialog<void>(
+    context: context,
+    barrierDismissible: barrierDismissible,
+    builder: (BuildContext context) {
+      return AlertDialog(
+        title: Text(title),
+        content: Text(content),
+        actions: buttons,
       );
     },
   );

@@ -5,7 +5,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:graphql_flutter/graphql_flutter.dart';
 import 'package:media_kit/media_kit.dart';
 import 'package:miniplayer/miniplayer.dart';
+import 'package:stash_app_mobile/Model/main_model.dart';
 import 'package:stash_app_mobile/Model/state.dart';
+import 'package:stash_app_mobile/util/observable.dart';
 import 'package:stash_app_mobile/util/storage.dart';
 import 'package:stash_app_mobile/View/screens/home.dart';
 import 'package:stash_app_mobile/View/screens/login.dart';
@@ -18,9 +20,9 @@ import 'package:stash_app_mobile/View/screens/video_screen.dart';
 import 'package:stash_app_mobile/View/widgets/video_card_widget.dart';
 import 'package:theme_manager/theme_manager.dart';
 
+import 'Controler/main_controller.dart';
 
 void main() async {
-
   WidgetsFlutterBinding.ensureInitialized();
   MediaKit.ensureInitialized();
   await initHiveForFlutter();
@@ -45,7 +47,6 @@ class MyApp extends StatelessWidget {
       defaultBrightnessPreference: BrightnessPreference.system,
       data: (Brightness brightness) => ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.indigo, brightness: brightness),
-
         brightness: brightness,
       ),
       themeChangeListener: (ThemeState state) {
@@ -66,7 +67,6 @@ class MyApp extends StatelessWidget {
                 theme: state.themeData,
                 home: const NavigationExample(),
               ),
-
           ),
         );
       },
@@ -95,39 +95,29 @@ class NavigationExample extends StatefulWidget {
 
   @override
   State<NavigationExample> createState() => _NavigationExampleState();
-
 }
 
-class _NavigationExampleState extends State<NavigationExample> {
-  int _currentPageIndex = 0;
+class _NavigationExampleState extends State<NavigationExample> implements Observer {
+  final MainController _controller = MainController();
+  
   late PageController _pageController;
 
-  Future<void> _checkLogin() async {
-    // if key url emtpy, go to login use readkey function
-    final prefs = await SharedPreferences.getInstance();
-    if (prefs.getString('url') == null) {
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (context) => const LoginPage()),
-      );
-    }
-  }
+  late WidgetRef _ref;
 
 // init state
   @override
   void initState() {
     super.initState();
-    _pageController = PageController(initialPage: _currentPageIndex, keepPage: true);
-    _checkLogin();
-
-// SharedPreferences.getInstance().then((prefs) {
-//       if (prefs.getString('url') == null) {
-//         Navigator.push(
-//           context,
-//           MaterialPageRoute(builder: (context) => const LoginPage()),
-//         );
-//       }
-//    });
+    _controller.addListener(this);
+    _pageController = PageController(initialPage: MainModel.currentPageIndex, keepPage: true);
+    _controller.checkLogin();
+  }
+  
+  @override
+  void dispose() {
+    _controller.removeListener(this);
+    _pageController.dispose();
+    super.dispose();
   }
 
   final List<Widget> _pages = <Widget>[
@@ -137,6 +127,14 @@ class _NavigationExampleState extends State<NavigationExample> {
     const SettingsPage(),
   ];
 
+  NavigationDestination barItemBuilder(String label, Icon icon, Icon selectedIcon) {
+    return NavigationDestination(
+      selectedIcon: selectedIcon,
+      icon: icon,
+      label: label,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     //final ThemeData theme = Theme.of(context);
@@ -144,60 +142,25 @@ class _NavigationExampleState extends State<NavigationExample> {
     const bool blockPanelSlide = false;
     bool isMiniplayerOpened = false;
 
-    const NavigationDestination home = NavigationDestination(
-      selectedIcon: Icon(Icons.home),
-      icon: Icon(Icons.home_outlined),
-      label: 'Home',
-    );
-
-    const NavigationDestination scenes = NavigationDestination(
-      selectedIcon: Icon(Icons.play_arrow),
-      icon: Icon(Icons.play_arrow_outlined),
-      label: 'Scenes',
-    );
-
-    const NavigationDestination performers = NavigationDestination(
-      selectedIcon: Icon(Icons.person),
-      icon: Icon(Icons.person_outline),
-      label: 'Performers',
-    );
-
-    const NavigationDestination settings = NavigationDestination(
-      selectedIcon: Icon(Icons.settings),
-      icon: Icon(Icons.settings_outlined),
-      label: 'Settings',
-    );
-
     return Scaffold(
       bottomNavigationBar: isMiniplayerOpened ? null : NavigationBar(
         onDestinationSelected: (int index) {
           setState(() {
-            // calculate the difference between the current page and the new page
-            int calc = _currentPageIndex - index;
-            if (calc == 1 || calc == -1) {
-              _pageController.animateToPage(index, duration: const Duration(
-                  milliseconds: 300), curve: Curves.ease);
-            } else {
-              _pageController.jumpToPage(index);
-            }
-            _currentPageIndex = index;
-            //HapticFeedback.mediumImpact();
-
-            // if key url empty, push over to login page, no back button
-            _checkLogin();
+            _controller.barTapManagement(index);
           });
         },
         //indicatorColor: Colors.amber,
-        selectedIndex: _currentPageIndex,
-        destinations: const <Widget>[
-          home,
-          scenes,
-          performers,
-          settings,
+        selectedIndex: MainModel.currentPageIndex,
+        destinations: <Widget>[
+          barItemBuilder("Home", const Icon(Icons.home_outlined), const Icon(Icons.home)),
+          barItemBuilder("Scenes", const Icon(Icons.play_arrow_outlined), const Icon(Icons.play_arrow)),
+          barItemBuilder("Performers", const Icon(Icons.person_outline), const Icon(Icons.person)),
+          barItemBuilder("Settings", const Icon(Icons.settings_outlined), const Icon(Icons.settings)),
         ],
       ),
       body: Consumer(builder: (BuildContext context, WidgetRef ref, Widget? child) {
 
+        _ref = ref;
         final selectedVideo = ref.watch(VideoState.selectedVideoProvider);
         final miniPlayerController = ref.watch(VideoState.miniPlayerControllerProvider);
 
@@ -205,11 +168,7 @@ class _NavigationExampleState extends State<NavigationExample> {
           children: <Widget>[PageView(
             onPageChanged: (int index) {
               setState(() {
-                _currentPageIndex = index;
-                ref.read(VideoState.miniPlayerControllerProvider.notifier).state.animateToHeight(
-                    state: PanelState.MIN
-                );
-                HapticFeedback.lightImpact();
+                _controller.swipeManagement(index);
               });
             },
             physics: blockPanelSlide ? const NeverScrollableScrollPhysics() : null,
@@ -230,7 +189,7 @@ class _NavigationExampleState extends State<NavigationExample> {
                       // not working
                       isMiniplayerOpened = true;
 
-                        return VideoScreen();
+                        return const VideoScreen();
                     }
 
                     return Container(
@@ -315,8 +274,6 @@ class _NavigationExampleState extends State<NavigationExample> {
                             value: 0.4,
                             valueColor: AlwaysStoppedAnimation<Color>(Colors.red),
                           ),
-
-
                         ]
                       ),
                     );
@@ -326,8 +283,49 @@ class _NavigationExampleState extends State<NavigationExample> {
           ],
         );
       },
-
       )
     );
+  }
+
+  @override
+  void update(ObserverEvent event) {
+    print("Event: ${event}");
+    switch (event) {
+      case MainEvents.initFinished:
+        break;
+        
+      case MainEvents.jumpAnimation:
+        _pageController.jumpToPage(MainModel.index);
+        print("Jumping to page: ${MainModel.index}");
+      break;
+
+      case MainEvents.swipeAnimation:
+        _pageController.animateToPage(MainModel.index, duration: const Duration(milliseconds: 250), curve: Curves.easeInOut);
+        print("Swiping to page: ${MainModel.index}");
+
+      break;
+
+      case MainEvents.swiped:
+
+        break;
+
+      case MainEvents.pageChanged:
+        _ref.read(VideoState.miniPlayerControllerProvider.notifier).state.animateToHeight(
+            state: PanelState.MIN);
+      break;
+
+      case MainEvents.loginChecked:
+        break;
+
+      case MainEvents.loginSuccess:
+        break;
+
+      case MainEvents.loginFailed:
+        Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => const LoginPage()));
+        break;
+
+      default:
+        break;
+    }
   }
 }

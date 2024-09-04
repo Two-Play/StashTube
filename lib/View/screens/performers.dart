@@ -2,10 +2,8 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_svg/svg.dart';
-import 'package:graphql_flutter/graphql_flutter.dart';
 import 'package:stash_app_mobile/Controler/screens/performers_controller.dart';
 import 'package:stash_app_mobile/Model/state.dart';
-import 'package:stash_app_mobile/main.dart';
 import 'package:stash_app_mobile/util/observable.dart';
 
 import '../../Model/screens/performers_model.dart';
@@ -128,25 +126,25 @@ class _PerformersPageState extends State<PerformersPage>
         if (PerformersModel.isLinkException) {
           // alert dialog and push to login page
           WidgetsBinding.instance.addPostFrameCallback((_) {
-            showDialog(
-              context: context,
-              builder: (context) {
-                return AlertDialog(
-                  title: const Text('Error'),
-                  content: Text(PerformersModel.errorMessage),
-                  actions: <Widget>[
-                    TextButton(
-                      onPressed: () {
-                        //Navigator.of(context).pop();
-                        Navigator.of(context).pushAndRemoveUntil(
-                            CupertinoPageRoute(builder: (context) => const LoginPage()),
-                                (route) => false);
-                      },
-                      child: const Text('OK'),
-                    ),
-                  ],
-                );
-              },
+            alertDialogHelper(
+              context,
+              'Error',
+              PerformersModel.errorMessage,
+              [
+                TextButton(
+                  onPressed: () {
+                    //Navigator.of(context).pop();
+                    Navigator.of(context).pushAndRemoveUntil(
+                    CupertinoPageRoute(builder: (context) => const LoginPage()),
+                    (route) => false);
+                  },
+                  child: const Text('OK'),
+                ),
+                TextButton(onPressed: () {
+                  Navigator.of(context).pop();
+                },
+                  child: const Text('Cancel'),),
+              ],
             );
           });
         } else {

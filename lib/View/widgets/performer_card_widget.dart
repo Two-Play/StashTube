@@ -8,14 +8,6 @@ import '../../Model/screens/performers_model.dart';
 import '../screens/performers.dart';
 
 class PerformerCard extends StatelessWidget {
-
-  // final String name;
-  // final String image;
-  // final String country;
-  // final String birthdate;
-  // final int rating;
-  // final bool favorite;
-
   final Performers performer;
 
   const PerformerCard({super.key, required this.performer});
