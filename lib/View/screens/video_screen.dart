@@ -1,5 +1,8 @@
+import 'dart:io';
+
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:media_kit_video/media_kit_video_controls/src/controls/methods/video_state.dart';
@@ -61,8 +64,37 @@ class _VideoScreenState extends ConsumerState<VideoScreen> {
                     child: Column(
                       children: [
                         Stack(
-                          children: [media_kit_video.Video(controller: controller,
-                            height: 220,),
+                          children: [media_kit_video.Video(
+                            controller: controller,
+                            height: 220,
+                            onEnterFullscreen: () async {
+                              try {
+                                if (Platform.isAndroid || Platform.isIOS) {
+                                  await SystemChrome.setEnabledSystemUIMode(
+                                    SystemUiMode.immersiveSticky,
+                                    overlays: [],
+                                  );
+                                  final stream = ref.read(VideoState.selectedVideoProvider);
+                                  if (stream!.width > stream.height ) { // Vertical video
+                                    await SystemChrome.setPreferredOrientations(
+                                      [
+                                        DeviceOrientation.landscapeLeft,
+                                        DeviceOrientation.landscapeRight,
+                                      ],
+                                    );
+                                  }
+                                } else if (Platform.isMacOS || Platform.isWindows || Platform.isLinux) {
+                                  await const MethodChannel('com.alexmercerind/media_kit_video')
+                                      .invokeMethod(
+                                    'Utils.EnterNativeFullscreen',
+                                  );
+                                }
+                              } catch (exception, stacktrace) {
+                                debugPrint(exception.toString());
+                                debugPrint(stacktrace.toString());
+                              }
+                            },
+                          ),
 
                         IconButton(
                           iconSize: 30.0,

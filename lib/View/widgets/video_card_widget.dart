@@ -21,6 +21,8 @@ class Video {
   final String date;
   final String duration;
   final String resolution;
+  final int width;
+  final int height;
   final String stream;
 
   const Video({
@@ -32,6 +34,8 @@ class Video {
     required this.date,
     required this.duration,
     required this.resolution,
+    required this.width,
+    required this.height,
     required this.stream
   });
 

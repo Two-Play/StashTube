@@ -166,6 +166,8 @@ class _ScenesPageState extends State<ScenesPage> with
               date: sceneList[index]['date'] ?? "date",
               duration: ScenesModel.getDuration(index),
               resolution: "resolution",
+              width: ScenesModel.getWidth(index),
+              height: ScenesModel.getHeigth(index)
             ),
           );
         },

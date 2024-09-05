@@ -48,6 +48,8 @@ final class ScenesModel {
   static String getStream(int index) => _scenes[index]['paths']['stream'];
   static String getPreview(int index) => _scenes[index]['paths']['preview'];
   static String getTitle(int index) => _scenes[index]['title'] == "" ? _scenes[index]['files'][0]['basename'] : _scenes[index]['title'];
+  static int getHeigth(int index) => _scenes[index]['files'][0]['height'];
+  static int getWidth(int index) => _scenes[index]['files'][0]['width'];
   static String getDuration(int index) {
     double duration = _scenes[index]['files'][0]['duration'];
     if (duration == 0) {
@@ -78,6 +80,7 @@ final class ScenesModel {
       files{
         duration,
         width,
+        height,
         basename
       }
       studio
