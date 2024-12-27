@@ -187,8 +187,7 @@ class _NavigationExampleState extends State<NavigationExample> implements Observ
                     }
                     if (height >= playerMinHeight + 10.0) {
                       // not working
-                      isMiniplayerOpened = true;
-
+                        isMiniplayerOpened = true;
                         return const VideoScreen();
                     }
 
