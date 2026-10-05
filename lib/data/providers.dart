@@ -11,6 +11,7 @@ import 'models/scene_details.dart';
 import 'models/scrub_thumbnails.dart';
 import 'models/stats.dart';
 import 'models/studio.dart';
+import 'models/tag.dart';
 import 'repositories/stash_repository.dart';
 
 class SceneListNotifier extends PagedNotifier<Scene, SceneQuery> {
@@ -111,4 +112,19 @@ final galleryListProvider =
 
 final galleryProvider = FutureProvider.autoDispose.family<Gallery, String>(
   (ref, id) => ref.watch(stashRepositoryProvider).findGallery(id),
+);
+
+class TagListNotifier extends PagedNotifier<Tag, TagQuery> {
+  TagListNotifier(super.arg);
+
+  @override
+  Future<PageResult<Tag>> fetchPage(TagQuery arg, int page, int perPage) =>
+      ref.read(stashRepositoryProvider).findTags(arg, page: page, perPage: perPage);
+}
+
+final tagListProvider =
+    AsyncNotifierProvider.autoDispose.family<TagListNotifier, PagedState<Tag>, TagQuery>(TagListNotifier.new);
+
+final tagProvider = FutureProvider.autoDispose.family<Tag, String>(
+  (ref, id) => ref.watch(stashRepositoryProvider).findTag(id),
 );

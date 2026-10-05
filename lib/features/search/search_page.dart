@@ -7,6 +7,8 @@ import '../../data/models/list_queries.dart';
 import '../../data/providers.dart';
 import '../../widgets/performer_tile.dart';
 import '../../widgets/scene_feed.dart';
+import '../shell/navigation.dart';
+import '../tags/tags_page.dart';
 
 /// Live search across scenes, with matching performers shown on top.
 class SearchPage extends ConsumerStatefulWidget {
@@ -65,7 +67,7 @@ class _SearchPageState extends ConsumerState<SearchPage> {
         ),
       ),
       body: _term.isEmpty
-          ? const _SearchHint()
+          ? const _Discover()
           : SceneFeedView(
               key: ValueKey(_term),
               layout: SceneFeedLayout.list,
@@ -113,21 +115,56 @@ class _PerformerResults extends ConsumerWidget {
   }
 }
 
-class _SearchHint extends StatelessWidget {
-  const _SearchHint();
+/// Shown before typing: popular tags to explore (8.2).
+class _Discover extends ConsumerWidget {
+  const _Discover();
+
+  static const _shown = 12;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
-    return Center(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(Icons.search, size: 64, color: theme.colorScheme.onSurfaceVariant),
-          const SizedBox(height: 12),
-          Text('Search scenes and performers', style: theme.textTheme.titleMedium),
-        ],
-      ),
+    final tags = ref.watch(tagListProvider(const TagQuery())).value?.items ?? const [];
+
+    return CustomScrollView(
+      slivers: [
+        if (tags.isNotEmpty) ...[
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(16, 12, 4, 4),
+              child: Row(
+                children: [
+                  Expanded(child: Text('Popular tags', style: theme.textTheme.titleMedium)),
+                  TextButton(onPressed: () => openTags(ref), child: const Text('See all')),
+                ],
+              ),
+            ),
+          ),
+          SliverPadding(
+            padding: const EdgeInsets.symmetric(horizontal: 12),
+            sliver: SliverGrid(
+              gridDelegate: tagGridDelegate,
+              delegate: SliverChildBuilderDelegate(
+                (_, i) => TagTile(tag: tags[i]),
+                childCount: tags.length.clamp(0, _shown),
+              ),
+            ),
+          ),
+        ] else
+          SliverFillRemaining(
+            hasScrollBody: false,
+            child: Center(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.search, size: 64, color: theme.colorScheme.onSurfaceVariant),
+                  const SizedBox(height: 12),
+                  Text('Search scenes and performers', style: theme.textTheme.titleMedium),
+                ],
+              ),
+            ),
+          ),
+      ],
     );
   }
 }

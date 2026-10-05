@@ -5,6 +5,8 @@ import '../performers/performer_page.dart';
 import '../player/player_providers.dart';
 import '../search/search_page.dart';
 import '../studios/studio_page.dart';
+import '../tags/tag_page.dart';
+import '../tags/tags_page.dart';
 
 enum AppTab {
   home('Home', Icons.home_outlined, Icons.home),
@@ -48,3 +50,7 @@ void openPerformer(WidgetRef ref, String id) => openPage(ref, PerformerPage(perf
 void openStudio(WidgetRef ref, String id) => openPage(ref, StudioPage(studioId: id));
 
 void openSearch(WidgetRef ref) => openPage(ref, const SearchPage());
+
+void openTag(WidgetRef ref, String id) => openPage(ref, TagPage(tagId: id));
+
+void openTags(WidgetRef ref) => openPage(ref, const TagsPage());

@@ -1,5 +1,7 @@
 import 'dart:math';
 
+import 'scene_filter.dart';
+
 /// Sort orders offered for scene lists, mapped to Stash `FindFilterType.sort`.
 enum SceneSort {
   recentlyAdded('Recently added', 'created_at'),
@@ -71,6 +73,7 @@ class SceneQuery {
     this.inProgressOnly = false,
     this.favoritePerformersOnly = false,
     this.includeSubStudios = false,
+    this.filter = SceneFilter.none,
     int? seed,
   }) : seed = seed ?? (sort == SceneSort.random ? newRandomSeed() : 0);
 
@@ -96,6 +99,9 @@ class SceneQuery {
   /// With [studioId]: also scenes of its sub-studios (at any depth).
   final bool includeSubStudios;
 
+  /// Tags, rating, duration, resolution and saved filters.
+  final SceneFilter filter;
+
   /// Seed for [SceneSort.random] so that pages are stable while scrolling.
   /// Always 0 for other sorts, so equal queries map to the same provider.
   final int seed;
@@ -106,7 +112,8 @@ class SceneQuery {
   String get direction => sort == SceneSort.title ? 'ASC' : 'DESC';
 
   Map<String, dynamic>? toSceneFilter() {
-    final filter = <String, dynamic>{
+    final criteria = <String, dynamic>{
+      ...filter.toCriteria(),
       if (performerId != null) 'performers': {'value': [performerId], 'modifier': 'INCLUDES'},
       if (studioId != null)
         'studios': {
@@ -117,10 +124,10 @@ class SceneQuery {
       if (inProgressOnly) 'resume_time': {'value': 0, 'modifier': 'GREATER_THAN'},
       if (favoritePerformersOnly) 'performer_favorite': true,
     };
-    return filter.isEmpty ? null : filter;
+    return criteria.isEmpty ? null : criteria;
   }
 
-  SceneQuery copyWith({SceneSort? sort}) => SceneQuery(
+  SceneQuery copyWith({SceneSort? sort, SceneFilter? filter}) => SceneQuery(
         sort: sort ?? this.sort,
         search: search,
         performerId: performerId,
@@ -129,6 +136,7 @@ class SceneQuery {
         inProgressOnly: inProgressOnly,
         favoritePerformersOnly: favoritePerformersOnly,
         includeSubStudios: includeSubStudios,
+        filter: filter ?? this.filter,
         // Picking a sort again (e.g. "Shuffle") starts a fresh shuffle.
         seed: sort == null ? seed : null,
       );
@@ -144,6 +152,7 @@ class SceneQuery {
       other.inProgressOnly == inProgressOnly &&
       other.favoritePerformersOnly == favoritePerformersOnly &&
       other.includeSubStudios == includeSubStudios &&
+      other.filter == filter &&
       other.seed == seed;
 
   @override
@@ -156,6 +165,7 @@ class SceneQuery {
         inProgressOnly,
         favoritePerformersOnly,
         includeSubStudios,
+        filter,
         seed,
       );
 }
@@ -180,6 +190,32 @@ class PerformerQuery {
 
   @override
   int get hashCode => Object.hash(sort, search, seed);
+}
+
+enum TagSort {
+  mostScenes('Most scenes', 'scenes_count'),
+  name('A–Z', 'name'),
+  recentlyAdded('Recently added', 'created_at');
+
+  const TagSort(this.label, this.field);
+
+  final String label;
+  final String field;
+}
+
+class TagQuery {
+  const TagQuery({this.sort = TagSort.mostScenes, this.search});
+
+  final TagSort sort;
+  final String? search;
+
+  String get direction => sort == TagSort.name ? 'ASC' : 'DESC';
+
+  @override
+  bool operator ==(Object other) => other is TagQuery && other.sort == sort && other.search == search;
+
+  @override
+  int get hashCode => Object.hash(sort, search);
 }
 
 class StudioQuery {

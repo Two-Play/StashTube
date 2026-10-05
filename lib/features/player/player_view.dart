@@ -328,8 +328,27 @@ class _SceneInfoState extends ConsumerState<_SceneInfo> {
               },
             ),
           ),
+        if (scene.tags.isNotEmpty)
+          SizedBox(
+            height: 44,
+            child: ListView.separated(
+              scrollDirection: Axis.horizontal,
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              itemCount: scene.tags.length,
+              separatorBuilder: (_, __) => const SizedBox(width: 6),
+              itemBuilder: (_, i) {
+                final tag = scene.tags[i];
+                return ActionChip(
+                  label: Text('#${tag.name}'),
+                  labelStyle: TextStyle(color: theme.colorScheme.primary),
+                  visualDensity: VisualDensity.compact,
+                  onPressed: () => openTag(ref, tag.id),
+                );
+              },
+            ),
+          ),
         if (details != null && details.markers.isNotEmpty) ChapterList(details: details),
-        if (scene.details != null || scene.tags.isNotEmpty)
+        if (scene.details != null)
           Padding(
             padding: const EdgeInsets.fromLTRB(12, 8, 12, 0),
             child: Material(
@@ -343,20 +362,12 @@ class _SceneInfoState extends ConsumerState<_SceneInfo> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      if (scene.tags.isNotEmpty)
-                        Text(
-                          scene.tags.map((t) => '#${t.name.replaceAll(' ', '')}').join(' '),
-                          maxLines: _expanded ? null : 1,
-                          overflow: _expanded ? null : TextOverflow.ellipsis,
-                          style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.primary),
-                        ),
-                      if (scene.details != null)
-                        Text(
-                          scene.details!,
-                          maxLines: _expanded ? null : 2,
-                          overflow: _expanded ? null : TextOverflow.ellipsis,
-                          style: theme.textTheme.bodyMedium,
-                        ),
+                      Text(
+                        scene.details!,
+                        maxLines: _expanded ? null : 2,
+                        overflow: _expanded ? null : TextOverflow.ellipsis,
+                        style: theme.textTheme.bodyMedium,
+                      ),
                       Text(_expanded ? 'Show less' : '...more', style: theme.textTheme.labelMedium),
                     ],
                   ),

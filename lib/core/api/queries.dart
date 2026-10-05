@@ -133,6 +133,21 @@ query FindGallery($id: ID!) {
 }
 ''' '$_galleryFields';
 
+  static const findTags = r'''
+query FindTags($filter: FindFilterType, $tag_filter: TagFilterType) {
+  findTags(filter: $filter, tag_filter: $tag_filter) {
+    count
+    tags { id name image_path scene_count }
+  }
+}
+''';
+
+  static const findTag = r'''
+query FindTag($id: ID!) {
+  findTag(id: $id) { id name image_path description scene_count }
+}
+''';
+
   /// Library totals; supported by all Stash versions this app targets.
   static const stats = r'''
 query Stats {

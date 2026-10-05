@@ -16,6 +16,7 @@ import '../models/scene_details.dart';
 import '../models/scrub_thumbnails.dart';
 import '../models/stats.dart';
 import '../models/studio.dart';
+import '../models/tag.dart';
 
 class StashApiException implements Exception {
   const StashApiException(this.message, {this.isNetworkError = false});
@@ -205,6 +206,38 @@ class StashRepository implements PlaybackActivityApi {
     final json = readObject(data, 'findGallery');
     if (json == null) throw const StashApiException('Gallery not found.');
     return Gallery.fromJson(json);
+  }
+
+  /// Tags; without a search only tags that have scenes.
+  Future<PageResult<Tag>> findTags(
+    TagQuery query, {
+    int page = 1,
+    int perPage = defaultPageSize,
+  }) async {
+    final data = await _query(StashQueries.findTags, {
+      'filter': _findFilter(
+        search: query.search,
+        page: page,
+        perPage: perPage,
+        sort: query.sort.field,
+        direction: query.direction,
+      ),
+      'tag_filter': (query.search == null || query.search!.isEmpty)
+          ? {'scene_count': {'value': 0, 'modifier': 'GREATER_THAN'}}
+          : null,
+    });
+    final result = readObject(data, 'findTags') ?? const {};
+    return PageResult(
+      items: readList(result, 'tags').map(Tag.fromJson).toList(),
+      totalCount: readInt(result, 'count'),
+    );
+  }
+
+  Future<Tag> findTag(String id) async {
+    final data = await _query(StashQueries.findTag, {'id': id});
+    final json = readObject(data, 'findTag');
+    if (json == null) throw const StashApiException('Tag not found.');
+    return Tag.fromJson(json);
   }
 
   Future<LibraryStats> libraryStats() async {

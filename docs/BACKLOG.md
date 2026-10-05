@@ -99,8 +99,8 @@ Eine wartbare Basis, damit Features unabhängig voneinander wachsen können.
 
 | # | User Story | Akzeptanzkriterien | Prio | Status |
 |---|---|---|---|---|
-| 8.1 | Als Nutzer möchte ich auf einen Tag tippen und alle Szenen mit diesem Tag sehen. | Tag-Seite mit paginierten Szenen. | Next | ⬜ (Tags werden im Player angezeigt) |
-| 8.2 | Als Nutzer möchte ich eine „Entdecken“-Seite mit beliebten Tags. | Raster aus `findTags`, sortiert nach Anzahl der Szenen. | Later | ⬜ |
+| 8.1 | Als Nutzer möchte ich auf einen Tag tippen und alle Szenen mit diesem Tag sehen. | Tags im Player sind antippbare Chips; Tag-Seite mit Kopfbereich (Bild, Szenenzahl, Beschreibung) und paginierten, sortierbaren Szenen. | Next | ✅ |
+| 8.2 | Als Nutzer möchte ich eine „Entdecken“-Seite mit beliebten Tags. | Leere Suche zeigt „Popular tags“ (meistgenutzt zuerst); „See all“ öffnet ein endloses Tag-Raster mit Sortierung (Szenen, A–Z, neu). Nur Tags mit Szenen. | Later | ✅ |
 
 ## Epic 9 – Bibliothek
 
