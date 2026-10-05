@@ -60,4 +60,6 @@ lib/
 
 **Cast (Chromecast).** `features/cast/`. `CastService` wraps `flutter_chrome_cast` (Default Media Receiver). It is an interface so tests can use a fake, and on desktop/tests it falls back to `UnsupportedCastService`. `NowPlayingNotifier` listens to `isCastingProvider`. On connect it pauses locally and loads the scene on the TV at the current position. While casting, `play()` prepares the scene locally (paused) and casts it. On disconnect it seeks locally to the last TV position. Cast devices can't send headers, so `castMediaFor` adds the API key as `?apikey=` and prefers MP4/WebM originals, then HLS. While casting, `StashVideoControls` shows `CastingControls`.
 
+**Filters.** `SceneFilter` (`data/models/scene_filter.dart`) holds tags, minimum rating, duration, resolution and an optional saved filter. It is part of `SceneQuery` and maps to Stash's `SceneFilterType`. `SceneFeedView(filterable:, showSavedFilters:)` adds the filter sheet button and the saved-filter chips. Saved filters store Stash's web-UI criterion format; `convertSavedSceneFilter` translates it and reports criteria it can't handle.
+
 **Images and auth.** Always load server images through `StashImage` or `ChannelAvatar`, which add the `ApiKey` header. Stash serves SVG placeholders for missing images, which fall back to an icon or the name's initial.

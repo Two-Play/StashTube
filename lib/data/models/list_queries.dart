@@ -127,9 +127,9 @@ class SceneQuery {
     return criteria.isEmpty ? null : criteria;
   }
 
-  SceneQuery copyWith({SceneSort? sort, SceneFilter? filter}) => SceneQuery(
+  SceneQuery copyWith({SceneSort? sort, SceneFilter? filter, String? search, bool clearSearch = false}) => SceneQuery(
         sort: sort ?? this.sort,
-        search: search,
+        search: clearSearch ? null : (search ?? this.search),
         performerId: performerId,
         studioId: studioId,
         excludeSceneId: excludeSceneId,

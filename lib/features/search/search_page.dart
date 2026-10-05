@@ -9,6 +9,7 @@ import '../../widgets/performer_tile.dart';
 import '../../widgets/scene_feed.dart';
 import '../shell/navigation.dart';
 import '../tags/tags_page.dart';
+import 'search_history.dart';
 
 /// Live search across scenes, with matching performers shown on top.
 class SearchPage extends ConsumerStatefulWidget {
@@ -21,20 +22,45 @@ class SearchPage extends ConsumerStatefulWidget {
 class _SearchPageState extends ConsumerState<SearchPage> {
   final _controller = TextEditingController();
   Timer? _debounce;
+  Timer? _record;
   String _term = '';
 
   @override
   void dispose() {
     _debounce?.cancel();
+    _record?.cancel();
     _controller.dispose();
     super.dispose();
   }
 
   void _onChanged(String value) {
     _debounce?.cancel();
-    _debounce = Timer(const Duration(milliseconds: 400), () {
-      if (mounted) setState(() => _term = value.trim());
-    });
+    _debounce = Timer(const Duration(milliseconds: 400), () => _search(value));
+  }
+
+  /// Shows results for [value]. A term goes into the history once its results
+  /// were on screen for a moment (or right away when submitted), so half-typed
+  /// words don't clutter it.
+  void _search(String value, {bool submitted = false}) {
+    if (!mounted) return;
+    final term = value.trim();
+    setState(() => _term = term);
+    _record?.cancel();
+    if (term.isEmpty) return;
+    if (submitted) {
+      ref.read(searchHistoryProvider.notifier).add(term);
+    } else {
+      _record = Timer(const Duration(seconds: 2), () {
+        if (mounted && _term == term) ref.read(searchHistoryProvider.notifier).add(term);
+      });
+    }
+  }
+
+  void _pick(String term) {
+    _controller.text = term;
+    _controller.selection = TextSelection.collapsed(offset: term.length);
+    _debounce?.cancel();
+    _search(term, submitted: true);
   }
 
   @override
@@ -49,7 +75,7 @@ class _SearchPageState extends ConsumerState<SearchPage> {
           onChanged: _onChanged,
           onSubmitted: (v) {
             _debounce?.cancel();
-            setState(() => _term = v.trim());
+            _search(v, submitted: true);
           },
           decoration: InputDecoration(
             hintText: 'Search Stash',
@@ -60,14 +86,14 @@ class _SearchPageState extends ConsumerState<SearchPage> {
                     icon: const Icon(Icons.close),
                     onPressed: () {
                       _controller.clear();
-                      setState(() => _term = '');
+                      _search('');
                     },
                   ),
           ),
         ),
       ),
       body: _term.isEmpty
-          ? const _Discover()
+          ? _Discover(onPick: _pick)
           : SceneFeedView(
               key: ValueKey(_term),
               layout: SceneFeedLayout.list,
@@ -115,9 +141,11 @@ class _PerformerResults extends ConsumerWidget {
   }
 }
 
-/// Shown before typing: popular tags to explore (8.2).
+/// Shown before typing: recent searches (5.3) and popular tags (8.2).
 class _Discover extends ConsumerWidget {
-  const _Discover();
+  const _Discover({required this.onPick});
+
+  final ValueChanged<String> onPick;
 
   static const _shown = 12;
 
@@ -125,9 +153,40 @@ class _Discover extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final tags = ref.watch(tagListProvider(const TagQuery())).value?.items ?? const [];
+    final history = ref.watch(searchHistoryProvider);
 
     return CustomScrollView(
       slivers: [
+        if (history.isNotEmpty) ...[
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(16, 8, 4, 0),
+              child: Row(
+                children: [
+                  Expanded(child: Text('Recent searches', style: theme.textTheme.titleMedium)),
+                  TextButton(
+                    onPressed: () => ref.read(searchHistoryProvider.notifier).clear(),
+                    child: const Text('Clear'),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          SliverList.builder(
+            itemCount: history.length.clamp(0, 8),
+            itemBuilder: (_, i) => ListTile(
+              dense: true,
+              leading: const Icon(Icons.history),
+              title: Text(history[i]),
+              onTap: () => onPick(history[i]),
+              trailing: IconButton(
+                tooltip: 'Remove',
+                icon: const Icon(Icons.close, size: 18),
+                onPressed: () => ref.read(searchHistoryProvider.notifier).remove(history[i]),
+              ),
+            ),
+          ),
+        ],
         if (tags.isNotEmpty) ...[
           SliverToBoxAdapter(
             child: Padding(
@@ -150,7 +209,7 @@ class _Discover extends ConsumerWidget {
               ),
             ),
           ),
-        ] else
+        ] else if (history.isEmpty)
           SliverFillRemaining(
             hasScrollBody: false,
             child: Center(

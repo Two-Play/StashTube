@@ -73,9 +73,9 @@ Eine wartbare Basis, damit Features unabhängig voneinander wachsen können.
 |---|---|---|---|---|
 | 5.1 | Als Nutzer möchte ich über die Lupe in der App-Bar nach Szenen suchen. | Live-Suche mit Debounce (400 ms) und endlos scrollbaren Ergebnissen. | MVP | ✅ |
 | 5.2 | Als Nutzer möchte ich in den Suchergebnissen auch passende Performer sehen. | Horizontale Performer-Reihe über den Szenen. | MVP | ✅ |
-| 5.3 | Als Nutzer möchte ich meine letzten Suchanfragen sehen. | Lokaler Verlauf, löschbar. | Next | ⬜ |
-| 5.4 | Als Nutzer möchte ich nach Tags, Bewertung, Dauer und Auflösung filtern. | Filter-Sheet, das auf `SceneFilterType` abgebildet wird. | Later | ⬜ |
-| 5.5 | Als Nutzer möchte ich gespeicherte Stash-Filter (Saved Filters) nutzen. | `findSavedFilters` als Chips im Feed. | Later | ⬜ |
+| 5.3 | Als Nutzer möchte ich meine letzten Suchanfragen sehen. | Leere Suche zeigt „Recent searches“ (max. 20 gespeichert, ohne Duplikate); Eintrag antippen sucht erneut, einzeln oder komplett löschbar. Gespeichert wird beim Absenden oder nach 2 s Ergebnisanzeige. | Next | ✅ |
+| 5.4 | Als Nutzer möchte ich nach Tags, Bewertung, Dauer und Auflösung filtern. | Filter-Button (mit Zähler) vor den Sortier-Chips auf der Startseite und im Library-Raster; Sheet mit Tags (alle müssen passen, Suche), Mindestbewertung, Dauer, Mindestqualität; abgebildet auf `SceneFilterType`. | Later | ✅ |
+| 5.5 | Als Nutzer möchte ich gespeicherte Stash-Filter (Saved Filters) nutzen. | Chip-Reihe auf der Startseite aus `findSavedFilters`; übernimmt Kriterien, Suche und Sortierung; erneutes Tippen schaltet ab. Das Web-UI-Kriterienformat wird bestmöglich konvertiert, nicht unterstützte Kriterien werden per Hinweis genannt. Benötigt Stash v0.25+. | Later | ✅ |
 
 ## Epic 6 – Performer („Kanäle“)
 

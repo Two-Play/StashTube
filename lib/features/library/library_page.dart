@@ -43,6 +43,7 @@ class _LibraryPageState extends ConsumerState<LibraryPage> {
                 initialQuery: _scenes,
                 layout: SceneFeedLayout.grid,
                 showCount: true,
+                filterable: true,
               ),
             ),
             const ImagesTab(),

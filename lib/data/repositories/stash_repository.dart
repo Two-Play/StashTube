@@ -12,6 +12,7 @@ import '../models/list_queries.dart';
 import '../models/page_result.dart';
 import '../models/performer.dart';
 import '../models/scene.dart';
+import '../models/saved_filter.dart';
 import '../models/scene_details.dart';
 import '../models/scrub_thumbnails.dart';
 import '../models/stats.dart';
@@ -238,6 +239,20 @@ class StashRepository implements PlaybackActivityApi {
     final json = readObject(data, 'findTag');
     if (json == null) throw const StashApiException('Tag not found.');
     return Tag.fromJson(json);
+  }
+
+  /// Scene filters saved in Stash's web UI; empty on servers that don't
+  /// support them in this form.
+  Future<List<SavedFilter>> savedSceneFilters() async {
+    try {
+      final data = await _query(StashQueries.savedSceneFilters);
+      final list = data['findSavedFilters'];
+      if (list is! List) return const [];
+      return [for (final f in list.whereType<Map>()) SavedFilter.fromJson(Map<String, dynamic>.from(f))];
+    } on StashApiException catch (e) {
+      if (e.isNetworkError) rethrow;
+      return const [];
+    }
   }
 
   Future<LibraryStats> libraryStats() async {

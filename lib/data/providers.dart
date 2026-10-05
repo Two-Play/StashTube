@@ -6,6 +6,7 @@ import 'models/image_item.dart';
 import 'models/list_queries.dart';
 import 'models/page_result.dart';
 import 'models/performer.dart';
+import 'models/saved_filter.dart';
 import 'models/scene.dart';
 import 'models/scene_details.dart';
 import 'models/scrub_thumbnails.dart';
@@ -127,4 +128,8 @@ final tagListProvider =
 
 final tagProvider = FutureProvider.autoDispose.family<Tag, String>(
   (ref, id) => ref.watch(stashRepositoryProvider).findTag(id),
+);
+
+final savedSceneFiltersProvider = FutureProvider.autoDispose<List<SavedFilter>>(
+  (ref) => ref.watch(stashRepositoryProvider).savedSceneFilters(),
 );

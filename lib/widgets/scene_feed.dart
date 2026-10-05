@@ -4,10 +4,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../data/models/list_queries.dart';
 import '../data/models/scene.dart';
 import '../core/utils/format.dart';
+import '../data/models/saved_filter.dart';
 import '../data/providers.dart';
 import 'chip_bar.dart';
 import 'paged_sliver.dart';
 import 'scene_card.dart';
+import 'scene_filter_sheet.dart';
 
 enum SceneFeedLayout {
   /// Full-width YouTube cards ([SceneCard]).
@@ -32,6 +34,8 @@ class SceneFeedView extends ConsumerStatefulWidget {
     this.layout = SceneFeedLayout.cards,
     this.showCount = false,
     this.refreshable = true,
+    this.filterable = false,
+    this.showSavedFilters = false,
     this.physics,
     this.emptyMessage = 'No scenes found',
     this.onRefresh,
@@ -50,6 +54,12 @@ class SceneFeedView extends ConsumerStatefulWidget {
   /// (e.g. minimizing the player).
   final bool refreshable;
 
+  /// Show a filter button (tags, rating, duration, quality) before the sort chips.
+  final bool filterable;
+
+  /// Show the user's saved Stash scene filters as a chip row.
+  final bool showSavedFilters;
+
   /// Scroll physics; defaults to always-scrollable platform physics.
   final ScrollPhysics? physics;
   final String emptyMessage;
@@ -64,6 +74,42 @@ class SceneFeedView extends ConsumerStatefulWidget {
 
 class _SceneFeedViewState extends ConsumerState<SceneFeedView> {
   late SceneQuery _query = widget.initialQuery;
+  String? _savedFilterId;
+
+  Future<void> _openFilters() async {
+    final next = await showSceneFilterSheet(context, _query.filter);
+    if (next != null && mounted) setState(() => _query = _query.copyWith(filter: next));
+  }
+
+  /// Applies a saved filter's criteria, search and sort; tapping the active
+  /// one again turns it off.
+  void _toggleSavedFilter(SavedFilter saved) {
+    if (_savedFilterId == saved.id) {
+      setState(() {
+        _savedFilterId = null;
+        _query = _query.copyWith(filter: _query.filter.copyWith(clearSavedFilter: true), clearSearch: true);
+      });
+      return;
+    }
+    final sortField = saved.sort ?? '';
+    final sort = sortField.startsWith('random')
+        ? SceneSort.random
+        : SceneSort.values.where((s) => s.field == sortField).firstOrNull;
+    setState(() {
+      _savedFilterId = saved.id;
+      _query = _query.copyWith(
+        sort: sort,
+        filter: _query.filter.copyWith(savedFilter: saved.sceneFilter),
+        search: saved.search,
+        clearSearch: saved.search == null,
+      );
+    });
+    if (saved.unsupportedCriteria.isNotEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text('"${saved.name}": ignored unsupported criteria (${saved.unsupportedCriteria.join(', ')})'),
+      ));
+    }
+  }
 
   @override
   void didUpdateWidget(SceneFeedView oldWidget) {
@@ -84,14 +130,37 @@ class _SceneFeedViewState extends ConsumerState<SceneFeedView> {
           physics: widget.physics ?? const AlwaysScrollableScrollPhysics(),
           slivers: [
             ...widget.headerSlivers,
-            if (widget.sorts.length > 1)
+            if (widget.sorts.length > 1 || widget.filterable)
               SliverToBoxAdapter(
-                child: ChipBar<SceneSort>(
-                  values: widget.sorts,
-                  selected: _query.sort,
-                  labelOf: (s) => s.label,
-                  onSelected: (s) => setState(() => _query = _query.copyWith(sort: s)),
+                child: Row(
+                  children: [
+                    if (widget.filterable)
+                      Padding(
+                        padding: const EdgeInsets.only(left: 4),
+                        child: IconButton(
+                          tooltip: 'Filter',
+                          onPressed: _openFilters,
+                          icon: Badge(
+                            isLabelVisible: _query.filter.activeCount > 0,
+                            label: Text('${_query.filter.activeCount}'),
+                            child: const Icon(Icons.tune),
+                          ),
+                        ),
+                      ),
+                    Expanded(
+                      child: ChipBar<SceneSort>(
+                        values: widget.sorts,
+                        selected: _query.sort,
+                        labelOf: (s) => s.label,
+                        onSelected: (s) => setState(() => _query = _query.copyWith(sort: s)),
+                      ),
+                    ),
+                  ],
                 ),
+              ),
+            if (widget.showSavedFilters)
+              SliverToBoxAdapter(
+                child: _SavedFilterChips(activeId: _savedFilterId, onSelected: _toggleSavedFilter),
               ),
             if (widget.showCount && value.value != null)
               SliverToBoxAdapter(
@@ -136,6 +205,38 @@ class _SceneFeedViewState extends ConsumerState<SceneFeedView> {
         return refreshFuture(ref, provider.future);
       },
       child: list,
+    );
+  }
+}
+
+/// Saved Stash scene filters (5.5) as a chip row; hidden when there are none.
+class _SavedFilterChips extends ConsumerWidget {
+  const _SavedFilterChips({required this.activeId, required this.onSelected});
+
+  final String? activeId;
+  final ValueChanged<SavedFilter> onSelected;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final filters = ref.watch(savedSceneFiltersProvider).value ?? const <SavedFilter>[];
+    if (filters.isEmpty) return const SizedBox.shrink();
+    return SizedBox(
+      height: 44,
+      child: ListView.separated(
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.symmetric(horizontal: 12),
+        itemCount: filters.length,
+        separatorBuilder: (_, __) => const SizedBox(width: 8),
+        itemBuilder: (_, i) {
+          final filter = filters[i];
+          return FilterChip(
+            avatar: const Icon(Icons.bookmark_outline, size: 16),
+            label: Text(filter.name),
+            selected: filter.id == activeId,
+            onSelected: (_) => onSelected(filter),
+          );
+        },
+      ),
     );
   }
 }

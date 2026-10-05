@@ -26,6 +26,7 @@ class _HomePageState extends ConsumerState<HomePage> {
   void _refreshShelves() {
     ref.invalidate(sceneListProvider(_continueWatching));
     ref.invalidate(sceneListProvider(_fromFavorites));
+    ref.invalidate(savedSceneFiltersProvider);
   }
 
   @override
@@ -45,6 +46,8 @@ class _HomePageState extends ConsumerState<HomePage> {
         bottom: false,
         child: SceneFeedView(
           initialQuery: _query,
+          filterable: true,
+          showSavedFilters: true,
           onRefresh: _refreshShelves,
           headerSlivers: [
             SliverAppBar(

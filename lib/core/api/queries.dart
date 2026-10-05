@@ -172,6 +172,18 @@ query FindTag($id: ID!) {
 }
 ''';
 
+  /// Saved scene filters (object_filter needs Stash v0.25+).
+  static const savedSceneFilters = r'''
+query SavedSceneFilters {
+  findSavedFilters(mode: SCENES) {
+    id
+    name
+    find_filter { q sort direction }
+    object_filter
+  }
+}
+''';
+
   /// Library totals; supported by all Stash versions this app targets.
   static const stats = r'''
 query Stats {
