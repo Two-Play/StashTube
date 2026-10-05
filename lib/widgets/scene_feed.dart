@@ -31,6 +31,8 @@ class SceneFeedView extends ConsumerStatefulWidget {
     this.sorts = SceneSort.values,
     this.layout = SceneFeedLayout.cards,
     this.showCount = false,
+    this.refreshable = true,
+    this.physics,
     this.emptyMessage = 'No scenes found',
     this.onRefresh,
   });
@@ -43,6 +45,13 @@ class SceneFeedView extends ConsumerStatefulWidget {
 
   /// Show the total number of matching scenes above the list.
   final bool showCount;
+
+  /// Pull-to-refresh; off where a downward swipe means something else
+  /// (e.g. minimizing the player).
+  final bool refreshable;
+
+  /// Scroll physics; defaults to always-scrollable platform physics.
+  final ScrollPhysics? physics;
   final String emptyMessage;
 
   /// Called on pull-to-refresh in addition to reloading the feed, e.g. to
@@ -67,17 +76,11 @@ class _SceneFeedViewState extends ConsumerState<SceneFeedView> {
     final provider = sceneListProvider(_query);
     final value = ref.watch(provider);
 
-    return RefreshIndicator(
-      edgeOffset: 80,
-      onRefresh: () {
-        widget.onRefresh?.call();
-        return refreshFuture(ref, provider.future);
-      },
-      child: LoadMoreListener(
-        onLoadMore: () => ref.read(provider.notifier).loadMore(),
-        child: CustomScrollView(
+    final list = LoadMoreListener(
+      onLoadMore: () => ref.read(provider.notifier).loadMore(),
+      child: CustomScrollView(
           // Pull-to-refresh must work even when the list is shorter than the screen.
-          physics: const AlwaysScrollableScrollPhysics(),
+          physics: widget.physics ?? const AlwaysScrollableScrollPhysics(),
           slivers: [
             ...widget.headerSlivers,
             if (widget.sorts.length > 1)
@@ -123,7 +126,15 @@ class _SceneFeedViewState extends ConsumerState<SceneFeedView> {
             ),
           ],
         ),
-      ),
+    );
+    if (!widget.refreshable) return list;
+    return RefreshIndicator(
+      edgeOffset: 80,
+      onRefresh: () {
+        widget.onRefresh?.call();
+        return refreshFuture(ref, provider.future);
+      },
+      child: list,
     );
   }
 }

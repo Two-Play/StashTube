@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/utils/format.dart';
@@ -8,6 +9,7 @@ import '../../data/providers.dart';
 import '../../widgets/scene_feed.dart';
 import '../../widgets/stash_image.dart';
 import '../shell/navigation.dart';
+import 'drag_to_minimize.dart';
 import 'player_controls.dart';
 import 'player_providers.dart';
 import 'player_transition.dart';
@@ -38,56 +40,88 @@ class PlayerPanel extends ConsumerWidget {
     );
     final markers = ref.watch(sceneDetailsProvider(scene.id)).valueOrNull?.markers ?? const [];
 
-    return PanelTapGuard(
-      // Collapsed or mid-drag, a tap should still expand the panel.
-      enabled: t.isExpanded,
-      child: ColoredBox(
-        color: Color.lerp(colors.surfaceContainer, colors.surface, t.progress)!,
-        child: Column(
-          children: [
-            SizedBox(height: t.topPadding),
-            SizedBox(
-              height: t.videoHeight,
-              child: Row(
-                children: [
-                  SizedBox(
-                    width: t.videoWidth,
-                    child: ColoredBox(
-                      color: Colors.black,
-                      child: PlayerVideo(scene: scene, showControls: t.isExpanded),
-                    ),
-                  ),
-                  // Mini bar info keeps its natural width and is clipped while
-                  // the video takes over the row.
-                  Expanded(
-                    child: ClipRect(
-                      child: OverflowBox(
-                        alignment: Alignment.centerLeft,
-                        minWidth: 0,
-                        maxWidth: media.size.width - kMiniPlayerHeight * 16 / 9,
-                        child: Opacity(
-                          opacity: t.miniBarOpacity,
-                          child: IgnorePointer(
-                            ignoring: t.miniBarOpacity < 0.5,
-                            child: _MiniInfo(scene: scene),
+    // Only status bar fields: the collapsed panel sits over Android's
+    // navigation bar, whose style must stay untouched.
+    final lightIcons = t.progress > 0.5 || Theme.of(context).brightness == Brightness.dark;
+    final statusBarStyle = SystemUiOverlayStyle(
+      statusBarColor: Colors.transparent,
+      statusBarIconBrightness: lightIcons ? Brightness.light : Brightness.dark,
+      statusBarBrightness: lightIcons ? Brightness.dark : Brightness.light, // iOS
+    );
+
+    // Every wrapper below is always present (only flags change), so the
+    // video keeps its place in the tree during the transition.
+    return AnnotatedRegion<SystemUiOverlayStyle>(
+      // Light status bar icons on the black area above the open player.
+      value: statusBarStyle,
+      child: DragToMinimize(
+        enabled: t.isExpanded,
+        controller: ref.watch(miniplayerControllerProvider),
+        minHeight: kMiniPlayerHeight,
+        maxHeight: maxHeight,
+        videoBottom: t.topPadding + t.videoHeight,
+        child: PanelTapGuard(
+          // Collapsed or mid-drag, a tap should still expand the panel.
+          enabled: t.isExpanded,
+          child: ColoredBox(
+            color: Color.lerp(colors.surfaceContainer, colors.surface, t.progress)!,
+            child: Column(
+              children: [
+                // Status bar area: black like the video, so no colored band
+                // grows above it while expanding.
+                SizedBox(height: t.topPadding, width: double.infinity, child: const ColoredBox(color: Colors.black)),
+                SizedBox(
+                  height: t.videoHeight,
+                  child: Row(
+                    children: [
+                      SizedBox(
+                        width: t.videoWidth,
+                        child: ColoredBox(
+                          color: Colors.black,
+                          child: PlayerVideo(scene: scene, showControls: t.isExpanded),
+                        ),
+                      ),
+                      // Mini bar info keeps its natural width and is clipped while
+                      // the video takes over the row.
+                      Expanded(
+                        child: ClipRect(
+                          child: OverflowBox(
+                            alignment: Alignment.centerLeft,
+                            minWidth: 0,
+                            maxWidth: media.size.width - kMiniPlayerHeight * 16 / 9,
+                            child: Opacity(
+                              opacity: t.miniBarOpacity,
+                              child: IgnorePointer(
+                                ignoring: t.miniBarOpacity < 0.5,
+                                child: _MiniInfo(scene: scene),
+                              ),
+                            ),
                           ),
                         ),
                       ),
+                    ],
+                  ),
+                ),
+                // Mini progress line shrinks away so no gap remains under the video.
+                SizedBox(
+                  height: 2 * t.miniBarOpacity,
+                  child: Opacity(opacity: t.miniBarOpacity, child: const _ProgressBar(height: 2)),
+                ),
+                if (t.showDetails && markers.isNotEmpty)
+                  Opacity(
+                    opacity: t.detailsOpacity,
+                    child: ChapterStrip(markers: markers, duration: scene.duration),
+                  ),
+                if (t.showDetails)
+                  Expanded(
+                    child: Opacity(
+                      opacity: t.detailsOpacity,
+                      child: _SceneDetails(scene: scene),
                     ),
                   ),
-                ],
-              ),
+              ],
             ),
-            Opacity(opacity: t.miniBarOpacity, child: const _ProgressBar(height: 2)),
-            if (t.isExpanded && markers.isNotEmpty) ChapterStrip(markers: markers, duration: scene.duration),
-            if (t.showDetails)
-              Expanded(
-                child: Opacity(
-                  opacity: t.detailsOpacity,
-                  child: _SceneDetails(scene: scene),
-                ),
-              ),
-          ],
+          ),
         ),
       ),
     );
@@ -190,6 +224,9 @@ class _SceneDetails extends ConsumerWidget {
       initialQuery: upNext,
       sorts: const [],
       layout: SceneFeedLayout.list,
+      // A downward swipe at the top minimizes the player instead.
+      refreshable: false,
+      physics: const ClampingScrollPhysics(),
       emptyMessage: 'Nothing else to watch here',
       headerSlivers: [
         SliverToBoxAdapter(child: _SceneInfo(scene: scene)),
