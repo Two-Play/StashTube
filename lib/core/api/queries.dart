@@ -74,6 +74,16 @@ mutation PerformerSetFavorite($id: ID!, $favorite: Boolean!) {
 }
 ''';
 
+  static const findSceneDetails = r'''
+query FindSceneDetails($id: ID!) {
+  findScene(id: $id) {
+    id
+    sceneStreams { url mime_type label }
+    scene_markers { id title seconds primary_tag { name } }
+  }
+}
+''';
+
   static const findScenes = r'''
 query FindScenes($filter: FindFilterType, $scene_filter: SceneFilterType) {
   findScenes(filter: $filter, scene_filter: $scene_filter) {

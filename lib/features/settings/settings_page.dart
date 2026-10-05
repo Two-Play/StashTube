@@ -14,6 +14,7 @@ class SettingsPage extends ConsumerWidget {
     final config = ref.watch(serverConfigProvider);
     final version = ref.watch(serverVersionProvider);
     final themeMode = ref.watch(themeModeProvider);
+    final preferredStream = ref.watch(preferredStreamProvider);
     final theme = Theme.of(context);
 
     return Scaffold(
@@ -47,6 +48,18 @@ class SettingsPage extends ConsumerWidget {
               selected: {themeMode},
               onSelectionChanged: (s) => ref.read(themeModeProvider.notifier).set(s.first),
             ),
+          ),
+          const _SectionTitle('Playback'),
+          ListTile(
+            leading: const Icon(Icons.high_quality_outlined),
+            title: const Text('Preferred quality'),
+            subtitle: Text(preferredStream ?? 'Original file – change it via ⚙ in the player'),
+            trailing: preferredStream == null
+                ? null
+                : TextButton(
+                    onPressed: () => ref.read(preferredStreamProvider.notifier).set(null),
+                    child: const Text('Reset'),
+                  ),
           ),
           const SizedBox(height: 16),
           ListTile(

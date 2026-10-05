@@ -60,8 +60,8 @@ Eine wartbare Basis, damit Features unabhängig voneinander wachsen können.
 | 4.7 | Als Nutzer möchte ich in den Vollbildmodus (Querformat) wechseln. | Vollbild über die Player-Controls. | MVP | ✅ (media_kit-Controls) |
 | 4.8 | Als Nutzer möchte ich dort weiterschauen, wo ich aufgehört habe. | `resume_time` lesen und beim Start dorthin springen. Fortschritt über `sceneSaveActivity` speichern: alle 15 s Wiedergabe, bei Pause, Schließen, Szenenwechsel und wenn die App in den Hintergrund geht. Kurz vor dem Ende (≥ 95 %) wird die Position auf 0 zurückgesetzt. Nur tatsächlich geschaute Zeit zählt, Spulen nicht. | Next | ✅ |
 | 4.9 | Als Nutzer möchte ich, dass Aufrufe gezählt werden. | `sceneAddPlay` einmal pro Wiedergabe, sobald 10 % der Szene geschaut wurden (höchstens 60 s). | Next | ✅ |
-| 4.10 | Als Nutzer möchte ich die Qualität bzw. den Transcode-Stream wählen. | Auswahl über `sceneStreams` (Direct, HLS, MP4 in 720p usw.). | Next | ⬜ |
-| 4.11 | Als Nutzer möchte ich per Doppeltipp ±10 s springen und Kapitel (Scene Markers) sehen. | Gesten plus Marker auf der Zeitleiste. | Later | ⬜ |
+| 4.10 | Als Nutzer möchte ich die Qualität bzw. den Transcode-Stream wählen. | ⚙-Button im Player (auch im Vollbild) listet `sceneStreams`. Der Wechsel behält die Position. Die Wahl wird gespeichert und bei weiteren Szenen automatisch genutzt, falls verfügbar. Zurücksetzen in den Einstellungen. | Next | ✅ |
+| 4.11 | Als Nutzer möchte ich per Doppeltipp ±10 s springen und Kapitel (Scene Markers) sehen. | Doppeltipp links/rechts im Video. Marker als Segment-Lücken auf einer Leiste unter dem Video und als antippbare Kapitel-Liste mit Hervorhebung des aktuellen Kapitels. (Marker im media_kit-Seekbar selbst sind nicht möglich.) | Later | ✅ |
 | 4.12 | Als Nutzer möchte ich Bild-in-Bild und Hintergrundwiedergabe. | Android-PiP, iOS-AVPictureInPicture, Audio-Session. | Later | ⬜ |
 | 4.13 | Als Nutzer möchte ich auf einen Chromecast oder AirPlay streamen. | Cast-Button im Player. | Later | ⬜ |
 

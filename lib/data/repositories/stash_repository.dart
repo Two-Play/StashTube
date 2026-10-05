@@ -9,6 +9,7 @@ import '../models/list_queries.dart';
 import '../models/page_result.dart';
 import '../models/performer.dart';
 import '../models/scene.dart';
+import '../models/scene_details.dart';
 import '../models/studio.dart';
 
 class StashApiException implements Exception {
@@ -146,6 +147,13 @@ class StashRepository implements PlaybackActivityApi {
 
   @override
   Future<void> addPlay(String sceneId) => _mutate(StashQueries.sceneAddPlay, {'id': sceneId});
+
+  Future<SceneDetails> findSceneDetails(String sceneId) async {
+    final data = await _query(StashQueries.findSceneDetails, {'id': sceneId});
+    final json = readObject(data, 'findScene');
+    if (json == null) throw const StashApiException('Scene not found.');
+    return SceneDetails.fromJson(json);
+  }
 
   Future<void> setPerformerFavorite(String performerId, bool favorite) =>
       _mutate(StashQueries.performerSetFavorite, {'id': performerId, 'favorite': favorite});

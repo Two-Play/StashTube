@@ -8,6 +8,8 @@ import 'package:miniplayer/miniplayer.dart';
 
 import '../../core/config/server_config.dart';
 import '../../data/models/scene.dart';
+import '../../data/models/scene_details.dart';
+import '../../data/providers.dart';
 import '../../data/repositories/stash_repository.dart';
 import 'playback_tracker.dart';
 
@@ -78,6 +80,29 @@ final playbackTrackerProvider = Provider<PlaybackTracker>((ref) {
   return tracker;
 });
 
+/// Stream label (e.g. "HLS 720p") to use when available; null = direct file.
+class PreferredStreamNotifier extends Notifier<String?> {
+  static const _key = 'preferred_stream';
+
+  @override
+  String? build() => ref.watch(sharedPreferencesProvider).getString(_key);
+
+  Future<void> set(String? label) async {
+    state = label;
+    final prefs = ref.read(sharedPreferencesProvider);
+    if (label == null) {
+      await prefs.remove(_key);
+    } else {
+      await prefs.setString(_key, label);
+    }
+  }
+}
+
+final preferredStreamProvider = NotifierProvider<PreferredStreamNotifier, String?>(PreferredStreamNotifier.new);
+
+/// The transcode currently playing; null while playing the direct file.
+final currentStreamProvider = StateProvider<SceneStream?>((ref) => null);
+
 /// The scene in the player, or null when the player is closed.
 class NowPlayingNotifier extends Notifier<Scene?> {
   @override
@@ -92,15 +117,52 @@ class NowPlayingNotifier extends Notifier<Scene?> {
       // Prefer the position saved in this session over the (possibly stale) list data.
       final resume = ref.read(resumeTimesProvider)[scene.id] ?? scene.resumeTime;
       unawaited(ref.read(playbackTrackerProvider).start(scene.copyWith(resumeTime: resume)));
-      ref.read(playerProvider).open(Media(
-        url,
-        httpHeaders: ref.read(authHeadersProvider),
-        start: resume > 0 ? Duration(milliseconds: (resume * 1000).round()) : null,
-      ));
+      ref.read(currentStreamProvider.notifier).state = null;
+      unawaited(_openPreferredStream(scene, url, Duration(milliseconds: (resume * 1000).round())));
     }
     state = scene;
     // On first play the miniplayer is only mounted in the next frame.
     WidgetsBinding.instance.addPostFrameCallback((_) => expand());
+  }
+
+  /// Opens the user's preferred transcode if this scene offers it, else the
+  /// direct file. Only waits for the stream list when a preference is set.
+  Future<void> _openPreferredStream(Scene scene, String directUrl, Duration start) async {
+    SceneStream? stream;
+    final preferred = ref.read(preferredStreamProvider);
+    if (preferred != null) {
+      final details = ref.listen(sceneDetailsProvider(scene.id).future, (_, __) {});
+      try {
+        stream = (await details.read()).streams.where((s) => s.label == preferred).firstOrNull;
+      } catch (_) {
+        // Fall back to the direct file.
+      } finally {
+        details.close();
+      }
+      if (state?.id != scene.id) return; // another scene was picked meanwhile
+    }
+    _open(stream?.url ?? directUrl, start);
+    ref.read(currentStreamProvider.notifier).state = stream;
+  }
+
+  /// Switches the quality of the current scene, keeping the position, and
+  /// remembers the choice for future scenes.
+  Future<void> selectStream(SceneStream stream) async {
+    if (state == null) return;
+    _open(stream.url, ref.read(playerProvider).state.position);
+    ref.read(currentStreamProvider.notifier).state = stream.isDirect ? null : stream;
+    await ref.read(preferredStreamProvider.notifier).set(stream.isDirect ? null : stream.label);
+  }
+
+  void seekTo(double seconds) =>
+      ref.read(playerProvider).seek(Duration(milliseconds: (seconds * 1000).round()));
+
+  void _open(String url, Duration start) {
+    ref.read(playerProvider).open(Media(
+      url,
+      httpHeaders: ref.read(authHeadersProvider),
+      start: start > Duration.zero ? start : null,
+    ));
   }
 
   void expand() => ref.read(miniplayerControllerProvider).animateToHeight(state: PanelState.MAX);

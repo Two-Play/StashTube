@@ -5,9 +5,11 @@ import 'package:media_kit_video/media_kit_video.dart';
 import '../../core/utils/format.dart';
 import '../../data/models/list_queries.dart';
 import '../../data/models/scene.dart';
+import '../../data/providers.dart';
 import '../../widgets/scene_feed.dart';
 import '../../widgets/stash_image.dart';
 import '../shell/navigation.dart';
+import 'player_controls.dart';
 import 'player_providers.dart';
 
 /// Content of the miniplayer panel. Interpolates between the collapsed bar
@@ -34,6 +36,7 @@ class PlayerPanel extends ConsumerWidget {
     }
 
     // Expanding: video grows to full width, details fade in.
+    final markers = ref.watch(sceneDetailsProvider(scene.id)).valueOrNull?.markers ?? const [];
     final videoHeight = kMiniPlayerHeight + (expandedVideoHeight - kMiniPlayerHeight) * percentage;
     return ColoredBox(
       color: colors.surface,
@@ -44,20 +47,9 @@ class PlayerPanel extends ConsumerWidget {
             SizedBox(
               height: videoHeight,
               width: double.infinity,
-              child: Stack(
-                children: [
-                  Positioned.fill(child: Video(controller: ref.watch(videoControllerProvider))),
-                  Positioned(
-                    left: 4,
-                    top: 4,
-                    child: IconButton(
-                      icon: const Icon(Icons.keyboard_arrow_down, color: Colors.white, size: 30),
-                      onPressed: () => ref.read(nowPlayingProvider.notifier).collapse(),
-                    ),
-                  ),
-                ],
-              ),
+              child: ColoredBox(color: Colors.black, child: ExpandedVideo(scene: scene)),
             ),
+            if (markers.isNotEmpty) ChapterStrip(markers: markers, duration: scene.duration),
             Expanded(
               child: Opacity(
                 opacity: percentage,
@@ -216,6 +208,7 @@ class _SceneInfoState extends ConsumerState<_SceneInfo> {
     final muted = theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurfaceVariant);
     final studio = scene.studio;
     final rating = scene.rating100;
+    final details = ref.watch(sceneDetailsProvider(scene.id)).valueOrNull;
 
     final meta = [
       if (scene.playCount > 0) formatCount(scene.playCount, 'play'),
@@ -268,6 +261,7 @@ class _SceneInfoState extends ConsumerState<_SceneInfo> {
               },
             ),
           ),
+        if (details != null && details.markers.isNotEmpty) ChapterList(details: details),
         if (scene.details != null || scene.tags.isNotEmpty)
           Padding(
             padding: const EdgeInsets.fromLTRB(12, 8, 12, 0),

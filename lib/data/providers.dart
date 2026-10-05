@@ -5,6 +5,7 @@ import 'models/list_queries.dart';
 import 'models/page_result.dart';
 import 'models/performer.dart';
 import 'models/scene.dart';
+import 'models/scene_details.dart';
 import 'models/studio.dart';
 import 'repositories/stash_repository.dart';
 
@@ -51,4 +52,9 @@ final studioProvider = FutureProvider.autoDispose.family<Studio, String>(
 
 final serverVersionProvider = FutureProvider.autoDispose<String?>(
   (ref) => ref.watch(stashRepositoryProvider).serverVersion(),
+);
+
+/// Streams and markers of a scene; loaded when the scene is played.
+final sceneDetailsProvider = FutureProvider.autoDispose.family<SceneDetails, String>(
+  (ref, id) => ref.watch(stashRepositoryProvider).findSceneDetails(id),
 );

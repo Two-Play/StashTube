@@ -1,0 +1,255 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:media_kit_video/media_kit_video.dart';
+
+import '../../core/utils/format.dart';
+import '../../data/models/scene.dart';
+import '../../data/models/scene_details.dart';
+import '../../data/providers.dart';
+import 'player_providers.dart';
+
+/// The video with YouTube-like controls: double tap to seek ±10 s (4.11),
+/// a quality button (4.10) and, outside fullscreen, a collapse button.
+class ExpandedVideo extends ConsumerWidget {
+  const ExpandedVideo({super.key, required this.scene});
+
+  final Scene scene;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final qualityButton = MaterialCustomButton(
+      icon: const Icon(Icons.settings_outlined),
+      onPressed: () => showQualitySheet(context, scene.id),
+    );
+
+    MaterialVideoControlsThemeData theme({required List<Widget> topBar}) => MaterialVideoControlsThemeData(
+          seekOnDoubleTap: true,
+          seekOnDoubleTapBackwardDuration: const Duration(seconds: 10),
+          seekOnDoubleTapForwardDuration: const Duration(seconds: 10),
+          topButtonBar: topBar,
+          primaryButtonBar: const [
+            Spacer(flex: 2),
+            MaterialPlayOrPauseButton(iconSize: 48),
+            Spacer(flex: 2),
+          ],
+          seekBarPositionColor: Theme.of(context).colorScheme.primary,
+          seekBarThumbColor: Theme.of(context).colorScheme.primary,
+        );
+
+    return MaterialVideoControlsTheme(
+      normal: theme(topBar: [
+        MaterialCustomButton(
+          icon: const Icon(Icons.keyboard_arrow_down, size: 30),
+          onPressed: () => ref.read(nowPlayingProvider.notifier).collapse(),
+        ),
+        const Spacer(),
+        qualityButton,
+      ]),
+      fullscreen: theme(topBar: [const Spacer(), qualityButton]),
+      child: Video(controller: ref.watch(videoControllerProvider), controls: MaterialVideoControls),
+    );
+  }
+}
+
+String _streamDescription(SceneStream stream) {
+  if (stream.isDirect) return 'Original file';
+  if (stream.isHls) return 'Adaptive streaming';
+  return 'Transcoded – seeking may be limited';
+}
+
+/// Bottom sheet listing the scene's `sceneStreams`.
+Future<void> showQualitySheet(BuildContext context, String sceneId) => showModalBottomSheet<void>(
+      context: context,
+      useRootNavigator: true,
+      showDragHandle: true,
+      isScrollControlled: true,
+      builder: (_) => _QualitySheet(sceneId: sceneId),
+    );
+
+class _QualitySheet extends ConsumerWidget {
+  const _QualitySheet({required this.sceneId});
+
+  final String sceneId;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final details = ref.watch(sceneDetailsProvider(sceneId));
+    final current = ref.watch(currentStreamProvider);
+
+    return SafeArea(
+      child: ConstrainedBox(
+        constraints: BoxConstraints(maxHeight: MediaQuery.sizeOf(context).height * 0.6),
+        child: switch (details) {
+          AsyncData(:final value) when value.streams.isNotEmpty => ListView(
+              shrinkWrap: true,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+                  child: Text('Quality', style: Theme.of(context).textTheme.titleMedium),
+                ),
+                for (final stream in value.streams)
+                  ListTile(
+                    leading: Icon(
+                      (current == null ? stream.isDirect : current.label == stream.label)
+                          ? Icons.check
+                          : null,
+                    ),
+                    title: Text(stream.label),
+                    subtitle: Text(_streamDescription(stream)),
+                    onTap: () {
+                      Navigator.pop(context);
+                      ref.read(nowPlayingProvider.notifier).selectStream(stream);
+                    },
+                  ),
+              ],
+            ),
+          AsyncData() => const ListTile(title: Text('No alternative streams available')),
+          AsyncError(:final error) => ListTile(
+              leading: const Icon(Icons.error_outline),
+              title: const Text('Couldn\'t load streams'),
+              subtitle: Text(error.toString()),
+            ),
+          _ => const Padding(padding: EdgeInsets.all(32), child: Center(child: CircularProgressIndicator())),
+        },
+      ),
+    );
+  }
+}
+
+/// Thin progress line under the video with a tick per chapter (scene marker).
+class ChapterStrip extends ConsumerWidget {
+  const ChapterStrip({super.key, required this.markers, required this.duration});
+
+  final List<SceneMarker> markers;
+
+  /// Fallback duration in seconds until the player reports one.
+  final double duration;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final player = ref.watch(playerProvider);
+    final colors = Theme.of(context).colorScheme;
+    return StreamBuilder<Duration>(
+      stream: player.stream.position,
+      initialData: player.state.position,
+      builder: (context, snapshot) {
+        final total = player.state.duration.inMilliseconds > 0
+            ? player.state.duration.inMilliseconds / 1000
+            : duration;
+        final position = snapshot.data!.inMilliseconds / 1000;
+        return SizedBox(
+          height: 4,
+          width: double.infinity,
+          child: CustomPaint(
+            painter: _ChapterPainter(
+              progress: total > 0 ? (position / total).clamp(0.0, 1.0) : 0,
+              ticks: [if (total > 0) for (final m in markers) (m.seconds / total).clamp(0.0, 1.0)],
+              track: colors.surfaceContainerHighest,
+              fill: colors.primary,
+              tick: colors.surface,
+            ),
+          ),
+        );
+      },
+    );
+  }
+}
+
+class _ChapterPainter extends CustomPainter {
+  _ChapterPainter({
+    required this.progress,
+    required this.ticks,
+    required this.track,
+    required this.fill,
+    required this.tick,
+  });
+
+  final double progress;
+  final List<double> ticks;
+  final Color track;
+  final Color fill;
+  final Color tick;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    canvas.drawRect(Offset.zero & size, Paint()..color = track);
+    canvas.drawRect(Rect.fromLTWH(0, 0, size.width * progress, size.height), Paint()..color = fill);
+    // Gaps between chapters, like YouTube's segmented seek bar.
+    final gap = Paint()..color = tick;
+    for (final t in ticks) {
+      if (t <= 0) continue;
+      canvas.drawRect(Rect.fromLTWH(size.width * t - 1, 0, 2, size.height), gap);
+    }
+  }
+
+  @override
+  bool shouldRepaint(_ChapterPainter old) =>
+      old.progress != progress || old.ticks.length != ticks.length || old.fill != fill;
+}
+
+/// Horizontal list of chapters; tapping one seeks there. Highlights the
+/// chapter currently playing.
+class ChapterList extends ConsumerWidget {
+  const ChapterList({super.key, required this.details});
+
+  final SceneDetails details;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final theme = Theme.of(context);
+    final player = ref.watch(playerProvider);
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+          child: Text('Chapters', style: theme.textTheme.titleSmall),
+        ),
+        SizedBox(
+          height: 64,
+          child: StreamBuilder<Duration>(
+            stream: player.stream.position,
+            initialData: player.state.position,
+            builder: (context, snapshot) {
+              final current = details.markerAt(snapshot.data!.inMilliseconds / 1000);
+              return ListView.separated(
+                scrollDirection: Axis.horizontal,
+                padding: const EdgeInsets.symmetric(horizontal: 12),
+                itemCount: details.markers.length,
+                separatorBuilder: (_, __) => const SizedBox(width: 8),
+                itemBuilder: (_, i) {
+                  final marker = details.markers[i];
+                  final active = identical(marker, current);
+                  return Material(
+                    color: active ? theme.colorScheme.primaryContainer : theme.colorScheme.surfaceContainerHighest,
+                    borderRadius: BorderRadius.circular(10),
+                    child: InkWell(
+                      borderRadius: BorderRadius.circular(10),
+                      onTap: () => ref.read(nowPlayingProvider.notifier).seekTo(marker.seconds),
+                      child: Container(
+                        width: 140,
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Text(
+                              formatDuration(marker.seconds),
+                              style: theme.textTheme.labelSmall?.copyWith(color: theme.colorScheme.primary),
+                            ),
+                            Text(marker.title, maxLines: 1, overflow: TextOverflow.ellipsis, style: theme.textTheme.bodyMedium),
+                          ],
+                        ),
+                      ),
+                    ),
+                  );
+                },
+              );
+            },
+          ),
+        ),
+      ],
+    );
+  }
+}
