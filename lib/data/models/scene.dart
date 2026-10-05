@@ -13,6 +13,7 @@ class Scene {
     this.rating100,
     this.playCount = 0,
     this.oCounter = 0,
+    this.resumeTime = 0,
     this.duration = 0,
     this.width,
     this.height,
@@ -34,6 +35,9 @@ class Scene {
   final int? rating100;
   final int playCount;
   final int oCounter;
+
+  /// Where the user stopped watching, in seconds; 0 if not started or finished.
+  final double resumeTime;
 
   /// Duration of the primary file in seconds.
   final double duration;
@@ -65,6 +69,7 @@ class Scene {
       rating100: readNullableInt(json, 'rating100'),
       playCount: readInt(json, 'play_count'),
       oCounter: readInt(json, 'o_counter'),
+      resumeTime: readDouble(json, 'resume_time'),
       duration: readDouble(file, 'duration'),
       width: readNullableInt(file, 'width'),
       height: readNullableInt(file, 'height'),
@@ -76,6 +81,27 @@ class Scene {
       tags: readList(json, 'tags').map(Tag.fromJson).toList(),
     );
   }
+
+  Scene copyWith({double? resumeTime}) => Scene(
+        id: id,
+        title: title,
+        details: details,
+        date: date,
+        createdAt: createdAt,
+        rating100: rating100,
+        playCount: playCount,
+        oCounter: oCounter,
+        resumeTime: resumeTime ?? this.resumeTime,
+        duration: duration,
+        width: width,
+        height: height,
+        screenshotUrl: screenshotUrl,
+        previewUrl: previewUrl,
+        streamUrl: streamUrl,
+        studio: studio,
+        performers: performers,
+        tags: tags,
+      );
 
   /// The date shown to users: the scene's release date, else when it was added.
   DateTime? get displayDate => date ?? createdAt;

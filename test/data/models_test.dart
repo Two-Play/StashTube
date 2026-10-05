@@ -15,6 +15,7 @@ void main() {
         'rating100': 80,
         'play_count': 3,
         'o_counter': 1,
+        'resume_time': 120.5,
         'files': [
           {'basename': 'sunset.mp4', 'duration': 754.2, 'width': 1920, 'height': 1080},
         ],
@@ -38,6 +39,7 @@ void main() {
       expect(scene.performers.single.favorite, isTrue);
       expect(scene.tags.single.name, 'Outdoor');
       expect(scene.playCount, 3);
+      expect(scene.resumeTime, 120.5);
     });
 
     test('tolerates missing and null fields', () {

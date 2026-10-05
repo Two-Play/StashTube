@@ -137,15 +137,17 @@ class SceneListTile extends ConsumerWidget {
   }
 }
 
-class SceneThumbnail extends StatelessWidget {
+class SceneThumbnail extends ConsumerWidget {
   const SceneThumbnail({super.key, required this.scene, this.compact = false});
 
   final Scene scene;
   final bool compact;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final resolution = resolutionLabel(scene.height);
+    final resume = effectiveResumeTime(ref, scene);
+    final progress = scene.duration > 0 ? (resume / scene.duration).clamp(0.0, 1.0) : 0.0;
     return AspectRatio(
       aspectRatio: 16 / 9,
       child: Stack(
@@ -155,7 +157,24 @@ class SceneThumbnail extends StatelessWidget {
           if (resolution != null && !compact)
             Positioned(left: 8, bottom: 8, child: _Badge(text: resolution)),
           if (scene.duration > 0)
-            Positioned(right: compact ? 4 : 8, bottom: compact ? 4 : 8, child: _Badge(text: formatDuration(scene.duration))),
+            Positioned(
+              right: compact ? 4 : 8,
+              bottom: (compact ? 4 : 8) + (progress > 0 ? 3 : 0),
+              child: _Badge(text: formatDuration(scene.duration)),
+            ),
+          // "Continue watching" progress, like YouTube's red bar.
+          if (progress > 0)
+            Positioned(
+              left: 0,
+              right: 0,
+              bottom: 0,
+              child: LinearProgressIndicator(
+                value: progress,
+                minHeight: 3,
+                color: Theme.of(context).colorScheme.primary,
+                backgroundColor: Colors.white24,
+              ),
+            ),
         ],
       ),
     );

@@ -24,4 +24,17 @@ void main() {
     expect(find.text('2:05'), findsOneWidget);
     expect(find.text('1080p'), findsOneWidget);
   });
+
+  testWidgets('shows a progress bar only for partially watched scenes', (tester) async {
+    Future<void> pump(Scene scene) => tester.pumpWidget(ProviderScope(
+          child: MaterialApp(home: Scaffold(body: SceneThumbnail(scene: scene))),
+        ));
+
+    await pump(const Scene(id: '1', title: 'A', duration: 100));
+    expect(find.byType(LinearProgressIndicator), findsNothing);
+
+    await pump(const Scene(id: '2', title: 'B', duration: 100, resumeTime: 25));
+    final bar = tester.widget<LinearProgressIndicator>(find.byType(LinearProgressIndicator));
+    expect(bar.value, 0.25);
+  });
 }

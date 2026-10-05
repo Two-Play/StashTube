@@ -3,6 +3,7 @@ import 'package:graphql_flutter/graphql_flutter.dart';
 
 import '../../core/api/queries.dart';
 import '../../core/config/server_config.dart';
+import '../../features/player/playback_tracker.dart';
 import '../models/json.dart';
 import '../models/list_queries.dart';
 import '../models/page_result.dart';
@@ -33,7 +34,7 @@ GraphQLClient createGraphQLClient(ServerConfig config) => GraphQLClient(
     );
 
 /// All access to the Stash GraphQL API goes through this class.
-class StashRepository {
+class StashRepository implements PlaybackActivityApi {
   StashRepository(this._client);
 
   final GraphQLClient _client;
@@ -135,6 +136,17 @@ class StashRepository {
     return Studio.fromJson(json);
   }
 
+  @override
+  Future<void> saveActivity(String sceneId, {required double resumeTime, required double playDuration}) =>
+      _mutate(StashQueries.sceneSaveActivity, {
+        'id': sceneId,
+        'resume_time': resumeTime,
+        'playDuration': playDuration,
+      });
+
+  @override
+  Future<void> addPlay(String sceneId) => _mutate(StashQueries.sceneAddPlay, {'id': sceneId});
+
   static Map<String, dynamic> _findFilter({
     String? search,
     required int page,
@@ -150,13 +162,16 @@ class StashRepository {
         'direction': direction,
       };
 
-  Future<Json> _query(String document, [Map<String, dynamic> variables = const {}]) async {
+  Future<Json> _query(String document, [Map<String, dynamic> variables = const {}]) =>
+      _run(() => _client.query(QueryOptions(document: gql(document), variables: variables)));
+
+  Future<Json> _mutate(String document, Map<String, dynamic> variables) =>
+      _run(() => _client.mutate(MutationOptions(document: gql(document), variables: variables)));
+
+  Future<Json> _run(Future<QueryResult> Function() request) async {
     final QueryResult result;
     try {
-      result = await _client.query(QueryOptions(
-        document: gql(document),
-        variables: variables,
-      ));
+      result = await request();
     } catch (e) {
       throw StashApiException(e.toString(), isNetworkError: true);
     }

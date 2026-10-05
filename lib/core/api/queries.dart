@@ -10,6 +10,7 @@ fragment SceneFields on Scene {
   rating100
   play_count
   o_counter
+  resume_time
   files { basename duration width height }
   paths { screenshot preview stream }
   studio { id name image_path }
@@ -52,6 +53,18 @@ query SystemStatus {
   static const version = r'''
 query Version {
   version { version }
+}
+''';
+
+  static const sceneSaveActivity = r'''
+mutation SceneSaveActivity($id: ID!, $resume_time: Float, $playDuration: Float) {
+  sceneSaveActivity(id: $id, resume_time: $resume_time, playDuration: $playDuration)
+}
+''';
+
+  static const sceneAddPlay = r'''
+mutation SceneAddPlay($id: ID!) {
+  sceneAddPlay(id: $id) { count }
 }
 ''';
 

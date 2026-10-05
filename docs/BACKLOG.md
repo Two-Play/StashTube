@@ -58,8 +58,8 @@ Eine wartbare Basis, damit Features unabhängig voneinander wachsen können.
 | 4.5 | Als Nutzer möchte ich unter dem Video Details sehen: Titel, Datum, Auflösung, Studio-„Kanal“, Performer, Tags, Beschreibung. | Ausklappbare Beschreibung. Tippen auf Studio oder Performer öffnet die Kanalseite. | MVP | ✅ |
 | 4.6 | Als Nutzer möchte ich unter dem Video „Als Nächstes“-Vorschläge sehen. | Weitere Szenen desselben Studios bzw. desselben Performers, sonst zufällige. | MVP | ✅ |
 | 4.7 | Als Nutzer möchte ich in den Vollbildmodus (Querformat) wechseln. | Vollbild über die Player-Controls. | MVP | ✅ (media_kit-Controls) |
-| 4.8 | Als Nutzer möchte ich dort weiterschauen, wo ich aufgehört habe. | `resume_time` lesen, Fortschritt über `sceneSaveActivity` speichern. | Next | ⬜ |
-| 4.9 | Als Nutzer möchte ich, dass Aufrufe gezählt werden. | `sceneAddPlay` nach X Sekunden Wiedergabe. | Next | ⬜ |
+| 4.8 | Als Nutzer möchte ich dort weiterschauen, wo ich aufgehört habe. | `resume_time` lesen und beim Start dorthin springen. Fortschritt über `sceneSaveActivity` speichern: alle 15 s Wiedergabe, bei Pause, Schließen, Szenenwechsel und wenn die App in den Hintergrund geht. Kurz vor dem Ende (≥ 95 %) wird die Position auf 0 zurückgesetzt. Nur tatsächlich geschaute Zeit zählt, Spulen nicht. | Next | ✅ |
+| 4.9 | Als Nutzer möchte ich, dass Aufrufe gezählt werden. | `sceneAddPlay` einmal pro Wiedergabe, sobald 10 % der Szene geschaut wurden (höchstens 60 s). | Next | ✅ |
 | 4.10 | Als Nutzer möchte ich die Qualität bzw. den Transcode-Stream wählen. | Auswahl über `sceneStreams` (Direct, HLS, MP4 in 720p usw.). | Next | ⬜ |
 | 4.11 | Als Nutzer möchte ich per Doppeltipp ±10 s springen und Kapitel (Scene Markers) sehen. | Gesten plus Marker auf der Zeitleiste. | Later | ⬜ |
 | 4.12 | Als Nutzer möchte ich Bild-in-Bild und Hintergrundwiedergabe. | Android-PiP, iOS-AVPictureInPicture, Audio-Session. | Later | ⬜ |
@@ -105,7 +105,7 @@ Eine wartbare Basis, damit Features unabhängig voneinander wachsen können.
 | # | User Story | Akzeptanzkriterien | Prio | Status |
 |---|---|---|---|---|
 | 9.1 | Als Nutzer möchte ich meinen Wiedergabeverlauf sehen. | Sortierung `last_played_at`. | Next | ⬜ |
-| 9.2 | Als Nutzer möchte ich „Weiterschauen“ mit Fortschrittsbalken auf dem Thumbnail. | Szenen mit `resume_time > 0`. | Next | ⬜ |
+| 9.2 | Als Nutzer möchte ich „Weiterschauen“ mit Fortschrittsbalken auf dem Thumbnail. | Szenen mit `resume_time > 0`. | Next | 🟡 (roter Balken auf allen Thumbnails ✅, eigene „Weiterschauen“-Reihe offen) |
 | 9.3 | Als Nutzer möchte ich Groups/Movies wie Playlists durchsehen und abspielen. | Gruppenseite. Autoplay der nächsten Szene. | Later | ⬜ |
 | 9.4 | Als Nutzer möchte ich eine Warteschlange („Später ansehen“). | Lokale Queue, die der Player abarbeitet. | Later | ⬜ |
 
@@ -147,5 +147,6 @@ Eine wartbare Basis, damit Features unabhängig voneinander wachsen können.
 | # | User Story | Akzeptanzkriterien | Prio | Status |
 |---|---|---|---|---|
 | 14.1 | Als Nutzer im Heimnetz möchte ich Server über `http://` erreichen. | Android `usesCleartextTraffic`, iOS-ATS-Ausnahme und Local-Network-Hinweis. | MVP | ✅ |
-| 14.2 | Als Entwickler möchte ich Abhängigkeiten aktualisieren (Riverpod 3, graphql 5.2, media_kit 1.2). | Upgrade in eigenem PR, danach Tests grün. | Next | ⬜ |
+| 14.2 | Als Entwickler möchte ich Abhängigkeiten aktualisieren (Riverpod 3, graphql 5.2, media_kit 1.2). | Upgrade in eigenem PR, danach Tests grün. | Next | 🟡 (graphql 5.2, media_kit 1.2 ✅; Riverpod 3 offen) |
+| 14.4 | Als Entwickler möchte ich mit aktuellem JDK für Android bauen. | Gradle 9.3.1, AGP 9.1.0, Kotlin 2.4.0, Kotlin-DSL nach aktuellem Flutter-Template. | MVP | ✅ |
 | 14.3 | Als Entwickler möchte ich signierte Release-Builds (APK/AAB, TestFlight). | Signing-Konfiguration, Fastlane o. Ä. | Later | ⬜ |
