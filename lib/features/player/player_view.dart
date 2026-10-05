@@ -38,25 +38,27 @@ class PlayerPanel extends ConsumerWidget {
     // Expanding: video grows to full width, details fade in.
     final markers = ref.watch(sceneDetailsProvider(scene.id)).valueOrNull?.markers ?? const [];
     final videoHeight = kMiniPlayerHeight + (expandedVideoHeight - kMiniPlayerHeight) * percentage;
-    return ColoredBox(
-      color: colors.surface,
-      child: SafeArea(
-        bottom: false,
-        child: Column(
-          children: [
-            SizedBox(
-              height: videoHeight,
-              width: double.infinity,
-              child: ColoredBox(color: Colors.black, child: ExpandedVideo(scene: scene)),
-            ),
-            if (markers.isNotEmpty) ChapterStrip(markers: markers, duration: scene.duration),
-            Expanded(
-              child: Opacity(
-                opacity: percentage,
-                child: _SceneDetails(scene: scene),
+    return PanelTapGuard(
+      child: ColoredBox(
+        color: colors.surface,
+        child: SafeArea(
+          bottom: false,
+          child: Column(
+            children: [
+              SizedBox(
+                height: videoHeight,
+                width: double.infinity,
+                child: ColoredBox(color: Colors.black, child: ExpandedVideo(scene: scene)),
               ),
-            ),
-          ],
+              if (markers.isNotEmpty) ChapterStrip(markers: markers, duration: scene.duration),
+              Expanded(
+                child: Opacity(
+                  opacity: percentage,
+                  child: _SceneDetails(scene: scene),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );

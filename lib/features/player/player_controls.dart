@@ -8,6 +8,23 @@ import '../../data/models/scene_details.dart';
 import '../../data/providers.dart';
 import 'player_providers.dart';
 
+/// Claims single taps inside the expanded player.
+///
+/// The miniplayer package wraps the whole panel in a `GestureDetector` whose
+/// `onTap` collapses an expanded panel. media_kit detects single taps with a
+/// raw `Listener`, so without this guard every tap on the video (or on empty
+/// space in the details) ends up collapsing the player. A deeper tap
+/// recognizer wins the gesture arena; buttons, double-tap and drag still work.
+class PanelTapGuard extends StatelessWidget {
+  const PanelTapGuard({super.key, required this.child});
+
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) =>
+      GestureDetector(behavior: HitTestBehavior.opaque, onTap: () {}, child: child);
+}
+
 /// The video with YouTube-like controls: double tap to seek ±10 s (4.11),
 /// a quality button (4.10) and, outside fullscreen, a collapse button.
 class ExpandedVideo extends ConsumerWidget {
