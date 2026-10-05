@@ -5,12 +5,16 @@ import 'package:miniplayer/miniplayer.dart';
 
 import '../home/home_page.dart';
 import '../library/library_page.dart';
+import '../library/watch_later_tab.dart';
 import '../performers/performers_page.dart';
 import '../player/closing_slide.dart';
 import '../player/player_providers.dart';
 import '../player/player_view.dart';
 import '../settings/settings_page.dart';
+import '../search/search_page.dart';
 import '../studios/studios_page.dart';
+import '../tags/tags_page.dart';
+import 'nav_bar_config.dart';
 import 'navigation.dart';
 
 /// Root layout after login: per-tab navigators, the miniplayer on top of
@@ -23,12 +27,16 @@ class AppShell extends ConsumerWidget {
         AppTab.performers => const PerformersPage(),
         AppTab.studios => const StudiosPage(),
         AppTab.library => const LibraryPage(),
+        AppTab.tags => const TagsPage(),
+        AppTab.search => const SearchPage(autofocus: false),
+        AppTab.watchLater => const WatchLaterPage(),
         AppTab.settings => const SettingsPage(),
       };
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final currentTab = ref.watch(currentTabProvider);
+    final tabs = ref.watch(navBarConfigProvider).visible;
     final navigatorKeys = ref.watch(tabNavigatorKeysProvider);
     final scene = ref.watch(nowPlayingProvider);
     final playerHeight = ref.watch(miniplayerHeightProvider);
@@ -51,8 +59,8 @@ class AppShell extends ConsumerWidget {
         final navigator = navigatorKeys[currentTab]!.currentState;
         if (navigator != null && navigator.canPop()) {
           navigator.pop();
-        } else if (currentTab != AppTab.home) {
-          ref.read(currentTabProvider.notifier).select(AppTab.home);
+        } else if (currentTab != tabs.first) {
+          ref.read(currentTabProvider.notifier).select(tabs.first);
         } else {
           SystemNavigator.pop();
         }
@@ -63,10 +71,12 @@ class AppShell extends ConsumerWidget {
             Padding(
               // Keep the end of every list visible above the collapsed player.
               padding: EdgeInsets.only(bottom: scene == null ? 0 : kMiniPlayerHeight),
+              // Only the tabs in the bar; the GlobalKeys keep each navigator's
+              // pages when the tabs are reordered.
               child: IndexedStack(
-                index: currentTab.index,
+                index: tabs.indexOf(currentTab).clamp(0, tabs.length - 1),
                 children: [
-                  for (final tab in AppTab.values)
+                  for (final tab in tabs)
                     Navigator(
                       key: navigatorKeys[tab],
                       onGenerateRoute: (_) => MaterialPageRoute(builder: (_) => _rootPage(tab)),
@@ -105,10 +115,10 @@ class AppShell extends ConsumerWidget {
             );
           },
           child: NavigationBar(
-            selectedIndex: currentTab.index,
-            onDestinationSelected: (i) => selectTab(AppTab.values[i]),
+            selectedIndex: tabs.indexOf(currentTab).clamp(0, tabs.length - 1),
+            onDestinationSelected: (i) => selectTab(tabs[i]),
             destinations: [
-              for (final tab in AppTab.values)
+              for (final tab in tabs)
                 NavigationDestination(
                   icon: Icon(tab.icon),
                   selectedIcon: Icon(tab.selectedIcon),

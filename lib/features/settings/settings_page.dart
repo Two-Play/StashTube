@@ -10,6 +10,9 @@ import '../security/app_lock.dart';
 import '../auth/server_switcher.dart';
 import '../security/app_icon.dart';
 import '../security/app_lock_gate.dart';
+import '../shell/nav_bar_config.dart';
+import '../shell/navigation.dart';
+import 'nav_bar_settings_page.dart';
 
 class SettingsPage extends ConsumerWidget {
   const SettingsPage({super.key});
@@ -86,6 +89,13 @@ class SettingsPage extends ConsumerWidget {
                   ),
               ],
             ),
+          ),
+          ListTile(
+            leading: const Icon(Icons.space_dashboard_outlined),
+            title: const Text('Navigation bar'),
+            subtitle: Text(ref.watch(navBarConfigProvider).visible.map((t) => t.label).join(' · ')),
+            trailing: const Icon(Icons.chevron_right),
+            onTap: () => openPage(ref, const NavBarSettingsPage()),
           ),
           const _SectionTitle('Playback'),
           ListTile(

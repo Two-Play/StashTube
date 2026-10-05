@@ -143,6 +143,7 @@ Eine wartbare Basis, damit Features unabhängig voneinander wachsen können.
 | 13.1 | Als Nutzer möchte ich Hell, Dunkel oder System wählen. | Wird gespeichert. YouTube-artiges Farbschema (Material 3, roter Akzent). | MVP | ✅ |
 | 13.2 | Als Nutzer möchte ich Server-Infos (URL, Stash-Version) sehen. | Abschnitt in den Einstellungen. | MVP | ✅ |
 | 13.6 | Als Nutzer möchte ich die Primärfarbe der App wählen. | 9 Farben in den Einstellungen (Standard: Rot), werden gespeichert. Textfarbe auf Buttons passt sich hellen Farben an. | Next | ✅ |
+| 13.7 | Als Nutzer möchte ich die Navigationsleiste in den Einstellungen frei konfigurieren. | Tabs ein-/ausblenden (2–5, Einstellungen immer sichtbar) und per Drag sortieren; zusätzlich Tags, Suche und Später ansehen als Tabs. Der erste Tab ist der Start-Tab. Wird gespeichert, „Zurücksetzen“ stellt den Standard her. | Next | ✅ |
 | 13.3 | Als Nutzer möchte ich die App auf Deutsch und Englisch nutzen. | `flutter_localizations` und ARB-Dateien. | Next | ⬜ |
 | 13.4 | Als Nutzer möchte ich ein App-Icon und einen Splashscreen. | `flutter_launcher_icons`, `flutter_native_splash`. | Next | ⬜ |
 | 13.5 | Als Nutzer möchte ich Tablet- und Querformat-Layouts. | Mehrspaltiges Raster ab 600 dp. | Later | ⬜ |

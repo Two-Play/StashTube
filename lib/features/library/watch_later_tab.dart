@@ -68,3 +68,14 @@ class WatchLaterTab extends ConsumerWidget {
     };
   }
 }
+
+/// Watch later as its own tab in the navigation bar (13.7).
+class WatchLaterPage extends StatelessWidget {
+  const WatchLaterPage({super.key});
+
+  @override
+  Widget build(BuildContext context) => Scaffold(
+        appBar: AppBar(title: const Text('Watch later')),
+        body: const WatchLaterTab(),
+      );
+}

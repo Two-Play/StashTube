@@ -13,7 +13,11 @@ import 'search_history.dart';
 
 /// Live search across scenes, with matching performers shown on top.
 class SearchPage extends ConsumerStatefulWidget {
-  const SearchPage({super.key});
+  const SearchPage({super.key, this.autofocus = true});
+
+  /// Off when the page is a tab of the navigation bar, which is built in the
+  /// background and shouldn't open the keyboard.
+  final bool autofocus;
 
   @override
   ConsumerState<SearchPage> createState() => _SearchPageState();
@@ -67,10 +71,11 @@ class _SearchPageState extends ConsumerState<SearchPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        titleSpacing: 0,
+        // Next to the back button; as a tab root the field keeps the margin.
+        titleSpacing: (ModalRoute.of(context)?.canPop ?? false) ? 0 : null,
         title: TextField(
           controller: _controller,
-          autofocus: true,
+          autofocus: widget.autofocus,
           textInputAction: TextInputAction.search,
           onChanged: _onChanged,
           onSubmitted: (v) {

@@ -9,12 +9,16 @@ import '../search/search_page.dart';
 import '../studios/studio_page.dart';
 import '../tags/tag_page.dart';
 import '../tags/tags_page.dart';
+import 'nav_bar_config.dart';
 
 enum AppTab {
   home('Home', Icons.home_outlined, Icons.home),
   performers('Performers', Icons.people_outline, Icons.people),
   studios('Studios', Icons.subscriptions_outlined, Icons.subscriptions),
   library('Library', Icons.video_library_outlined, Icons.video_library),
+  tags('Tags', Icons.sell_outlined, Icons.sell),
+  search('Search', Icons.search, Icons.saved_search),
+  watchLater('Later', Icons.watch_later_outlined, Icons.watch_later),
   settings('Settings', Icons.settings_outlined, Icons.settings);
 
   const AppTab(this.label, this.icon, this.selectedIcon);
@@ -24,9 +28,16 @@ enum AppTab {
   final IconData selectedIcon;
 }
 
+/// The selected tab. Starts on the first tab of the bar, and moves there
+/// when the selected tab is hidden in the settings.
 class CurrentTabNotifier extends Notifier<AppTab> {
   @override
-  AppTab build() => AppTab.home;
+  AppTab build() {
+    ref.listen(navBarConfigProvider, (_, config) {
+      if (!config.isVisible(state)) state = config.visible.first;
+    });
+    return ref.read(navBarConfigProvider).visible.first;
+  }
 
   void select(AppTab tab) => state = tab;
 }
