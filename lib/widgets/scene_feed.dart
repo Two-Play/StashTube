@@ -30,7 +30,7 @@ class SceneFeedView extends ConsumerStatefulWidget {
     super.key,
     required this.initialQuery,
     this.headerSlivers = const [],
-    this.sorts = SceneSort.values,
+    this.sorts = SceneSort.feed,
     this.layout = SceneFeedLayout.cards,
     this.showCount = false,
     this.refreshable = true,

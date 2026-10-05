@@ -6,6 +6,7 @@ import '../../core/api/queries.dart';
 import '../../core/config/server_config.dart';
 import '../../features/player/playback_tracker.dart';
 import '../models/gallery.dart';
+import '../models/group.dart';
 import '../models/image_item.dart';
 import '../models/json.dart';
 import '../models/list_queries.dart';
@@ -253,6 +254,34 @@ class StashRepository implements PlaybackActivityApi {
       if (e.isNetworkError) rethrow;
       return const [];
     }
+  }
+
+  /// Scenes by id, in the order of [ids] (unknown ids are skipped).
+  Future<List<Scene>> findScenesByIds(List<String> ids) async {
+    if (ids.isEmpty) return const [];
+    final data = await _query(StashQueries.findScenesByIds, {'ids': ids});
+    final byId = {
+      for (final s in readList(readObject(data, 'findScenes') ?? const {}, 'scenes').map(Scene.fromJson)) s.id: s,
+    };
+    return [for (final id in ids) if (byId[id] case final scene?) scene];
+  }
+
+  Future<PageResult<Group>> findGroups(GroupQuery query, {int page = 1, int perPage = defaultPageSize}) async {
+    final data = await _query(StashQueries.findGroups, {
+      'filter': _findFilter(search: query.search, page: page, perPage: perPage, sort: 'name', direction: 'ASC'),
+    });
+    final result = readObject(data, 'findGroups') ?? const {};
+    return PageResult(
+      items: readList(result, 'groups').map(Group.fromJson).toList(),
+      totalCount: readInt(result, 'count'),
+    );
+  }
+
+  Future<Group> findGroup(String id) async {
+    final data = await _query(StashQueries.findGroup, {'id': id});
+    final json = readObject(data, 'findGroup');
+    if (json == null) throw const StashApiException('Group not found.');
+    return Group.fromJson(json);
   }
 
   Future<LibraryStats> libraryStats() async {

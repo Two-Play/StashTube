@@ -231,6 +231,42 @@ query SavedSceneFilters {
 }
 ''';
 
+  static const findScenesByIds = r'''
+query FindScenesByIds($ids: [ID!]) {
+  findScenes(ids: $ids, filter: { per_page: -1 }) {
+    scenes { ...SceneFields }
+  }
+}
+''' '$_sceneFields';
+
+  static const _groupFields = r'''
+fragment GroupFields on Group {
+  id
+  name
+  date
+  duration
+  front_image_path
+  scene_count
+  studio { id name image_path }
+}
+''';
+
+  /// Groups replaced movies in Stash v0.27.
+  static const findGroups = r'''
+query FindGroups($filter: FindFilterType) {
+  findGroups(filter: $filter) {
+    count
+    groups { ...GroupFields }
+  }
+}
+''' '$_groupFields';
+
+  static const findGroup = r'''
+query FindGroup($id: ID!) {
+  findGroup(id: $id) { ...GroupFields synopsis }
+}
+''' '$_groupFields';
+
   /// Library totals; supported by all Stash versions this app targets.
   static const stats = r'''
 query Stats {

@@ -107,11 +107,11 @@ Eine wartbare Basis, damit Features unabhängig voneinander wachsen können.
 
 | # | User Story | Akzeptanzkriterien | Prio | Status |
 |---|---|---|---|---|
-| 9.1 | Als Nutzer möchte ich meinen Wiedergabeverlauf sehen. | Sortierung `last_played_at`. | Next | ⬜ |
+| 9.1 | Als Nutzer möchte ich meinen Wiedergabeverlauf sehen. | Library → „History“: gespielte Szenen (`play_count > 0`), zuletzt gesehen zuerst (`last_played_at`). | Next | ✅ |
 | 9.2 | Als Nutzer möchte ich „Weiterschauen“ mit Fortschrittsbalken auf dem Thumbnail. | Szenen mit `resume_time > 0`. | Next | ✅ |
 | 9.5 | Als Nutzer möchte ich alle Szenen meiner Bibliothek als kompaktes Raster durchsehen. | Tab „Library“ → „Scenes“: Raster mit Gesamtzahl, Sortier-Chips, Endlos-Scroll, langer Druck öffnet das Szenen-Menü. | Next | ✅ |
-| 9.3 | Als Nutzer möchte ich Groups/Movies wie Playlists durchsehen und abspielen. | Gruppenseite. Autoplay der nächsten Szene. | Later | ⬜ |
-| 9.4 | Als Nutzer möchte ich eine Warteschlange („Später ansehen“). | Lokale Queue, die der Player abarbeitet. | Later | ⬜ |
+| 9.3 | Als Nutzer möchte ich Groups/Movies wie Playlists durchsehen und abspielen. | Library → „Groups“ (Poster-Raster); Gruppenseite mit Details und Szenen in Gruppenreihenfolge; „Play all“ spielt als Warteschlange mit Autoplay. Benötigt Stash v0.27+ (Groups). | Later | ✅ |
+| 9.4 | Als Nutzer möchte ich eine Warteschlange („Später ansehen“). | „Later“ im Player und „Save to Watch later“ im ⋮-Menü (lokal gespeichert); Library → „Watch later“ mit „Play all“, Wischen zum Entfernen. Warteschlange unter dem Video mit aktueller Position, nächste Szene startet automatisch am Ende. | Later | ✅ |
 
 ## Epic 10 – Interaktion mit Szenen
 

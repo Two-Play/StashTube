@@ -10,6 +10,7 @@ class FakePlayer implements Player {
   PlayerState _state;
   final seeks = <Duration>[];
   final position = StreamController<Duration>.broadcast();
+  final completed = StreamController<bool>.broadcast();
 
   @override
   PlayerState get state => _state;
@@ -18,7 +19,7 @@ class FakePlayer implements Player {
   PlayerStream get stream => PlayerStream(
         const Stream.empty(), // playlist
         const Stream.empty(), // playing
-        const Stream.empty(), // completed
+        completed.stream,
         position.stream,
         const Stream.empty(), // duration
         const Stream.empty(), // volume

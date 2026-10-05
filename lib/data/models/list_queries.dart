@@ -10,12 +10,18 @@ enum SceneSort {
   topRated('Top rated', 'rating'),
   mostPlayed('Most played', 'play_count'),
   lastPlayed('Recently watched', 'last_played_at'),
-  title('A–Z', 'title');
+  title('A–Z', 'title'),
+
+  /// Order within a group (playlist); only meaningful with a group filter.
+  groupOrder('Group order', 'group_scene_number');
 
   const SceneSort(this.label, this.field);
 
   final String label;
   final String field;
+
+  /// Sorts offered in general scene feeds.
+  static const feed = [recentlyAdded, newest, random, topRated, mostPlayed, lastPlayed, title];
 }
 
 enum PerformerSort {
@@ -74,6 +80,8 @@ class SceneQuery {
     this.favoritePerformersOnly = false,
     this.includeSubStudios = false,
     this.filter = SceneFilter.none,
+    this.groupId,
+    this.playedOnly = false,
     int? seed,
   }) : seed = seed ?? (sort == SceneSort.random ? newRandomSeed() : 0);
 
@@ -102,14 +110,21 @@ class SceneQuery {
   /// Tags, rating, duration, resolution and saved filters.
   final SceneFilter filter;
 
+  /// Only scenes of this group (playlist).
+  final String? groupId;
+
+  /// Only scenes that were played at least once (history).
+  final bool playedOnly;
+
   /// Seed for [SceneSort.random] so that pages are stable while scrolling.
   /// Always 0 for other sorts, so equal queries map to the same provider.
   final int seed;
 
   String get sortField => sort == SceneSort.random ? 'random_$seed' : sort.field;
 
-  /// A-Z reads naturally ascending; every other sort shows the "most" first.
-  String get direction => sort == SceneSort.title ? 'ASC' : 'DESC';
+  /// A-Z and group order read naturally ascending; every other sort shows
+  /// the "most" first.
+  String get direction => sort == SceneSort.title || sort == SceneSort.groupOrder ? 'ASC' : 'DESC';
 
   Map<String, dynamic>? toSceneFilter() {
     final criteria = <String, dynamic>{
@@ -123,6 +138,8 @@ class SceneQuery {
         },
       if (inProgressOnly) 'resume_time': {'value': 0, 'modifier': 'GREATER_THAN'},
       if (favoritePerformersOnly) 'performer_favorite': true,
+      if (groupId != null) 'groups': {'value': [groupId], 'modifier': 'INCLUDES'},
+      if (playedOnly) 'play_count': {'value': 0, 'modifier': 'GREATER_THAN'},
     };
     return criteria.isEmpty ? null : criteria;
   }
@@ -137,6 +154,8 @@ class SceneQuery {
         favoritePerformersOnly: favoritePerformersOnly,
         includeSubStudios: includeSubStudios,
         filter: filter ?? this.filter,
+        groupId: groupId,
+        playedOnly: playedOnly,
         // Picking a sort again (e.g. "Shuffle") starts a fresh shuffle.
         seed: sort == null ? seed : null,
       );
@@ -153,6 +172,8 @@ class SceneQuery {
       other.favoritePerformersOnly == favoritePerformersOnly &&
       other.includeSubStudios == includeSubStudios &&
       other.filter == filter &&
+      other.groupId == groupId &&
+      other.playedOnly == playedOnly &&
       other.seed == seed;
 
   @override
@@ -166,6 +187,8 @@ class SceneQuery {
         favoritePerformersOnly,
         includeSubStudios,
         filter,
+        groupId,
+        playedOnly,
         seed,
       );
 }
@@ -216,6 +239,18 @@ class TagQuery {
 
   @override
   int get hashCode => Object.hash(sort, search);
+}
+
+class GroupQuery {
+  const GroupQuery({this.search});
+
+  final String? search;
+
+  @override
+  bool operator ==(Object other) => other is GroupQuery && other.search == search;
+
+  @override
+  int get hashCode => search.hashCode;
 }
 
 class StudioQuery {

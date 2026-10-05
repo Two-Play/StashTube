@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../core/pagination/paged_notifier.dart';
 import 'models/gallery.dart';
+import 'models/group.dart';
 import 'models/image_item.dart';
 import 'models/list_queries.dart';
 import 'models/page_result.dart';
@@ -132,4 +133,19 @@ final tagProvider = FutureProvider.autoDispose.family<Tag, String>(
 
 final savedSceneFiltersProvider = FutureProvider.autoDispose<List<SavedFilter>>(
   (ref) => ref.watch(stashRepositoryProvider).savedSceneFilters(),
+);
+
+class GroupListNotifier extends PagedNotifier<Group, GroupQuery> {
+  GroupListNotifier(super.arg);
+
+  @override
+  Future<PageResult<Group>> fetchPage(GroupQuery arg, int page, int perPage) =>
+      ref.read(stashRepositoryProvider).findGroups(arg, page: page, perPage: perPage);
+}
+
+final groupListProvider =
+    AsyncNotifierProvider.autoDispose.family<GroupListNotifier, PagedState<Group>, GroupQuery>(GroupListNotifier.new);
+
+final groupProvider = FutureProvider.autoDispose.family<Group, String>(
+  (ref, id) => ref.watch(stashRepositoryProvider).findGroup(id),
 );

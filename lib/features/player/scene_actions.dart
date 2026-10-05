@@ -11,6 +11,7 @@ import '../../data/models/tag.dart';
 import '../../data/providers.dart';
 import '../../data/repositories/stash_repository.dart';
 import '../edit/edit_pages.dart';
+import '../library/watch_later.dart';
 import '../shell/navigation.dart';
 import 'player_providers.dart';
 import 'scene_edits.dart';
@@ -69,6 +70,8 @@ class SceneActions extends ConsumerWidget {
               }
             },
           ),
+          const SizedBox(width: 8),
+          WatchLaterChip(sceneId: scene.id),
           const SizedBox(width: 8),
           ActionChip(
             avatar: const Icon(Icons.edit_outlined, size: 18),
@@ -215,6 +218,24 @@ class _AddMarkerSheetState extends ConsumerState<AddMarkerSheet> {
           ),
         ),
       ),
+    );
+  }
+}
+
+/// Toggles the scene in "Watch later" (9.4).
+class WatchLaterChip extends ConsumerWidget {
+  const WatchLaterChip({super.key, required this.sceneId});
+
+  final String sceneId;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final saved = ref.watch(watchLaterProvider).contains(sceneId);
+    return ActionChip(
+      avatar: Icon(saved ? Icons.watch_later : Icons.watch_later_outlined, size: 18),
+      label: Text(saved ? 'Saved' : 'Later'),
+      tooltip: saved ? 'Remove from Watch later' : 'Save to Watch later',
+      onPressed: () => ref.read(watchLaterProvider.notifier).toggle(sceneId),
     );
   }
 }

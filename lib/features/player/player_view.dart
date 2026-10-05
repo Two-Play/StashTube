@@ -6,6 +6,7 @@ import '../../core/utils/format.dart';
 import '../../data/models/list_queries.dart';
 import '../../data/models/scene.dart';
 import '../../data/providers.dart';
+import '../../widgets/scene_card.dart';
 import '../../widgets/scene_feed.dart';
 import '../../widgets/stash_image.dart';
 import '../shell/navigation.dart';
@@ -226,6 +227,9 @@ class _SceneDetails extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final queue = ref.watch(playQueueProvider);
+    if (queue != null) return _QueueDetails(scene: scene, queue: queue);
+
     // Prefer more scenes from the same studio, then performer, else random.
     final upNext = SceneQuery(
       sort: SceneSort.random,
@@ -255,6 +259,53 @@ class _SceneDetails extends ConsumerWidget {
             ),
           ),
         ),
+      ],
+    );
+  }
+}
+
+/// Details plus the queue being played (watch later, a group).
+class _QueueDetails extends StatelessWidget {
+  const _QueueDetails({required this.scene, required this.queue});
+
+  final Scene scene;
+  final PlayQueue queue;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return CustomScrollView(
+      key: ValueKey(scene.id),
+      physics: const ClampingScrollPhysics(),
+      slivers: [
+        SliverToBoxAdapter(child: _SceneInfo(scene: scene)),
+        SliverToBoxAdapter(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+            child: Row(
+              children: [
+                Icon(Icons.playlist_play, color: theme.colorScheme.primary),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    '${queue.title} · ${queue.index + 1} / ${queue.scenes.length}',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: theme.textTheme.titleMedium,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+        SliverList.builder(
+          itemCount: queue.scenes.length,
+          itemBuilder: (_, i) => ColoredBox(
+            color: i == queue.index ? theme.colorScheme.primaryContainer.withValues(alpha: 0.4) : Colors.transparent,
+            child: SceneListTile(scene: queue.scenes[i]),
+          ),
+        ),
+        const SliverToBoxAdapter(child: SizedBox(height: 24)),
       ],
     );
   }

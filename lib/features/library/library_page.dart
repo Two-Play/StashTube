@@ -5,10 +5,13 @@ import '../../data/models/list_queries.dart';
 import '../../widgets/scene_feed.dart';
 import '../shell/navigation.dart';
 import 'galleries_tab.dart';
+import 'groups.dart';
 import 'images_tab.dart';
 import 'stats_tab.dart';
+import 'watch_later_tab.dart';
 
-/// Library tab: every scene as a grid, every image, galleries and statistics.
+/// Library tab: all scenes, history, watch later, groups, images, galleries
+/// and statistics.
 class LibraryPage extends ConsumerStatefulWidget {
   const LibraryPage({super.key});
 
@@ -18,18 +21,24 @@ class LibraryPage extends ConsumerStatefulWidget {
 
 class _LibraryPageState extends ConsumerState<LibraryPage> {
   final _scenes = SceneQuery(sort: SceneSort.recentlyAdded);
+  final _history = SceneQuery(sort: SceneSort.lastPlayed, playedOnly: true);
 
   @override
   Widget build(BuildContext context) {
     return DefaultTabController(
-      length: 4,
+      length: 7,
       child: Scaffold(
         appBar: AppBar(
           title: const Text('Library'),
           actions: [IconButton(icon: const Icon(Icons.search), onPressed: () => openSearch(ref))],
           bottom: const TabBar(
+            isScrollable: true,
+            tabAlignment: TabAlignment.start,
             tabs: [
               Tab(icon: Icon(Icons.movie_outlined), text: 'Scenes'),
+              Tab(icon: Icon(Icons.history), text: 'History'),
+              Tab(icon: Icon(Icons.watch_later_outlined), text: 'Watch later'),
+              Tab(icon: Icon(Icons.video_library_outlined), text: 'Groups'),
               Tab(icon: Icon(Icons.image_outlined), text: 'Images'),
               Tab(icon: Icon(Icons.photo_library_outlined), text: 'Galleries'),
               Tab(icon: Icon(Icons.insights_outlined), text: 'Stats'),
@@ -46,6 +55,16 @@ class _LibraryPageState extends ConsumerState<LibraryPage> {
                 filterable: true,
               ),
             ),
+            _KeepAlive(
+              child: SceneFeedView(
+                initialQuery: _history,
+                sorts: const [],
+                layout: SceneFeedLayout.list,
+                emptyMessage: 'Nothing watched yet',
+              ),
+            ),
+            const WatchLaterTab(),
+            const GroupsTab(),
             const ImagesTab(),
             const GalleriesTab(),
             const StatsTab(),

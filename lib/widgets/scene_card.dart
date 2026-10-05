@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../core/utils/format.dart';
 import '../data/models/scene.dart';
 import '../features/edit/edit_pages.dart';
+import '../features/library/watch_later.dart';
 import '../features/player/player_providers.dart';
 import '../features/shell/navigation.dart';
 import 'stash_image.dart';
@@ -95,9 +96,12 @@ class SceneCard extends ConsumerWidget {
 
 /// Compact row used for "Up next" and search results: thumbnail left, text right.
 class SceneListTile extends ConsumerWidget {
-  const SceneListTile({super.key, required this.scene});
+  const SceneListTile({super.key, required this.scene, this.onTap});
 
   final Scene scene;
+
+  /// Defaults to playing the scene on its own.
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -105,7 +109,7 @@ class SceneListTile extends ConsumerWidget {
     final muted = theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurfaceVariant);
 
     return InkWell(
-      onTap: () => ref.read(nowPlayingProvider.notifier).play(scene),
+      onTap: onTap ?? () => ref.read(nowPlayingProvider.notifier).play(scene),
       child: Padding(
         padding: const EdgeInsets.fromLTRB(12, 6, 0, 6),
         child: Row(
@@ -258,6 +262,14 @@ void showSceneMenu(BuildContext context, WidgetRef ref, Scene scene) => showModa
                 title: const Text('Play'),
                 onTap: () => go(() => ref.read(nowPlayingProvider.notifier).play(scene)),
               ),
+              Consumer(builder: (context, ref, _) {
+                final saved = ref.watch(watchLaterProvider).contains(scene.id);
+                return ListTile(
+                  leading: Icon(saved ? Icons.watch_later : Icons.watch_later_outlined),
+                  title: Text(saved ? 'Remove from Watch later' : 'Save to Watch later'),
+                  onTap: () => go(() => ref.read(watchLaterProvider.notifier).toggle(scene.id)),
+                );
+              }),
               ListTile(
                 leading: const Icon(Icons.edit_outlined),
                 title: const Text('Edit details'),

@@ -122,6 +122,32 @@ class PlayerClosingNotifier extends Notifier<bool> {
 
 final playerClosingProvider = NotifierProvider<PlayerClosingNotifier, bool>(PlayerClosingNotifier.new);
 
+/// Scenes played one after another (watch later, a group), with the one
+/// currently playing.
+class PlayQueue {
+  const PlayQueue({required this.title, required this.scenes, this.index = 0});
+
+  final String title;
+  final List<Scene> scenes;
+  final int index;
+
+  bool get hasNext => index + 1 < scenes.length;
+
+  PlayQueue at(int index) => PlayQueue(title: title, scenes: scenes, index: index);
+}
+
+class PlayQueueNotifier extends Notifier<PlayQueue?> {
+  @override
+  PlayQueue? build() => null;
+
+  void set(PlayQueue? queue) => state = queue;
+}
+
+final playQueueProvider = NotifierProvider<PlayQueueNotifier, PlayQueue?>(PlayQueueNotifier.new);
+
+/// Emits true when the current media played to the end.
+final playerCompletedProvider = StreamProvider<bool>((ref) => ref.watch(playerProvider).stream.completed);
+
 /// The scene in the player, or null when the player is closed.
 class NowPlayingNotifier extends Notifier<Scene?> {
   /// Last position reported by the cast device, to continue locally after
@@ -130,6 +156,10 @@ class NowPlayingNotifier extends Notifier<Scene?> {
 
   @override
   Scene? build() {
+    // Autoplay: continue with the next scene of the queue.
+    ref.listen(playerCompletedProvider, (_, next) {
+      if (next.value == true) playNext();
+    });
     ref.listen(castPlaybackProvider, (_, next) {
       final position = next.value?.position;
       if (position != null && position > Duration.zero) _lastCastPosition = position;
@@ -150,9 +180,33 @@ class NowPlayingNotifier extends Notifier<Scene?> {
     return null;
   }
 
+  /// Plays [scenes] in order, starting at [start] (9.3, 9.4).
+  void playQueue(List<Scene> scenes, {required String title, int start = 0}) {
+    if (scenes.isEmpty) return;
+    final queue = PlayQueue(title: title, scenes: scenes, index: start.clamp(0, scenes.length - 1));
+    ref.read(playQueueProvider.notifier).set(queue);
+    play(queue.scenes[queue.index]);
+  }
+
+  /// Next scene of the queue, if any.
+  void playNext() {
+    final queue = ref.read(playQueueProvider);
+    if (queue == null || !queue.hasNext) return;
+    ref.read(playQueueProvider.notifier).set(queue.at(queue.index + 1));
+    play(queue.scenes[queue.index + 1]);
+  }
+
+  /// Plays [scene]. Inside the active queue this moves the queue position;
+  /// any other scene ends the queue.
   void play(Scene scene) {
     final url = scene.streamUrl;
     if (url == null) return;
+
+    final queue = ref.read(playQueueProvider);
+    if (queue != null) {
+      final i = queue.scenes.indexWhere((s) => s.id == scene.id);
+      ref.read(playQueueProvider.notifier).set(i < 0 ? null : queue.at(i));
+    }
 
     if (state == null) ref.read(miniplayerHeightProvider).value = kMiniPlayerHeight;
     ref.read(playerClosingProvider.notifier).set(false);
@@ -252,6 +306,7 @@ class NowPlayingNotifier extends Notifier<Scene?> {
 
   void close() {
     ref.read(playerClosingProvider.notifier).set(false);
+    ref.read(playQueueProvider.notifier).set(null);
     unawaited(ref.read(playbackTrackerProvider).stop());
     ref.read(playerProvider).stop();
     state = null;
