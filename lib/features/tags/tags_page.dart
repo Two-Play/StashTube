@@ -9,6 +9,7 @@ import '../../widgets/chip_bar.dart';
 import '../../widgets/paged_sliver.dart';
 import '../../widgets/stash_image.dart';
 import '../shell/navigation.dart';
+import 'tag_editor.dart';
 
 /// Discover: every tag that has scenes, most used first (8.2).
 class TagsPage extends ConsumerStatefulWidget {
@@ -26,6 +27,14 @@ class _TagsPageState extends ConsumerState<TagsPage> {
     final provider = tagListProvider(_query);
     return Scaffold(
       appBar: AppBar(title: const Text('Tags')),
+      floatingActionButton: FloatingActionButton.extended(
+        icon: const Icon(Icons.add),
+        label: const Text('New tag'),
+        onPressed: () async {
+          final tag = await showCreateTagDialog(context, ref);
+          if (tag != null) openTag(ref, tag.id);
+        },
+      ),
       body: RefreshIndicator(
         onRefresh: () => refreshFuture(ref, provider.future),
         child: LoadMoreListener(

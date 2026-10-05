@@ -75,6 +75,18 @@ mutation SceneSetRating($id: ID!, $rating100: Int) {
 }
 ''';
 
+  static const tagCreate = r'''
+mutation TagCreate($name: String!) {
+  tagCreate(input: { name: $name }) { id name image_path scene_count }
+}
+''';
+
+  static const sceneSetTags = r'''
+mutation SceneSetTags($id: ID!, $tag_ids: [ID!]) {
+  sceneUpdate(input: { id: $id, tag_ids: $tag_ids }) { id tags { id name } }
+}
+''';
+
   static const sceneAddO = r'''
 mutation SceneAddO($id: ID!) {
   sceneAddO(id: $id) { count }

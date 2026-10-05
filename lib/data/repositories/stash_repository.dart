@@ -296,6 +296,19 @@ class StashRepository implements PlaybackActivityApi {
   Future<void> setSceneRating(String sceneId, int? rating100) =>
       _mutate(StashQueries.sceneSetRating, {'id': sceneId, 'rating100': rating100});
 
+  Future<Tag> createTag(String name) async {
+    final data = await _mutate(StashQueries.tagCreate, {'name': name});
+    final json = readObject(data, 'tagCreate');
+    if (json == null) throw const StashApiException('Tag was not created.');
+    return Tag.fromJson(json);
+  }
+
+  /// Replaces the scene's tags; returns them as saved by the server.
+  Future<List<Tag>> setSceneTags(String sceneId, List<String> tagIds) async {
+    final data = await _mutate(StashQueries.sceneSetTags, {'id': sceneId, 'tag_ids': tagIds});
+    return readList(readObject(data, 'sceneUpdate') ?? const {}, 'tags').map(Tag.fromJson).toList();
+  }
+
   /// Increments the O-counter; returns the new count.
   Future<int> addSceneO(String sceneId) async {
     final data = await _mutate(StashQueries.sceneAddO, {'id': sceneId});

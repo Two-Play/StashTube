@@ -2,24 +2,29 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../data/models/scene.dart';
+import '../../data/models/tag.dart';
 import '../../data/repositories/stash_repository.dart';
 
-/// Rating and O-count changed in this session; override the loaded scene.
+/// Rating, O-count and tags changed in this session; override the loaded scene.
 @immutable
 class SceneEdit {
-  const SceneEdit({this.rating100, this.ratingChanged = false, this.oCounter});
+  const SceneEdit({this.rating100, this.ratingChanged = false, this.oCounter, this.tags});
 
   /// Only meaningful when [ratingChanged] (null = rating removed).
   final int? rating100;
   final bool ratingChanged;
   final int? oCounter;
+  final List<Tag>? tags;
 
-  SceneEdit withRating(int? rating100) => SceneEdit(rating100: rating100, ratingChanged: true, oCounter: oCounter);
+  SceneEdit withRating(int? rating100) =>
+      SceneEdit(rating100: rating100, ratingChanged: true, oCounter: oCounter, tags: tags);
   SceneEdit withOCounter(int count) =>
-      SceneEdit(rating100: rating100, ratingChanged: ratingChanged, oCounter: count);
+      SceneEdit(rating100: rating100, ratingChanged: ratingChanged, oCounter: count, tags: tags);
+  SceneEdit withTags(List<Tag> tags) =>
+      SceneEdit(rating100: rating100, ratingChanged: ratingChanged, oCounter: oCounter, tags: tags);
 }
 
-/// Rating (10.1) and O-counter (10.2) edits, applied optimistically and
+/// Rating (10.1), O-counter (10.2) and tag edits, applied optimistically and
 /// reverted when the server rejects them.
 class SceneEditsNotifier extends Notifier<Map<String, SceneEdit>> {
   @override
@@ -36,6 +41,19 @@ class SceneEditsNotifier extends Notifier<Map<String, SceneEdit>> {
     _put(scene.id, previous.withRating(rating100));
     try {
       await ref.read(stashRepositoryProvider).setSceneRating(scene.id, rating100);
+    } catch (_) {
+      if (ref.mounted) _put(scene.id, previous);
+      rethrow;
+    }
+  }
+
+  /// Replaces the scene's tags (optimistic; reverted on failure).
+  Future<void> setTags(Scene scene, List<Tag> tags) async {
+    final previous = _editOf(scene.id);
+    _put(scene.id, previous.withTags(tags));
+    try {
+      final saved = await ref.read(stashRepositoryProvider).setSceneTags(scene.id, [for (final t in tags) t.id]);
+      if (ref.mounted) _put(scene.id, _editOf(scene.id).withTags(saved));
     } catch (_) {
       if (ref.mounted) _put(scene.id, previous);
       rethrow;
@@ -84,3 +102,7 @@ int effectiveStars(WidgetRef ref, Scene scene) {
 
 int effectiveOCounter(WidgetRef ref, Scene scene) =>
     ref.watch(sceneEditsProvider.select((m) => m[scene.id]?.oCounter)) ?? scene.oCounter;
+
+/// Tags of [scene], including edits from this session.
+List<Tag> effectiveTags(WidgetRef ref, Scene scene) =>
+    ref.watch(sceneEditsProvider.select((m) => m[scene.id]?.tags)) ?? scene.tags;

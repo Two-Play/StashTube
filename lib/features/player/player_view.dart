@@ -14,7 +14,9 @@ import 'drag_to_minimize.dart';
 import 'player_controls.dart';
 import 'player_providers.dart';
 import 'player_transition.dart';
+import '../tags/tag_editor.dart';
 import 'scene_actions.dart';
+import 'scene_edits.dart';
 
 /// Content of the miniplayer panel: one layout that [PlayerTransition]
 /// morphs continuously from the collapsed bar into the full player page.
@@ -278,6 +280,7 @@ class _SceneInfoState extends ConsumerState<_SceneInfo> {
     final muted = theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurfaceVariant);
     final studio = scene.studio;
     final details = ref.watch(sceneDetailsProvider(scene.id)).value;
+    final tags = effectiveTags(ref, scene);
 
     final meta = [
       if (scene.playCount > 0) formatCount(scene.playCount, 'play'),
@@ -335,25 +338,32 @@ class _SceneInfoState extends ConsumerState<_SceneInfo> {
               },
             ),
           ),
-        if (scene.tags.isNotEmpty)
-          SizedBox(
-            height: 44,
-            child: ListView.separated(
-              scrollDirection: Axis.horizontal,
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              itemCount: scene.tags.length,
-              separatorBuilder: (_, __) => const SizedBox(width: 6),
-              itemBuilder: (_, i) {
-                final tag = scene.tags[i];
+        SizedBox(
+          height: 44,
+          child: ListView.separated(
+            scrollDirection: Axis.horizontal,
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            itemCount: tags.length + 1,
+            separatorBuilder: (_, __) => const SizedBox(width: 6),
+            itemBuilder: (_, i) {
+              if (i == tags.length) {
                 return ActionChip(
-                  label: Text('#${tag.name}'),
-                  labelStyle: TextStyle(color: theme.colorScheme.primary),
+                  avatar: Icon(tags.isEmpty ? Icons.add : Icons.edit_outlined, size: 16),
+                  label: Text(tags.isEmpty ? 'Add tags' : 'Edit tags'),
                   visualDensity: VisualDensity.compact,
-                  onPressed: () => openTag(ref, tag.id),
+                  onPressed: () => showSceneTagEditor(context, scene, tags),
                 );
-              },
-            ),
+              }
+              final tag = tags[i];
+              return ActionChip(
+                label: Text('#${tag.name}'),
+                labelStyle: TextStyle(color: theme.colorScheme.primary),
+                visualDensity: VisualDensity.compact,
+                onPressed: () => openTag(ref, tag.id),
+              );
+            },
           ),
+        ),
         if (details != null && details.markers.isNotEmpty) ChapterList(details: details),
         if (scene.details != null)
           Padding(

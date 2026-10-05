@@ -101,6 +101,7 @@ Eine wartbare Basis, damit Features unabhängig voneinander wachsen können.
 |---|---|---|---|---|
 | 8.1 | Als Nutzer möchte ich auf einen Tag tippen und alle Szenen mit diesem Tag sehen. | Tags im Player sind antippbare Chips; Tag-Seite mit Kopfbereich (Bild, Szenenzahl, Beschreibung) und paginierten, sortierbaren Szenen. | Next | ✅ |
 | 8.2 | Als Nutzer möchte ich eine „Entdecken“-Seite mit beliebten Tags. | Leere Suche zeigt „Popular tags“ (meistgenutzt zuerst); „See all“ öffnet ein endloses Tag-Raster mit Sortierung (Szenen, A–Z, neu). Nur Tags mit Szenen. | Later | ✅ |
+| 8.3 | Als Nutzer möchte ich Tags erstellen und die Tags einer Szene im Player bearbeiten. | „Edit tags“/„Add tags“ im Player: Tags entfernen, aus der Suche hinzufügen oder neu anlegen (`tagCreate`), speichern per `sceneUpdate(tag_ids)` mit sofortiger Anzeige. Tag-Übersicht mit „New tag“. | Next | ✅ |
 
 ## Epic 9 – Bibliothek
 
