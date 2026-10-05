@@ -7,7 +7,7 @@ import '../../data/models/scene.dart';
 import '../../data/models/scene_details.dart';
 import '../../data/providers.dart';
 import 'player_providers.dart';
-import 'preview_seek_bar.dart';
+import 'video_controls.dart';
 
 /// Claims single taps inside the expanded player.
 ///
@@ -32,8 +32,9 @@ class PanelTapGuard extends StatelessWidget {
 /// The one video surface of the player, used both in the miniplayer and in
 /// the expanded view so it is never rebuilt during the transition.
 ///
-/// With [showControls]: YouTube-like controls with double tap to seek ±10 s
-/// (4.11), a quality button (4.10) and, outside fullscreen, a collapse button.
+/// With [showControls] it shows [StashVideoControls]: double tap to seek
+/// ±10 s (4.11), quality (4.10), scrubbing with previews (4.14), and outside
+/// fullscreen a collapse button.
 class PlayerVideo extends ConsumerWidget {
   const PlayerVideo({super.key, required this.scene, required this.showControls});
 
@@ -41,59 +42,18 @@ class PlayerVideo extends ConsumerWidget {
   final bool showControls;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final qualityButton = MaterialCustomButton(
-      icon: const Icon(Icons.settings_outlined),
-      onPressed: () => showQualitySheet(context, scene.id),
-    );
-
-    MaterialVideoControlsThemeData theme({required List<Widget> topBar}) => MaterialVideoControlsThemeData(
-          seekOnDoubleTap: true,
-          seekOnDoubleTapBackwardDuration: const Duration(seconds: 10),
-          seekOnDoubleTapForwardDuration: const Duration(seconds: 10),
-          topButtonBar: topBar,
-          primaryButtonBar: const [
-            Spacer(flex: 2),
-            MaterialPlayOrPauseButton(iconSize: 48),
-            Spacer(flex: 2),
-          ],
-          // Own seek bar with preview thumbnails instead of media_kit's.
-          displaySeekBar: false,
-          buttonBarHeight: 76,
-          bottomButtonBarMargin: const EdgeInsets.symmetric(horizontal: 12),
-          bottomButtonBar: [
-            Expanded(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.end,
-                children: [
-                  const Row(
-                    children: [MaterialPositionIndicator(), Spacer(), MaterialFullscreenButton()],
-                  ),
-                  PreviewSeekBar(sceneId: scene.id),
-                ],
-              ),
-            ),
-          ],
-          seekBarPositionColor: Theme.of(context).colorScheme.primary,
-          seekBarThumbColor: Theme.of(context).colorScheme.primary,
-        );
-
-    return MaterialVideoControlsTheme(
-      normal: theme(topBar: [
-        MaterialCustomButton(
-          icon: const Icon(Icons.keyboard_arrow_down, size: 30),
-          onPressed: () => ref.read(nowPlayingProvider.notifier).collapse(),
-        ),
-        const Spacer(),
-        qualityButton,
-      ]),
-      fullscreen: theme(topBar: [const Spacer(), qualityButton]),
-      child: Video(
+  Widget build(BuildContext context, WidgetRef ref) => Video(
         controller: ref.watch(videoControllerProvider),
-        controls: showControls ? MaterialVideoControls : NoVideoControls,
-      ),
-    );
-  }
+        // The same builder is used by media_kit's fullscreen route.
+        controls: showControls
+            ? (state) => StashVideoControls(
+                  fullscreen: state.isFullscreen(),
+                  onToggleFullscreen: state.toggleFullscreen,
+                  scene: scene,
+                  onQuality: () => showQualitySheet(context, scene.id),
+                )
+            : NoVideoControls,
+      );
 }
 
 String _streamDescription(SceneStream stream) {

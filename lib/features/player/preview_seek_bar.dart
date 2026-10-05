@@ -14,9 +14,13 @@ import 'player_providers.dart';
 /// (from Stash's sprite thumbnails, if generated) plus the target time.
 /// Seeks once on release, like YouTube.
 class PreviewSeekBar extends ConsumerStatefulWidget {
-  const PreviewSeekBar({super.key, required this.sceneId});
+  const PreviewSeekBar({super.key, required this.sceneId, this.onInteractionStart, this.onInteractionEnd});
 
   final String sceneId;
+
+  /// While the user touches the bar, e.g. to keep the controls visible.
+  final VoidCallback? onInteractionStart;
+  final VoidCallback? onInteractionEnd;
 
   @override
   ConsumerState<PreviewSeekBar> createState() => _PreviewSeekBarState();
@@ -64,17 +68,26 @@ class _PreviewSeekBarState extends ConsumerState<PreviewSeekBar> {
   double _fractionOf(Duration d) => _totalMs <= 0 ? 0 : (d.inMilliseconds / _totalMs).clamp(0.0, 1.0);
 
   void _update(double dx) {
+    if (_drag == null) widget.onInteractionStart?.call();
     setState(() => _drag = (dx / _barWidth).clamp(0.0, 1.0));
     if (!_overlay.isShowing) _overlay.show();
   }
 
+  /// Seeks to the dragged position and ends the interaction.
   void _end() {
     final drag = _drag;
     if (drag != null && _totalMs > 0) {
       ref.read(playerProvider).seek(Duration(milliseconds: (drag * _totalMs).round()));
     }
+    _reset();
+  }
+
+  /// Ends the interaction without seeking.
+  void _reset() {
+    final wasActive = _drag != null;
     _overlay.hide();
     setState(() => _drag = null);
+    if (wasActive) widget.onInteractionEnd?.call();
   }
 
   @override
@@ -97,14 +110,17 @@ class _PreviewSeekBarState extends ConsumerState<PreviewSeekBar> {
               onHorizontalDragStart: (d) => _update(d.localPosition.dx),
               onHorizontalDragUpdate: (d) => _update(d.localPosition.dx),
               onHorizontalDragEnd: (_) => _end(),
-              onHorizontalDragCancel: _end,
+              onHorizontalDragCancel: _reset,
               onTapDown: (d) => _update(d.localPosition.dx),
               onTapUp: (_) => _end(),
-              onTapCancel: () {
-                if (_drag != null) _end();
-              },
+              // A drag winning over the tap cancels it: don't seek here, the
+              // drag continues and seeks on release.
+              onTapCancel: _reset,
+              // Explicit full width: in a Column (loose constraints) a
+              // childless CustomPaint would otherwise shrink to zero width.
               child: SizedBox(
                 height: 28,
+                width: double.infinity,
                 child: CustomPaint(
                   painter: _SeekBarPainter(
                     played: played,
