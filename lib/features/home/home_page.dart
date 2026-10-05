@@ -35,7 +35,7 @@ class _HomePageState extends ConsumerState<HomePage> {
     // A scene that isn't in "Continue watching" yet got its first saved
     // position: reload the shelf so it shows up.
     ref.listen(resumeTimesProvider, (previous, next) {
-      final shown = ref.read(sceneListProvider(_continueWatching)).valueOrNull?.items.map((s) => s.id).toSet() ?? {};
+      final shown = ref.read(sceneListProvider(_continueWatching)).value?.items.map((s) => s.id).toSet() ?? {};
       final added = next.entries.any((e) => e.value > 0 && previous?[e.key] == null && !shown.contains(e.key));
       if (added) ref.invalidate(sceneListProvider(_continueWatching));
     });

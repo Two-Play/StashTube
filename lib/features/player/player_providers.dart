@@ -103,7 +103,14 @@ class PreferredStreamNotifier extends Notifier<String?> {
 final preferredStreamProvider = NotifierProvider<PreferredStreamNotifier, String?>(PreferredStreamNotifier.new);
 
 /// The transcode currently playing; null while playing the direct file.
-final currentStreamProvider = StateProvider<SceneStream?>((ref) => null);
+class CurrentStreamNotifier extends Notifier<SceneStream?> {
+  @override
+  SceneStream? build() => null;
+
+  void set(SceneStream? stream) => state = stream;
+}
+
+final currentStreamProvider = NotifierProvider<CurrentStreamNotifier, SceneStream?>(CurrentStreamNotifier.new);
 
 /// The scene in the player, or null when the player is closed.
 class NowPlayingNotifier extends Notifier<Scene?> {
@@ -114,7 +121,7 @@ class NowPlayingNotifier extends Notifier<Scene?> {
   @override
   Scene? build() {
     ref.listen(castPlaybackProvider, (_, next) {
-      final position = next.valueOrNull?.position;
+      final position = next.value?.position;
       if (position != null && position > Duration.zero) _lastCastPosition = position;
     });
     ref.listen(isCastingProvider, (wasCasting, casting) {
@@ -142,7 +149,7 @@ class NowPlayingNotifier extends Notifier<Scene?> {
       // Prefer the position saved in this session over the (possibly stale) list data.
       final resume = ref.read(resumeTimesProvider)[scene.id] ?? scene.resumeTime;
       unawaited(ref.read(playbackTrackerProvider).start(scene.copyWith(resumeTime: resume)));
-      ref.read(currentStreamProvider.notifier).state = null;
+      ref.read(currentStreamProvider.notifier).set(null);
       final start = Duration(milliseconds: (resume * 1000).round());
       unawaited(_openPreferredStream(scene, url, start));
       if (ref.read(isCastingProvider)) unawaited(_castScene(scene, start));
@@ -170,7 +177,7 @@ class NowPlayingNotifier extends Notifier<Scene?> {
     }
     // While casting, prepare the scene locally but play it on the cast device.
     _open(stream?.url ?? directUrl, start, play: !ref.read(isCastingProvider));
-    ref.read(currentStreamProvider.notifier).state = stream;
+    ref.read(currentStreamProvider.notifier).set(stream);
   }
 
   /// Plays [scene] on the connected cast device from [start].
@@ -197,7 +204,7 @@ class NowPlayingNotifier extends Notifier<Scene?> {
   Future<void> selectStream(SceneStream stream) async {
     if (state == null) return;
     _open(stream.url, ref.read(playerProvider).state.position, play: !ref.read(isCastingProvider));
-    ref.read(currentStreamProvider.notifier).state = stream.isDirect ? null : stream;
+    ref.read(currentStreamProvider.notifier).set(stream.isDirect ? null : stream);
     await ref.read(preferredStreamProvider.notifier).set(stream.isDirect ? null : stream.label);
   }
 

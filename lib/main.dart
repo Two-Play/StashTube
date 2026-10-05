@@ -5,6 +5,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import 'app.dart';
 import 'core/config/server_config.dart';
+import 'data/repositories/stash_repository.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -12,6 +13,7 @@ Future<void> main() async {
   final prefs = await SharedPreferences.getInstance();
 
   runApp(ProviderScope(
+    retry: stashRetry,
     overrides: [sharedPreferencesProvider.overrideWithValue(prefs)],
     child: const StashApp(),
   ));

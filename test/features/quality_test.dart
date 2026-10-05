@@ -67,7 +67,7 @@ void main() {
     expect(checkIn('Direct stream'), findsOneWidget, reason: 'direct file plays by default');
     expect(checkIn('HLS 720p'), findsNothing);
 
-    container.read(currentStreamProvider.notifier).state = _details.streams[1];
+    container.read(currentStreamProvider.notifier).set(_details.streams[1]);
     await tester.pump();
     expect(checkIn('Direct stream'), findsNothing);
     expect(checkIn('HLS 720p'), findsOneWidget);

@@ -21,7 +21,7 @@ class GalleryPage extends ConsumerWidget {
     final theme = Theme.of(context);
 
     return Scaffold(
-      appBar: AppBar(title: Text(gallery.valueOrNull?.title ?? '')),
+      appBar: AppBar(title: Text(gallery.value?.title ?? '')),
       body: ImageGridView(
         initialQuery: ImageQuery(sort: ImageSort.path, galleryId: galleryId),
         sorts: const [ImageSort.path, ImageSort.title, ImageSort.newest, ImageSort.random],

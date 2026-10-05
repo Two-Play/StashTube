@@ -15,4 +15,4 @@ final castPlaybackProvider = StreamProvider<CastPlayback>(
 );
 
 /// Whether playback currently happens on a cast device.
-final isCastingProvider = Provider<bool>((ref) => ref.watch(castConnectionProvider).valueOrNull != null);
+final isCastingProvider = Provider<bool>((ref) => ref.watch(castConnectionProvider).value != null);

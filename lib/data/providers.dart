@@ -14,6 +14,8 @@ import 'models/studio.dart';
 import 'repositories/stash_repository.dart';
 
 class SceneListNotifier extends PagedNotifier<Scene, SceneQuery> {
+  SceneListNotifier(super.arg);
+
   @override
   Future<PageResult<Scene>> fetchPage(SceneQuery arg, int page, int perPage) =>
       ref.read(stashRepositoryProvider).findScenes(arg, page: page, perPage: perPage);
@@ -25,6 +27,8 @@ final sceneListProvider =
 );
 
 class PerformerListNotifier extends PagedNotifier<Performer, PerformerQuery> {
+  PerformerListNotifier(super.arg);
+
   @override
   Future<PageResult<Performer>> fetchPage(PerformerQuery arg, int page, int perPage) =>
       ref.read(stashRepositoryProvider).findPerformers(arg, page: page, perPage: perPage);
@@ -36,6 +40,8 @@ final performerListProvider = AsyncNotifierProvider.autoDispose
 );
 
 class StudioListNotifier extends PagedNotifier<Studio, StudioQuery> {
+  StudioListNotifier(super.arg);
+
   @override
   Future<PageResult<Studio>> fetchPage(StudioQuery arg, int page, int perPage) =>
       ref.read(stashRepositoryProvider).findStudios(arg, page: page, perPage: perPage);
@@ -64,6 +70,8 @@ final sceneDetailsProvider = FutureProvider.autoDispose.family<SceneDetails, Str
 );
 
 class ImageListNotifier extends PagedNotifier<ImageItem, ImageQuery> {
+  ImageListNotifier(super.arg);
+
   @override
   Future<PageResult<ImageItem>> fetchPage(ImageQuery arg, int page, int perPage) =>
       ref.read(stashRepositoryProvider).findImages(arg, page: page, perPage: perPage);
@@ -89,6 +97,8 @@ final scrubThumbnailsProvider = FutureProvider.autoDispose.family<ScrubThumbnail
 });
 
 class GalleryListNotifier extends PagedNotifier<Gallery, GalleryQuery> {
+  GalleryListNotifier(super.arg);
+
   @override
   Future<PageResult<Gallery>> fetchPage(GalleryQuery arg, int page, int perPage) =>
       ref.read(stashRepositoryProvider).findGalleries(arg, page: page, perPage: perPage);

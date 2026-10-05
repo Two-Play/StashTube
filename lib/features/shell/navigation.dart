@@ -20,7 +20,14 @@ enum AppTab {
   final IconData selectedIcon;
 }
 
-final currentTabProvider = StateProvider<AppTab>((ref) => AppTab.home);
+class CurrentTabNotifier extends Notifier<AppTab> {
+  @override
+  AppTab build() => AppTab.home;
+
+  void select(AppTab tab) => state = tab;
+}
+
+final currentTabProvider = NotifierProvider<CurrentTabNotifier, AppTab>(CurrentTabNotifier.new);
 
 /// Each tab has its own navigator so pushed pages keep the bottom bar and the
 /// miniplayer visible, like YouTube.

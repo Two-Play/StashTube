@@ -93,7 +93,7 @@ class _SceneFeedViewState extends ConsumerState<SceneFeedView> {
                   onSelected: (s) => setState(() => _query = _query.copyWith(sort: s)),
                 ),
               ),
-            if (widget.showCount && value.valueOrNull != null)
+            if (widget.showCount && value.value != null)
               SliverToBoxAdapter(
                 child: Padding(
                   padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),

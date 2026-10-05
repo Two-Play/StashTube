@@ -30,6 +30,16 @@ class StashApiException implements Exception {
   String toString() => message;
 }
 
+/// Retry policy for failed providers (Riverpod 3 retries by default, up to
+/// 10 times). Only retry when the server was unreachable, a few times with
+/// backoff; errors the server reports (bad query, wrong API key) are shown
+/// right away instead of hammering the server.
+Duration? stashRetry(int retryCount, Object error) {
+  if (retryCount >= 3) return null;
+  if (error is! StashApiException || !error.isNetworkError) return null;
+  return Duration(milliseconds: 500 * (1 << retryCount));
+}
+
 GraphQLClient createGraphQLClient(ServerConfig config) => GraphQLClient(
       link: HttpLink(config.graphqlEndpoint, defaultHeaders: config.authHeaders),
       // Lists are paginated and refreshed manually, so no normalized caching.

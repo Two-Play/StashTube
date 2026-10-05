@@ -85,7 +85,7 @@ class _PerformerResults extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final performers = ref.watch(performerListProvider(PerformerQuery(search: term))).valueOrNull?.items ?? const [];
+    final performers = ref.watch(performerListProvider(PerformerQuery(search: term))).value?.items ?? const [];
     if (performers.isEmpty) return const SliverToBoxAdapter();
 
     return SliverToBoxAdapter(

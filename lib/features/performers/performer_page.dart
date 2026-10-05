@@ -23,7 +23,7 @@ class PerformerPage extends ConsumerWidget {
     final performer = ref.watch(performerProvider(performerId));
 
     return Scaffold(
-      appBar: AppBar(title: Text(performer.valueOrNull?.name ?? '')),
+      appBar: AppBar(title: Text(performer.value?.name ?? '')),
       body: SceneFeedView(
         initialQuery: SceneQuery(sort: SceneSort.newest, performerId: performerId),
         sorts: _sorts,

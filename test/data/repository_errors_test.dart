@@ -45,4 +45,13 @@ void main() {
       throwsA(isA<StashApiException>().having((e) => e.isNetworkError, 'isNetworkError', isTrue)),
     );
   });
+
+  test('retry policy: only network errors, at most 3 times with backoff', () {
+    const network = StashApiException('offline', isNetworkError: true);
+    expect(stashRetry(0, network), const Duration(milliseconds: 500));
+    expect(stashRetry(2, network), const Duration(milliseconds: 2000));
+    expect(stashRetry(3, network), isNull);
+    expect(stashRetry(0, const StashApiException('Not authorized')), isNull);
+    expect(stashRetry(0, StateError('bug')), isNull);
+  });
 }

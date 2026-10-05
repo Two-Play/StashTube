@@ -94,7 +94,7 @@ class _PreviewSeekBarState extends ConsumerState<PreviewSeekBar> {
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
     final played = _drag ?? _fractionOf(_position);
-    final thumbs = ref.watch(scrubThumbnailsProvider(widget.sceneId)).valueOrNull;
+    final thumbs = ref.watch(scrubThumbnailsProvider(widget.sceneId)).value;
     final headers = ref.watch(authHeadersProvider);
 
     return OverlayPortal(

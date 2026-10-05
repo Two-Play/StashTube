@@ -47,7 +47,7 @@ class _GalleriesTabState extends ConsumerState<GalleriesTab> with AutomaticKeepA
                 onSelected: (s) => setState(() => _query = GalleryQuery(sort: s)),
               ),
             ),
-            if (value.valueOrNull case final state?)
+            if (value.value case final state?)
               SliverToBoxAdapter(
                 child: Padding(
                   padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),

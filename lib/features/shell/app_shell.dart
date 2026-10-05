@@ -39,7 +39,7 @@ class AppShell extends ConsumerWidget {
         navigatorKeys[tab]!.currentState?.popUntil((r) => r.isFirst);
       } else {
         HapticFeedback.selectionClick();
-        ref.read(currentTabProvider.notifier).state = tab;
+        ref.read(currentTabProvider.notifier).select(tab);
       }
     }
 
@@ -51,7 +51,7 @@ class AppShell extends ConsumerWidget {
         if (navigator != null && navigator.canPop()) {
           navigator.pop();
         } else if (currentTab != AppTab.home) {
-          ref.read(currentTabProvider.notifier).state = AppTab.home;
+          ref.read(currentTabProvider.notifier).select(AppTab.home);
         } else {
           SystemNavigator.pop();
         }

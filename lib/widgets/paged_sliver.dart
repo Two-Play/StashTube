@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_riverpod/misc.dart' show Refreshable;
 
 import '../core/pagination/paged_notifier.dart';
 import 'status_views.dart';
@@ -58,7 +59,7 @@ class PagedSliver<T> extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final state = value.valueOrNull;
+    final state = value.value;
     if (state == null) {
       if (value.hasError) {
         return SliverToBoxAdapter(child: ErrorView(error: value.error!, onRetry: onRetry));

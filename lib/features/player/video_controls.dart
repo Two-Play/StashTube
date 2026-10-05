@@ -120,7 +120,7 @@ class _StashVideoControlsState extends ConsumerState<StashVideoControls> {
     final fullscreen = widget.fullscreen;
 
     // While casting, the video plays on the TV: show remote controls instead.
-    final casting = ref.watch(castConnectionProvider).valueOrNull;
+    final casting = ref.watch(castConnectionProvider).value;
     if (casting != null) return CastingControls(connection: casting, showMinimize: !fullscreen);
 
     // Layers: gestures at the bottom, a purely visual scrim, buttons on top.

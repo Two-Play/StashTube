@@ -11,7 +11,7 @@ A YouTube-style Flutter client (iOS/Android) for a self-hosted [Stash](https://g
 ```bash
 flutter pub get
 flutter run
-flutter analyze                 # flutter_lints
+dart analyze                    # flutter_lints + riverpod_lint (flutter analyze does NOT run analyzer plugins)
 flutter test                    # all tests
 flutter test test/core/paged_notifier_test.dart --plain-name "loads pages"   # single test
 flutter build ios --simulator --debug
@@ -20,8 +20,9 @@ flutter build apk --debug
 
 - `pubspec.lock` is git-ignored (`*.lock`), so check resolved versions with `flutter pub deps`. Older transitive versions (`archive` 3.4, `win32` 5.4) don't compile on the current Dart SDK.
 - Android uses Gradle 9.3.1 / AGP 9.1.0 / Kotlin 2.4.0 with Kotlin DSL, matching the current Flutter template. `android.builtInKotlin=false` and `android.newDsl=false` in `gradle.properties` keep older plugins such as media_kit working.
-- `riverpod_generator`/`build_runner` are dev dependencies, but all providers are written by hand. Nothing uses `@riverpod`.
-- `custom_lint`/`riverpod_lint` were removed: riverpod_lint 2.x crashes on the current analyzer, and the old 0.6 versions conflict with `flutter_chrome_cast`. Riverpod lints come back with the Riverpod 3 upgrade (backlog 14.2).
+- Riverpod 3. All providers are written by hand: there is no codegen and no `@riverpod`. riverpod_lint 3 is enabled under `plugins:` in `analysis_options.yaml` (analysis_server_plugin, no custom_lint).
+- Family notifiers get their argument through the constructor (see `PagedNotifier`). `AsyncValue.value` is null while loading or on error (there is no `valueOrNull`). Use `Notifier` classes with methods instead of `StateProvider`. Check `ref.mounted` after `await` before touching `state`.
+- Riverpod 3 retries failed providers automatically. `main()` sets `retry: stashRetry`, which retries only network errors, at most 3 times; server-reported errors show immediately.
 - `flutter_chrome_cast` is pinned below 1.5. Version 1.5 pulls in permission_handler 13, which needs compileSdk 37, and AGP 9.1 only supports up to 36.
 
 ## Architecture

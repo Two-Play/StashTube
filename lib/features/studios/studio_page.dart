@@ -32,11 +32,11 @@ class _StudioPageState extends ConsumerState<StudioPage> {
   @override
   Widget build(BuildContext context) {
     final studio = ref.watch(studioProvider(widget.studioId));
-    final hasChildren = studio.valueOrNull?.children.isNotEmpty ?? false;
+    final hasChildren = studio.value?.children.isNotEmpty ?? false;
     final includeSubStudios = _includeSubStudios ?? hasChildren;
 
     return Scaffold(
-      appBar: AppBar(title: Text(studio.valueOrNull?.name ?? '')),
+      appBar: AppBar(title: Text(studio.value?.name ?? '')),
       body: SceneFeedView(
         initialQuery: SceneQuery(
           sort: SceneSort.newest,

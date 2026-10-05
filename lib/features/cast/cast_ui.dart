@@ -16,7 +16,7 @@ class CastButton extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     if (!ref.watch(castServiceProvider).isSupported) return const SizedBox.shrink();
-    final connection = ref.watch(castConnectionProvider).valueOrNull;
+    final connection = ref.watch(castConnectionProvider).value;
     return IconButton(
       tooltip: connection == null ? 'Cast' : 'Casting to ${connection.deviceName}',
       icon: Icon(
@@ -41,7 +41,7 @@ class _CastSheet extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final service = ref.watch(castServiceProvider);
-    final connection = ref.watch(castConnectionProvider).valueOrNull;
+    final connection = ref.watch(castConnectionProvider).value;
     final theme = Theme.of(context);
 
     if (connection != null) {
@@ -125,7 +125,7 @@ class CastingControls extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final service = ref.watch(castServiceProvider);
-    final playback = ref.watch(castPlaybackProvider).valueOrNull ?? const CastPlayback();
+    final playback = ref.watch(castPlaybackProvider).value ?? const CastPlayback();
 
     void seekBy(int seconds) {
       final target = playback.position + Duration(seconds: seconds);

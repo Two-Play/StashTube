@@ -39,7 +39,7 @@ class PlayerPanel extends ConsumerWidget {
       screenWidth: media.size.width,
       topInset: media.padding.top,
     );
-    final markers = ref.watch(sceneDetailsProvider(scene.id)).valueOrNull?.markers ?? const [];
+    final markers = ref.watch(sceneDetailsProvider(scene.id)).value?.markers ?? const [];
 
     // Only status bar fields: the collapsed panel sits over Android's
     // navigation bar, whose style must stay untouched.
@@ -163,7 +163,7 @@ class _MiniInfo extends ConsumerWidget {
         if (ref.watch(isCastingProvider))
           // Controls the cast device while casting.
           Builder(builder: (_) {
-            final playing = ref.watch(castPlaybackProvider).valueOrNull?.playing ?? false;
+            final playing = ref.watch(castPlaybackProvider).value?.playing ?? false;
             final cast = ref.watch(castServiceProvider);
             return IconButton(
               icon: Icon(playing ? Icons.pause : Icons.play_arrow),
@@ -275,7 +275,7 @@ class _SceneInfoState extends ConsumerState<_SceneInfo> {
     final muted = theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurfaceVariant);
     final studio = scene.studio;
     final rating = scene.rating100;
-    final details = ref.watch(sceneDetailsProvider(scene.id)).valueOrNull;
+    final details = ref.watch(sceneDetailsProvider(scene.id)).value;
 
     final meta = [
       if (scene.playCount > 0) formatCount(scene.playCount, 'play'),

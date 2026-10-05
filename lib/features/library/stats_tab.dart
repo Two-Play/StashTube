@@ -39,7 +39,7 @@ class StatsTab extends ConsumerWidget {
             _ => [const LoadingView()],
           },
           // Activity stats are optional: hidden on servers that don't support them.
-          if (activity.valueOrNull case final value?) ..._activityTiles(value),
+          if (activity.value case final value?) ..._activityTiles(value),
         ],
       ),
     );
