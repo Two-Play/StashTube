@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../core/utils/format.dart';
 import '../data/models/performer.dart';
+import '../features/performers/favorite_button.dart';
 import '../features/shell/navigation.dart';
 import 'stash_image.dart';
 
@@ -29,12 +30,7 @@ class PerformerTile extends ConsumerWidget {
                 fit: StackFit.expand,
                 children: [
                   StashImage(performer.imageUrl, fallbackIcon: Icons.person),
-                  if (performer.favorite)
-                    const Positioned(
-                      top: 8,
-                      left: 8,
-                      child: Icon(Icons.favorite, color: Colors.redAccent, size: 20),
-                    ),
+                  Positioned(top: 4, left: 4, child: FavoriteIconButton(performer: performer)),
                   if (performer.country != null)
                     Positioned(top: 8, right: 8, child: CountryFlagIcon(code: performer.country!)),
                 ],

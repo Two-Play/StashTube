@@ -11,18 +11,20 @@ class ChannelHeader extends StatelessWidget {
     this.imageUrl,
     this.subtitle,
     this.description,
-    this.trailing,
     this.leadingBadge,
+    this.action,
   });
 
   final String name;
   final String? imageUrl;
   final String? subtitle;
   final String? description;
-  final Widget? trailing;
 
   /// Small widget shown before the name, e.g. a country flag.
   final Widget? leadingBadge;
+
+  /// Full-width button below the header, like YouTube's "Subscribe".
+  final Widget? action;
 
   @override
   Widget build(BuildContext context) {
@@ -75,7 +77,6 @@ class ChannelHeader extends StatelessWidget {
                   ],
                 ),
               ),
-              if (trailing != null) trailing!,
             ],
           ),
         ),
@@ -88,6 +89,11 @@ class ChannelHeader extends StatelessWidget {
               overflow: TextOverflow.ellipsis,
               style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurfaceVariant),
             ),
+          ),
+        if (action != null)
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+            child: SizedBox(width: double.infinity, child: action),
           ),
         const SizedBox(height: 8),
       ],

@@ -20,7 +20,7 @@ class _HomePageState extends ConsumerState<HomePage> {
   // Held in state so the shuffle seed stays stable across rebuilds.
   final _query = SceneQuery(sort: SceneSort.recentlyAdded);
   final _continueWatching = SceneQuery(sort: SceneSort.lastPlayed, inProgressOnly: true);
-  final _fromFavorites = SceneQuery(sort: SceneSort.recentlyAdded, favoritePerformersOnly: true);
+  final _fromFavorites = SceneQuery.newFromFavorites();
 
   void _refreshShelves() {
     ref.invalidate(sceneListProvider(_continueWatching));

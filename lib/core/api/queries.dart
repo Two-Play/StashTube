@@ -68,6 +68,12 @@ mutation SceneAddPlay($id: ID!) {
 }
 ''';
 
+  static const performerSetFavorite = r'''
+mutation PerformerSetFavorite($id: ID!, $favorite: Boolean!) {
+  performerUpdate(input: { id: $id, favorite: $favorite }) { id favorite }
+}
+''';
+
   static const findScenes = r'''
 query FindScenes($filter: FindFilterType, $scene_filter: SceneFilterType) {
   findScenes(filter: $filter, scene_filter: $scene_filter) {

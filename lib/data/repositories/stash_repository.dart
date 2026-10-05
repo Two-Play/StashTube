@@ -147,6 +147,9 @@ class StashRepository implements PlaybackActivityApi {
   @override
   Future<void> addPlay(String sceneId) => _mutate(StashQueries.sceneAddPlay, {'id': sceneId});
 
+  Future<void> setPerformerFavorite(String performerId, bool favorite) =>
+      _mutate(StashQueries.performerSetFavorite, {'id': performerId, 'favorite': favorite});
+
   static Map<String, dynamic> _findFilter({
     String? search,
     required int page,

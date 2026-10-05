@@ -82,7 +82,7 @@ Eine wartbare Basis, damit Features unabhängig voneinander wachsen können.
 | 6.1 | Als Nutzer möchte ich alle Performer als Raster sehen und endlos scrollen. | Porträtkarten mit Name, Flagge und Anzahl der Szenen. Paginiert. | MVP | ✅ |
 | 6.2 | Als Nutzer möchte ich Performer sortieren bzw. filtern (Name, Anzahl Szenen, Favoriten, Zufall). | Chip-Leiste. | MVP | ✅ |
 | 6.3 | Als Nutzer möchte ich eine Kanalseite für einen Performer sehen: Header mit Bild und Infos, darunter alle Szenen. | Header (Bild, Name, Land, Alter, Szenen) und paginierte Szenenliste. | MVP | ✅ |
-| 6.4 | Als Nutzer möchte ich einen Performer als Favoriten markieren („Abonnieren“). | `performerUpdate(favorite)` mit optimistischem UI-Update. | Next | ⬜ |
+| 6.4 | Als Nutzer möchte ich einen Performer als Favoriten markieren („Abonnieren“). | `performerUpdate(favorite)` mit optimistischem UI-Update. Button „Favorite/Favorited“ auf der Kanalseite, Herz auf den Performer-Kacheln. Bei Fehler Rücksetzen und Snackbar. Favoriten-Listen und die Reihe „New from favorites“ laden danach neu. | Next | ✅ |
 | 6.5 | Als Nutzer möchte ich einen „Abos“-Feed mit neuen Szenen meiner Favoriten. | Szenenfeed mit Filter `performer_favorite: true`. | Next | 🟡 (Reihe „New from favorites“ auf der Startseite ✅, eigener Tab offen) |
 
 ## Epic 7 – Studios („Kanäle“)

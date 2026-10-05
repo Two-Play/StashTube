@@ -8,6 +8,7 @@ import '../../widgets/channel_header.dart';
 import '../../widgets/performer_tile.dart';
 import '../../widgets/scene_feed.dart';
 import '../../widgets/status_views.dart';
+import 'favorite_button.dart';
 
 /// Performer "channel": header with profile info and all of their scenes.
 class PerformerPage extends ConsumerWidget {
@@ -42,7 +43,7 @@ class PerformerPage extends ConsumerWidget {
                     if (age != null) '$age years',
                   ].join(' • '),
                   description: p.details,
-                  trailing: p.favorite ? const Icon(Icons.favorite, color: Colors.redAccent) : null,
+                  action: FavoriteButton(performer: p),
                 );
               },
             ),

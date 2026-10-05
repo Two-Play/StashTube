@@ -44,6 +44,11 @@ class SceneQuery {
     int? seed,
   }) : seed = seed ?? (sort == SceneSort.random ? newRandomSeed() : 0);
 
+  /// Home shelf "New from favorites"; shared so it can be invalidated after
+  /// favorites change.
+  factory SceneQuery.newFromFavorites() =>
+      SceneQuery(sort: SceneSort.recentlyAdded, favoritePerformersOnly: true);
+
   final SceneSort sort;
   final String? search;
   final String? performerId;
