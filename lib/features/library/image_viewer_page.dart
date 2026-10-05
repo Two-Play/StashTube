@@ -1,9 +1,7 @@
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../core/config/server_config.dart';
 import '../../core/utils/format.dart';
 import '../../data/models/image_item.dart';
 import '../../data/models/list_queries.dart';
@@ -55,7 +53,6 @@ class _ImageViewerPageState extends ConsumerState<ImageViewerPage> {
   @override
   Widget build(BuildContext context) {
     final items = ref.watch(imageListProvider(widget.query)).value?.items ?? const <ImageItem>[];
-    final headers = ref.watch(authHeadersProvider);
     final current = _index < items.length ? items[_index] : null;
 
     return Scaffold(
@@ -72,7 +69,6 @@ class _ImageViewerPageState extends ConsumerState<ImageViewerPage> {
               onTap: () => setState(() => _showOverlay = !_showOverlay),
               child: _ZoomableImage(
                 image: items[i],
-                headers: headers,
                 onZoomChanged: (zoomed) {
                   if (zoomed != _zoomed) setState(() => _zoomed = zoomed);
                 },
@@ -94,10 +90,9 @@ class _ImageViewerPageState extends ConsumerState<ImageViewerPage> {
 }
 
 class _ZoomableImage extends StatefulWidget {
-  const _ZoomableImage({required this.image, required this.headers, required this.onZoomChanged});
+  const _ZoomableImage({required this.image, required this.onZoomChanged});
 
   final ImageItem image;
-  final Map<String, String> headers;
   final ValueChanged<bool> onZoomChanged;
 
   @override
@@ -123,15 +118,14 @@ class _ZoomableImageState extends State<_ZoomableImage> {
       child: Center(
         child: url == null
             ? const Icon(Icons.broken_image_outlined, color: Colors.white54, size: 64)
-            : CachedNetworkImage(
-                imageUrl: url,
-                httpHeaders: widget.headers,
+            // Blur-up: the (usually cached) thumbnail first, then the full
+            // image at full resolution so zooming stays sharp.
+            : StashImage(
+                url,
+                previewUrl: url == widget.image.thumbnailUrl ? null : widget.image.thumbnailUrl,
                 fit: BoxFit.contain,
-                fadeInDuration: Duration.zero,
-                // Show the (usually cached) thumbnail while the full image loads.
-                placeholder: (_, __) => StashImage(widget.image.thumbnailUrl, fit: BoxFit.contain),
-                errorWidget: (_, __, ___) =>
-                    const Icon(Icons.broken_image_outlined, color: Colors.white54, size: 64),
+                decodeAtDisplaySize: false,
+                fallbackIcon: Icons.broken_image_outlined,
               ),
       ),
     );
