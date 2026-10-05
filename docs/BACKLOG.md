@@ -93,7 +93,7 @@ Eine wartbare Basis, damit Features unabhängig voneinander wachsen können.
 |---|---|---|---|---|
 | 7.1 | Als Nutzer möchte ich alle Studios als Kanalliste sehen. | Logo, Name und Anzahl der Szenen. Paginiert. | MVP | ✅ |
 | 7.2 | Als Nutzer möchte ich eine Studio-Kanalseite mit allen Szenen. | Header und paginierte Szenen. | MVP | ✅ |
-| 7.3 | Als Nutzer möchte ich Unter- und Elternstudios sehen. | Hierarchie aus `parent_studio`/`child_studios`. | Later | ⬜ |
+| 7.3 | Als Nutzer möchte ich Unter- und Elternstudios sehen. | Studioseite: „Part of …“-Chip zum Elternstudio, Reihe der Unterstudios mit Szenenzahl, Schalter „Include sub-studios“ (Standard an, wenn Unterstudios existieren; Filter `depth: -1`). Studio-Liste zeigt das Elternstudio. | Later | ✅ |
 
 ## Epic 8 – Tags & Entdecken
 

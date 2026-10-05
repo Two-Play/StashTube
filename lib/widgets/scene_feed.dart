@@ -68,7 +68,8 @@ class _SceneFeedViewState extends ConsumerState<SceneFeedView> {
   @override
   void didUpdateWidget(SceneFeedView oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (oldWidget.initialQuery != widget.initialQuery) _query = widget.initialQuery;
+    // A changed filter from the parent (e.g. a toggle) keeps the chosen sort.
+    if (oldWidget.initialQuery != widget.initialQuery) _query = widget.initialQuery.copyWith(sort: _query.sort);
   }
 
   @override

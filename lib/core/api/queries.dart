@@ -41,6 +41,7 @@ fragment StudioFields on Studio {
   image_path
   url
   scene_count
+  parent_studio { id name image_path }
 }
 ''';
 
@@ -197,7 +198,11 @@ query FindStudios($filter: FindFilterType) {
 
   static const findStudio = r'''
 query FindStudio($id: ID!) {
-  findStudio(id: $id) { ...StudioFields details }
+  findStudio(id: $id) {
+    ...StudioFields
+    details
+    child_studios { id name image_path scene_count }
+  }
 }
 ''' '$_studioFields';
 }

@@ -70,6 +70,7 @@ class SceneQuery {
     this.excludeSceneId,
     this.inProgressOnly = false,
     this.favoritePerformersOnly = false,
+    this.includeSubStudios = false,
     int? seed,
   }) : seed = seed ?? (sort == SceneSort.random ? newRandomSeed() : 0);
 
@@ -92,6 +93,9 @@ class SceneQuery {
   /// Only scenes with at least one favorite performer.
   final bool favoritePerformersOnly;
 
+  /// With [studioId]: also scenes of its sub-studios (at any depth).
+  final bool includeSubStudios;
+
   /// Seed for [SceneSort.random] so that pages are stable while scrolling.
   /// Always 0 for other sorts, so equal queries map to the same provider.
   final int seed;
@@ -104,7 +108,12 @@ class SceneQuery {
   Map<String, dynamic>? toSceneFilter() {
     final filter = <String, dynamic>{
       if (performerId != null) 'performers': {'value': [performerId], 'modifier': 'INCLUDES'},
-      if (studioId != null) 'studios': {'value': [studioId], 'modifier': 'INCLUDES', 'depth': 0},
+      if (studioId != null)
+        'studios': {
+          'value': [studioId],
+          'modifier': 'INCLUDES',
+          'depth': includeSubStudios ? -1 : 0,
+        },
       if (inProgressOnly) 'resume_time': {'value': 0, 'modifier': 'GREATER_THAN'},
       if (favoritePerformersOnly) 'performer_favorite': true,
     };
@@ -119,6 +128,7 @@ class SceneQuery {
         excludeSceneId: excludeSceneId,
         inProgressOnly: inProgressOnly,
         favoritePerformersOnly: favoritePerformersOnly,
+        includeSubStudios: includeSubStudios,
         // Picking a sort again (e.g. "Shuffle") starts a fresh shuffle.
         seed: sort == null ? seed : null,
       );
@@ -133,6 +143,7 @@ class SceneQuery {
       other.excludeSceneId == excludeSceneId &&
       other.inProgressOnly == inProgressOnly &&
       other.favoritePerformersOnly == favoritePerformersOnly &&
+      other.includeSubStudios == includeSubStudios &&
       other.seed == seed;
 
   @override
@@ -144,6 +155,7 @@ class SceneQuery {
         excludeSceneId,
         inProgressOnly,
         favoritePerformersOnly,
+        includeSubStudios,
         seed,
       );
 }

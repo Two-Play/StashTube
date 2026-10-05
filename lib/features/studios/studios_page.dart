@@ -41,7 +41,10 @@ class StudiosPage extends ConsumerWidget {
                 itemBuilder: (_, studio) => ListTile(
                   leading: ChannelAvatar(name: studio.name, imageUrl: studio.imageUrl, radius: 24),
                   title: Text(studio.name),
-                  subtitle: Text(formatCount(studio.sceneCount, 'scene')),
+                  subtitle: Text([
+                    formatCount(studio.sceneCount, 'scene'),
+                    if (studio.parent != null) 'Part of ${studio.parent!.name}',
+                  ].join(' • ')),
                   onTap: () => openStudio(ref, studio.id),
                 ),
               ),
