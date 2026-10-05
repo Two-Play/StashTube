@@ -36,7 +36,7 @@ class _StudioPageState extends ConsumerState<StudioPage> {
     final includeSubStudios = _includeSubStudios ?? hasChildren;
 
     return Scaffold(
-      appBar: AppBar(title: Text(studio.value?.name ?? '')),
+      appBar: AppBar(title: Text(studio.value?.name ?? '', maxLines: 1, overflow: TextOverflow.ellipsis)),
       body: SceneFeedView(
         initialQuery: SceneQuery(
           sort: SceneSort.newest,

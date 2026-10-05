@@ -93,7 +93,7 @@ class _CastSheet extends ConsumerWidget {
               for (final device in devices)
                 ListTile(
                   leading: const Icon(Icons.tv),
-                  title: Text(device.name),
+                  title: Text(device.name, maxLines: 1, overflow: TextOverflow.ellipsis),
                   subtitle: device.model == null ? null : Text(device.model!),
                   onTap: () async {
                     final messenger = ScaffoldMessenger.of(context);

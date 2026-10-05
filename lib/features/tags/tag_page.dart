@@ -23,7 +23,7 @@ class TagPage extends ConsumerWidget {
     final tag = ref.watch(tagProvider(tagId));
 
     return Scaffold(
-      appBar: AppBar(title: Text(tag.value == null ? '' : '#${tag.value!.name}')),
+      appBar: AppBar(title: Text(tag.value == null ? '' : '#${tag.value!.name}', maxLines: 1, overflow: TextOverflow.ellipsis)),
       body: SceneFeedView(
         initialQuery: SceneQuery(
           sort: SceneSort.newest,

@@ -269,6 +269,7 @@ class _SceneInfo extends ConsumerStatefulWidget {
 
 class _SceneInfoState extends ConsumerState<_SceneInfo> {
   bool _expanded = false;
+  bool _titleExpanded = false;
 
   @override
   Widget build(BuildContext context) {
@@ -289,7 +290,20 @@ class _SceneInfoState extends ConsumerState<_SceneInfo> {
       children: [
         Padding(
           padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
-          child: Text(scene.title, style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w600)),
+          // Long titles (often file names) are cut to two lines; tap to expand.
+          child: GestureDetector(
+            onTap: () => setState(() => _titleExpanded = !_titleExpanded),
+            child: AnimatedSize(
+              duration: const Duration(milliseconds: 150),
+              alignment: Alignment.topCenter,
+              child: Text(
+                scene.title,
+                maxLines: _titleExpanded ? null : 2,
+                overflow: _titleExpanded ? TextOverflow.visible : TextOverflow.ellipsis,
+                style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w600),
+              ),
+            ),
+          ),
         ),
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -299,7 +313,7 @@ class _SceneInfoState extends ConsumerState<_SceneInfo> {
         if (studio != null)
           ListTile(
             leading: ChannelAvatar(name: studio.name, imageUrl: studio.imageUrl),
-            title: Text(studio.name, style: theme.textTheme.titleSmall),
+            title: Text(studio.name, maxLines: 1, overflow: TextOverflow.ellipsis, style: theme.textTheme.titleSmall),
             trailing: const Icon(Icons.chevron_right),
             onTap: () => openStudio(ref, studio.id),
           ),

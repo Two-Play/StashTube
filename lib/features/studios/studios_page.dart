@@ -40,7 +40,7 @@ class StudiosPage extends ConsumerWidget {
                 onLoadMore: () => ref.read(provider.notifier).loadMore(),
                 itemBuilder: (_, studio) => ListTile(
                   leading: ChannelAvatar(name: studio.name, imageUrl: studio.imageUrl, radius: 24),
-                  title: Text(studio.name),
+                  title: Text(studio.name, maxLines: 1, overflow: TextOverflow.ellipsis),
                   subtitle: Text([
                     formatCount(studio.sceneCount, 'scene'),
                     if (studio.parent != null) 'Part of ${studio.parent!.name}',
