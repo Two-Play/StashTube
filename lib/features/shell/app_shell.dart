@@ -6,6 +6,7 @@ import 'package:miniplayer/miniplayer.dart';
 import '../home/home_page.dart';
 import '../library/library_page.dart';
 import '../performers/performers_page.dart';
+import '../player/closing_slide.dart';
 import '../player/player_providers.dart';
 import '../player/player_view.dart';
 import '../settings/settings_page.dart';
@@ -74,13 +75,18 @@ class AppShell extends ConsumerWidget {
               ),
             ),
             if (scene != null)
-              Miniplayer(
-                controller: ref.watch(miniplayerControllerProvider),
-                valueNotifier: playerHeight,
-                minHeight: kMiniPlayerHeight,
-                maxHeight: maxPlayerHeight,
-                onDismissed: () => ref.read(nowPlayingProvider.notifier).close(),
-                builder: (height, _) => PlayerPanel(scene: scene, height: height, maxHeight: maxPlayerHeight),
+              ClosingSlide(
+                closing: ref.watch(playerClosingProvider),
+                distance: kMiniPlayerHeight,
+                onClosed: () => ref.read(nowPlayingProvider.notifier).close(),
+                child: Miniplayer(
+                  controller: ref.watch(miniplayerControllerProvider),
+                  valueNotifier: playerHeight,
+                  minHeight: kMiniPlayerHeight,
+                  maxHeight: maxPlayerHeight,
+                  onDismissed: () => ref.read(nowPlayingProvider.notifier).close(),
+                  builder: (height, _) => PlayerPanel(scene: scene, height: height, maxHeight: maxPlayerHeight),
+                ),
               ),
           ],
         ),

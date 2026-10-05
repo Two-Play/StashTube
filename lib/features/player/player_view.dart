@@ -181,8 +181,9 @@ class _MiniInfo extends ConsumerWidget {
             ),
           ),
         IconButton(
+          tooltip: 'Close',
           icon: const Icon(Icons.close),
-          onPressed: () => ref.read(nowPlayingProvider.notifier).close(),
+          onPressed: () => ref.read(nowPlayingProvider.notifier).dismiss(),
         ),
       ],
     );

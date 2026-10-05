@@ -112,6 +112,16 @@ class CurrentStreamNotifier extends Notifier<SceneStream?> {
 
 final currentStreamProvider = NotifierProvider<CurrentStreamNotifier, SceneStream?>(CurrentStreamNotifier.new);
 
+/// True while the miniplayer slides away after tapping close.
+class PlayerClosingNotifier extends Notifier<bool> {
+  @override
+  bool build() => false;
+
+  void set(bool closing) => state = closing;
+}
+
+final playerClosingProvider = NotifierProvider<PlayerClosingNotifier, bool>(PlayerClosingNotifier.new);
+
 /// The scene in the player, or null when the player is closed.
 class NowPlayingNotifier extends Notifier<Scene?> {
   /// Last position reported by the cast device, to continue locally after
@@ -145,6 +155,7 @@ class NowPlayingNotifier extends Notifier<Scene?> {
     if (url == null) return;
 
     if (state == null) ref.read(miniplayerHeightProvider).value = kMiniPlayerHeight;
+    ref.read(playerClosingProvider.notifier).set(false);
     if (state?.id != scene.id) {
       // Prefer the position saved in this session over the (possibly stale) list data.
       final resume = ref.read(resumeTimesProvider)[scene.id] ?? scene.resumeTime;
@@ -226,7 +237,16 @@ class NowPlayingNotifier extends Notifier<Scene?> {
 
   void collapse() => ref.read(miniplayerControllerProvider).animateToHeight(state: PanelState.MIN);
 
+  /// Closes with an animation: pauses right away, the shell slides the
+  /// miniplayer down and then calls [close].
+  void dismiss() {
+    if (state == null) return;
+    ref.read(playerProvider).pause();
+    ref.read(playerClosingProvider.notifier).set(true);
+  }
+
   void close() {
+    ref.read(playerClosingProvider.notifier).set(false);
     unawaited(ref.read(playbackTrackerProvider).stop());
     ref.read(playerProvider).stop();
     state = null;
