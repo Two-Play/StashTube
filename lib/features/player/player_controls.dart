@@ -52,9 +52,14 @@ class PlayerVideo extends ConsumerWidget {
                   scene: scene,
                   onQuality: () => showQualitySheet(context, scene.id),
                 )
-            : NoVideoControls,
+            : _noControls,
       );
 }
+
+/// Shown while the panel isn't fully open. media_kit's `NoVideoControls` is
+/// `null`, and `Video` ignores a change to `null`, so the expanded controls
+/// would stay visible in the miniplayer.
+Widget _noControls(VideoState state) => const SizedBox.shrink();
 
 String _streamDescription(SceneStream stream) {
   if (stream.isDirect) return 'Original file';
