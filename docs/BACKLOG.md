@@ -44,7 +44,7 @@ Eine wartbare Basis, damit Features unabhängig voneinander wachsen können.
 | 3.2 | Als Nutzer möchte ich den Feed über Filter-Chips umschalten („Neu hinzugefügt“, „Neueste“, „Zufällig“, „Top bewertet“, „Meistgesehen“). | Chip-Leiste wie bei YouTube. Der Wechsel lädt den Feed neu. „Zufällig“ ist über alle Seiten stabil (Seed). | MVP | ✅ |
 | 3.3 | Als Nutzer möchte ich per Pull-to-Refresh aktualisieren – auch wenn nur wenige Einträge da sind. | `AlwaysScrollableScrollPhysics`. Der bekannte Bug „Refresh geht nicht bei kurzem Inhalt“ ist behoben. | MVP | ✅ |
 | 3.4 | Als Nutzer möchte ich beim Gedrückthalten bzw. Scrollen eine animierte Vorschau (Stash-`preview`) sehen. | Autoplay des Preview-MP4 (stumm) für die sichtbare Karte. | Next | ⬜ |
-| 3.5 | Als Nutzer möchte ich auf der Startseite Abschnitte sehen („Weiterschauen“, „Neu von Favoriten“). | Horizontale Reihen oberhalb des Feeds. | Next | ⬜ |
+| 3.5 | Als Nutzer möchte ich auf der Startseite Abschnitte sehen („Weiterschauen“, „Neu von Favoriten“). | Horizontale Reihen oberhalb des Feeds. „Weiterschauen“: Szenen mit `resume_time > 0`, zuletzt gesehen zuerst, lädt nach dem ersten gespeicherten Fortschritt neu. „Neu von Favoriten“: `performer_favorite`. Leere Reihen werden ausgeblendet. | Next | ✅ |
 | 3.6 | Als Nutzer möchte ich über das „⋮“-Menü einer Karte Aktionen ausführen (Zur Playlist, Zum Studio, Teilen). | Bottom Sheet mit Aktionen. | Later | 🟡 (zu Studio/Performer) |
 
 ## Epic 4 – Video-Player
@@ -83,7 +83,7 @@ Eine wartbare Basis, damit Features unabhängig voneinander wachsen können.
 | 6.2 | Als Nutzer möchte ich Performer sortieren bzw. filtern (Name, Anzahl Szenen, Favoriten, Zufall). | Chip-Leiste. | MVP | ✅ |
 | 6.3 | Als Nutzer möchte ich eine Kanalseite für einen Performer sehen: Header mit Bild und Infos, darunter alle Szenen. | Header (Bild, Name, Land, Alter, Szenen) und paginierte Szenenliste. | MVP | ✅ |
 | 6.4 | Als Nutzer möchte ich einen Performer als Favoriten markieren („Abonnieren“). | `performerUpdate(favorite)` mit optimistischem UI-Update. | Next | ⬜ |
-| 6.5 | Als Nutzer möchte ich einen „Abos“-Feed mit neuen Szenen meiner Favoriten. | Szenenfeed mit Filter `performer_favorite: true`. | Next | ⬜ |
+| 6.5 | Als Nutzer möchte ich einen „Abos“-Feed mit neuen Szenen meiner Favoriten. | Szenenfeed mit Filter `performer_favorite: true`. | Next | 🟡 (Reihe „New from favorites“ auf der Startseite ✅, eigener Tab offen) |
 
 ## Epic 7 – Studios („Kanäle“)
 
@@ -105,7 +105,7 @@ Eine wartbare Basis, damit Features unabhängig voneinander wachsen können.
 | # | User Story | Akzeptanzkriterien | Prio | Status |
 |---|---|---|---|---|
 | 9.1 | Als Nutzer möchte ich meinen Wiedergabeverlauf sehen. | Sortierung `last_played_at`. | Next | ⬜ |
-| 9.2 | Als Nutzer möchte ich „Weiterschauen“ mit Fortschrittsbalken auf dem Thumbnail. | Szenen mit `resume_time > 0`. | Next | 🟡 (roter Balken auf allen Thumbnails ✅, eigene „Weiterschauen“-Reihe offen) |
+| 9.2 | Als Nutzer möchte ich „Weiterschauen“ mit Fortschrittsbalken auf dem Thumbnail. | Szenen mit `resume_time > 0`. | Next | ✅ |
 | 9.3 | Als Nutzer möchte ich Groups/Movies wie Playlists durchsehen und abspielen. | Gruppenseite. Autoplay der nächsten Szene. | Later | ⬜ |
 | 9.4 | Als Nutzer möchte ich eine Warteschlange („Später ansehen“). | Lokale Queue, die der Player abarbeitet. | Later | ⬜ |
 

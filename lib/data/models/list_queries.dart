@@ -7,6 +7,7 @@ enum SceneSort {
   random('Shuffle', 'random'),
   topRated('Top rated', 'rating'),
   mostPlayed('Most played', 'play_count'),
+  lastPlayed('Recently watched', 'last_played_at'),
   title('A–Z', 'title');
 
   const SceneSort(this.label, this.field);
@@ -38,6 +39,8 @@ class SceneQuery {
     this.performerId,
     this.studioId,
     this.excludeSceneId,
+    this.inProgressOnly = false,
+    this.favoritePerformersOnly = false,
     int? seed,
   }) : seed = seed ?? (sort == SceneSort.random ? newRandomSeed() : 0);
 
@@ -48,6 +51,12 @@ class SceneQuery {
 
   /// Filtered out client-side, e.g. the scene currently playing in "Up next".
   final String? excludeSceneId;
+
+  /// Only scenes with a saved resume position ("Continue watching").
+  final bool inProgressOnly;
+
+  /// Only scenes with at least one favorite performer.
+  final bool favoritePerformersOnly;
 
   /// Seed for [SceneSort.random] so that pages are stable while scrolling.
   /// Always 0 for other sorts, so equal queries map to the same provider.
@@ -62,6 +71,8 @@ class SceneQuery {
     final filter = <String, dynamic>{
       if (performerId != null) 'performers': {'value': [performerId], 'modifier': 'INCLUDES'},
       if (studioId != null) 'studios': {'value': [studioId], 'modifier': 'INCLUDES', 'depth': 0},
+      if (inProgressOnly) 'resume_time': {'value': 0, 'modifier': 'GREATER_THAN'},
+      if (favoritePerformersOnly) 'performer_favorite': true,
     };
     return filter.isEmpty ? null : filter;
   }
@@ -72,6 +83,8 @@ class SceneQuery {
         performerId: performerId,
         studioId: studioId,
         excludeSceneId: excludeSceneId,
+        inProgressOnly: inProgressOnly,
+        favoritePerformersOnly: favoritePerformersOnly,
         // Picking a sort again (e.g. "Shuffle") starts a fresh shuffle.
         seed: sort == null ? seed : null,
       );
@@ -84,10 +97,21 @@ class SceneQuery {
       other.performerId == performerId &&
       other.studioId == studioId &&
       other.excludeSceneId == excludeSceneId &&
+      other.inProgressOnly == inProgressOnly &&
+      other.favoritePerformersOnly == favoritePerformersOnly &&
       other.seed == seed;
 
   @override
-  int get hashCode => Object.hash(sort, search, performerId, studioId, excludeSceneId, seed);
+  int get hashCode => Object.hash(
+        sort,
+        search,
+        performerId,
+        studioId,
+        excludeSceneId,
+        inProgressOnly,
+        favoritePerformersOnly,
+        seed,
+      );
 }
 
 class PerformerQuery {

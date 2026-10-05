@@ -19,6 +19,7 @@ class SceneFeedView extends ConsumerStatefulWidget {
     this.sorts = SceneSort.values,
     this.compact = false,
     this.emptyMessage = 'No scenes found',
+    this.onRefresh,
   });
 
   final SceneQuery initialQuery;
@@ -28,6 +29,10 @@ class SceneFeedView extends ConsumerStatefulWidget {
   /// Use [SceneListTile] rows instead of full-width cards.
   final bool compact;
   final String emptyMessage;
+
+  /// Called on pull-to-refresh in addition to reloading the feed, e.g. to
+  /// reload content in [headerSlivers].
+  final VoidCallback? onRefresh;
 
   @override
   ConsumerState<SceneFeedView> createState() => _SceneFeedViewState();
@@ -49,7 +54,10 @@ class _SceneFeedViewState extends ConsumerState<SceneFeedView> {
 
     return RefreshIndicator(
       edgeOffset: 80,
-      onRefresh: () => refreshFuture(ref, provider.future),
+      onRefresh: () {
+        widget.onRefresh?.call();
+        return refreshFuture(ref, provider.future);
+      },
       child: LoadMoreListener(
         onLoadMore: () => ref.read(provider.notifier).loadMore(),
         child: CustomScrollView(

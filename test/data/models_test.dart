@@ -93,6 +93,14 @@ void main() {
       expect(q.copyWith(sort: SceneSort.random).seed, isNot(1));
     });
 
+    test('builds filters for home shelves', () {
+      expect(SceneQuery(inProgressOnly: true).toSceneFilter(), {
+        'resume_time': {'value': 0, 'modifier': 'GREATER_THAN'},
+      });
+      expect(SceneQuery(favoritePerformersOnly: true).toSceneFilter(), {'performer_favorite': true});
+      expect(SceneQuery(inProgressOnly: true), isNot(SceneQuery()));
+    });
+
     test('builds scene filters for channels', () {
       expect(SceneQuery().toSceneFilter(), isNull);
       expect(SceneQuery(studioId: '7').toSceneFilter(), {
