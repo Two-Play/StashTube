@@ -6,6 +6,7 @@ import '../../core/config/theme.dart';
 import '../../data/providers.dart';
 import '../player/player_providers.dart';
 import '../security/app_lock.dart';
+import '../security/app_icon.dart';
 import '../security/app_lock_gate.dart';
 
 class SettingsPage extends ConsumerWidget {
@@ -179,6 +180,7 @@ class _SecuritySettings extends ConsumerWidget {
             },
           ),
         ],
+        const _AppIconTile(),
         SwitchListTile(
           secondary: const Icon(Icons.visibility_off_outlined),
           title: const Text('Hide in app switcher'),
@@ -187,6 +189,91 @@ class _SecuritySettings extends ConsumerWidget {
           onChanged: notifier.setHideInSwitcher,
         ),
       ],
+    );
+  }
+}
+
+/// Disguised launcher icon (11.3).
+class _AppIconTile extends ConsumerWidget {
+  const _AppIconTile();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final current = ref.watch(appIconProvider);
+    return ListTile(
+      leading: ClipRRect(
+        borderRadius: BorderRadius.circular(6),
+        child: Image.asset(current.preview, width: 28, height: 28),
+      ),
+      title: const Text('App icon'),
+      subtitle: Text(current.label),
+      trailing: const Icon(Icons.chevron_right),
+      onTap: () => showModalBottomSheet<void>(
+        context: context,
+        useRootNavigator: true,
+        showDragHandle: true,
+        builder: (sheetContext) => SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('App icon', style: Theme.of(sheetContext).textTheme.titleMedium),
+                const SizedBox(height: 4),
+                Text(
+                  'On Android the name on the home screen changes too and the launcher may need a moment. '
+                  'On iOS only the icon changes and the system shows a confirmation.',
+                  style: Theme.of(sheetContext).textTheme.bodySmall,
+                ),
+                const SizedBox(height: 16),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: [
+                    for (final choice in AppIconChoice.values)
+                      InkWell(
+                        borderRadius: BorderRadius.circular(12),
+                        onTap: () async {
+                          final messenger = ScaffoldMessenger.of(context);
+                          Navigator.pop(sheetContext);
+                          try {
+                            await ref.read(appIconProvider.notifier).set(choice);
+                          } catch (e) {
+                            messenger.showSnackBar(SnackBar(content: Text('Couldn\'t change the icon: $e')));
+                          }
+                        },
+                        child: Padding(
+                          padding: const EdgeInsets.all(8),
+                          child: Column(
+                            children: [
+                              Container(
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(16),
+                                  border: Border.all(
+                                    color: choice == current
+                                        ? Theme.of(sheetContext).colorScheme.primary
+                                        : Colors.transparent,
+                                    width: 3,
+                                  ),
+                                ),
+                                child: ClipRRect(
+                                  borderRadius: BorderRadius.circular(13),
+                                  child: Image.asset(choice.preview, width: 64, height: 64),
+                                ),
+                              ),
+                              const SizedBox(height: 6),
+                              Text(choice.label),
+                            ],
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
     );
   }
 }
