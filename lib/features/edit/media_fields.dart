@@ -79,7 +79,7 @@ class ImageEditField extends StatelessWidget {
     if (choice?.bytes case final bytes?) {
       preview = Image.memory(bytes, fit: BoxFit.cover);
     } else if (choice?.url case final url?) {
-      preview = Image.network(url, fit: BoxFit.cover, errorBuilder: (_, __, ___) => const Icon(Icons.broken_image));
+      preview = Image.network(url, fit: BoxFit.cover, errorBuilder: (_, _, _) => const Icon(Icons.broken_image));
     } else {
       preview = StashImage(currentUrl, fallbackIcon: Icons.image_outlined);
     }

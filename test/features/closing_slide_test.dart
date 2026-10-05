@@ -41,7 +41,7 @@ void main() {
     final player = FakePlayer(playing: true);
     final container = ProviderContainer(overrides: [playerProvider.overrideWithValue(player)]);
     addTearDown(container.dispose);
-    container.listen(nowPlayingProvider, (_, __) {});
+    container.listen(nowPlayingProvider, (_, _) {});
 
     // Put a scene into the player without opening media.
     container.read(nowPlayingProvider.notifier).state = const Scene(id: '1', title: 'A');

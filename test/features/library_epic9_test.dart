@@ -91,7 +91,7 @@ void main() {
         playerProvider.overrideWithValue(player),
         playbackTrackerProvider.overrideWithValue(PlaybackTracker(api: _NoopActivity())),
       ]);
-      container.listen(nowPlayingProvider, (_, __) {});
+      container.listen(nowPlayingProvider, (_, _) {});
     });
     tearDown(() => container.dispose());
 

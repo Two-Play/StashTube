@@ -44,8 +44,8 @@ void main() {
     // Like the UI: lists stay subscribed while the server changes.
     final scenes = sceneListProvider(SceneQuery());
     final performers = performerListProvider(PerformerQuery());
-    c.listen(scenes, (_, __) {});
-    c.listen(performers, (_, __) {});
+    c.listen(scenes, (_, _) {});
+    c.listen(performers, (_, _) {});
     expect((await c.read(scenes.future)).items.single.title, 'scene from http://a');
 
     await servers.activate(c.read(serverProfilesProvider).profiles.last.id);

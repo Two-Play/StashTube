@@ -26,7 +26,7 @@ void main() {
           minHeight: 64,
           maxHeight: 600,
           valueNotifier: height,
-          builder: (_, __) => content,
+          builder: (_, _) => content,
         ),
       ),
     ));

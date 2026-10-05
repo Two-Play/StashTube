@@ -36,7 +36,7 @@ void main() {
         SharedPreferences.setMockInitialValues({});
         final prefs = await SharedPreferences.getInstance();
         final c = ProviderContainer(
-          retry: (_, __) => null,
+          retry: (_, _) => null,
           overrides: [
             sharedPreferencesProvider.overrideWithValue(prefs),
             stashRepositoryProvider.overrideWith((ref) => FakeServerRepository(ref.watch(serverConfigProvider)!.baseUrl)),

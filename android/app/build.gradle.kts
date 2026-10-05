@@ -6,7 +6,8 @@ plugins {
 
 android {
     namespace = "de.twoplay.stash.stash_app_mobile"
-    compileSdk = flutter.compileSdkVersion
+    // 37: permission_handler_android (via flutter_chrome_cast) compiles against it.
+    compileSdk = 37
     ndkVersion = flutter.ndkVersion
 
     compileOptions {

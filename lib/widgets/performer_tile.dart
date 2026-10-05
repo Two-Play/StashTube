@@ -89,7 +89,7 @@ class CountryFlagIcon extends StatelessWidget {
     try {
       return ClipRRect(
         borderRadius: BorderRadius.circular(3),
-        child: CountryFlag.fromCountryCode(code, width: width, height: width * 0.7),
+        child: CountryFlag.fromCountryCode(code, theme: ImageTheme(width: width, height: width * 0.7)),
       );
     } catch (_) {
       // Stash allows free-text countries; ignore anything that isn't a code.

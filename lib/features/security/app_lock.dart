@@ -152,6 +152,8 @@ class LocalBiometricAuth implements BiometricAuth {
   Future<bool> isAvailable() async {
     try {
       return await _auth.isDeviceSupported() && await _auth.canCheckBiometrics;
+    } on LocalAuthException {
+      return false;
     } on PlatformException {
       return false;
     }
@@ -162,8 +164,12 @@ class LocalBiometricAuth implements BiometricAuth {
     try {
       return await _auth.authenticate(
         localizedReason: reason,
-        options: const AuthenticationOptions(biometricOnly: true, stickyAuth: true),
+        biometricOnly: true,
+        persistAcrossBackgrounding: true, // was `stickyAuth`
       );
+    } on LocalAuthException {
+      // Cancelled, locked out, not enrolled, ...: the PIN pad stays.
+      return false;
     } on PlatformException {
       return false;
     }

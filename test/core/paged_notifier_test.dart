@@ -43,7 +43,7 @@ void main() {
     repo = FakeRepository(50);
     container = ProviderContainer(overrides: [stashRepositoryProvider.overrideWithValue(repo), ...testServer]);
     // Keep the auto-dispose provider alive for the test.
-    container.listen(sceneListProvider(query), (_, __) {});
+    container.listen(sceneListProvider(query), (_, _) {});
   });
 
   tearDown(() => container.dispose());

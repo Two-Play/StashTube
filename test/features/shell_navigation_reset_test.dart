@@ -31,7 +31,7 @@ void main() {
     await tester.pumpWidget(UncontrolledProviderScope(
       container: c,
       child: MaterialApp(
-        home: Consumer(builder: (_, ref, __) => _Shell(key: ValueKey(ref.watch(activeServerIdProvider)))),
+        home: Consumer(builder: (_, ref, _) => _Shell(key: ValueKey(ref.watch(activeServerIdProvider)))),
       ),
     ));
     c.read(tabNavigatorKeysProvider)[AppTab.studios]!.currentState!.push(

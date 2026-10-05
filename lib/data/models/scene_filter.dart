@@ -87,8 +87,8 @@ class SceneFilter {
             'depth': 0,
           },
         if (minStars > 0) 'rating100': {'value': minStars * 20 - 1, 'modifier': 'GREATER_THAN'},
-        if (duration.toCriterion() case final c?) 'duration': c,
-        if (resolution.toCriterion() case final c?) 'resolution': c,
+        'duration': ?duration.toCriterion(),
+        'resolution': ?resolution.toCriterion(),
       };
 
   SceneFilter copyWith({

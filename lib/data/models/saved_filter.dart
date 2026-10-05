@@ -90,22 +90,22 @@ const _resolutions = {
       filter[key] = {
         'value': ids(value['items']),
         if (ids(value['excluded']).isNotEmpty) 'excludes': ids(value['excluded']),
-        if (modifier != null) 'modifier': modifier,
+        'modifier': ?modifier,
         if (value['depth'] != null) 'depth': value['depth'],
       };
     } else if (value is Map && value.containsKey('value')) {
       filter[key] = {
         'value': value['value'],
         if (value['value2'] != null) 'value2': value['value2'],
-        if (modifier != null) 'modifier': modifier,
+        'modifier': ?modifier,
       };
     } else if (value is List) {
-      filter[key] = {'value': ids(value), if (modifier != null) 'modifier': modifier};
+      filter[key] = {'value': ids(value), 'modifier': ?modifier};
     } else if (_booleanCriteria.contains(key) && (value == 'true' || value == 'false' || value is bool)) {
       filter[key] = value == true || value == 'true';
     } else if (value is String || value is num) {
       final mapped = key == 'resolution' ? _resolutions[value.toString().toLowerCase()] ?? value : value;
-      filter[key] = {'value': mapped, if (modifier != null) 'modifier': modifier};
+      filter[key] = {'value': mapped, 'modifier': ?modifier};
     } else if (value == null && (modifier == 'IS_NULL' || modifier == 'NOT_NULL')) {
       filter[key] = {'value': '', 'modifier': modifier};
     } else {

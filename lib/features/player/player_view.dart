@@ -379,7 +379,7 @@ class _SceneInfoState extends ConsumerState<_SceneInfo> {
               scrollDirection: Axis.horizontal,
               padding: const EdgeInsets.symmetric(horizontal: 16),
               itemCount: scene.performers.length,
-              separatorBuilder: (_, __) => const SizedBox(width: 8),
+              separatorBuilder: (_, _) => const SizedBox(width: 8),
               itemBuilder: (_, i) {
                 final p = scene.performers[i];
                 return ActionChip(
@@ -396,7 +396,7 @@ class _SceneInfoState extends ConsumerState<_SceneInfo> {
             scrollDirection: Axis.horizontal,
             padding: const EdgeInsets.symmetric(horizontal: 16),
             itemCount: tags.length + 1,
-            separatorBuilder: (_, __) => const SizedBox(width: 6),
+            separatorBuilder: (_, _) => const SizedBox(width: 6),
             itemBuilder: (_, i) {
               if (i == tags.length) {
                 return ActionChip(

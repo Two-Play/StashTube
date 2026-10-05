@@ -23,7 +23,7 @@ flutter build apk --debug
 - Riverpod 3. All providers are written by hand: there is no codegen and no `@riverpod`. riverpod_lint 3 is enabled under `plugins:` in `analysis_options.yaml` (analysis_server_plugin, no custom_lint).
 - Family notifiers get their argument through the constructor (see `PagedNotifier`). `AsyncValue.value` is null while loading or on error (there is no `valueOrNull`). Use `Notifier` classes with methods instead of `StateProvider`. Check `ref.mounted` after `await` before touching `state`.
 - Riverpod 3 retries failed providers automatically. `main()` sets `retry: stashRetry`, which retries only network errors, at most 3 times; server-reported errors show immediately.
-- `flutter_chrome_cast` is pinned below 1.5. Version 1.5 pulls in permission_handler 13, which needs compileSdk 37, and AGP 9.1 only supports up to 36.
+- `android/app/build.gradle.kts` sets `compileSdk = 37` instead of `flutter.compileSdkVersion` (36), because `flutter_chrome_cast` 1.5 pulls in permission_handler_android, which compiles against 37.
 
 ## Architecture
 

@@ -68,12 +68,12 @@ class StashImage extends ConsumerWidget {
           memCacheHeight: size.height,
           fadeInDuration: const Duration(milliseconds: 250),
           fadeOutDuration: const Duration(milliseconds: 150),
-          placeholder: (_, __) => preview == null
+          placeholder: (_, _) => preview == null
               ? ShimmerBox(width: width, height: height)
               : BlurredPreview(url: preview, headers: headers, fit: fit),
           // Stash serves SVG placeholders for missing studio/performer images,
           // which CachedNetworkImage can't decode; show an icon instead.
-          errorWidget: (_, __, ___) => _fallback(colors),
+          errorWidget: (_, _, _) => _fallback(colors),
         );
       },
     );
@@ -105,8 +105,8 @@ class BlurredPreview extends StatelessWidget {
             httpHeaders: headers,
             fit: fit,
             fadeInDuration: Duration.zero,
-            placeholder: (_, __) => const ShimmerBox(),
-            errorWidget: (_, __, ___) => const ShimmerBox(),
+            placeholder: (_, _) => const ShimmerBox(),
+            errorWidget: (_, _, _) => const ShimmerBox(),
           ),
         ),
       );
@@ -150,7 +150,7 @@ class _ShimmerBoxState extends State<ShimmerBox> with SingleTickerProviderStateM
     final highlight = Color.lerp(base, colors.surface, 0.5)!;
     return AnimatedBuilder(
       animation: _controller,
-      builder: (_, __) {
+      builder: (_, _) {
         final x = -1.5 + 3 * _controller.value;
         return Container(
           width: widget.width,

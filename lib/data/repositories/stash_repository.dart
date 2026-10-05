@@ -262,7 +262,7 @@ class StashRepository implements PlaybackActivityApi {
     final byId = {
       for (final s in readList(readObject(data, 'findScenes') ?? const {}, 'scenes').map(Scene.fromJson)) s.id: s,
     };
-    return [for (final id in ids) if (byId[id] case final scene?) scene];
+    return [for (final id in ids) ?byId[id]];
   }
 
   Future<PageResult<Group>> findGroups(GroupQuery query, {int page = 1, int perPage = defaultPageSize}) async {

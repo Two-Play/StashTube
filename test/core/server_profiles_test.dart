@@ -84,7 +84,7 @@ void main() {
     final c = await containerWith({});
     final servers = c.read(serverProfilesProvider.notifier);
     await servers.add(const ServerConfig(baseUrl: 'http://a:1'));
-    c.listen(sceneEditsProvider, (_, __) {});
+    c.listen(sceneEditsProvider, (_, _) {});
     // A cached edit for a scene of server A, then switch to server B.
     c.read(sceneEditsProvider.notifier).state = {'s1': const SceneEdit(oCounter: 5)};
     await servers.add(const ServerConfig(baseUrl: 'http://b:1'));

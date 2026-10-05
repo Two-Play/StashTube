@@ -244,7 +244,7 @@ class NowPlayingNotifier extends Notifier<Scene?> {
     SceneStream? stream;
     final preferred = ref.read(preferredStreamProvider);
     if (preferred != null) {
-      final details = ref.listen(sceneDetailsProvider(scene.id).future, (_, __) {});
+      final details = ref.listen(sceneDetailsProvider(scene.id).future, (_, _) {});
       try {
         stream = (await details.read()).streams.where((s) => s.label == preferred).firstOrNull;
       } catch (_) {
@@ -261,7 +261,7 @@ class NowPlayingNotifier extends Notifier<Scene?> {
 
   /// Plays [scene] on the connected cast device from [start].
   Future<void> _castScene(Scene scene, Duration start) async {
-    final details = ref.listen(sceneDetailsProvider(scene.id).future, (_, __) {});
+    final details = ref.listen(sceneDetailsProvider(scene.id).future, (_, _) {});
     try {
       final media = castMediaFor(
         scene,

@@ -114,9 +114,9 @@ void main() {
         await tester.pump(); // let the post-frame expand() run first
         container.dispose();
       });
-      container.listen(nowPlayingProvider, (_, __) {});
-      container.listen(isCastingProvider, (_, __) {});
-      container.listen(castPlaybackProvider, (_, __) {});
+      container.listen(nowPlayingProvider, (_, _) {});
+      container.listen(isCastingProvider, (_, _) {});
+      container.listen(castPlaybackProvider, (_, _) {});
       await tester.pump();
     }
 
