@@ -8,6 +8,8 @@ import 'package:stash_app_mobile/data/repositories/stash_repository.dart';
 import 'package:stash_app_mobile/features/player/player_providers.dart';
 import 'package:stash_app_mobile/widgets/scene_shelf.dart';
 
+import '../helpers.dart';
+
 class FakeRepository implements StashRepository {
   FakeRepository(this.scenes);
 
@@ -26,6 +28,7 @@ void main() {
 
   Future<ProviderContainer> pumpShelf(WidgetTester tester, List<Scene> scenes) async {
     final container = ProviderContainer(overrides: [
+      testServer,
       stashRepositoryProvider.overrideWithValue(FakeRepository(scenes)),
     ]);
     addTearDown(container.dispose);

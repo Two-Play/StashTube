@@ -5,6 +5,8 @@ import 'package:stash_app_mobile/data/models/performer.dart';
 import 'package:stash_app_mobile/data/models/scene.dart';
 import 'package:stash_app_mobile/widgets/scene_card.dart';
 
+import '../helpers.dart';
+
 void main() {
   testWidgets('SceneCard shows title, channel, duration and resolution', (tester) async {
     const scene = Scene(
@@ -15,8 +17,9 @@ void main() {
       performers: [Performer(id: '9', name: 'Alice')],
     );
 
-    await tester.pumpWidget(const ProviderScope(
-      child: MaterialApp(home: Scaffold(body: SingleChildScrollView(child: SceneCard(scene: scene)))),
+    await tester.pumpWidget(ProviderScope(
+      overrides: [testServer],
+      child: const MaterialApp(home: Scaffold(body: SingleChildScrollView(child: SceneCard(scene: scene)))),
     ));
 
     expect(find.text('My scene'), findsOneWidget);
@@ -27,6 +30,7 @@ void main() {
 
   testWidgets('shows a progress bar only for partially watched scenes', (tester) async {
     Future<void> pump(Scene scene) => tester.pumpWidget(ProviderScope(
+          overrides: [testServer],
           child: MaterialApp(home: Scaffold(body: SceneThumbnail(scene: scene))),
         ));
 

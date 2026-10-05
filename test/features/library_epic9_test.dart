@@ -101,7 +101,9 @@ void main() {
       expect(await wl.toggle('2'), isTrue);
       expect(await wl.toggle('1'), isFalse);
       expect(container.read(watchLaterProvider), ['2']);
-      expect(container.read(sharedPreferencesProvider).getStringList('watch_later'), ['2']);
+      final server = container.read(activeServerIdProvider);
+      expect(server, isNotNull, reason: 'the legacy login was migrated into a server profile');
+      expect(container.read(sharedPreferencesProvider).getStringList('watch_later:$server'), ['2']);
     });
 
     testWidgets('a queue plays in order and advances when a scene ends', (tester) async {

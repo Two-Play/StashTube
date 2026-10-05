@@ -8,6 +8,8 @@ import 'package:stash_app_mobile/data/repositories/stash_repository.dart';
 import 'package:stash_app_mobile/features/performers/favorite_button.dart';
 import 'package:stash_app_mobile/features/performers/performer_favorites.dart';
 
+import '../helpers.dart';
+
 class FakeRepository implements StashRepository {
   final calls = <(String, bool)>[];
   Completer<void>? gate;
@@ -31,7 +33,7 @@ void main() {
 
   setUp(() {
     repo = FakeRepository();
-    container = ProviderContainer(overrides: [stashRepositoryProvider.overrideWithValue(repo)]);
+    container = ProviderContainer(overrides: [stashRepositoryProvider.overrideWithValue(repo), testServer]);
   });
   tearDown(() => container.dispose());
 

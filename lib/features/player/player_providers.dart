@@ -46,7 +46,10 @@ final miniplayerHeightProvider = Provider<ValueNotifier<double>>((ref) {
 /// them so progress bars are current without refetching.
 class ResumeTimesNotifier extends Notifier<Map<String, double>> {
   @override
-  Map<String, double> build() => const {};
+  Map<String, double> build() {
+    ref.watch(activeServerIdProvider); // scene ids are per server
+    return const {};
+  }
 
   void set(String sceneId, double resumeTime) => state = {...state, sceneId: resumeTime};
 }
@@ -138,7 +141,10 @@ class PlayQueue {
 
 class PlayQueueNotifier extends Notifier<PlayQueue?> {
   @override
-  PlayQueue? build() => null;
+  PlayQueue? build() {
+    ref.watch(activeServerIdProvider);
+    return null;
+  }
 
   void set(PlayQueue? queue) => state = queue;
 }
@@ -156,6 +162,10 @@ class NowPlayingNotifier extends Notifier<Scene?> {
 
   @override
   Scene? build() {
+    // Switching servers: the scene belongs to the old server.
+    ref.listen(activeServerIdProvider, (previous, next) {
+      if (previous != next && state != null) close();
+    });
     ref.listen(castPlaybackProvider, (_, next) {
       final position = next.value?.position;
       if (position != null && position > Duration.zero) _lastCastPosition = position;

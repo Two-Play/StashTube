@@ -12,7 +12,7 @@ class StashApp extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final config = ref.watch(serverConfigProvider);
+    final server = ref.watch(serverProfilesProvider).active;
     final accent = ref.watch(accentColorProvider);
 
     return MaterialApp(
@@ -23,7 +23,7 @@ class StashApp extends ConsumerWidget {
       themeMode: ref.watch(themeModeProvider),
       builder: (context, child) => AppLockGate(child: child ?? const SizedBox.shrink()),
       // Keyed by server so all per-server state is rebuilt after switching.
-      home: config == null ? const LoginPage() : AppShell(key: ValueKey(config.baseUrl)),
+      home: server == null ? const LoginPage() : AppShell(key: ValueKey(server.id)),
     );
   }
 }

@@ -7,8 +7,19 @@ class SearchHistoryNotifier extends Notifier<List<String>> {
   static const _key = 'search_history';
   static const maxEntries = 20;
 
+  String? get _serverKey {
+    final server = ref.read(activeServerIdProvider);
+    return server == null ? null : '$_key:$server';
+  }
+
   @override
-  List<String> build() => ref.watch(sharedPreferencesProvider).getStringList(_key) ?? const [];
+  List<String> build() {
+    final prefs = ref.watch(sharedPreferencesProvider);
+    ref.watch(activeServerIdProvider);
+    final key = _serverKey;
+    if (key == null) return const [];
+    return prefs.getStringList(key) ?? prefs.getStringList(_key) ?? const [];
+  }
 
   Future<void> add(String term) async {
     final t = term.trim();
@@ -24,7 +35,8 @@ class SearchHistoryNotifier extends Notifier<List<String>> {
 
   Future<void> _save(List<String> terms) async {
     state = terms;
-    await ref.read(sharedPreferencesProvider).setStringList(_key, terms);
+    final key = _serverKey;
+    if (key != null) await ref.read(sharedPreferencesProvider).setStringList(key, terms);
   }
 }
 

@@ -9,6 +9,8 @@ import 'package:stash_app_mobile/data/repositories/stash_repository.dart';
 import 'package:stash_app_mobile/features/edit/edit_pages.dart';
 import 'package:stash_app_mobile/features/player/player_providers.dart';
 
+import '../helpers.dart';
+
 class FakeRepository implements StashRepository {
   final calls = <String, Map<String, dynamic>>{};
 
@@ -46,7 +48,7 @@ void main() {
 
   setUp(() {
     repo = FakeRepository();
-    container = ProviderContainer(overrides: [stashRepositoryProvider.overrideWithValue(repo)]);
+    container = ProviderContainer(overrides: [stashRepositoryProvider.overrideWithValue(repo), testServer]);
     addTearDown(container.dispose);
   });
 

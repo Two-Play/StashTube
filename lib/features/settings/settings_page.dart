@@ -3,9 +3,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/config/server_config.dart';
 import '../../core/config/theme.dart';
+import '../../core/utils/format.dart';
 import '../../data/providers.dart';
 import '../player/player_providers.dart';
 import '../security/app_lock.dart';
+import '../auth/server_switcher.dart';
 import '../security/app_icon.dart';
 import '../security/app_lock_gate.dart';
 
@@ -15,6 +17,8 @@ class SettingsPage extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final config = ref.watch(serverConfigProvider);
+    final profiles = ref.watch(serverProfilesProvider).profiles;
+    final server = ref.watch(serverProfilesProvider).active;
     final version = ref.watch(serverVersionProvider);
     final themeMode = ref.watch(themeModeProvider);
     final preferredStream = ref.watch(preferredStreamProvider);
@@ -28,12 +32,22 @@ class SettingsPage extends ConsumerWidget {
           const _SectionTitle('Server'),
           ListTile(
             leading: const Icon(Icons.dns_outlined),
-            title: Text(config?.baseUrl ?? '-'),
-            subtitle: Text(switch (version) {
-              AsyncData(:final value) => 'Stash ${value ?? 'unknown version'}',
-              AsyncError() => 'Not reachable',
-              _ => 'Checking…',
-            }),
+            title: Text(server?.name ?? '-', maxLines: 1, overflow: TextOverflow.ellipsis),
+            subtitle: Text(
+              '${config?.baseUrl ?? ''}\n${switch (version) {
+                AsyncData(:final value) => 'Stash ${value ?? 'unknown version'}',
+                AsyncError() => 'Not reachable',
+                _ => 'Checking…',
+              }}',
+            ),
+            isThreeLine: true,
+          ),
+          ListTile(
+            leading: const Icon(Icons.swap_horiz),
+            title: const Text('Switch server'),
+            subtitle: Text(formatCount(profiles.length, 'saved server')),
+            trailing: const Icon(Icons.chevron_right),
+            onTap: () => showServerSwitcher(context),
           ),
           ListTile(
             leading: const Icon(Icons.key_outlined),
@@ -90,22 +104,11 @@ class SettingsPage extends ConsumerWidget {
           const SizedBox(height: 16),
           ListTile(
             leading: Icon(Icons.logout, color: theme.colorScheme.error),
-            title: Text('Disconnect from server', style: TextStyle(color: theme.colorScheme.error)),
+            title: Text('Remove this server', style: TextStyle(color: theme.colorScheme.error)),
             onTap: () async {
-              final confirmed = await showDialog<bool>(
-                context: context,
-                builder: (context) => AlertDialog(
-                  title: const Text('Disconnect?'),
-                  content: const Text('The server URL and API key will be removed from this device.'),
-                  actions: [
-                    TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancel')),
-                    FilledButton(onPressed: () => Navigator.pop(context, true), child: const Text('Disconnect')),
-                  ],
-                ),
-              );
-              if (confirmed != true) return;
+              if (server == null || !await confirmRemoveServer(context, server)) return;
               ref.read(nowPlayingProvider.notifier).close();
-              await ref.read(serverConfigProvider.notifier).clear();
+              await ref.read(serverProfilesProvider.notifier).remove(server.id);
             },
           ),
         ],

@@ -16,6 +16,8 @@ import 'package:stash_app_mobile/features/search/search_page.dart';
 import 'package:stash_app_mobile/widgets/scene_feed.dart';
 import 'package:stash_app_mobile/widgets/scene_filter_sheet.dart';
 
+import '../helpers.dart';
+
 class FakeRepository implements StashRepository {
   final sceneQueries = <SceneQuery>[];
   List<SavedFilter> saved = const [];
@@ -55,6 +57,7 @@ void main() {
 
   ProviderContainer container() {
     final c = ProviderContainer(overrides: [
+      testServer,
       sharedPreferencesProvider.overrideWithValue(prefs),
       stashRepositoryProvider.overrideWithValue(repo),
     ]);
@@ -76,7 +79,7 @@ void main() {
       }
       expect(c.read(searchHistoryProvider), hasLength(SearchHistoryNotifier.maxEntries));
       expect(c.read(searchHistoryProvider).first, 'term 29');
-      expect(prefs.getStringList('search_history')?.first, 'term 29');
+      expect(prefs.getStringList('search_history:test-server')?.first, 'term 29');
 
       await history.remove('term 29');
       expect(c.read(searchHistoryProvider).first, 'term 28');

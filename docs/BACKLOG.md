@@ -30,10 +30,10 @@ Eine wartbare Basis, damit Features unabhängig voneinander wachsen können.
 |---|---|---|---|---|
 | 2.1 | Als Nutzer möchte ich die URL meines Stash-Servers eingeben, damit sich die App mit ihm verbindet. | URL wird validiert, die Verbindung über `systemStatus` geprüft. Eine Fehlermeldung zeigt die Ursache. | MVP | ✅ |
 | 2.2 | Als Nutzer mit passwortgeschütztem Stash möchte ich einen API-Key hinterlegen. | API-Key-Feld (optional, verdeckt). Der Key wird als `ApiKey`-Header an GraphQL, Bilder und Streams gesendet. | MVP | ✅ |
-| 2.3 | Als Nutzer möchte ich mich abmelden bzw. den Server wechseln. | Logout löscht URL und Key und führt zurück zum Login. Caches werden verworfen. | MVP | ✅ |
+| 2.3 | Als Nutzer möchte ich mich abmelden bzw. den Server wechseln. | Logout löscht URL und Key und führt zurück zum Login. Caches werden verworfen. | MVP | ✅ (jetzt „Remove this server“) |
 | 2.4 | Als Nutzer möchte ich, dass die App beim nächsten Start direkt verbunden ist. | Die Konfiguration wird persistiert. Der Start erfolgt ohne Login-Screen. | MVP | ✅ |
 | 2.5 | Als Nutzer möchte ich den API-Key sicher gespeichert wissen. | Speicherung in Keychain/Keystore (`flutter_secure_storage`) statt SharedPreferences. | Next | ⬜ |
-| 2.6 | Als Nutzer möchte ich mehrere Server-Profile speichern und schnell wechseln. | Profilliste in den Einstellungen. | Later | ⬜ |
+| 2.6 | Als Nutzer möchte ich mehrere Server-Profile speichern und schnell wechseln. | Server mit optionalem Namen speichern; Einstellungen → „Switch server“ (wechseln, umbenennen, entfernen, hinzufügen); Login zeigt gespeicherte Server. Bestehende Anmeldung wird automatisch übernommen. Watch later und Suchverlauf sind pro Server getrennt; beim Wechsel wird der Player geschlossen und serverbezogener Cache verworfen. | Later | ✅ |
 | 2.7 | Als Nutzer möchte ich bei Login per Benutzername und Passwort (Session-Cookie) unterstützt werden. | `/login` mit Cookie-Handling als Alternative zum API-Key. | Later | ⬜ |
 
 ## Epic 3 – Startseite / Feed (YouTube-Home)

@@ -5,9 +5,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/config/server_config.dart';
 import '../../data/repositories/stash_repository.dart';
 
-/// Connects the app to a Stash server (URL + optional API key).
+/// Connects the app to a Stash server (URL + optional API key and name).
+/// Lists saved servers to pick from (2.6). Pushed from the settings with
+/// [addServer] to save another server.
 class LoginPage extends ConsumerStatefulWidget {
-  const LoginPage({super.key});
+  const LoginPage({super.key, this.addServer = false});
+
+  final bool addServer;
 
   @override
   ConsumerState<LoginPage> createState() => _LoginPageState();
@@ -17,6 +21,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
   final _formKey = GlobalKey<FormState>();
   final _urlController = TextEditingController();
   final _apiKeyController = TextEditingController();
+  final _nameController = TextEditingController();
   bool _connecting = false;
   bool _obscureKey = true;
   String? _error;
@@ -25,6 +30,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
   void dispose() {
     _urlController.dispose();
     _apiKeyController.dispose();
+    _nameController.dispose();
     super.dispose();
   }
 
@@ -42,8 +48,9 @@ class _LoginPageState extends ConsumerState<LoginPage> {
     });
     try {
       await StashRepository.verifyServer(config);
-      // Switching the config swaps the app to the shell (see StashApp).
-      await ref.read(serverConfigProvider.notifier).save(config);
+      // Activating the server swaps the app to its shell (see StashApp).
+      await ref.read(serverProfilesProvider.notifier).add(config, name: _nameController.text);
+      if (mounted && widget.addServer) Navigator.of(context).pop();
     } catch (e) {
       HapticFeedback.vibrate();
       if (mounted) setState(() => _error = e.toString());
@@ -55,7 +62,9 @@ class _LoginPageState extends ConsumerState<LoginPage> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final saved = widget.addServer ? const <ServerProfile>[] : ref.watch(serverProfilesProvider).profiles;
     return Scaffold(
+      appBar: widget.addServer ? AppBar(title: const Text('Add server')) : null,
       body: SafeArea(
         child: Center(
           child: SingleChildScrollView(
@@ -66,16 +75,46 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    Icon(Icons.play_circle_fill, size: 72, color: theme.colorScheme.primary),
-                    const SizedBox(height: 12),
-                    Text('Connect to Stash', textAlign: TextAlign.center, style: theme.textTheme.headlineSmall),
+                    if (!widget.addServer) ...[
+                      Icon(Icons.play_circle_fill, size: 72, color: theme.colorScheme.primary),
+                      const SizedBox(height: 12),
+                      Text('Connect to Stash', textAlign: TextAlign.center, style: theme.textTheme.headlineSmall),
+                    ],
                     const SizedBox(height: 8),
                     Text(
                       'Enter the address of your Stash server, e.g. http://192.168.1.10:9999',
                       textAlign: TextAlign.center,
                       style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.onSurfaceVariant),
                     ),
+                    if (saved.isNotEmpty) ...[
+                      const SizedBox(height: 24),
+                      Text('Saved servers', style: theme.textTheme.titleSmall),
+                      for (final server in saved)
+                        Card(
+                          margin: const EdgeInsets.only(top: 8),
+                          child: ListTile(
+                            leading: const Icon(Icons.dns_outlined),
+                            title: Text(server.name, maxLines: 1, overflow: TextOverflow.ellipsis),
+                            subtitle: Text(server.baseUrl, maxLines: 1, overflow: TextOverflow.ellipsis),
+                            trailing: const Icon(Icons.chevron_right),
+                            onTap: () => ref.read(serverProfilesProvider.notifier).activate(server.id),
+                          ),
+                        ),
+                      const SizedBox(height: 16),
+                      Text('Or add another server', style: theme.textTheme.titleSmall),
+                    ],
                     const SizedBox(height: 32),
+                    TextFormField(
+                      controller: _nameController,
+                      textInputAction: TextInputAction.next,
+                      decoration: const InputDecoration(
+                        border: OutlineInputBorder(),
+                        labelText: 'Name (optional)',
+                        hintText: 'e.g. Home',
+                        prefixIcon: Icon(Icons.label_outline),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
                     TextFormField(
                       controller: _urlController,
                       keyboardType: TextInputType.url,

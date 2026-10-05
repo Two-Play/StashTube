@@ -1,5 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/config/server_config.dart';
+
 import '../../data/models/list_queries.dart';
 import '../../data/models/performer.dart';
 import '../../data/providers.dart';
@@ -11,7 +13,10 @@ class PerformerFavoritesNotifier extends Notifier<Map<String, bool>> {
   final _pending = <String>{};
 
   @override
-  Map<String, bool> build() => const {};
+  Map<String, bool> build() {
+    ref.watch(activeServerIdProvider); // performer ids are per server
+    return const {};
+  }
 
   /// Flips the favorite flag optimistically and saves it via `performerUpdate`.
   /// Reverts and rethrows when the server rejects the change.

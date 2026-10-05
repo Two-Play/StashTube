@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../data/models/scene.dart';
 import '../../data/models/tag.dart';
+import '../../core/config/server_config.dart';
 import '../../data/repositories/stash_repository.dart';
 
 /// Rating, O-count and tags changed in this session; override the loaded scene.
@@ -28,7 +29,10 @@ class SceneEdit {
 /// reverted when the server rejects them.
 class SceneEditsNotifier extends Notifier<Map<String, SceneEdit>> {
   @override
-  Map<String, SceneEdit> build() => const {};
+  Map<String, SceneEdit> build() {
+    ref.watch(activeServerIdProvider); // scene ids are per server
+    return const {};
+  }
 
   SceneEdit _editOf(String id) => state[id] ?? const SceneEdit();
 
