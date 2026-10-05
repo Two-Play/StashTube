@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:media_kit_video/media_kit_video.dart';
 
 import '../../core/utils/format.dart';
 import '../../data/models/list_queries.dart';
@@ -11,9 +10,14 @@ import '../../widgets/stash_image.dart';
 import '../shell/navigation.dart';
 import 'player_controls.dart';
 import 'player_providers.dart';
+import 'player_transition.dart';
 
-/// Content of the miniplayer panel. Interpolates between the collapsed bar
-/// and the full player page depending on the panel [height].
+/// Content of the miniplayer panel: one layout that [PlayerTransition]
+/// morphs continuously from the collapsed bar into the full player page.
+///
+/// The widget tree keeps the same structure at every height (the video stays
+/// the first child of the first row), so the video is never rebuilt and the
+/// transition doesn't flicker.
 class PlayerPanel extends ConsumerWidget {
   const PlayerPanel({super.key, required this.scene, required this.height, required this.maxHeight});
 
@@ -24,103 +28,115 @@ class PlayerPanel extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final colors = Theme.of(context).colorScheme;
-    final expandedVideoHeight = MediaQuery.sizeOf(context).width * 9 / 16;
-    final percentage = ((height - kMiniPlayerHeight) / (maxHeight - kMiniPlayerHeight)).clamp(0.0, 1.0);
-
-    // Mostly collapsed: compact bar, like YouTube's miniplayer.
-    if (percentage < 0.2) {
-      return ColoredBox(
-        color: colors.surfaceContainer,
-        child: _MiniBar(scene: scene, height: height),
-      );
-    }
-
-    // Expanding: video grows to full width, details fade in.
+    final media = MediaQuery.of(context);
+    final t = PlayerTransition(
+      height: height,
+      minHeight: kMiniPlayerHeight,
+      maxHeight: maxHeight,
+      screenWidth: media.size.width,
+      topInset: media.padding.top,
+    );
     final markers = ref.watch(sceneDetailsProvider(scene.id)).valueOrNull?.markers ?? const [];
-    final videoHeight = kMiniPlayerHeight + (expandedVideoHeight - kMiniPlayerHeight) * percentage;
+
     return PanelTapGuard(
+      // Collapsed or mid-drag, a tap should still expand the panel.
+      enabled: t.isExpanded,
       child: ColoredBox(
-        color: colors.surface,
-        child: SafeArea(
-          bottom: false,
-          child: Column(
-            children: [
-              SizedBox(
-                height: videoHeight,
-                width: double.infinity,
-                child: ColoredBox(color: Colors.black, child: ExpandedVideo(scene: scene)),
+        color: Color.lerp(colors.surfaceContainer, colors.surface, t.progress)!,
+        child: Column(
+          children: [
+            SizedBox(height: t.topPadding),
+            SizedBox(
+              height: t.videoHeight,
+              child: Row(
+                children: [
+                  SizedBox(
+                    width: t.videoWidth,
+                    child: ColoredBox(
+                      color: Colors.black,
+                      child: PlayerVideo(scene: scene, showControls: t.isExpanded),
+                    ),
+                  ),
+                  // Mini bar info keeps its natural width and is clipped while
+                  // the video takes over the row.
+                  Expanded(
+                    child: ClipRect(
+                      child: OverflowBox(
+                        alignment: Alignment.centerLeft,
+                        minWidth: 0,
+                        maxWidth: media.size.width - kMiniPlayerHeight * 16 / 9,
+                        child: Opacity(
+                          opacity: t.miniBarOpacity,
+                          child: IgnorePointer(
+                            ignoring: t.miniBarOpacity < 0.5,
+                            child: _MiniInfo(scene: scene),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
               ),
-              if (markers.isNotEmpty) ChapterStrip(markers: markers, duration: scene.duration),
+            ),
+            Opacity(opacity: t.miniBarOpacity, child: const _ProgressBar(height: 2)),
+            if (t.isExpanded && markers.isNotEmpty) ChapterStrip(markers: markers, duration: scene.duration),
+            if (t.showDetails)
               Expanded(
                 child: Opacity(
-                  opacity: percentage,
+                  opacity: t.detailsOpacity,
                   child: _SceneDetails(scene: scene),
                 ),
               ),
-            ],
-          ),
+          ],
         ),
       ),
     );
   }
 }
 
-class _MiniBar extends ConsumerWidget {
-  const _MiniBar({required this.scene, required this.height});
+/// Title, channel, play/pause and close of the collapsed miniplayer.
+class _MiniInfo extends ConsumerWidget {
+  const _MiniInfo({required this.scene});
 
   final Scene scene;
-  final double height;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final player = ref.watch(playerProvider);
-    final barHeight = height.clamp(0.0, kMiniPlayerHeight);
 
-    return Column(
+    return Row(
       children: [
-        SizedBox(
-          height: barHeight - 2,
-          child: Row(
-            children: [
-              AspectRatio(
-                aspectRatio: 16 / 9,
-                child: Video(controller: ref.watch(videoControllerProvider), controls: NoVideoControls),
-              ),
-              Expanded(
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 12),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(scene.title, maxLines: 1, overflow: TextOverflow.ellipsis, style: theme.textTheme.bodyMedium),
-                      Text(
-                        scene.studio?.name ?? scene.performers.firstOrNull?.name ?? '',
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurfaceVariant),
-                      ),
-                    ],
-                  ),
+        Expanded(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 12),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(scene.title, maxLines: 1, overflow: TextOverflow.ellipsis, style: theme.textTheme.bodyMedium),
+                Text(
+                  scene.studio?.name ?? scene.performers.firstOrNull?.name ?? '',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurfaceVariant),
                 ),
-              ),
-              StreamBuilder<bool>(
-                stream: player.stream.playing,
-                initialData: player.state.playing,
-                builder: (_, snapshot) => IconButton(
-                  icon: Icon(snapshot.data == true ? Icons.pause : Icons.play_arrow),
-                  onPressed: player.playOrPause,
-                ),
-              ),
-              IconButton(
-                icon: const Icon(Icons.close),
-                onPressed: () => ref.read(nowPlayingProvider.notifier).close(),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
-        const _ProgressBar(height: 2),
+        StreamBuilder<bool>(
+          stream: player.stream.playing,
+          initialData: player.state.playing,
+          builder: (_, snapshot) => IconButton(
+            icon: Icon(snapshot.data == true ? Icons.pause : Icons.play_arrow),
+            onPressed: player.playOrPause,
+          ),
+        ),
+        IconButton(
+          icon: const Icon(Icons.close),
+          onPressed: () => ref.read(nowPlayingProvider.notifier).close(),
+        ),
       ],
     );
   }

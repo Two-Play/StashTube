@@ -16,21 +16,28 @@ import 'player_providers.dart';
 /// space in the details) ends up collapsing the player. A deeper tap
 /// recognizer wins the gesture arena; buttons, double-tap and drag still work.
 class PanelTapGuard extends StatelessWidget {
-  const PanelTapGuard({super.key, required this.child});
+  const PanelTapGuard({super.key, this.enabled = true, required this.child});
 
+  /// When false, taps reach the miniplayer again (e.g. tap-to-expand on the
+  /// collapsed bar). Toggling keeps the widget tree stable.
+  final bool enabled;
   final Widget child;
 
   @override
   Widget build(BuildContext context) =>
-      GestureDetector(behavior: HitTestBehavior.opaque, onTap: () {}, child: child);
+      GestureDetector(behavior: HitTestBehavior.opaque, onTap: enabled ? () {} : null, child: child);
 }
 
-/// The video with YouTube-like controls: double tap to seek ±10 s (4.11),
-/// a quality button (4.10) and, outside fullscreen, a collapse button.
-class ExpandedVideo extends ConsumerWidget {
-  const ExpandedVideo({super.key, required this.scene});
+/// The one video surface of the player, used both in the miniplayer and in
+/// the expanded view so it is never rebuilt during the transition.
+///
+/// With [showControls]: YouTube-like controls with double tap to seek ±10 s
+/// (4.11), a quality button (4.10) and, outside fullscreen, a collapse button.
+class PlayerVideo extends ConsumerWidget {
+  const PlayerVideo({super.key, required this.scene, required this.showControls});
 
   final Scene scene;
+  final bool showControls;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -63,7 +70,10 @@ class ExpandedVideo extends ConsumerWidget {
         qualityButton,
       ]),
       fullscreen: theme(topBar: [const Spacer(), qualityButton]),
-      child: Video(controller: ref.watch(videoControllerProvider), controls: MaterialVideoControls),
+      child: Video(
+        controller: ref.watch(videoControllerProvider),
+        controls: showControls ? MaterialVideoControls : NoVideoControls,
+      ),
     );
   }
 }
