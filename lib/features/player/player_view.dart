@@ -12,6 +12,7 @@ import '../../widgets/stash_image.dart';
 import '../shell/navigation.dart';
 import '../cast/cast_providers.dart';
 import 'drag_to_minimize.dart';
+import 'file_info.dart';
 import 'player_controls.dart';
 import 'player_providers.dart';
 import 'player_transition.dart';
@@ -44,7 +45,6 @@ class PlayerPanel extends ConsumerWidget {
       screenWidth: media.size.width,
       topInset: media.padding.top,
     );
-    final markers = ref.watch(sceneDetailsProvider(scene.id)).value?.markers ?? const [];
 
     // Only status bar fields: the collapsed panel sits over Android's
     // navigation bar, whose style must stay untouched.
@@ -113,11 +113,6 @@ class PlayerPanel extends ConsumerWidget {
                   height: 2 * t.miniBarOpacity,
                   child: Opacity(opacity: t.miniBarOpacity, child: const _ProgressBar(height: 2)),
                 ),
-                if (t.showDetails && markers.isNotEmpty)
-                  Opacity(
-                    opacity: t.detailsOpacity,
-                    child: ChapterStrip(markers: markers, duration: scene.duration),
-                  ),
                 if (t.showDetails)
                   Expanded(
                     child: Opacity(
@@ -445,6 +440,7 @@ class _SceneInfoState extends ConsumerState<_SceneInfo> {
               ),
             ),
           ),
+        if (details != null && details.files.isNotEmpty) FileInfoCard(files: details.files),
         const SizedBox(height: 8),
       ],
     );

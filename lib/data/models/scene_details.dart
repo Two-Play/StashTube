@@ -36,11 +36,91 @@ class SceneMarker {
   }
 }
 
+/// A video file of a scene, as Stash's scan reports it.
+class SceneFile {
+  const SceneFile({
+    required this.path,
+    this.size,
+    this.format,
+    this.width,
+    this.height,
+    this.duration,
+    this.videoCodec,
+    this.audioCodec,
+    this.frameRate,
+    this.bitRate,
+    this.modified,
+  });
+
+  final String path;
+
+  /// Bytes.
+  final double? size;
+
+  /// Container, e.g. "mp4".
+  final String? format;
+  final int? width;
+  final int? height;
+
+  /// Seconds.
+  final double? duration;
+  final String? videoCodec;
+  final String? audioCodec;
+  final double? frameRate;
+
+  /// Bits per second.
+  final int? bitRate;
+  final DateTime? modified;
+
+  factory SceneFile.fromJson(Json json) {
+    double? positive(String key) {
+      final v = readDouble(json, key);
+      return v > 0 ? v : null;
+    }
+
+    int? positiveInt(String key) {
+      final v = readNullableInt(json, key);
+      return v != null && v > 0 ? v : null;
+    }
+
+    String? text(String key) {
+      final v = readNullableString(json, key)?.trim();
+      return v == null || v.isEmpty ? null : v;
+    }
+
+    return SceneFile(
+      path: readString(json, 'path'),
+      size: positive('size'),
+      format: text('format'),
+      width: positiveInt('width'),
+      height: positiveInt('height'),
+      duration: positive('duration'),
+      videoCodec: text('video_codec'),
+      audioCodec: text('audio_codec'),
+      frameRate: positive('frame_rate'),
+      bitRate: positiveInt('bit_rate'),
+      modified: readDate(json, 'mod_time'),
+    );
+  }
+
+  /// File name without the folders (Stash paths may use either separator).
+  String get name => path.split(RegExp(r'[/\\]')).last;
+}
+
 /// Per-scene data that is only needed while the scene is playing.
 class SceneDetails {
-  const SceneDetails({this.streams = const [], this.markers = const [], this.spriteUrl, this.vttUrl});
+  const SceneDetails({
+    this.streams = const [],
+    this.markers = const [],
+    this.files = const [],
+    this.spriteUrl,
+    this.vttUrl,
+  });
 
   final List<SceneStream> streams;
+
+  /// The scene's files; the first is the one that plays.
+  final List<SceneFile> files;
 
   /// Sorted by position.
   final List<SceneMarker> markers;
@@ -56,6 +136,7 @@ class SceneDetails {
         streams: readList(json, 'sceneStreams').map(SceneStream.fromJson).where((s) => s.url.isNotEmpty).toList(),
         markers: readList(json, 'scene_markers').map(SceneMarker.fromJson).toList()
           ..sort((a, b) => a.seconds.compareTo(b.seconds)),
+        files: readList(json, 'files').map(SceneFile.fromJson).where((f) => f.path.isNotEmpty).toList(),
       );
 
   /// The chapter that contains [seconds], if any.

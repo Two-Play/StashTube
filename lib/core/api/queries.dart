@@ -167,6 +167,7 @@ query FindSceneDetails($id: ID!) {
     paths { sprite vtt }
     sceneStreams { url mime_type label }
     scene_markers { id title seconds primary_tag { name } }
+    files { path size format width height duration video_codec audio_codec frame_rate bit_rate mod_time }
   }
 }
 ''';

@@ -1137,4 +1137,67 @@ class AppLocalizationsEn extends AppLocalizations {
   String navBarCount(int count, int max) {
     return '$count of $max tabs chosen';
   }
+
+  @override
+  String get fileInfo => 'File info';
+
+  @override
+  String fileInfoFiles(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'File info ($count files)',
+      one: 'File info',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get fileName => 'File';
+
+  @override
+  String get filePath => 'Path';
+
+  @override
+  String get fileSize => 'Size';
+
+  @override
+  String get fileFormat => 'Format';
+
+  @override
+  String get fileResolution => 'Resolution';
+
+  @override
+  String get fileDuration => 'Duration';
+
+  @override
+  String get fileVideoCodec => 'Video codec';
+
+  @override
+  String get fileAudioCodec => 'Audio codec';
+
+  @override
+  String get fileFrameRate => 'Frame rate';
+
+  @override
+  String get fileBitRate => 'Bit rate';
+
+  @override
+  String get fileModified => 'Modified';
+
+  @override
+  String get copyPath => 'Copy path';
+
+  @override
+  String get pathCopied => 'Path copied';
+
+  @override
+  String framesPerSecond(String fps) {
+    return '$fps fps';
+  }
+
+  @override
+  String megabitsPerSecond(String rate) {
+    return '$rate Mbit/s';
+  }
 }

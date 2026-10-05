@@ -1957,6 +1957,108 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'{count} of {max} tabs chosen'**
   String navBarCount(int count, int max);
+
+  /// No description provided for @fileInfo.
+  ///
+  /// In en, this message translates to:
+  /// **'File info'**
+  String get fileInfo;
+
+  /// No description provided for @fileInfoFiles.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{File info} other{File info ({count} files)}}'**
+  String fileInfoFiles(int count);
+
+  /// No description provided for @fileName.
+  ///
+  /// In en, this message translates to:
+  /// **'File'**
+  String get fileName;
+
+  /// No description provided for @filePath.
+  ///
+  /// In en, this message translates to:
+  /// **'Path'**
+  String get filePath;
+
+  /// No description provided for @fileSize.
+  ///
+  /// In en, this message translates to:
+  /// **'Size'**
+  String get fileSize;
+
+  /// No description provided for @fileFormat.
+  ///
+  /// In en, this message translates to:
+  /// **'Format'**
+  String get fileFormat;
+
+  /// No description provided for @fileResolution.
+  ///
+  /// In en, this message translates to:
+  /// **'Resolution'**
+  String get fileResolution;
+
+  /// No description provided for @fileDuration.
+  ///
+  /// In en, this message translates to:
+  /// **'Duration'**
+  String get fileDuration;
+
+  /// No description provided for @fileVideoCodec.
+  ///
+  /// In en, this message translates to:
+  /// **'Video codec'**
+  String get fileVideoCodec;
+
+  /// No description provided for @fileAudioCodec.
+  ///
+  /// In en, this message translates to:
+  /// **'Audio codec'**
+  String get fileAudioCodec;
+
+  /// No description provided for @fileFrameRate.
+  ///
+  /// In en, this message translates to:
+  /// **'Frame rate'**
+  String get fileFrameRate;
+
+  /// No description provided for @fileBitRate.
+  ///
+  /// In en, this message translates to:
+  /// **'Bit rate'**
+  String get fileBitRate;
+
+  /// No description provided for @fileModified.
+  ///
+  /// In en, this message translates to:
+  /// **'Modified'**
+  String get fileModified;
+
+  /// No description provided for @copyPath.
+  ///
+  /// In en, this message translates to:
+  /// **'Copy path'**
+  String get copyPath;
+
+  /// No description provided for @pathCopied.
+  ///
+  /// In en, this message translates to:
+  /// **'Path copied'**
+  String get pathCopied;
+
+  /// No description provided for @framesPerSecond.
+  ///
+  /// In en, this message translates to:
+  /// **'{fps} fps'**
+  String framesPerSecond(String fps);
+
+  /// No description provided for @megabitsPerSecond.
+  ///
+  /// In en, this message translates to:
+  /// **'{rate} Mbit/s'**
+  String megabitsPerSecond(String rate);
 }
 
 class _AppLocalizationsDelegate

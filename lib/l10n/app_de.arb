@@ -309,5 +309,22 @@
   "errorNotReady": "Der Server ist erreichbar, aber nicht bereit (Status: {status}).",
   "errorNotFound": "Nicht gefunden.",
   "errorNotSaved": "Es wurde nichts gespeichert.",
-  "navBarCount": "{count} von {max} Tabs gewählt"
+  "navBarCount": "{count} von {max} Tabs gewählt",
+  "fileInfo": "Dateiinfos",
+  "fileInfoFiles": "{count, plural, =1{Dateiinfos} other{Dateiinfos ({count} Dateien)}}",
+  "fileName": "Datei",
+  "filePath": "Pfad",
+  "fileSize": "Größe",
+  "fileFormat": "Format",
+  "fileResolution": "Auflösung",
+  "fileDuration": "Dauer",
+  "fileVideoCodec": "Video-Codec",
+  "fileAudioCodec": "Audio-Codec",
+  "fileFrameRate": "Bildrate",
+  "fileBitRate": "Bitrate",
+  "fileModified": "Geändert",
+  "copyPath": "Pfad kopieren",
+  "pathCopied": "Pfad kopiert",
+  "framesPerSecond": "{fps} fps",
+  "megabitsPerSecond": "{rate} Mbit/s"
 }

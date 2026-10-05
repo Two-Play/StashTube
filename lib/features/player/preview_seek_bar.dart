@@ -1,18 +1,21 @@
 import 'dart:async';
 
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/config/server_config.dart';
 import '../../core/utils/format.dart';
+import '../../data/models/scene_details.dart';
 import '../../data/models/scrub_thumbnails.dart';
 import '../../data/providers.dart';
 import 'player_providers.dart';
 
 /// Seek bar that shows a preview frame above the finger while scrubbing
-/// (from Stash's sprite thumbnails, if generated) plus the target time.
-/// Seeks once on release, like YouTube.
+/// (from Stash's sprite thumbnails, if generated) plus the target time and
+/// chapter. Chapters (scene markers) split the bar into segments. Seeks
+/// once on release, like YouTube.
 class PreviewSeekBar extends ConsumerStatefulWidget {
   const PreviewSeekBar({super.key, required this.sceneId, this.onInteractionStart, this.onInteractionEnd});
 
@@ -96,10 +99,12 @@ class _PreviewSeekBarState extends ConsumerState<PreviewSeekBar> {
     final played = _drag ?? _fractionOf(_position);
     final thumbs = ref.watch(scrubThumbnailsProvider(widget.sceneId)).value;
     final headers = ref.watch(authHeadersProvider);
+    final details = ref.watch(sceneDetailsProvider(widget.sceneId)).value;
+    final markers = details?.markers ?? const <SceneMarker>[];
 
     return OverlayPortal(
       controller: _overlay,
-      overlayChildBuilder: (_) => _buildPreview(thumbs, headers),
+      overlayChildBuilder: (_) => _buildPreview(thumbs, headers, details),
       child: CompositedTransformTarget(
         link: _link,
         child: LayoutBuilder(
@@ -127,6 +132,10 @@ class _PreviewSeekBarState extends ConsumerState<PreviewSeekBar> {
                     buffered: _fractionOf(_buffer),
                     dragging: _drag != null,
                     playedColor: colors.primary,
+                    chapters: [
+                      if (_totalMs > 0)
+                        for (final m in markers) (m.seconds * 1000 / _totalMs).clamp(0.0, 1.0),
+                    ],
                   ),
                 ),
               ),
@@ -137,10 +146,11 @@ class _PreviewSeekBarState extends ConsumerState<PreviewSeekBar> {
     );
   }
 
-  Widget _buildPreview(ScrubThumbnails? thumbs, Map<String, String> headers) {
+  Widget _buildPreview(ScrubThumbnails? thumbs, Map<String, String> headers, SceneDetails? details) {
     final drag = _drag ?? 0;
     final seconds = drag * _totalMs / 1000;
     final cue = thumbs?.cueAt(seconds);
+    final chapter = details?.markerAt(seconds)?.title;
     final previewHeight = cue == null ? 0.0 : _previewWidth * cue.height / cue.width;
     // Center the preview on the finger, but keep it within the bar.
     final left = (drag * _barWidth - _previewWidth / 2).clamp(0.0, (_barWidth - _previewWidth).clamp(0.0, double.infinity));
@@ -182,7 +192,9 @@ class _PreviewSeekBarState extends ConsumerState<PreviewSeekBar> {
                   child: Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                     child: Text(
-                      formatDuration(seconds),
+                      chapter == null ? formatDuration(seconds) : '${formatDuration(seconds)} • $chapter',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                       style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600, fontSize: 13),
                     ),
                   ),
@@ -250,12 +262,23 @@ class SpriteFrame extends StatelessWidget {
 }
 
 class _SeekBarPainter extends CustomPainter {
-  _SeekBarPainter({required this.played, required this.buffered, required this.dragging, required this.playedColor});
+  _SeekBarPainter({
+    required this.played,
+    required this.buffered,
+    required this.dragging,
+    required this.playedColor,
+    this.chapters = const [],
+  });
 
   final double played;
   final double buffered;
   final bool dragging;
   final Color playedColor;
+
+  /// Chapter starts as fractions of the duration.
+  final List<double> chapters;
+
+  static const _chapterGap = 2.0;
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -264,6 +287,8 @@ class _SeekBarPainter extends CustomPainter {
     final track = Rect.fromLTWH(0, y - trackHeight / 2, size.width, trackHeight);
     final radius = Radius.circular(trackHeight / 2);
 
+    // The track in a layer of its own, so chapter gaps can be cut out of it.
+    canvas.saveLayer(Offset.zero & size, Paint());
     canvas.drawRRect(RRect.fromRectAndRadius(track, radius), Paint()..color = Colors.white24);
     canvas.drawRRect(
       RRect.fromRectAndRadius(Rect.fromLTWH(0, track.top, size.width * buffered, trackHeight), radius),
@@ -273,10 +298,20 @@ class _SeekBarPainter extends CustomPainter {
       RRect.fromRectAndRadius(Rect.fromLTWH(0, track.top, size.width * played, trackHeight), radius),
       Paint()..color = playedColor,
     );
+    final gap = Paint()..blendMode = BlendMode.clear;
+    for (final c in chapters) {
+      if (c <= 0 || c >= 1) continue;
+      canvas.drawRect(Rect.fromLTWH(size.width * c - _chapterGap / 2, track.top, _chapterGap, trackHeight), gap);
+    }
+    canvas.restore();
     canvas.drawCircle(Offset(size.width * played, y), dragging ? 9 : 6, Paint()..color = playedColor);
   }
 
   @override
   bool shouldRepaint(_SeekBarPainter old) =>
-      old.played != played || old.buffered != buffered || old.dragging != dragging || old.playedColor != playedColor;
+      old.played != played ||
+      old.buffered != buffered ||
+      old.dragging != dragging ||
+      old.playedColor != playedColor ||
+      !listEquals(old.chapters, chapters);
 }

@@ -611,5 +611,43 @@
         "type": "int"
       }
     }
+  },
+  "fileInfo": "File info",
+  "fileInfoFiles": "{count, plural, =1{File info} other{File info ({count} files)}}",
+  "@fileInfoFiles": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "fileName": "File",
+  "filePath": "Path",
+  "fileSize": "Size",
+  "fileFormat": "Format",
+  "fileResolution": "Resolution",
+  "fileDuration": "Duration",
+  "fileVideoCodec": "Video codec",
+  "fileAudioCodec": "Audio codec",
+  "fileFrameRate": "Frame rate",
+  "fileBitRate": "Bit rate",
+  "fileModified": "Modified",
+  "copyPath": "Copy path",
+  "pathCopied": "Path copied",
+  "framesPerSecond": "{fps} fps",
+  "@framesPerSecond": {
+    "placeholders": {
+      "fps": {
+        "type": "String"
+      }
+    }
+  },
+  "megabitsPerSecond": "{rate} Mbit/s",
+  "@megabitsPerSecond": {
+    "placeholders": {
+      "rate": {
+        "type": "String"
+      }
+    }
   }
 }

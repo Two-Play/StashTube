@@ -66,6 +66,7 @@ Eine wartbare Basis, damit Features unabhängig voneinander wachsen können.
 | 4.13 | Als Nutzer möchte ich auf einen Chromecast oder AirPlay streamen. | Chromecast: Cast-Button im Player und auf der Startseite, Geräteauswahl, laufende Szene wird an der aktuellen Stelle übergeben, neue Szenen laufen direkt auf dem TV, Fernbedienung (Play/Pause, ±10 s) im Player und Miniplayer, nach dem Trennen geht es lokal an der TV-Position weiter. Stream: Original (MP4/WebM), sonst HLS; API-Key per `?apikey=`. AirPlay-Video ist mit dem mpv-basierten Player nicht möglich – unter iOS bleibt die Bildschirmsynchronisierung. | Later | 🟡 (Chromecast ✅, AirPlay ⬜) |
 | 4.14 | Als Nutzer möchte ich beim Spulen ein Vorschaubild der Stelle sehen. | Eigener Fortschrittsbalken: Beim Ziehen/Tippen erscheint über dem Finger der passende Ausschnitt aus Stashs Sprite (WebVTT) plus Zielzeit; Sprung beim Loslassen. Ohne generierte Sprites nur die Zeit. | Next | ✅ |
 | 4.15 | Als Nutzer möchte ich den großen Player per Wischen nach unten minimieren. | Wischen auf dem Video oder in den Details (ganz oben) folgt dem Finger und rastet ein; kein Pull-to-Refresh im Player. | MVP | ✅ |
+| 4.16 | Als Nutzer möchte ich die Dateiinfos eines Videos sehen. | Aufklappbare Karte unter den Videodetails: Zusammenfassung (Auflösung, Codec, Größe, Bitrate), aufgeklappt Pfad, Format, Auflösung, Dauer, Codecs, Bildrate, Bitrate, Änderungsdatum; Pfad kopierbar. Mehrere Dateien werden einzeln aufgeführt. | Next | ✅ |
 
 ## Epic 5 – Suche & Filter
 
