@@ -140,6 +140,20 @@ mutation GalleryEdit($input: GalleryUpdateInput!) {
 }
 ''' '$_galleryFields';
 
+  /// URL lists, queried separately so older Stash versions without `urls`
+  /// only lose the URL editor, not the lists.
+  static const sceneUrls = r'''
+query SceneUrls($id: ID!) { findScene(id: $id) { id urls } }
+''';
+
+  static const performerUrls = r'''
+query PerformerUrls($id: ID!) { findPerformer(id: $id) { id urls } }
+''';
+
+  static const galleryUrls = r'''
+query GalleryUrls($id: ID!) { findGallery(id: $id) { id urls } }
+''';
+
   static const performerSetFavorite = r'''
 mutation PerformerSetFavorite($id: ID!, $favorite: Boolean!) {
   performerUpdate(input: { id: $id, favorite: $favorite }) { id favorite }

@@ -163,7 +163,7 @@ Eine wartbare Basis, damit Features unabhängig voneinander wachsen können.
 |---|---|---|---|---|
 | 17.1 | Als Nutzer möchte ich Szenen bearbeiten. | Titel, Beschreibung, Datum, Studio (Suche), Performer (Mehrfachauswahl), „Organized“; aus dem Player („Edit“) und dem ⋮-Menü. Nur geänderte Felder werden gesendet; der Player zeigt die Änderung sofort. | Next | ✅ |
 | 17.2 | Als Nutzer möchte ich Performer, Studios, Tags und Galerien bearbeiten. | ✎ in der App-Bar der jeweiligen Seite: Performer (Name, Disambiguation, Geschlecht, Geburtsdatum, Land, Details), Studio (Name, Elternstudio, Details), Tag (Name, Beschreibung), Galerie (Titel, Datum, Details). | Next | ✅ |
-| 17.3 | Als Nutzer möchte ich Bilder (Cover/Porträts) und URLs bearbeiten. | Bild-Upload, URL-Listen. | Later | ⬜ |
+| 17.3 | Als Nutzer möchte ich Bilder (Cover/Porträts) und URLs bearbeiten. | Bildfeld in den Formularen (Szenen-Cover, Performer-Bild, Studio-Logo, Tag-Bild): Foto aus der Mediathek (auf max. 2048 px verkleinert) oder Bild-URL; Upload als data-URI. URL-Listen für Szenen, Performer und Galerien (nur wenn der Server sie unterstützt), Website-Feld für Studios. | Later | ✅ |
 ## Epic 15 – Bilder & Galerien
 
 | # | User Story | Akzeptanzkriterien | Prio | Status |

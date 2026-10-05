@@ -19,6 +19,12 @@ class FakeRepository implements StashRepository {
   }
 
   @override
+  Future<List<String>?> sceneUrls(String id) async => null;
+
+  @override
+  Future<List<String>?> performerUrls(String id) async => null;
+
+  @override
   Future<Performer> updatePerformer(String id, Map<String, dynamic> changes) async {
     calls['performer'] = changes;
     return Performer(id: id, name: 'x');
@@ -76,6 +82,7 @@ void main() {
 
     await tester.enterText(find.widgetWithText(TextField, 'Old title'), 'New title');
     await tester.tap(find.byTooltip('Clear')); // studio
+    await tester.scrollUntilVisible(find.text('Organized'), 200, scrollable: find.byType(Scrollable).first);
     await tester.tap(find.text('Organized'));
     await tester.pump();
     await tester.tap(find.text('Save'));
@@ -101,6 +108,11 @@ void main() {
       const PerformerEditPage(performer: Performer(id: 'p', name: 'Alice', disambiguation: 'old')),
     );
     await tester.enterText(find.widgetWithText(TextField, 'old'), '');
+    await tester.scrollUntilVisible(
+      find.widgetWithText(TextField, 'Country code'),
+      200,
+      scrollable: find.byType(Scrollable).first,
+    );
     await tester.enterText(find.widgetWithText(TextField, 'Country code'), 'de');
     await tester.tap(find.text('Save'));
     await tester.pumpAndSettle();

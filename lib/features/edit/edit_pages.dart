@@ -11,6 +11,7 @@ import '../../data/repositories/stash_repository.dart';
 import '../player/player_providers.dart';
 import '../player/scene_edits.dart';
 import 'edit_common.dart';
+import 'media_fields.dart';
 
 /// Adds `key: value` to [changes] when it differs from [original].
 void _diff(Map<String, dynamic> changes, String key, Object? original, Object? value) {
@@ -24,6 +25,30 @@ void _diff(Map<String, dynamic> changes, String key, Object? original, Object? v
 
 String? _blankToNull(String text) => text.trim().isEmpty ? null : text.trim();
 
+/// Loads an entity's URL list once for the form; null = not supported by
+/// the server (the URL editor is hidden then).
+mixin _UrlsLoader<T extends ConsumerStatefulWidget> on ConsumerState<T> {
+  List<String>? originalUrls;
+  List<String>? urls;
+
+  Future<List<String>?> loadUrls(StashRepository repo);
+
+  @override
+  void initState() {
+    super.initState();
+    // Future.sync: errors thrown synchronously also end up in onError.
+    Future.sync(() => loadUrls(ref.read(stashRepositoryProvider))).then((value) {
+      if (mounted) setState(() => originalUrls = urls = value);
+    }, onError: (_) {});
+  }
+
+  void diffUrls(Map<String, dynamic> changes) {
+    if (originalUrls != null && urls != null) _diff(changes, 'urls', originalUrls, urls);
+  }
+
+  Widget? urlsField() => urls == null ? null : UrlListField(urls: urls!, onChanged: (v) => setState(() => urls = v));
+}
+
 // ---------------------------------------------------------------- Scene
 
 class SceneEditPage extends ConsumerStatefulWidget {
@@ -35,13 +60,17 @@ class SceneEditPage extends ConsumerStatefulWidget {
   ConsumerState<SceneEditPage> createState() => _SceneEditPageState();
 }
 
-class _SceneEditPageState extends ConsumerState<SceneEditPage> {
+class _SceneEditPageState extends ConsumerState<SceneEditPage> with _UrlsLoader {
   late final _title = TextEditingController(text: widget.scene.title);
   late final _details = TextEditingController(text: widget.scene.details ?? '');
   late DateTime? _date = widget.scene.date;
   late Studio? _studio = widget.scene.studio;
   late List<Performer> _performers = widget.scene.performers;
   late bool _organized = widget.scene.organized;
+  ImageChoice? _cover;
+
+  @override
+  Future<List<String>?> loadUrls(StashRepository repo) => repo.sceneUrls(widget.scene.id);
 
   @override
   void dispose() {
@@ -59,6 +88,8 @@ class _SceneEditPageState extends ConsumerState<SceneEditPage> {
     _diff(changes, 'studio_id', s.studio?.id, _studio?.id);
     _diff(changes, 'performer_ids', [for (final p in s.performers) p.id], [for (final p in _performers) p.id]);
     _diff(changes, 'organized', s.organized, _organized);
+    if (_cover != null) changes['cover_image'] = _cover!.value;
+    diffUrls(changes);
     if (changes.isEmpty) return false;
 
     final updated = await ref.read(stashRepositoryProvider).updateScene(s.id, changes);
@@ -73,6 +104,12 @@ class _SceneEditPageState extends ConsumerState<SceneEditPage> {
         title: 'Edit scene',
         onSave: _save,
         children: [
+          ImageEditField(
+            label: 'Cover',
+            currentUrl: widget.scene.screenshotUrl,
+            choice: _cover,
+            onChanged: (c) => setState(() => _cover = c),
+          ),
           TextField(
             controller: _title,
             decoration: const InputDecoration(labelText: 'Title', border: OutlineInputBorder()),
@@ -108,6 +145,7 @@ class _SceneEditPageState extends ConsumerState<SceneEditPage> {
             value: _organized,
             onChanged: (v) => setState(() => _organized = v),
           ),
+          ?urlsField(),
         ],
       );
 }
@@ -132,13 +170,17 @@ class PerformerEditPage extends ConsumerStatefulWidget {
   ConsumerState<PerformerEditPage> createState() => _PerformerEditPageState();
 }
 
-class _PerformerEditPageState extends ConsumerState<PerformerEditPage> {
+class _PerformerEditPageState extends ConsumerState<PerformerEditPage> with _UrlsLoader {
   late final _name = TextEditingController(text: widget.performer.name);
   late final _disambiguation = TextEditingController(text: widget.performer.disambiguation ?? '');
   late final _country = TextEditingController(text: widget.performer.country ?? '');
   late final _details = TextEditingController(text: widget.performer.details ?? '');
   late String? _gender = _genders.containsKey(widget.performer.gender) ? widget.performer.gender : null;
   late DateTime? _birthdate = widget.performer.birthdate;
+  ImageChoice? _image;
+
+  @override
+  Future<List<String>?> loadUrls(StashRepository repo) => repo.performerUrls(widget.performer.id);
 
   @override
   void dispose() {
@@ -158,6 +200,8 @@ class _PerformerEditPageState extends ConsumerState<PerformerEditPage> {
     _diff(changes, 'details', p.details, _blankToNull(_details.text));
     _diff(changes, 'gender', _genders.containsKey(p.gender) ? p.gender : null, _gender);
     _diff(changes, 'birthdate', stashDate(p.birthdate), stashDate(_birthdate));
+    if (_image != null) changes['image'] = _image!.value;
+    diffUrls(changes);
     if (changes.isEmpty) return false;
 
     await ref.read(stashRepositoryProvider).updatePerformer(p.id, changes);
@@ -171,6 +215,13 @@ class _PerformerEditPageState extends ConsumerState<PerformerEditPage> {
         title: 'Edit performer',
         onSave: _save,
         children: [
+          ImageEditField(
+            label: 'Image',
+            currentUrl: widget.performer.imageUrl,
+            choice: _image,
+            aspectRatio: 2 / 3,
+            onChanged: (c) => setState(() => _image = c),
+          ),
           TextField(controller: _name, decoration: const InputDecoration(labelText: 'Name', border: OutlineInputBorder())),
           TextField(
             controller: _disambiguation,
@@ -202,6 +253,7 @@ class _PerformerEditPageState extends ConsumerState<PerformerEditPage> {
             maxLines: 8,
             decoration: const InputDecoration(labelText: 'Details', border: OutlineInputBorder()),
           ),
+          ?urlsField(),
         ],
       );
 }
@@ -221,11 +273,14 @@ class _StudioEditPageState extends ConsumerState<StudioEditPage> {
   late final _name = TextEditingController(text: widget.studio.name);
   late final _details = TextEditingController(text: widget.studio.details ?? '');
   late Studio? _parent = widget.studio.parent;
+  late final _url = TextEditingController(text: widget.studio.url ?? '');
+  ImageChoice? _image;
 
   @override
   void dispose() {
     _name.dispose();
     _details.dispose();
+    _url.dispose();
     super.dispose();
   }
 
@@ -236,6 +291,8 @@ class _StudioEditPageState extends ConsumerState<StudioEditPage> {
     _diff(changes, 'name', s.name, _name.text.trim());
     _diff(changes, 'details', s.details, _blankToNull(_details.text));
     _diff(changes, 'parent_id', s.parent?.id, _parent?.id);
+    _diff(changes, 'url', s.url, _blankToNull(_url.text));
+    if (_image != null) changes['image'] = _image!.value;
     if (changes.isEmpty) return false;
 
     await ref.read(stashRepositoryProvider).updateStudio(s.id, changes);
@@ -249,6 +306,13 @@ class _StudioEditPageState extends ConsumerState<StudioEditPage> {
         title: 'Edit studio',
         onSave: _save,
         children: [
+          ImageEditField(
+            label: 'Logo',
+            currentUrl: widget.studio.imageUrl,
+            choice: _image,
+            aspectRatio: 1,
+            onChanged: (c) => setState(() => _image = c),
+          ),
           TextField(controller: _name, decoration: const InputDecoration(labelText: 'Name', border: OutlineInputBorder())),
           PickerField(
             label: 'Parent studio',
@@ -265,6 +329,11 @@ class _StudioEditPageState extends ConsumerState<StudioEditPage> {
               setState(() => _parent = picked);
             },
             onClear: () => setState(() => _parent = null),
+          ),
+          TextField(
+            controller: _url,
+            keyboardType: TextInputType.url,
+            decoration: const InputDecoration(labelText: 'Website', border: OutlineInputBorder()),
           ),
           TextField(
             controller: _details,
@@ -290,6 +359,7 @@ class TagEditPage extends ConsumerStatefulWidget {
 class _TagEditPageState extends ConsumerState<TagEditPage> {
   late final _name = TextEditingController(text: widget.tag.name);
   late final _description = TextEditingController(text: widget.tag.description ?? '');
+  ImageChoice? _image;
 
   @override
   void dispose() {
@@ -304,6 +374,7 @@ class _TagEditPageState extends ConsumerState<TagEditPage> {
     final changes = <String, dynamic>{};
     _diff(changes, 'name', t.name, _name.text.trim());
     _diff(changes, 'description', t.description, _blankToNull(_description.text));
+    if (_image != null) changes['image'] = _image!.value;
     if (changes.isEmpty) return false;
 
     await ref.read(stashRepositoryProvider).updateTag(t.id, changes);
@@ -317,6 +388,13 @@ class _TagEditPageState extends ConsumerState<TagEditPage> {
         title: 'Edit tag',
         onSave: _save,
         children: [
+          ImageEditField(
+            label: 'Image',
+            currentUrl: widget.tag.imageUrl,
+            choice: _image,
+            aspectRatio: 1,
+            onChanged: (c) => setState(() => _image = c),
+          ),
           TextField(
             controller: _name,
             decoration: const InputDecoration(labelText: 'Name', prefixText: '#', border: OutlineInputBorder()),
@@ -342,10 +420,13 @@ class GalleryEditPage extends ConsumerStatefulWidget {
   ConsumerState<GalleryEditPage> createState() => _GalleryEditPageState();
 }
 
-class _GalleryEditPageState extends ConsumerState<GalleryEditPage> {
+class _GalleryEditPageState extends ConsumerState<GalleryEditPage> with _UrlsLoader {
   late final _title = TextEditingController(text: widget.gallery.title);
   late final _details = TextEditingController(text: widget.gallery.details ?? '');
   late DateTime? _date = widget.gallery.date;
+
+  @override
+  Future<List<String>?> loadUrls(StashRepository repo) => repo.galleryUrls(widget.gallery.id);
 
   @override
   void dispose() {
@@ -360,6 +441,7 @@ class _GalleryEditPageState extends ConsumerState<GalleryEditPage> {
     _diff(changes, 'title', g.title, _title.text.trim());
     _diff(changes, 'details', g.details, _blankToNull(_details.text));
     _diff(changes, 'date', stashDate(g.date), stashDate(_date));
+    diffUrls(changes);
     if (changes.isEmpty) return false;
 
     await ref.read(stashRepositoryProvider).updateGallery(g.id, changes);
@@ -381,6 +463,7 @@ class _GalleryEditPageState extends ConsumerState<GalleryEditPage> {
             maxLines: 8,
             decoration: const InputDecoration(labelText: 'Details', border: OutlineInputBorder()),
           ),
+          ?urlsField(),
         ],
       );
 }

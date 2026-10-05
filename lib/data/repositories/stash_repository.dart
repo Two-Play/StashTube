@@ -54,9 +54,8 @@ GraphQLClient createGraphQLClient(ServerConfig config) => GraphQLClient(
 
 /// All access to the Stash GraphQL API goes through this class.
 class StashRepository implements PlaybackActivityApi {
-  StashRepository(this._client, {Map<String, String> authHeaders = const {}, http.Client? httpClient})
-      : _authHeaders = authHeaders,
-        _http = httpClient ?? http.Client();
+  StashRepository(this._client, {this._authHeaders = const {}, http.Client? httpClient})
+      : _http = httpClient ?? http.Client();
 
   final GraphQLClient _client;
   final Map<String, String> _authHeaders;
@@ -342,6 +341,22 @@ class StashRepository implements PlaybackActivityApi {
 
   Future<Gallery> updateGallery(String id, Map<String, dynamic> changes) =>
       _update(StashQueries.galleryUpdate, 'galleryUpdate', id, changes, Gallery.fromJson);
+
+  Future<List<String>?> sceneUrls(String id) => _urls(StashQueries.sceneUrls, 'findScene', id);
+  Future<List<String>?> performerUrls(String id) => _urls(StashQueries.performerUrls, 'findPerformer', id);
+  Future<List<String>?> galleryUrls(String id) => _urls(StashQueries.galleryUrls, 'findGallery', id);
+
+  /// Null when the server doesn't support URL lists for this kind.
+  Future<List<String>?> _urls(String document, String field, String id) async {
+    try {
+      final data = await _query(document, {'id': id});
+      final list = readObject(data, field)?['urls'];
+      return list is List ? [for (final u in list) u.toString()] : const [];
+    } on StashApiException catch (e) {
+      if (e.isNetworkError) rethrow;
+      return null;
+    }
+  }
 
   Future<T> _update<T>(
     String document,
