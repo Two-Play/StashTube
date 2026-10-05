@@ -156,10 +156,6 @@ class NowPlayingNotifier extends Notifier<Scene?> {
 
   @override
   Scene? build() {
-    // Autoplay: continue with the next scene of the queue.
-    ref.listen(playerCompletedProvider, (_, next) {
-      if (next.value == true) playNext();
-    });
     ref.listen(castPlaybackProvider, (_, next) {
       final position = next.value?.position;
       if (position != null && position > Duration.zero) _lastCastPosition = position;
@@ -180,9 +176,17 @@ class NowPlayingNotifier extends Notifier<Scene?> {
     return null;
   }
 
-  /// Plays [scenes] in order, starting at [start] (9.3, 9.4).
+  /// Listens for "playback finished" only once a queue exists, so the native
+  /// player isn't created just to watch for it.
+  ProviderSubscription<AsyncValue<bool>>? _autoplay;
+
+  /// Plays [scenes] in order, starting at [start] (9.3, 9.4); the next one
+  /// starts automatically when a scene ends.
   void playQueue(List<Scene> scenes, {required String title, int start = 0}) {
     if (scenes.isEmpty) return;
+    _autoplay ??= ref.listen(playerCompletedProvider, (_, next) {
+      if (next.value == true) playNext();
+    });
     final queue = PlayQueue(title: title, scenes: scenes, index: start.clamp(0, scenes.length - 1));
     ref.read(playQueueProvider.notifier).set(queue);
     play(queue.scenes[queue.index]);
@@ -307,6 +311,8 @@ class NowPlayingNotifier extends Notifier<Scene?> {
   void close() {
     ref.read(playerClosingProvider.notifier).set(false);
     ref.read(playQueueProvider.notifier).set(null);
+    _autoplay?.close();
+    _autoplay = null;
     unawaited(ref.read(playbackTrackerProvider).stop());
     ref.read(playerProvider).stop();
     state = null;

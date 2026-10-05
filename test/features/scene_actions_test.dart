@@ -3,6 +3,8 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:stash_app_mobile/core/config/server_config.dart';
 import 'package:stash_app_mobile/data/models/list_queries.dart';
 import 'package:stash_app_mobile/data/models/page_result.dart';
 import 'package:stash_app_mobile/data/models/scene.dart';
@@ -65,9 +67,12 @@ void main() {
   late FakeRepository repo;
   late ProviderContainer container;
 
-  setUp(() {
+  setUp(() async {
+    SharedPreferences.setMockInitialValues({});
+    final prefs = await SharedPreferences.getInstance();
     repo = FakeRepository();
     container = ProviderContainer(overrides: [
+      sharedPreferencesProvider.overrideWithValue(prefs),
       stashRepositoryProvider.overrideWithValue(repo),
       playerProvider.overrideWithValue(FakePlayer(position: const Duration(seconds: 75))),
     ]);
