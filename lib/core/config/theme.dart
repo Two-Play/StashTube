@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -19,6 +21,30 @@ class ThemeModeNotifier extends Notifier<ThemeMode> {
 }
 
 final themeModeProvider = NotifierProvider<ThemeModeNotifier, ThemeMode>(ThemeModeNotifier.new);
+
+/// WCAG contrast ratio between two colors (1–21).
+double contrastRatio(Color a, Color b) {
+  final la = a.computeLuminance();
+  final lb = b.computeLuminance();
+  return (max(la, lb) + 0.05) / (min(la, lb) + 0.05);
+}
+
+/// [color] with its lightness moved away from [background] (lighter on dark
+/// backgrounds, darker on light ones) until the contrast reaches [minimum].
+Color ensureContrast(Color color, Color background, {double minimum = 4.5}) {
+  final lighten = background.computeLuminance() < 0.5;
+  var hsl = HSLColor.fromColor(color);
+  while (contrastRatio(hsl.toColor(), background) < minimum) {
+    final next = (hsl.lightness + (lighten ? 0.01 : -0.01)).clamp(0.0, 1.0);
+    if (next == hsl.lightness) break; // reached black or white
+    hsl = hsl.withLightness(next);
+  }
+  return hsl.toColor();
+}
+
+/// White or black, whichever is easier to read on [color].
+Color readableOn(Color color) =>
+    contrastRatio(Colors.white, color) >= contrastRatio(Colors.black, color) ? Colors.white : Colors.black;
 
 /// Accent colors offered in the settings; the first one is the default.
 const accentColors = <String, Color>{
@@ -59,17 +85,23 @@ abstract final class AppTheme {
         (states) => states.contains(WidgetState.selected) ? scheme.surface : scheme.onSurface,
       );
 
+  static Color surfaceFor(Brightness brightness) =>
+      brightness == Brightness.dark ? const Color(0xFF0F0F0F) : Colors.white;
+
+  /// The accent as shown in [brightness] mode: same hue, lightened on dark
+  /// or darkened on light surfaces until it is readable there (WCAG AA).
+  static Color accentFor(Color accent, Brightness brightness) => ensureContrast(accent, surfaceFor(brightness));
+
   static ThemeData _build(Brightness brightness, Color accent) {
-    final isDark = brightness == Brightness.dark;
+    final primary = accentFor(accent, brightness);
     final scheme = ColorScheme.fromSeed(
       seedColor: accent,
       brightness: brightness,
       dynamicSchemeVariant: DynamicSchemeVariant.neutral,
     ).copyWith(
-      primary: accent,
-      // Light accents (amber, ...) need dark text on top of them.
-      onPrimary: ThemeData.estimateBrightnessForColor(accent) == Brightness.dark ? Colors.white : Colors.black,
-      surface: isDark ? const Color(0xFF0F0F0F) : Colors.white,
+      primary: primary,
+      onPrimary: readableOn(primary),
+      surface: surfaceFor(brightness),
     );
 
     return ThemeData(

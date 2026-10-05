@@ -60,7 +60,7 @@ lib/
 
 **Errors.** `StashRepository._run` maps failures to `StashApiException`. Stash answers invalid queries with HTTP 422 plus GraphQL errors, which gql_http_link raises as `HttpLinkServerException`; these count as query errors (`isNetworkError == false`), and 401/403 become "check the API key". Fields that only newer Stash versions have should go into a separate, optional query (see `activityStats`).
 
-**Theme.** `accentColorProvider` (persisted) feeds `AppTheme.light/dark(accent)`. Use `colorScheme.primary` and the other scheme colors instead of hard-coded colors, so the user's accent applies everywhere.
+**Theme.** `accentColorProvider` (persisted) feeds `AppTheme.light/dark(accent)`. The accent is adapted per mode (`AppTheme.accentFor`: same hue, lightened or darkened to WCAG 4.5:1 against the surface), and `onPrimary` is whichever of black or white reads better (`readableOn`); `test/core/theme_contrast_test.dart` checks every accent in both modes. Use `colorScheme.primary` and the other scheme colors instead of hard-coded colors, so the user's accent applies everywhere.
 
 **Cast (Chromecast).** `features/cast/`. `CastService` wraps `flutter_chrome_cast` (Default Media Receiver). It is an interface so tests can use a fake, and on desktop/tests it falls back to `UnsupportedCastService`. `NowPlayingNotifier` listens to `isCastingProvider`. On connect it pauses locally and loads the scene on the TV at the current position. While casting, `play()` prepares the scene locally (paused) and casts it. On disconnect it seeks locally to the last TV position. Cast devices can't send headers, so `castMediaFor` adds the API key as `?apikey=` and prefers MP4/WebM originals, then HLS. While casting, `StashVideoControls` shows `CastingControls`.
 

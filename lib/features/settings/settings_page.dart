@@ -294,7 +294,8 @@ class _AccentSwatch extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final onColor = ThemeData.estimateBrightnessForColor(color) == Brightness.dark ? Colors.white : Colors.black;
+    // Shown as it will look in the current light/dark mode.
+    final shown = AppTheme.accentFor(color, Theme.of(context).brightness);
     return Tooltip(
       message: name,
       child: Semantics(
@@ -309,11 +310,11 @@ class _AccentSwatch extends StatelessWidget {
             height: 44,
             margin: const EdgeInsets.all(2),
             decoration: BoxDecoration(
-              color: color,
+              color: shown,
               shape: BoxShape.circle,
               border: selected ? Border.all(color: Theme.of(context).colorScheme.onSurface, width: 3) : null,
             ),
-            child: selected ? Icon(Icons.check, color: onColor) : null,
+            child: selected ? Icon(Icons.check, color: readableOn(shown)) : null,
           ),
         ),
       ),

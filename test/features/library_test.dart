@@ -49,8 +49,13 @@ void main() {
     expect(prefs.getInt('accent_color'), accentColors['Amber']!.toARGB32());
 
     final theme = AppTheme.light(accentColors['Amber']!);
-    expect(theme.colorScheme.primary, accentColors['Amber']);
-    expect(theme.colorScheme.onPrimary, Colors.black, reason: 'readable on a light accent');
-    expect(AppTheme.dark(accentColors['Indigo']!).colorScheme.onPrimary, Colors.white);
+    // Amber is too light for a white page: darkened, same hue.
+    expect(theme.colorScheme.primary, AppTheme.accentFor(accentColors['Amber']!, Brightness.light));
+    expect(HSLColor.fromColor(theme.colorScheme.primary).hue,
+        closeTo(HSLColor.fromColor(accentColors['Amber']!).hue, 1));
+    // On the dark page it is used as is, with dark text on top.
+    final dark = AppTheme.dark(accentColors['Amber']!).colorScheme;
+    expect(dark.primary, accentColors['Amber']);
+    expect(dark.onPrimary, Colors.black);
   });
 }

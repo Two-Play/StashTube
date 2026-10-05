@@ -63,7 +63,7 @@ class _HomePageState extends ConsumerState<HomePage> {
                       color: colors.primary,
                       borderRadius: BorderRadius.circular(6),
                     ),
-                    child: const Icon(Icons.play_arrow, color: Colors.white, size: 20),
+                    child: Icon(Icons.play_arrow, color: colors.onPrimary, size: 20),
                   ),
                   const SizedBox(width: 6),
                   const Text('Stash', style: TextStyle(fontWeight: FontWeight.w700, letterSpacing: -0.5)),
