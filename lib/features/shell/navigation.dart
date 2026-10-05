@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/config/server_config.dart';
+
 import '../performers/performer_page.dart';
 import '../player/player_providers.dart';
 import '../search/search_page.dart';
@@ -33,9 +35,14 @@ final currentTabProvider = NotifierProvider<CurrentTabNotifier, AppTab>(CurrentT
 
 /// Each tab has its own navigator so pushed pages keep the bottom bar and the
 /// miniplayer visible, like YouTube.
-final tabNavigatorKeysProvider = Provider<Map<AppTab, GlobalKey<NavigatorState>>>(
-  (ref) => {for (final tab in AppTab.values) tab: GlobalKey<NavigatorState>(debugLabel: tab.name)},
-);
+///
+/// New keys per server: with the same GlobalKeys, the shell rebuilt for a
+/// new server would take over the old navigators, including pages opened on
+/// the old server (a studio, a performer, ...).
+final tabNavigatorKeysProvider = Provider<Map<AppTab, GlobalKey<NavigatorState>>>((ref) {
+  final server = ref.watch(activeServerIdProvider);
+  return {for (final tab in AppTab.values) tab: GlobalKey<NavigatorState>(debugLabel: '${tab.name}@$server')};
+});
 
 /// Pushes [page] onto the current tab. Works from anywhere, including the
 /// expanded player (which lives above the tab navigators).
