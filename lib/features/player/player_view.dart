@@ -248,6 +248,7 @@ class _SceneDetails extends ConsumerWidget {
       refreshable: false,
       physics: const ClampingScrollPhysics(),
       emptyMessage: 'Nothing else to watch here',
+      emptyIcon: Icons.playlist_play,
       headerSlivers: [
         SliverToBoxAdapter(child: _SceneInfo(scene: scene)),
         SliverToBoxAdapter(

@@ -38,6 +38,8 @@ class SceneFeedView extends ConsumerStatefulWidget {
     this.showSavedFilters = false,
     this.physics,
     this.emptyMessage = 'No scenes found',
+    this.emptyIcon = Icons.movie_outlined,
+    this.emptyHint,
     this.onRefresh,
   });
 
@@ -63,6 +65,8 @@ class SceneFeedView extends ConsumerStatefulWidget {
   /// Scroll physics; defaults to always-scrollable platform physics.
   final ScrollPhysics? physics;
   final String emptyMessage;
+  final IconData emptyIcon;
+  final String? emptyHint;
 
   /// Called on pull-to-refresh in addition to reloading the feed, e.g. to
   /// reload content in [headerSlivers].
@@ -177,6 +181,8 @@ class _SceneFeedViewState extends ConsumerState<SceneFeedView> {
             PagedSliver<Scene>(
               value: value,
               emptyMessage: widget.emptyMessage,
+              emptyIcon: widget.emptyIcon,
+              emptyHint: widget.emptyHint,
               onRetry: () => ref.invalidate(provider),
               onLoadMore: () => ref.read(provider.notifier).loadMore(),
               padding: widget.layout == SceneFeedLayout.grid ? const EdgeInsets.symmetric(horizontal: 12) : EdgeInsets.zero,

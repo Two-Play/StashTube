@@ -43,6 +43,8 @@ class PagedSliver<T> extends StatelessWidget {
     required this.onRetry,
     required this.onLoadMore,
     this.emptyMessage = 'Nothing here yet',
+    this.emptyIcon = Icons.inbox_outlined,
+    this.emptyHint,
     this.gridDelegate,
     this.padding = EdgeInsets.zero,
   });
@@ -52,6 +54,8 @@ class PagedSliver<T> extends StatelessWidget {
   final VoidCallback onRetry;
   final VoidCallback onLoadMore;
   final String emptyMessage;
+  final IconData emptyIcon;
+  final String? emptyHint;
 
   /// Renders a grid instead of a list when set.
   final SliverGridDelegate? gridDelegate;
@@ -67,7 +71,7 @@ class PagedSliver<T> extends StatelessWidget {
       return const SliverToBoxAdapter(child: LoadingView());
     }
     if (state.items.isEmpty) {
-      return SliverToBoxAdapter(child: EmptyView(message: emptyMessage));
+      return SliverToBoxAdapter(child: EmptyView(message: emptyMessage, icon: emptyIcon, hint: emptyHint));
     }
 
     final delegate = SliverChildBuilderDelegate(

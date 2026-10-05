@@ -1,23 +1,50 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 
+/// Shown when a list has no entries: a symbol for what is missing in a soft
+/// accent-tinted circle, a title and an optional hint.
 class EmptyView extends StatelessWidget {
-  const EmptyView({super.key, required this.message});
+  const EmptyView({super.key, required this.message, this.icon = Icons.inbox_outlined, this.hint});
 
   final String message;
+  final IconData icon;
+  final String? hint;
 
   @override
-  Widget build(BuildContext context) => Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 48, vertical: 64),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            SvgPicture.asset('assets/images/no-data.svg', height: 180),
-            const SizedBox(height: 24),
-            Text(message, style: Theme.of(context).textTheme.titleMedium, textAlign: TextAlign.center),
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colors = theme.colorScheme;
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 56),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            width: 96,
+            height: 96,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: colors.primaryContainer.withValues(alpha: 0.5),
+            ),
+            child: Icon(icon, size: 44, color: colors.onPrimaryContainer),
+          ),
+          const SizedBox(height: 20),
+          Text(
+            message,
+            textAlign: TextAlign.center,
+            style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
+          ),
+          if (hint != null) ...[
+            const SizedBox(height: 6),
+            Text(
+              hint!,
+              textAlign: TextAlign.center,
+              style: theme.textTheme.bodyMedium?.copyWith(color: colors.onSurfaceVariant),
+            ),
           ],
-        ),
-      );
+        ],
+      ),
+    );
+  }
 }
 
 class ErrorView extends StatelessWidget {

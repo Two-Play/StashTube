@@ -48,6 +48,7 @@ class _PerformersPageState extends ConsumerState<PerformersPage> {
               PagedSliver<Performer>(
                 value: ref.watch(provider),
                 emptyMessage: 'No performers found',
+                emptyIcon: Icons.people_outline,
                 padding: const EdgeInsets.all(12),
                 gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
                   maxCrossAxisExtent: 220,

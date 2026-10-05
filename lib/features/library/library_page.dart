@@ -61,6 +61,8 @@ class _LibraryPageState extends ConsumerState<LibraryPage> {
                 sorts: const [],
                 layout: SceneFeedLayout.list,
                 emptyMessage: 'Nothing watched yet',
+                emptyIcon: Icons.history,
+                emptyHint: 'Scenes you play show up here.',
               ),
             ),
             const WatchLaterTab(),

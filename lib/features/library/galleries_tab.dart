@@ -59,7 +59,9 @@ class _GalleriesTabState extends ConsumerState<GalleriesTab> with AutomaticKeepA
               ),
             PagedSliver<Gallery>(
               value: value,
-              emptyMessage: 'No galleries found',
+              emptyMessage: 'No galleries yet',
+              emptyIcon: Icons.photo_library_outlined,
+              emptyHint: 'Add image folders or zip files to your Stash library.',
               padding: const EdgeInsets.symmetric(horizontal: 12),
               gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
                 maxCrossAxisExtent: 220,

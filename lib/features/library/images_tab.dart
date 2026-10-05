@@ -90,7 +90,8 @@ class _ImageGridViewState extends ConsumerState<ImageGridView> {
               ),
             PagedSliver<ImageItem>(
               value: value,
-              emptyMessage: 'No images found',
+              emptyMessage: 'No images yet',
+              emptyIcon: Icons.image_outlined,
               padding: const EdgeInsets.symmetric(horizontal: 2),
               gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
                 maxCrossAxisExtent: 140,

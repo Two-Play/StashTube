@@ -35,7 +35,9 @@ class StudiosPage extends ConsumerWidget {
             slivers: [
               PagedSliver<Studio>(
                 value: ref.watch(provider),
-                emptyMessage: 'No studios found',
+                emptyMessage: 'No studios yet',
+                emptyIcon: Icons.subscriptions_outlined,
+                emptyHint: 'Studios appear here once scenes in Stash have one.',
                 onRetry: () => ref.invalidate(provider),
                 onLoadMore: () => ref.read(provider.notifier).loadMore(),
                 itemBuilder: (_, studio) => ListTile(

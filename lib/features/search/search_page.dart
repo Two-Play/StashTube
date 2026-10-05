@@ -100,6 +100,8 @@ class _SearchPageState extends ConsumerState<SearchPage> {
               initialQuery: SceneQuery(sort: SceneSort.recentlyAdded, search: _term),
               sorts: const [],
               emptyMessage: 'No scenes match "$_term"',
+              emptyIcon: Icons.search_off,
+              emptyHint: 'Try other words or check the spelling.',
               headerSlivers: [_PerformerResults(term: _term)],
             ),
     );

@@ -19,7 +19,11 @@ class WatchLaterTab extends ConsumerWidget {
       _ when scenes.isReloading => const LoadingView(),
       AsyncError(:final error) => ErrorView(error: error, onRetry: () => ref.invalidate(watchLaterScenesProvider)),
       AsyncValue(:final value?) when value.isEmpty => const Center(
-          child: EmptyView(message: 'Nothing saved yet.\nUse "Later" on a scene to add it.'),
+          child: EmptyView(
+            message: 'Nothing saved yet',
+            icon: Icons.watch_later_outlined,
+            hint: 'Tap "Later" on a scene to watch it afterwards.',
+          ),
         ),
       AsyncValue(:final value?) => ListView.builder(
           itemCount: value.length + 1,

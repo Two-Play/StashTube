@@ -32,6 +32,8 @@ class GroupsTab extends ConsumerWidget {
             PagedSliver<Group>(
               value: ref.watch(provider),
               emptyMessage: 'No groups yet',
+              emptyIcon: Icons.video_library_outlined,
+              emptyHint: 'Groups need Stash v0.27 or newer.',
               padding: const EdgeInsets.all(12),
               gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
                 maxCrossAxisExtent: 160,
@@ -113,6 +115,7 @@ class GroupPage extends ConsumerWidget {
         sorts: const [],
         layout: SceneFeedLayout.list,
         emptyMessage: 'This group has no scenes',
+        emptyIcon: Icons.playlist_remove,
         headerSlivers: [
           SliverToBoxAdapter(
             child: group.when(

@@ -53,6 +53,8 @@ class _TagsPageState extends ConsumerState<TagsPage> {
               PagedSliver<Tag>(
                 value: ref.watch(provider),
                 emptyMessage: 'No tags yet',
+                emptyIcon: Icons.sell_outlined,
+                emptyHint: 'Create one with "New tag".',
                 padding: const EdgeInsets.all(12),
                 gridDelegate: tagGridDelegate,
                 onRetry: () => ref.invalidate(provider),
