@@ -10,16 +10,16 @@ import '../../widgets/paged_sliver.dart';
 import '../../widgets/stash_image.dart';
 import 'image_viewer_page.dart';
 
-/// All images as an endless thumbnail grid; tapping opens the viewer.
-class ImagesTab extends ConsumerStatefulWidget {
+/// All images, newest first.
+class ImagesTab extends StatefulWidget {
   const ImagesTab({super.key});
 
   @override
-  ConsumerState<ImagesTab> createState() => _ImagesTabState();
+  State<ImagesTab> createState() => _ImagesTabState();
 }
 
-class _ImagesTabState extends ConsumerState<ImagesTab> with AutomaticKeepAliveClientMixin {
-  var _query = ImageQuery();
+class _ImagesTabState extends State<ImagesTab> with AutomaticKeepAliveClientMixin {
+  final _query = ImageQuery();
 
   @override
   bool get wantKeepAlive => true;
@@ -27,6 +27,36 @@ class _ImagesTabState extends ConsumerState<ImagesTab> with AutomaticKeepAliveCl
   @override
   Widget build(BuildContext context) {
     super.build(context);
+    return ImageGridView(
+      initialQuery: _query,
+      sorts: const [ImageSort.recentlyAdded, ImageSort.newest, ImageSort.random, ImageSort.topRated, ImageSort.title],
+    );
+  }
+}
+
+/// Endless, refreshable thumbnail grid of images with optional sort chips;
+/// tapping an image opens [ImageViewerPage] on the same list.
+class ImageGridView extends ConsumerStatefulWidget {
+  const ImageGridView({
+    super.key,
+    required this.initialQuery,
+    this.sorts = const [],
+    this.headerSlivers = const [],
+  });
+
+  final ImageQuery initialQuery;
+  final List<ImageSort> sorts;
+  final List<Widget> headerSlivers;
+
+  @override
+  ConsumerState<ImageGridView> createState() => _ImageGridViewState();
+}
+
+class _ImageGridViewState extends ConsumerState<ImageGridView> {
+  late ImageQuery _query = widget.initialQuery;
+
+  @override
+  Widget build(BuildContext context) {
     final provider = imageListProvider(_query);
     final value = ref.watch(provider);
     final theme = Theme.of(context);
@@ -38,14 +68,16 @@ class _ImagesTabState extends ConsumerState<ImagesTab> with AutomaticKeepAliveCl
         child: CustomScrollView(
           physics: const AlwaysScrollableScrollPhysics(),
           slivers: [
-            SliverToBoxAdapter(
-              child: ChipBar<ImageSort>(
-                values: ImageSort.values,
-                selected: _query.sort,
-                labelOf: (s) => s.label,
-                onSelected: (s) => setState(() => _query = ImageQuery(sort: s)),
+            ...widget.headerSlivers,
+            if (widget.sorts.length > 1)
+              SliverToBoxAdapter(
+                child: ChipBar<ImageSort>(
+                  values: widget.sorts,
+                  selected: _query.sort,
+                  labelOf: (s) => s.label,
+                  onSelected: (s) => setState(() => _query = ImageQuery(sort: s, galleryId: _query.galleryId)),
+                ),
               ),
-            ),
             if (value.valueOrNull case final state?)
               SliverToBoxAdapter(
                 child: Padding(

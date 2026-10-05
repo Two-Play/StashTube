@@ -33,9 +33,25 @@ enum ImageSort {
   newest('Newest', 'date'),
   random('Shuffle', 'random'),
   topRated('Top rated', 'rating'),
-  title('A–Z', 'title');
+  title('A–Z', 'title'),
+
+  /// File order, used inside galleries.
+  path('File name', 'path');
 
   const ImageSort(this.label, this.field);
+
+  final String label;
+  final String field;
+}
+
+enum GallerySort {
+  recentlyAdded('Recently added', 'created_at'),
+  newest('Newest', 'date'),
+  random('Shuffle', 'random'),
+  mostImages('Most images', 'images_count'),
+  title('A–Z', 'title');
+
+  const GallerySort(this.label, this.field);
 
   final String label;
   final String field;
@@ -167,17 +183,44 @@ class StudioQuery {
 }
 
 class ImageQuery {
-  ImageQuery({this.sort = ImageSort.recentlyAdded, int? seed})
+  ImageQuery({this.sort = ImageSort.recentlyAdded, this.galleryId, int? seed})
       : seed = seed ?? (sort == ImageSort.random ? newRandomSeed() : 0);
 
   final ImageSort sort;
+
+  /// Only images of this gallery.
+  final String? galleryId;
   final int seed;
 
   String get sortField => sort == ImageSort.random ? 'random_$seed' : sort.field;
-  String get direction => sort == ImageSort.title ? 'ASC' : 'DESC';
+  String get direction => sort == ImageSort.title || sort == ImageSort.path ? 'ASC' : 'DESC';
+
+  Map<String, dynamic>? toImageFilter() => galleryId == null
+      ? null
+      : {
+          'galleries': {'value': [galleryId], 'modifier': 'INCLUDES'},
+        };
 
   @override
-  bool operator ==(Object other) => other is ImageQuery && other.sort == sort && other.seed == seed;
+  bool operator ==(Object other) =>
+      other is ImageQuery && other.sort == sort && other.galleryId == galleryId && other.seed == seed;
+
+  @override
+  int get hashCode => Object.hash(sort, galleryId, seed);
+}
+
+class GalleryQuery {
+  GalleryQuery({this.sort = GallerySort.recentlyAdded, int? seed})
+      : seed = seed ?? (sort == GallerySort.random ? newRandomSeed() : 0);
+
+  final GallerySort sort;
+  final int seed;
+
+  String get sortField => sort == GallerySort.random ? 'random_$seed' : sort.field;
+  String get direction => sort == GallerySort.title ? 'ASC' : 'DESC';
+
+  @override
+  bool operator ==(Object other) => other is GalleryQuery && other.sort == sort && other.seed == seed;
 
   @override
   int get hashCode => Object.hash(sort, seed);

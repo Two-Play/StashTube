@@ -4,10 +4,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../data/models/list_queries.dart';
 import '../../widgets/scene_feed.dart';
 import '../shell/navigation.dart';
+import 'galleries_tab.dart';
 import 'images_tab.dart';
 import 'stats_tab.dart';
 
-/// Library tab: every scene as a grid, every image, and statistics.
+/// Library tab: every scene as a grid, every image, galleries and statistics.
 class LibraryPage extends ConsumerStatefulWidget {
   const LibraryPage({super.key});
 
@@ -21,7 +22,7 @@ class _LibraryPageState extends ConsumerState<LibraryPage> {
   @override
   Widget build(BuildContext context) {
     return DefaultTabController(
-      length: 3,
+      length: 4,
       child: Scaffold(
         appBar: AppBar(
           title: const Text('Library'),
@@ -30,6 +31,7 @@ class _LibraryPageState extends ConsumerState<LibraryPage> {
             tabs: [
               Tab(icon: Icon(Icons.movie_outlined), text: 'Scenes'),
               Tab(icon: Icon(Icons.image_outlined), text: 'Images'),
+              Tab(icon: Icon(Icons.photo_library_outlined), text: 'Galleries'),
               Tab(icon: Icon(Icons.insights_outlined), text: 'Stats'),
             ],
           ),
@@ -44,6 +46,7 @@ class _LibraryPageState extends ConsumerState<LibraryPage> {
               ),
             ),
             const ImagesTab(),
+            const GalleriesTab(),
             const StatsTab(),
           ],
         ),

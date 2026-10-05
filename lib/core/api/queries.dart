@@ -86,8 +86,8 @@ query FindSceneDetails($id: ID!) {
 ''';
 
   static const findImages = r'''
-query FindImages($filter: FindFilterType) {
-  findImages(filter: $filter) {
+query FindImages($filter: FindFilterType, $image_filter: ImageFilterType) {
+  findImages(filter: $filter, image_filter: $image_filter) {
     count
     images {
       id
@@ -101,6 +101,36 @@ query FindImages($filter: FindFilterType) {
   }
 }
 ''';
+
+  static const _galleryFields = r'''
+fragment GalleryFields on Gallery {
+  id
+  title
+  date
+  details
+  image_count
+  paths { cover }
+  files { basename }
+  folder { path }
+  studio { id name image_path }
+  performers { id name image_path }
+}
+''';
+
+  static const findGalleries = r'''
+query FindGalleries($filter: FindFilterType) {
+  findGalleries(filter: $filter) {
+    count
+    galleries { ...GalleryFields }
+  }
+}
+''' '$_galleryFields';
+
+  static const findGallery = r'''
+query FindGallery($id: ID!) {
+  findGallery(id: $id) { ...GalleryFields }
+}
+''' '$_galleryFields';
 
   /// Library totals; supported by all Stash versions this app targets.
   static const stats = r'''

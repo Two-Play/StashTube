@@ -5,6 +5,7 @@ import 'package:http/http.dart' as http;
 import '../../core/api/queries.dart';
 import '../../core/config/server_config.dart';
 import '../../features/player/playback_tracker.dart';
+import '../models/gallery.dart';
 import '../models/image_item.dart';
 import '../models/json.dart';
 import '../models/list_queries.dart';
@@ -165,12 +166,35 @@ class StashRepository implements PlaybackActivityApi {
   }) async {
     final data = await _query(StashQueries.findImages, {
       'filter': _findFilter(page: page, perPage: perPage, sort: query.sortField, direction: query.direction),
+      'image_filter': query.toImageFilter(),
     });
     final result = readObject(data, 'findImages') ?? const {};
     return PageResult(
       items: readList(result, 'images').map(ImageItem.fromJson).toList(),
       totalCount: readInt(result, 'count'),
     );
+  }
+
+  Future<PageResult<Gallery>> findGalleries(
+    GalleryQuery query, {
+    int page = 1,
+    int perPage = defaultPageSize,
+  }) async {
+    final data = await _query(StashQueries.findGalleries, {
+      'filter': _findFilter(page: page, perPage: perPage, sort: query.sortField, direction: query.direction),
+    });
+    final result = readObject(data, 'findGalleries') ?? const {};
+    return PageResult(
+      items: readList(result, 'galleries').map(Gallery.fromJson).toList(),
+      totalCount: readInt(result, 'count'),
+    );
+  }
+
+  Future<Gallery> findGallery(String id) async {
+    final data = await _query(StashQueries.findGallery, {'id': id});
+    final json = readObject(data, 'findGallery');
+    if (json == null) throw const StashApiException('Gallery not found.');
+    return Gallery.fromJson(json);
   }
 
   Future<LibraryStats> libraryStats() async {

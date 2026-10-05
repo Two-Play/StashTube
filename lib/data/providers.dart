@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../core/pagination/paged_notifier.dart';
+import 'models/gallery.dart';
 import 'models/image_item.dart';
 import 'models/list_queries.dart';
 import 'models/page_result.dart';
@@ -86,3 +87,18 @@ final scrubThumbnailsProvider = FutureProvider.autoDispose.family<ScrubThumbnail
   final details = await ref.watch(sceneDetailsProvider(id).future);
   return ref.watch(stashRepositoryProvider).scrubThumbnails(details);
 });
+
+class GalleryListNotifier extends PagedNotifier<Gallery, GalleryQuery> {
+  @override
+  Future<PageResult<Gallery>> fetchPage(GalleryQuery arg, int page, int perPage) =>
+      ref.read(stashRepositoryProvider).findGalleries(arg, page: page, perPage: perPage);
+}
+
+final galleryListProvider =
+    AsyncNotifierProvider.autoDispose.family<GalleryListNotifier, PagedState<Gallery>, GalleryQuery>(
+  GalleryListNotifier.new,
+);
+
+final galleryProvider = FutureProvider.autoDispose.family<Gallery, String>(
+  (ref, id) => ref.watch(stashRepositoryProvider).findGallery(id),
+);
