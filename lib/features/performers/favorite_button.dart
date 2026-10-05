@@ -15,7 +15,7 @@ Future<void> _toggle(BuildContext context, WidgetRef ref, Performer performer) a
   }
 }
 
-/// YouTube "Subscribe"-style button for a performer's channel page.
+/// Compact YouTube "Subscribe"-style button under a performer's name.
 class FavoriteButton extends ConsumerWidget {
   const FavoriteButton({super.key, required this.performer});
 
@@ -31,13 +31,18 @@ class FavoriteButton extends ConsumerWidget {
       child: favorite
           ? FilledButton.tonalIcon(
               key: const ValueKey('favorited'),
+              style: FilledButton.styleFrom(visualDensity: VisualDensity.compact),
               onPressed: () => _toggle(context, ref, performer),
               icon: const Icon(Icons.favorite, color: Colors.redAccent),
               label: const Text('Favorited'),
             )
           : FilledButton.icon(
               key: const ValueKey('favorite'),
-              style: FilledButton.styleFrom(backgroundColor: colors.onSurface, foregroundColor: colors.surface),
+              style: FilledButton.styleFrom(
+                backgroundColor: colors.onSurface,
+                foregroundColor: colors.surface,
+                visualDensity: VisualDensity.compact,
+              ),
               onPressed: () => _toggle(context, ref, performer),
               icon: const Icon(Icons.favorite_border),
               label: const Text('Favorite'),

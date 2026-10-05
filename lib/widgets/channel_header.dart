@@ -23,7 +23,7 @@ class ChannelHeader extends StatelessWidget {
   /// Small widget shown before the name, e.g. a country flag.
   final Widget? leadingBadge;
 
-  /// Full-width button below the header, like YouTube's "Subscribe".
+  /// Compact button under the name and stats, e.g. "Favorite".
   final Widget? action;
 
   @override
@@ -74,6 +74,7 @@ class ChannelHeader extends StatelessWidget {
                         subtitle!,
                         style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.onSurfaceVariant),
                       ),
+                    if (action != null) ...[const SizedBox(height: 8), action!],
                   ],
                 ),
               ),
@@ -89,11 +90,6 @@ class ChannelHeader extends StatelessWidget {
               overflow: TextOverflow.ellipsis,
               style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurfaceVariant),
             ),
-          ),
-        if (action != null)
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
-            child: SizedBox(width: double.infinity, child: action),
           ),
         const SizedBox(height: 8),
       ],
