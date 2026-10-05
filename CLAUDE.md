@@ -12,7 +12,6 @@ A YouTube-style Flutter client (iOS/Android) for a self-hosted [Stash](https://g
 flutter pub get
 flutter run
 flutter analyze                 # flutter_lints
-dart run custom_lint            # riverpod_lint rules
 flutter test                    # all tests
 flutter test test/core/paged_notifier_test.dart --plain-name "loads pages"   # single test
 flutter build ios --simulator --debug
@@ -22,6 +21,8 @@ flutter build apk --debug
 - `pubspec.lock` is git-ignored (`*.lock`), so check resolved versions with `flutter pub deps`. Older transitive versions (`archive` 3.4, `win32` 5.4) don't compile on the current Dart SDK.
 - Android uses Gradle 9.3.1 / AGP 9.1.0 / Kotlin 2.4.0 with Kotlin DSL, matching the current Flutter template. `android.builtInKotlin=false` and `android.newDsl=false` in `gradle.properties` keep older plugins such as media_kit working.
 - `riverpod_generator`/`build_runner` are dev dependencies, but all providers are written by hand. Nothing uses `@riverpod`.
+- `custom_lint`/`riverpod_lint` were removed: riverpod_lint 2.x crashes on the current analyzer, and the old 0.6 versions conflict with `flutter_chrome_cast`. Riverpod lints come back with the Riverpod 3 upgrade (backlog 14.2).
+- `flutter_chrome_cast` is pinned below 1.5. Version 1.5 pulls in permission_handler 13, which needs compileSdk 37, and AGP 9.1 only supports up to 36.
 
 ## Architecture
 
@@ -55,5 +56,7 @@ lib/
 **Errors.** `StashRepository._run` maps failures to `StashApiException`. Stash answers invalid queries with HTTP 422 plus GraphQL errors, which gql_http_link raises as `HttpLinkServerException`; these count as query errors (`isNetworkError == false`), and 401/403 become "check the API key". Fields that only newer Stash versions have should go into a separate, optional query (see `activityStats`).
 
 **Theme.** `accentColorProvider` (persisted) feeds `AppTheme.light/dark(accent)`. Use `colorScheme.primary` and the other scheme colors instead of hard-coded colors, so the user's accent applies everywhere.
+
+**Cast (Chromecast).** `features/cast/`. `CastService` wraps `flutter_chrome_cast` (Default Media Receiver). It is an interface so tests can use a fake, and on desktop/tests it falls back to `UnsupportedCastService`. `NowPlayingNotifier` listens to `isCastingProvider`. On connect it pauses locally and loads the scene on the TV at the current position. While casting, `play()` prepares the scene locally (paused) and casts it. On disconnect it seeks locally to the last TV position. Cast devices can't send headers, so `castMediaFor` adds the API key as `?apikey=` and prefers MP4/WebM originals, then HLS. While casting, `StashVideoControls` shows `CastingControls`.
 
 **Images and auth.** Always load server images through `StashImage` or `ChannelAvatar`, which add the `ApiKey` header. Stash serves SVG placeholders for missing images, which fall back to an icon or the name's initial.

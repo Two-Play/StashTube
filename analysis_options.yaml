@@ -14,8 +14,6 @@ analyzer:
     - build/**
     - android/**
     - ios/**
-  plugins:
-    - custom_lint
 
 linter:
   # The lint rules applied to this project can be customized in the

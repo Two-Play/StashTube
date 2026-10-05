@@ -5,6 +5,7 @@ import '../../data/models/list_queries.dart';
 import '../../data/providers.dart';
 import '../../widgets/scene_feed.dart';
 import '../../widgets/scene_shelf.dart';
+import '../cast/cast_ui.dart';
 import '../player/player_providers.dart';
 import '../shell/navigation.dart';
 
@@ -66,6 +67,7 @@ class _HomePageState extends ConsumerState<HomePage> {
                 ],
               ),
               actions: [
+                const CastButton(),
                 IconButton(
                   tooltip: 'Search',
                   icon: const Icon(Icons.search),

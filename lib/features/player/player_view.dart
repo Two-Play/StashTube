@@ -9,6 +9,7 @@ import '../../data/providers.dart';
 import '../../widgets/scene_feed.dart';
 import '../../widgets/stash_image.dart';
 import '../shell/navigation.dart';
+import '../cast/cast_providers.dart';
 import 'drag_to_minimize.dart';
 import 'player_controls.dart';
 import 'player_providers.dart';
@@ -159,14 +160,25 @@ class _MiniInfo extends ConsumerWidget {
             ),
           ),
         ),
-        StreamBuilder<bool>(
-          stream: player.stream.playing,
-          initialData: player.state.playing,
-          builder: (_, snapshot) => IconButton(
-            icon: Icon(snapshot.data == true ? Icons.pause : Icons.play_arrow),
-            onPressed: player.playOrPause,
+        if (ref.watch(isCastingProvider))
+          // Controls the cast device while casting.
+          Builder(builder: (_) {
+            final playing = ref.watch(castPlaybackProvider).valueOrNull?.playing ?? false;
+            final cast = ref.watch(castServiceProvider);
+            return IconButton(
+              icon: Icon(playing ? Icons.pause : Icons.play_arrow),
+              onPressed: playing ? cast.pause : cast.play,
+            );
+          })
+        else
+          StreamBuilder<bool>(
+            stream: player.stream.playing,
+            initialData: player.state.playing,
+            builder: (_, snapshot) => IconButton(
+              icon: Icon(snapshot.data == true ? Icons.pause : Icons.play_arrow),
+              onPressed: player.playOrPause,
+            ),
           ),
-        ),
         IconButton(
           icon: const Icon(Icons.close),
           onPressed: () => ref.read(nowPlayingProvider.notifier).close(),

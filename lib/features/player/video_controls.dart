@@ -6,6 +6,8 @@ import 'package:media_kit/media_kit.dart';
 
 import '../../core/utils/format.dart';
 import '../../data/models/scene.dart';
+import '../cast/cast_providers.dart';
+import '../cast/cast_ui.dart';
 import 'player_providers.dart';
 import 'preview_seek_bar.dart';
 
@@ -117,6 +119,10 @@ class _StashVideoControlsState extends ConsumerState<StashVideoControls> {
     final player = ref.watch(playerProvider);
     final fullscreen = widget.fullscreen;
 
+    // While casting, the video plays on the TV: show remote controls instead.
+    final casting = ref.watch(castConnectionProvider).valueOrNull;
+    if (casting != null) return CastingControls(connection: casting, showMinimize: !fullscreen);
+
     // Layers: gestures at the bottom, a purely visual scrim, buttons on top.
     // Buttons must not sit inside the double-tap detector, or every button
     // tap would wait for the double-tap timeout. Empty areas of the button
@@ -170,6 +176,7 @@ class _StashVideoControlsState extends ConsumerState<StashVideoControls> {
                             onPressed: () => ref.read(nowPlayingProvider.notifier).collapse(),
                           ),
                         const Spacer(),
+                        const CastButton(color: Colors.white),
                         ...widget.topActions,
                         IconButton(
                           tooltip: 'Quality',

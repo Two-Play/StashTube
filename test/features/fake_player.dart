@@ -51,6 +51,25 @@ class FakePlayer implements Player {
   }
 
   int playOrPauseCalls = 0;
+  int pauseCalls = 0;
+
+  /// Opened media with whether it started playing.
+  final opened = <({String uri, bool play})>[];
+
+  @override
+  Future<void> open(Playable playable, {bool play = true}) async {
+    opened.add((uri: (playable as Media).uri, play: play));
+    _state = _state.copyWith(playing: play);
+  }
+
+  @override
+  Future<void> pause() async {
+    pauseCalls++;
+    _state = _state.copyWith(playing: false);
+  }
+
+  @override
+  Future<void> stop() async {}
 
   @override
   Future<void> playOrPause() async => playOrPauseCalls++;

@@ -11,6 +11,8 @@ import '../../data/models/scene.dart';
 import '../../data/models/scene_details.dart';
 import '../../data/providers.dart';
 import '../../data/repositories/stash_repository.dart';
+import '../cast/cast_media.dart';
+import '../cast/cast_providers.dart';
 import 'playback_tracker.dart';
 
 const double kMiniPlayerHeight = 64;
@@ -105,8 +107,31 @@ final currentStreamProvider = StateProvider<SceneStream?>((ref) => null);
 
 /// The scene in the player, or null when the player is closed.
 class NowPlayingNotifier extends Notifier<Scene?> {
+  /// Last position reported by the cast device, to continue locally after
+  /// disconnecting.
+  Duration _lastCastPosition = Duration.zero;
+
   @override
-  Scene? build() => null;
+  Scene? build() {
+    ref.listen(castPlaybackProvider, (_, next) {
+      final position = next.valueOrNull?.position;
+      if (position != null && position > Duration.zero) _lastCastPosition = position;
+    });
+    ref.listen(isCastingProvider, (wasCasting, casting) {
+      final scene = state;
+      if (scene == null) return;
+      final player = ref.read(playerProvider);
+      if (casting && wasCasting != true) {
+        // Hand the current scene over to the cast device.
+        player.pause();
+        unawaited(_castScene(scene, player.state.position));
+      } else if (!casting && wasCasting == true) {
+        // Continue locally where the cast device was (paused).
+        player.seek(_lastCastPosition);
+      }
+    });
+    return null;
+  }
 
   void play(Scene scene) {
     final url = scene.streamUrl;
@@ -118,7 +143,9 @@ class NowPlayingNotifier extends Notifier<Scene?> {
       final resume = ref.read(resumeTimesProvider)[scene.id] ?? scene.resumeTime;
       unawaited(ref.read(playbackTrackerProvider).start(scene.copyWith(resumeTime: resume)));
       ref.read(currentStreamProvider.notifier).state = null;
-      unawaited(_openPreferredStream(scene, url, Duration(milliseconds: (resume * 1000).round())));
+      final start = Duration(milliseconds: (resume * 1000).round());
+      unawaited(_openPreferredStream(scene, url, start));
+      if (ref.read(isCastingProvider)) unawaited(_castScene(scene, start));
     }
     state = scene;
     // On first play the miniplayer is only mounted in the next frame.
@@ -141,15 +168,35 @@ class NowPlayingNotifier extends Notifier<Scene?> {
       }
       if (state?.id != scene.id) return; // another scene was picked meanwhile
     }
-    _open(stream?.url ?? directUrl, start);
+    // While casting, prepare the scene locally but play it on the cast device.
+    _open(stream?.url ?? directUrl, start, play: !ref.read(isCastingProvider));
     ref.read(currentStreamProvider.notifier).state = stream;
+  }
+
+  /// Plays [scene] on the connected cast device from [start].
+  Future<void> _castScene(Scene scene, Duration start) async {
+    final details = ref.listen(sceneDetailsProvider(scene.id).future, (_, __) {});
+    try {
+      final media = castMediaFor(
+        scene,
+        await details.read().catchError((Object _) => const SceneDetails()),
+        apiKey: ref.read(serverConfigProvider)?.apiKey,
+        start: start,
+      );
+      if (state?.id != scene.id) return;
+      await ref.read(castServiceProvider).load(media);
+    } catch (e) {
+      debugPrint('Casting failed: $e');
+    } finally {
+      details.close();
+    }
   }
 
   /// Switches the quality of the current scene, keeping the position, and
   /// remembers the choice for future scenes.
   Future<void> selectStream(SceneStream stream) async {
     if (state == null) return;
-    _open(stream.url, ref.read(playerProvider).state.position);
+    _open(stream.url, ref.read(playerProvider).state.position, play: !ref.read(isCastingProvider));
     ref.read(currentStreamProvider.notifier).state = stream.isDirect ? null : stream;
     await ref.read(preferredStreamProvider.notifier).set(stream.isDirect ? null : stream.label);
   }
@@ -157,12 +204,15 @@ class NowPlayingNotifier extends Notifier<Scene?> {
   void seekTo(double seconds) =>
       ref.read(playerProvider).seek(Duration(milliseconds: (seconds * 1000).round()));
 
-  void _open(String url, Duration start) {
-    ref.read(playerProvider).open(Media(
-      url,
-      httpHeaders: ref.read(authHeadersProvider),
-      start: start > Duration.zero ? start : null,
-    ));
+  void _open(String url, Duration start, {bool play = true}) {
+    ref.read(playerProvider).open(
+          Media(
+            url,
+            httpHeaders: ref.read(authHeadersProvider),
+            start: start > Duration.zero ? start : null,
+          ),
+          play: play,
+        );
   }
 
   void expand() => ref.read(miniplayerControllerProvider).animateToHeight(state: PanelState.MAX);

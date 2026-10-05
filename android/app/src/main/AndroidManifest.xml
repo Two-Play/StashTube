@@ -31,6 +31,14 @@
         <meta-data
             android:name="flutterEmbedding"
             android:value="2" />
+        <!-- Google Cast (flutter_chrome_cast) -->
+        <meta-data
+            android:name="com.google.android.gms.cast.framework.OPTIONS_PROVIDER_CLASS_NAME"
+            android:value="com.felnanuke.google_cast.GoogleCastOptionsProvider" />
+        <service
+            android:name="com.google.android.gms.cast.framework.media.MediaNotificationService"
+            android:exported="false"
+            android:foregroundServiceType="mediaPlayback" />
     </application>
     <!-- Required to query activities that can process text, see:
          https://developer.android.com/training/package-visibility?hl=en and
@@ -39,6 +47,8 @@
          In particular, this is used by the Flutter engine in io.flutter.plugin.text.ProcessTextPlugin. -->
 
     <uses-permission android:name="android.permission.INTERNET"/>
+    <!-- Cast media notification -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK"/>
 
     <queries>
         <intent>
