@@ -55,6 +55,10 @@ abstract final class AppTheme {
   static ThemeData light(Color accent) => _build(Brightness.light, accent);
   static ThemeData dark(Color accent) => _build(Brightness.dark, accent);
 
+  static WidgetStateColor _onChip(ColorScheme scheme) => WidgetStateColor.resolveWith(
+        (states) => states.contains(WidgetState.selected) ? scheme.surface : scheme.onSurface,
+      );
+
   static ThemeData _build(Brightness brightness, Color accent) {
     final isDark = brightness == Brightness.dark;
     final scheme = ColorScheme.fromSeed(
@@ -89,6 +93,10 @@ abstract final class AppTheme {
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
         backgroundColor: scheme.surfaceContainerHighest,
         selectedColor: scheme.onSurface,
+        // Selected chips are inverted (YouTube style), so their label needs
+        // the surface color to stay readable. (Icons don't resolve states:
+        // chips with avatars set their icon color themselves.)
+        labelStyle: TextStyle(color: _onChip(scheme), fontWeight: FontWeight.w500),
       ),
     );
   }

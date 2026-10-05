@@ -17,7 +17,6 @@ class ChipBar<T> extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colors = Theme.of(context).colorScheme;
     return SizedBox(
       height: 48,
       child: ListView.separated(
@@ -27,14 +26,9 @@ class ChipBar<T> extends StatelessWidget {
         separatorBuilder: (_, __) => const SizedBox(width: 8),
         itemBuilder: (context, i) {
           final value = values[i];
-          final isSelected = value == selected;
           return ChoiceChip(
             label: Text(labelOf(value)),
-            selected: isSelected,
-            labelStyle: TextStyle(
-              color: isSelected ? colors.surface : colors.onSurface,
-              fontWeight: FontWeight.w500,
-            ),
+            selected: value == selected,
             onSelected: (_) => onSelected(value),
           );
         },

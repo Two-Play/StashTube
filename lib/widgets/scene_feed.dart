@@ -229,10 +229,12 @@ class _SavedFilterChips extends ConsumerWidget {
         separatorBuilder: (_, __) => const SizedBox(width: 8),
         itemBuilder: (_, i) {
           final filter = filters[i];
+          final selected = filter.id == activeId;
+          final colors = Theme.of(context).colorScheme;
           return FilterChip(
-            avatar: const Icon(Icons.bookmark_outline, size: 16),
+            avatar: Icon(Icons.bookmark_outline, size: 16, color: selected ? colors.surface : colors.onSurface),
             label: Text(filter.name),
-            selected: filter.id == activeId,
+            selected: selected,
             onSelected: (_) => onSelected(filter),
           );
         },
