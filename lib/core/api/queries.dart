@@ -11,6 +11,7 @@ fragment SceneFields on Scene {
   play_count
   o_counter
   resume_time
+  organized
   files { basename duration width height }
   paths { screenshot preview stream }
   studio { id name image_path }
@@ -104,6 +105,40 @@ mutation SceneMarkerCreate($input: SceneMarkerCreateInput!) {
   sceneMarkerCreate(input: $input) { id title seconds primary_tag { name } }
 }
 ''';
+
+  static const sceneUpdate = r'''
+mutation SceneEdit($input: SceneUpdateInput!) {
+  sceneUpdate(input: $input) { ...SceneFields }
+}
+''' '$_sceneFields';
+
+  static const performerUpdate = r'''
+mutation PerformerEdit($input: PerformerUpdateInput!) {
+  performerUpdate(input: $input) { ...PerformerFields details }
+}
+''' '$_performerFields';
+
+  static const studioUpdate = r'''
+mutation StudioEdit($input: StudioUpdateInput!) {
+  studioUpdate(input: $input) {
+    ...StudioFields
+    details
+    child_studios { id name image_path scene_count }
+  }
+}
+''' '$_studioFields';
+
+  static const tagUpdate = r'''
+mutation TagEdit($input: TagUpdateInput!) {
+  tagUpdate(input: $input) { id name image_path description scene_count }
+}
+''';
+
+  static const galleryUpdate = r'''
+mutation GalleryEdit($input: GalleryUpdateInput!) {
+  galleryUpdate(input: $input) { ...GalleryFields }
+}
+''' '$_galleryFields';
 
   static const performerSetFavorite = r'''
 mutation PerformerSetFavorite($id: ID!, $favorite: Boolean!) {

@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../core/utils/format.dart';
 import '../data/models/scene.dart';
+import '../features/edit/edit_pages.dart';
 import '../features/player/player_providers.dart';
 import '../features/shell/navigation.dart';
 import 'stash_image.dart';
@@ -256,6 +257,11 @@ void showSceneMenu(BuildContext context, WidgetRef ref, Scene scene) => showModa
                 leading: const Icon(Icons.play_arrow),
                 title: const Text('Play'),
                 onTap: () => go(() => ref.read(nowPlayingProvider.notifier).play(scene)),
+              ),
+              ListTile(
+                leading: const Icon(Icons.edit_outlined),
+                title: const Text('Edit details'),
+                onTap: () => go(() => openPage(ref, SceneEditPage(scene: scene))),
               ),
               if (studio != null)
                 ListTile(

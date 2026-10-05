@@ -156,6 +156,14 @@ Eine wartbare Basis, damit Features unabhängig voneinander wachsen können.
 | 14.4 | Als Entwickler möchte ich mit aktuellem JDK für Android bauen. | Gradle 9.3.1, AGP 9.1.0, Kotlin 2.4.0, Kotlin-DSL nach aktuellem Flutter-Template. | MVP | ✅ |
 | 14.3 | Als Entwickler möchte ich signierte Release-Builds (APK/AAB, TestFlight). | Signing-Konfiguration, Fastlane o. Ä. | Later | ⬜ |
 
+
+## Epic 17 – Metadaten bearbeiten
+
+| # | User Story | Akzeptanzkriterien | Prio | Status |
+|---|---|---|---|---|
+| 17.1 | Als Nutzer möchte ich Szenen bearbeiten. | Titel, Beschreibung, Datum, Studio (Suche), Performer (Mehrfachauswahl), „Organized“; aus dem Player („Edit“) und dem ⋮-Menü. Nur geänderte Felder werden gesendet; der Player zeigt die Änderung sofort. | Next | ✅ |
+| 17.2 | Als Nutzer möchte ich Performer, Studios, Tags und Galerien bearbeiten. | ✎ in der App-Bar der jeweiligen Seite: Performer (Name, Disambiguation, Geschlecht, Geburtsdatum, Land, Details), Studio (Name, Elternstudio, Details), Tag (Name, Beschreibung), Galerie (Titel, Datum, Details). | Next | ✅ |
+| 17.3 | Als Nutzer möchte ich Bilder (Cover/Porträts) und URLs bearbeiten. | Bild-Upload, URL-Listen. | Later | ⬜ |
 ## Epic 15 – Bilder & Galerien
 
 | # | User Story | Akzeptanzkriterien | Prio | Status |

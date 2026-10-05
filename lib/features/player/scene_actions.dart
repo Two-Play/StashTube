@@ -10,6 +10,8 @@ import '../../data/models/scene.dart';
 import '../../data/models/tag.dart';
 import '../../data/providers.dart';
 import '../../data/repositories/stash_repository.dart';
+import '../edit/edit_pages.dart';
+import '../shell/navigation.dart';
 import 'player_providers.dart';
 import 'scene_edits.dart';
 
@@ -66,6 +68,13 @@ class SceneActions extends ConsumerWidget {
                 showError(e);
               }
             },
+          ),
+          const SizedBox(width: 8),
+          ActionChip(
+            avatar: const Icon(Icons.edit_outlined, size: 18),
+            label: const Text('Edit'),
+            tooltip: 'Edit scene details',
+            onPressed: () => openPage(ref, SceneEditPage(scene: scene)),
           ),
           const SizedBox(width: 8),
           ActionChip(

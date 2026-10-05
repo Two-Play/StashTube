@@ -9,6 +9,7 @@ import '../../widgets/channel_header.dart';
 import '../../widgets/scene_feed.dart';
 import '../../widgets/stash_image.dart';
 import '../../widgets/status_views.dart';
+import '../edit/edit_pages.dart';
 import '../shell/navigation.dart';
 
 /// Studio "channel": header, parent studio and sub-studios (7.3), and all
@@ -36,7 +37,17 @@ class _StudioPageState extends ConsumerState<StudioPage> {
     final includeSubStudios = _includeSubStudios ?? hasChildren;
 
     return Scaffold(
-      appBar: AppBar(title: Text(studio.value?.name ?? '', maxLines: 1, overflow: TextOverflow.ellipsis)),
+      appBar: AppBar(
+        title: Text(studio.value?.name ?? '', maxLines: 1, overflow: TextOverflow.ellipsis),
+        actions: [
+          if (studio.value case final value?)
+            IconButton(
+              tooltip: 'Edit',
+              icon: const Icon(Icons.edit_outlined),
+              onPressed: () => openPage(ref, StudioEditPage(studio: value)),
+            ),
+        ],
+      ),
       body: SceneFeedView(
         initialQuery: SceneQuery(
           sort: SceneSort.newest,

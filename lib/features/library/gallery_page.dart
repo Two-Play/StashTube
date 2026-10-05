@@ -5,6 +5,7 @@ import '../../core/utils/format.dart';
 import '../../data/models/list_queries.dart';
 import '../../data/providers.dart';
 import '../../widgets/status_views.dart';
+import '../edit/edit_pages.dart';
 import '../shell/navigation.dart';
 import 'images_tab.dart';
 
@@ -21,7 +22,17 @@ class GalleryPage extends ConsumerWidget {
     final theme = Theme.of(context);
 
     return Scaffold(
-      appBar: AppBar(title: Text(gallery.value?.title ?? '', maxLines: 1, overflow: TextOverflow.ellipsis)),
+      appBar: AppBar(
+        title: Text(gallery.value?.title ?? '', maxLines: 1, overflow: TextOverflow.ellipsis),
+        actions: [
+          if (gallery.value case final value?)
+            IconButton(
+              tooltip: 'Edit',
+              icon: const Icon(Icons.edit_outlined),
+              onPressed: () => openPage(ref, GalleryEditPage(gallery: value)),
+            ),
+        ],
+      ),
       body: ImageGridView(
         initialQuery: ImageQuery(sort: ImageSort.path, galleryId: galleryId),
         sorts: const [ImageSort.path, ImageSort.title, ImageSort.newest, ImageSort.random],

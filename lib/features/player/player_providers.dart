@@ -237,6 +237,11 @@ class NowPlayingNotifier extends Notifier<Scene?> {
 
   void collapse() => ref.read(miniplayerControllerProvider).animateToHeight(state: PanelState.MIN);
 
+  /// Shows edited metadata for the playing scene without reopening it.
+  void replaceScene(Scene scene) {
+    if (state?.id == scene.id) state = scene;
+  }
+
   /// Closes with an animation: pauses right away, the shell slides the
   /// miniplayer down and then calls [close].
   void dismiss() {

@@ -296,6 +296,39 @@ class StashRepository implements PlaybackActivityApi {
   Future<void> setSceneRating(String sceneId, int? rating100) =>
       _mutate(StashQueries.sceneSetRating, {'id': sceneId, 'rating100': rating100});
 
+  // Updates: [changes] holds only the fields to change, in the GraphQL input
+  // shape (e.g. {'title': 'x', 'studio_id': '3'}); the id is added here.
+
+  Future<Scene> updateScene(String id, Map<String, dynamic> changes) =>
+      _update(StashQueries.sceneUpdate, 'sceneUpdate', id, changes, Scene.fromJson);
+
+  Future<Performer> updatePerformer(String id, Map<String, dynamic> changes) =>
+      _update(StashQueries.performerUpdate, 'performerUpdate', id, changes, Performer.fromJson);
+
+  Future<Studio> updateStudio(String id, Map<String, dynamic> changes) =>
+      _update(StashQueries.studioUpdate, 'studioUpdate', id, changes, Studio.fromJson);
+
+  Future<Tag> updateTag(String id, Map<String, dynamic> changes) =>
+      _update(StashQueries.tagUpdate, 'tagUpdate', id, changes, Tag.fromJson);
+
+  Future<Gallery> updateGallery(String id, Map<String, dynamic> changes) =>
+      _update(StashQueries.galleryUpdate, 'galleryUpdate', id, changes, Gallery.fromJson);
+
+  Future<T> _update<T>(
+    String document,
+    String field,
+    String id,
+    Map<String, dynamic> changes,
+    T Function(Json) parse,
+  ) async {
+    final data = await _mutate(document, {
+      'input': {'id': id, ...changes},
+    });
+    final json = readObject(data, field);
+    if (json == null) throw const StashApiException('Nothing was saved.');
+    return parse(json);
+  }
+
   Future<Tag> createTag(String name) async {
     final data = await _mutate(StashQueries.tagCreate, {'name': name});
     final json = readObject(data, 'tagCreate');

@@ -8,6 +8,8 @@ import '../../widgets/channel_header.dart';
 import '../../widgets/performer_tile.dart';
 import '../../widgets/scene_feed.dart';
 import '../../widgets/status_views.dart';
+import '../edit/edit_pages.dart';
+import '../shell/navigation.dart';
 import 'favorite_button.dart';
 
 /// Performer "channel": header with profile info and all of their scenes.
@@ -23,7 +25,17 @@ class PerformerPage extends ConsumerWidget {
     final performer = ref.watch(performerProvider(performerId));
 
     return Scaffold(
-      appBar: AppBar(title: Text(performer.value?.name ?? '', maxLines: 1, overflow: TextOverflow.ellipsis)),
+      appBar: AppBar(
+        title: Text(performer.value?.name ?? '', maxLines: 1, overflow: TextOverflow.ellipsis),
+        actions: [
+          if (performer.value case final value?)
+            IconButton(
+              tooltip: 'Edit',
+              icon: const Icon(Icons.edit_outlined),
+              onPressed: () => openPage(ref, PerformerEditPage(performer: value)),
+            ),
+        ],
+      ),
       body: SceneFeedView(
         initialQuery: SceneQuery(sort: SceneSort.newest, performerId: performerId),
         sorts: _sorts,

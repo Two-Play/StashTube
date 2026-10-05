@@ -14,6 +14,7 @@ class Scene {
     this.playCount = 0,
     this.oCounter = 0,
     this.resumeTime = 0,
+    this.organized = false,
     this.duration = 0,
     this.width,
     this.height,
@@ -38,6 +39,9 @@ class Scene {
 
   /// Where the user stopped watching, in seconds; 0 if not started or finished.
   final double resumeTime;
+
+  /// Marked as organized (metadata reviewed) in Stash.
+  final bool organized;
 
   /// Duration of the primary file in seconds.
   final double duration;
@@ -70,6 +74,7 @@ class Scene {
       playCount: readInt(json, 'play_count'),
       oCounter: readInt(json, 'o_counter'),
       resumeTime: readDouble(json, 'resume_time'),
+      organized: readBool(json, 'organized'),
       duration: readDouble(file, 'duration'),
       width: readNullableInt(file, 'width'),
       height: readNullableInt(file, 'height'),
@@ -92,6 +97,7 @@ class Scene {
         playCount: playCount,
         oCounter: oCounter,
         resumeTime: resumeTime ?? this.resumeTime,
+        organized: organized,
         duration: duration,
         width: width,
         height: height,

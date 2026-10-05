@@ -47,6 +47,9 @@ class SceneEditsNotifier extends Notifier<Map<String, SceneEdit>> {
     }
   }
 
+  /// Drops local overrides once the scene was reloaded from the server.
+  void forget(String sceneId) => state = {...state}..remove(sceneId);
+
   /// Replaces the scene's tags (optimistic; reverted on failure).
   Future<void> setTags(Scene scene, List<Tag> tags) async {
     final previous = _editOf(scene.id);

@@ -9,6 +9,8 @@ import '../../data/providers.dart';
 import '../../widgets/channel_header.dart';
 import '../../widgets/scene_feed.dart';
 import '../../widgets/status_views.dart';
+import '../edit/edit_pages.dart';
+import '../shell/navigation.dart';
 
 /// All scenes with one tag (8.1).
 class TagPage extends ConsumerWidget {
@@ -23,7 +25,17 @@ class TagPage extends ConsumerWidget {
     final tag = ref.watch(tagProvider(tagId));
 
     return Scaffold(
-      appBar: AppBar(title: Text(tag.value == null ? '' : '#${tag.value!.name}', maxLines: 1, overflow: TextOverflow.ellipsis)),
+      appBar: AppBar(
+        title: Text(tag.value == null ? '' : '#${tag.value!.name}', maxLines: 1, overflow: TextOverflow.ellipsis),
+        actions: [
+          if (tag.value case final value?)
+            IconButton(
+              tooltip: 'Edit',
+              icon: const Icon(Icons.edit_outlined),
+              onPressed: () => openPage(ref, TagEditPage(tag: value)),
+            ),
+        ],
+      ),
       body: SceneFeedView(
         initialQuery: SceneQuery(
           sort: SceneSort.newest,
