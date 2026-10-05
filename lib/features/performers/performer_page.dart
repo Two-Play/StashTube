@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../core/utils/format.dart';
 import '../../data/models/list_queries.dart';
 import '../../data/providers.dart';
 import '../../widgets/channel_header.dart';
@@ -11,6 +10,7 @@ import '../../widgets/status_views.dart';
 import '../edit/edit_pages.dart';
 import '../shell/navigation.dart';
 import 'favorite_button.dart';
+import '../../l10n/l10n.dart';
 
 /// Performer "channel": header with profile info and all of their scenes.
 class PerformerPage extends ConsumerWidget {
@@ -30,7 +30,7 @@ class PerformerPage extends ConsumerWidget {
         actions: [
           if (performer.value case final value?)
             IconButton(
-              tooltip: 'Edit',
+              tooltip: context.l10n.edit,
               icon: const Icon(Icons.edit_outlined),
               onPressed: () => openPage(ref, PerformerEditPage(performer: value)),
             ),
@@ -51,8 +51,8 @@ class PerformerPage extends ConsumerWidget {
                   imageUrl: p.imageUrl,
                   leadingBadge: p.country == null ? null : CountryFlagIcon(code: p.country!),
                   subtitle: [
-                    formatCount(p.sceneCount, 'scene'),
-                    if (age != null) '$age years',
+                    context.l10n.scenesCount(p.sceneCount),
+                    if (age != null) context.l10n.ageYears(age),
                   ].join(' • '),
                   description: p.details,
                   action: FavoriteButton(performer: p),

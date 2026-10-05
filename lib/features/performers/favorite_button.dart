@@ -4,14 +4,16 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../data/models/performer.dart';
 import 'performer_favorites.dart';
+import '../../l10n/l10n.dart';
 
 Future<void> _toggle(BuildContext context, WidgetRef ref, Performer performer) async {
   HapticFeedback.lightImpact();
   final messenger = ScaffoldMessenger.of(context);
+  final l = context.l10n;
   try {
     await ref.read(performerFavoritesProvider.notifier).toggle(performer);
   } catch (e) {
-    messenger.showSnackBar(SnackBar(content: Text('Couldn\'t update favorite: $e')));
+    messenger.showSnackBar(SnackBar(content: Text(l.favoriteUpdateFailed(errorText(l, e)))));
   }
 }
 
@@ -34,7 +36,7 @@ class FavoriteButton extends ConsumerWidget {
               style: FilledButton.styleFrom(visualDensity: VisualDensity.compact),
               onPressed: () => _toggle(context, ref, performer),
               icon: const Icon(Icons.favorite, color: Colors.redAccent),
-              label: const Text('Favorited'),
+              label: Text(context.l10n.favorited),
             )
           : FilledButton.icon(
               key: const ValueKey('favorite'),
@@ -45,7 +47,7 @@ class FavoriteButton extends ConsumerWidget {
               ),
               onPressed: () => _toggle(context, ref, performer),
               icon: const Icon(Icons.favorite_border),
-              label: const Text('Favorite'),
+              label: Text(context.l10n.favorite),
             ),
     );
   }
@@ -61,7 +63,7 @@ class FavoriteIconButton extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final favorite = effectiveFavorite(ref, performer);
     return IconButton(
-      tooltip: favorite ? 'Remove from favorites' : 'Add to favorites',
+      tooltip: favorite ? context.l10n.favoriteRemove : context.l10n.favoriteAdd,
       visualDensity: VisualDensity.compact,
       style: IconButton.styleFrom(backgroundColor: Colors.black38),
       onPressed: () => _toggle(context, ref, performer),

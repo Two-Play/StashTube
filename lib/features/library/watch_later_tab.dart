@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../core/utils/format.dart';
 import '../../widgets/scene_card.dart';
 import '../../widgets/status_views.dart';
 import '../player/player_providers.dart';
 import 'watch_later.dart';
+import '../../l10n/l10n.dart';
 
 /// Saved scenes (9.4): play all as a queue, swipe to remove.
 class WatchLaterTab extends ConsumerWidget {
@@ -18,11 +18,11 @@ class WatchLaterTab extends ConsumerWidget {
       // A server switch reloads the list: don't show the old server's scenes.
       _ when scenes.isReloading => const LoadingView(),
       AsyncError(:final error) => ErrorView(error: error, onRetry: () => ref.invalidate(watchLaterScenesProvider)),
-      AsyncValue(:final value?) when value.isEmpty => const Center(
+      AsyncValue(:final value?) when value.isEmpty => Center(
           child: EmptyView(
-            message: 'Nothing saved yet',
+            message: context.l10n.watchLaterEmpty,
             icon: Icons.watch_later_outlined,
-            hint: 'Tap "Later" on a scene to watch it afterwards.',
+            hint: context.l10n.watchLaterEmptyHint,
           ),
         ),
       AsyncValue(:final value?) => ListView.builder(
@@ -34,12 +34,12 @@ class WatchLaterTab extends ConsumerWidget {
                 child: Row(
                   children: [
                     Expanded(
-                      child: Text(formatCount(value.length, 'scene'), style: Theme.of(context).textTheme.titleMedium),
+                      child: Text(context.l10n.scenesCount(value.length), style: Theme.of(context).textTheme.titleMedium),
                     ),
                     FilledButton.icon(
                       icon: const Icon(Icons.play_arrow),
-                      label: const Text('Play all'),
-                      onPressed: () => ref.read(nowPlayingProvider.notifier).playQueue(value, title: 'Watch later'),
+                      label: Text(context.l10n.playAll),
+                      onPressed: () => ref.read(nowPlayingProvider.notifier).playQueue(value, title: context.l10n.libraryWatchLater),
                     ),
                   ],
                 ),
@@ -59,7 +59,7 @@ class WatchLaterTab extends ConsumerWidget {
               // Tapping plays the list from this scene on.
               child: SceneListTile(
                 scene: scene,
-                onTap: () => ref.read(nowPlayingProvider.notifier).playQueue(value, title: 'Watch later', start: i - 1),
+                onTap: () => ref.read(nowPlayingProvider.notifier).playQueue(value, title: context.l10n.libraryWatchLater, start: i - 1),
               ),
             );
           },
@@ -69,13 +69,3 @@ class WatchLaterTab extends ConsumerWidget {
   }
 }
 
-/// Watch later as its own tab in the navigation bar (13.7).
-class WatchLaterPage extends StatelessWidget {
-  const WatchLaterPage({super.key});
-
-  @override
-  Widget build(BuildContext context) => Scaffold(
-        appBar: AppBar(title: const Text('Watch later')),
-        body: const WatchLaterTab(),
-      );
-}

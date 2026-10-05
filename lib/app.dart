@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import 'core/config/locale.dart';
 import 'core/config/server_config.dart';
 import 'core/config/theme.dart';
 import 'features/auth/login_page.dart';
 import 'features/security/app_lock_gate.dart';
 import 'features/shell/app_shell.dart';
+import 'l10n/l10n.dart';
 
 class StashApp extends ConsumerWidget {
   const StashApp({super.key});
@@ -16,7 +18,10 @@ class StashApp extends ConsumerWidget {
     final accent = ref.watch(accentColorProvider);
 
     return MaterialApp(
-      title: 'Stash',
+      onGenerateTitle: (context) => context.l10n.appTitle,
+      locale: ref.watch(appLocaleProvider),
+      supportedLocales: AppLocalizations.supportedLocales,
+      localizationsDelegates: AppLocalizations.localizationsDelegates,
       debugShowCheckedModeBanner: false,
       theme: AppTheme.light(accent),
       darkTheme: AppTheme.dark(accent),

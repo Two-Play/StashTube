@@ -20,10 +20,31 @@ import '../models/stats.dart';
 import '../models/studio.dart';
 import '../models/tag.dart';
 
+/// What went wrong, so the UI can show the error in the user's language
+/// (`errorText`); [StashApiException.message] stays English for logs.
+enum StashErrorKind {
+  /// The server's own error text, shown as is.
+  server,
+  unreachable,
+  unauthorized,
+  notReady,
+  notFound,
+  notSaved,
+}
+
 class StashApiException implements Exception {
-  const StashApiException(this.message, {this.isNetworkError = false});
+  const StashApiException(
+    this.message, {
+    this.isNetworkError = false,
+    this.kind = StashErrorKind.server,
+    this.detail,
+  });
 
   final String message;
+  final StashErrorKind kind;
+
+  /// Extra information for the localized text, e.g. the network error.
+  final String? detail;
 
   /// True when the server could not be reached (wrong URL, offline, ...),
   /// as opposed to the server rejecting the query.
@@ -71,7 +92,11 @@ class StashRepository implements PlaybackActivityApi {
     final data = await repo._query(StashQueries.systemStatus);
     final status = readObject(data, 'systemStatus')?['status'];
     if (status != 'OK') {
-      throw StashApiException('Server is reachable but not ready (status: $status).');
+      throw StashApiException(
+        'Server is reachable but not ready (status: $status).',
+        kind: StashErrorKind.notReady,
+        detail: '$status',
+      );
     }
   }
 
@@ -128,7 +153,7 @@ class StashRepository implements PlaybackActivityApi {
   Future<Performer> findPerformer(String id) async {
     final data = await _query(StashQueries.findPerformer, {'id': id});
     final json = readObject(data, 'findPerformer');
-    if (json == null) throw const StashApiException('Performer not found.');
+    if (json == null) throw const StashApiException('Performer not found.', kind: StashErrorKind.notFound);
     return Performer.fromJson(json);
   }
 
@@ -156,7 +181,7 @@ class StashRepository implements PlaybackActivityApi {
   Future<Studio> findStudio(String id) async {
     final data = await _query(StashQueries.findStudio, {'id': id});
     final json = readObject(data, 'findStudio');
-    if (json == null) throw const StashApiException('Studio not found.');
+    if (json == null) throw const StashApiException('Studio not found.', kind: StashErrorKind.notFound);
     return Studio.fromJson(json);
   }
 
@@ -205,7 +230,7 @@ class StashRepository implements PlaybackActivityApi {
   Future<Gallery> findGallery(String id) async {
     final data = await _query(StashQueries.findGallery, {'id': id});
     final json = readObject(data, 'findGallery');
-    if (json == null) throw const StashApiException('Gallery not found.');
+    if (json == null) throw const StashApiException('Gallery not found.', kind: StashErrorKind.notFound);
     return Gallery.fromJson(json);
   }
 
@@ -237,7 +262,7 @@ class StashRepository implements PlaybackActivityApi {
   Future<Tag> findTag(String id) async {
     final data = await _query(StashQueries.findTag, {'id': id});
     final json = readObject(data, 'findTag');
-    if (json == null) throw const StashApiException('Tag not found.');
+    if (json == null) throw const StashApiException('Tag not found.', kind: StashErrorKind.notFound);
     return Tag.fromJson(json);
   }
 
@@ -279,7 +304,7 @@ class StashRepository implements PlaybackActivityApi {
   Future<Group> findGroup(String id) async {
     final data = await _query(StashQueries.findGroup, {'id': id});
     final json = readObject(data, 'findGroup');
-    if (json == null) throw const StashApiException('Group not found.');
+    if (json == null) throw const StashApiException('Group not found.', kind: StashErrorKind.notFound);
     return Group.fromJson(json);
   }
 
@@ -302,7 +327,7 @@ class StashRepository implements PlaybackActivityApi {
   Future<SceneDetails> findSceneDetails(String sceneId) async {
     final data = await _query(StashQueries.findSceneDetails, {'id': sceneId});
     final json = readObject(data, 'findScene');
-    if (json == null) throw const StashApiException('Scene not found.');
+    if (json == null) throw const StashApiException('Scene not found.', kind: StashErrorKind.notFound);
     return SceneDetails.fromJson(json);
   }
 
@@ -369,14 +394,14 @@ class StashRepository implements PlaybackActivityApi {
       'input': {'id': id, ...changes},
     });
     final json = readObject(data, field);
-    if (json == null) throw const StashApiException('Nothing was saved.');
+    if (json == null) throw const StashApiException('Nothing was saved.', kind: StashErrorKind.notSaved);
     return parse(json);
   }
 
   Future<Tag> createTag(String name) async {
     final data = await _mutate(StashQueries.tagCreate, {'name': name});
     final json = readObject(data, 'tagCreate');
-    if (json == null) throw const StashApiException('Tag was not created.');
+    if (json == null) throw const StashApiException('Tag was not created.', kind: StashErrorKind.notSaved);
     return Tag.fromJson(json);
   }
 
@@ -408,7 +433,7 @@ class StashRepository implements PlaybackActivityApi {
       'input': {'scene_id': sceneId, 'seconds': seconds, 'primary_tag_id': primaryTagId, 'title': title},
     });
     final json = readObject(data, 'sceneMarkerCreate');
-    if (json == null) throw const StashApiException('Marker was not created.');
+    if (json == null) throw const StashApiException('Marker was not created.', kind: StashErrorKind.notSaved);
     return SceneMarker.fromJson(json);
   }
 
@@ -441,7 +466,7 @@ class StashRepository implements PlaybackActivityApi {
     try {
       result = await request();
     } catch (e) {
-      throw StashApiException(e.toString(), isNetworkError: true);
+      throw StashApiException('$e', isNetworkError: true, kind: StashErrorKind.unreachable, detail: '$e');
     }
 
     final exception = result.exception;
@@ -453,12 +478,17 @@ class StashRepository implements PlaybackActivityApi {
         final errors = link.parsedResponse?.errors ?? const [];
         if (errors.isNotEmpty) throw StashApiException(errors.map((e) => e.message).join('\n'));
         if (link.response.statusCode == 401 || link.response.statusCode == 403) {
-          throw const StashApiException('Not authorized – check the API key.');
+          throw const StashApiException('Not authorized – check the API key.', kind: StashErrorKind.unauthorized);
         }
       }
       if (link != null) {
         final cause = link.originalException ?? link;
-        throw StashApiException('Could not reach the server: $cause', isNetworkError: true);
+        throw StashApiException(
+          'Could not reach the server: $cause',
+          isNetworkError: true,
+          kind: StashErrorKind.unreachable,
+          detail: '$cause',
+        );
       }
       throw StashApiException(
         exception.graphqlErrors.map((e) => e.message).join('\n'),

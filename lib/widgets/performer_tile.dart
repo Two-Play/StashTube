@@ -2,11 +2,11 @@ import 'package:country_flags/country_flags.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../core/utils/format.dart';
 import '../data/models/performer.dart';
 import '../features/performers/favorite_button.dart';
 import '../features/shell/navigation.dart';
 import 'stash_image.dart';
+import '../l10n/l10n.dart';
 
 /// Portrait card for the performers grid.
 class PerformerTile extends ConsumerWidget {
@@ -40,7 +40,7 @@ class PerformerTile extends ConsumerWidget {
           const SizedBox(height: 6),
           Text(performer.name, maxLines: 1, overflow: TextOverflow.ellipsis, style: theme.textTheme.titleSmall),
           Text(
-            formatCount(performer.sceneCount, 'scene'),
+            context.l10n.scenesCount(performer.sceneCount),
             style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurfaceVariant),
           ),
         ],

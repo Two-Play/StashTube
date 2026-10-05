@@ -7,6 +7,7 @@ import '../data/models/list_queries.dart';
 import '../data/models/scene_filter.dart';
 import '../data/models/tag.dart';
 import '../data/providers.dart';
+import '../l10n/l10n.dart';
 
 /// Opens the filter sheet (5.4); returns the new filter, or null if dismissed.
 Future<SceneFilter?> showSceneFilterSheet(BuildContext context, SceneFilter initial) =>
@@ -72,8 +73,8 @@ class _SceneFilterSheetState extends ConsumerState<SceneFilterSheet> {
                 controller: scrollController,
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 children: [
-                  Text('Filter scenes', style: theme.textTheme.titleLarge),
-                  section('Tags (all of)'),
+                  Text(context.l10n.filterScenes, style: theme.textTheme.titleLarge),
+                  section(context.l10n.filterTagsAllOf),
                   if (_filter.tags.isNotEmpty)
                     Wrap(
                       spacing: 6,
@@ -85,10 +86,10 @@ class _SceneFilterSheetState extends ConsumerState<SceneFilterSheet> {
                     ),
                   const SizedBox(height: 8),
                   TextField(
-                    decoration: const InputDecoration(
-                      hintText: 'Search tags',
-                      prefixIcon: Icon(Icons.sell_outlined),
-                      border: OutlineInputBorder(),
+                    decoration: InputDecoration(
+                      hintText: context.l10n.searchTags,
+                      prefixIcon: const Icon(Icons.sell_outlined),
+                      border: const OutlineInputBorder(),
                       isDense: true,
                     ),
                     onChanged: (v) {
@@ -107,39 +108,39 @@ class _SceneFilterSheetState extends ConsumerState<SceneFilterSheet> {
                         ActionChip(label: Text('#${tag.name}'), onPressed: () => _toggleTag(tag)),
                     ],
                   ),
-                  section('Minimum rating'),
+                  section(context.l10n.minimumRating),
                   Wrap(
                     spacing: 6,
                     children: [
                       for (var stars = 0; stars <= 5; stars++)
                         ChoiceChip(
-                          label: Text(stars == 0 ? 'Any' : '$stars★'),
+                          label: Text(stars == 0 ? context.l10n.ratingAny : '$stars★'),
                           selected: _filter.minStars == stars,
                           onSelected: (_) => setState(() => _filter = _filter.copyWith(minStars: stars)),
                         ),
                     ],
                   ),
-                  section('Duration'),
+                  section(context.l10n.duration),
                   Wrap(
                     spacing: 6,
                     runSpacing: 6,
                     children: [
                       for (final d in DurationFilter.values)
                         ChoiceChip(
-                          label: Text(d.label),
+                          label: Text(d.label(context.l10n)),
                           selected: _filter.duration == d,
                           onSelected: (_) => setState(() => _filter = _filter.copyWith(duration: d)),
                         ),
                     ],
                   ),
-                  section('Quality'),
+                  section(context.l10n.quality),
                   Wrap(
                     spacing: 6,
                     runSpacing: 6,
                     children: [
                       for (final r in ResolutionFilter.values)
                         ChoiceChip(
-                          label: Text(r.label),
+                          label: Text(r.label(context.l10n)),
                           selected: _filter.resolution == r,
                           onSelected: (_) => setState(() => _filter = _filter.copyWith(resolution: r)),
                         ),
@@ -157,12 +158,12 @@ class _SceneFilterSheetState extends ConsumerState<SceneFilterSheet> {
                   children: [
                     TextButton(
                       onPressed: () => setState(() => _filter = SceneFilter(savedFilter: _filter.savedFilter)),
-                      child: const Text('Reset'),
+                      child: Text(context.l10n.reset),
                     ),
                     const Spacer(),
                     FilledButton(
                       onPressed: () => Navigator.pop(context, _filter),
-                      child: const Text('Apply'),
+                      child: Text(context.l10n.apply),
                     ),
                   ],
                 ),

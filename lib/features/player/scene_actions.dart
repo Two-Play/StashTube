@@ -15,6 +15,7 @@ import '../library/watch_later.dart';
 import '../shell/navigation.dart';
 import 'player_providers.dart';
 import 'scene_edits.dart';
+import '../../l10n/l10n.dart';
 
 /// Rating stars, O-counter and "add marker" below the title (epic 10).
 class SceneActions extends ConsumerWidget {
@@ -27,9 +28,10 @@ class SceneActions extends ConsumerWidget {
     final stars = effectiveStars(ref, scene);
     final oCount = effectiveOCounter(ref, scene);
     final colors = Theme.of(context).colorScheme;
+    final l = context.l10n;
 
     void showError(Object e) =>
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Couldn\'t save: $e')));
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(l.saveFailed(errorText(l, e)))));
 
     return SingleChildScrollView(
       scrollDirection: Axis.horizontal,
@@ -39,7 +41,7 @@ class SceneActions extends ConsumerWidget {
           for (var i = 1; i <= 5; i++)
             IconButton(
               visualDensity: VisualDensity.compact,
-              tooltip: i == stars ? 'Remove rating' : 'Rate $i star${i == 1 ? '' : 's'}',
+              tooltip: i == stars ? l.removeRating : l.rateStars(i),
               icon: Icon(i <= stars ? Icons.star_rounded : Icons.star_outline_rounded,
                   color: i <= stars ? Colors.amber.shade600 : colors.onSurfaceVariant),
               onPressed: () {
@@ -52,16 +54,16 @@ class SceneActions extends ConsumerWidget {
           ActionChip(
             avatar: const Icon(Icons.water_drop_outlined, size: 18),
             label: Text('$oCount'),
-            tooltip: 'Add O',
+            tooltip: l.addO,
             onPressed: () async {
               HapticFeedback.mediumImpact();
               final messenger = ScaffoldMessenger.of(context);
               try {
                 final count = await ref.read(sceneEditsProvider.notifier).addO(scene);
                 messenger.showSnackBar(SnackBar(
-                  content: Text('O-count: $count'),
+                  content: Text(l.oCountValue(count)),
                   action: SnackBarAction(
-                    label: 'Undo',
+                    label: l.undo,
                     onPressed: () => ref.read(sceneEditsProvider.notifier).removeO(scene).catchError(showError),
                   ),
                 ));
@@ -75,15 +77,15 @@ class SceneActions extends ConsumerWidget {
           const SizedBox(width: 8),
           ActionChip(
             avatar: const Icon(Icons.edit_outlined, size: 18),
-            label: const Text('Edit'),
-            tooltip: 'Edit scene details',
+            label: Text(l.edit),
+            tooltip: l.editSceneDetails,
             onPressed: () => openPage(ref, SceneEditPage(scene: scene)),
           ),
           const SizedBox(width: 8),
           ActionChip(
             avatar: const Icon(Icons.bookmark_add_outlined, size: 18),
-            label: const Text('Marker'),
-            tooltip: 'Add a marker at the current position',
+            label: Text(l.marker),
+            tooltip: l.addMarkerHere,
             onPressed: () {
               final position = ref.read(playerProvider).state.position;
               showAddMarkerSheet(context, scene: scene, seconds: position.inMilliseconds / 1000);
@@ -135,6 +137,7 @@ class _AddMarkerSheetState extends ConsumerState<AddMarkerSheet> {
     setState(() => _saving = true);
     final messenger = ScaffoldMessenger.of(context);
     final navigator = Navigator.of(context);
+    final l = context.l10n;
     try {
       await ref.read(stashRepositoryProvider).createMarker(
             sceneId: widget.scene.id,
@@ -145,10 +148,10 @@ class _AddMarkerSheetState extends ConsumerState<AddMarkerSheet> {
       // Chapters come from the scene details.
       ref.invalidate(sceneDetailsProvider(widget.scene.id));
       navigator.pop();
-      messenger.showSnackBar(SnackBar(content: Text('Marker added at ${formatDuration(widget.seconds)}')));
+      messenger.showSnackBar(SnackBar(content: Text(l.markerAdded(formatDuration(widget.seconds)))));
     } catch (e) {
       if (mounted) setState(() => _saving = false);
-      messenger.showSnackBar(SnackBar(content: Text('Couldn\'t add marker: $e')));
+      messenger.showSnackBar(SnackBar(content: Text(l.markerAddFailed(errorText(l, e)))));
     }
   }
 
@@ -167,12 +170,12 @@ class _AddMarkerSheetState extends ConsumerState<AddMarkerSheet> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Text('Add marker at ${formatDuration(widget.seconds)}', style: theme.textTheme.titleMedium),
+              Text(context.l10n.addMarkerAt(formatDuration(widget.seconds)), style: theme.textTheme.titleMedium),
               const SizedBox(height: 12),
               TextField(
                 controller: _title,
                 textCapitalization: TextCapitalization.sentences,
-                decoration: const InputDecoration(labelText: 'Title (optional)', border: OutlineInputBorder()),
+                decoration: InputDecoration(labelText: context.l10n.titleOptional, border: const OutlineInputBorder()),
               ),
               const SizedBox(height: 12),
               if (_tag case final tag?)
@@ -185,10 +188,10 @@ class _AddMarkerSheetState extends ConsumerState<AddMarkerSheet> {
                 )
               else ...[
                 TextField(
-                  decoration: const InputDecoration(
-                    labelText: 'Primary tag (required)',
-                    prefixIcon: Icon(Icons.sell_outlined),
-                    border: OutlineInputBorder(),
+                  decoration: InputDecoration(
+                    labelText: context.l10n.primaryTagRequired,
+                    prefixIcon: const Icon(Icons.sell_outlined),
+                    border: const OutlineInputBorder(),
                   ),
                   onChanged: (v) {
                     _debounce?.cancel();
@@ -212,7 +215,7 @@ class _AddMarkerSheetState extends ConsumerState<AddMarkerSheet> {
                 onPressed: _tag == null || _saving ? null : _save,
                 child: _saving
                     ? const SizedBox.square(dimension: 20, child: CircularProgressIndicator(strokeWidth: 2))
-                    : const Text('Add marker'),
+                    : Text(context.l10n.addMarker),
               ),
             ],
           ),
@@ -233,8 +236,8 @@ class WatchLaterChip extends ConsumerWidget {
     final saved = ref.watch(watchLaterProvider).contains(sceneId);
     return ActionChip(
       avatar: Icon(saved ? Icons.watch_later : Icons.watch_later_outlined, size: 18),
-      label: Text(saved ? 'Saved' : 'Later'),
-      tooltip: saved ? 'Remove from Watch later' : 'Save to Watch later',
+      label: Text(saved ? context.l10n.saved : context.l10n.later),
+      tooltip: saved ? context.l10n.watchLaterRemove : context.l10n.watchLaterSave,
       onPressed: () => ref.read(watchLaterProvider.notifier).toggle(sceneId),
     );
   }

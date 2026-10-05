@@ -10,6 +10,7 @@ import '../../widgets/scene_feed.dart';
 import '../shell/navigation.dart';
 import '../tags/tags_page.dart';
 import 'search_history.dart';
+import '../../l10n/l10n.dart';
 
 /// Live search across scenes, with matching performers shown on top.
 class SearchPage extends ConsumerStatefulWidget {
@@ -83,7 +84,7 @@ class _SearchPageState extends ConsumerState<SearchPage> {
             _search(v, submitted: true);
           },
           decoration: InputDecoration(
-            hintText: 'Search Stash',
+            hintText: context.l10n.searchHint,
             border: InputBorder.none,
             suffixIcon: _controller.text.isEmpty
                 ? null
@@ -104,9 +105,9 @@ class _SearchPageState extends ConsumerState<SearchPage> {
               layout: SceneFeedLayout.list,
               initialQuery: SceneQuery(sort: SceneSort.recentlyAdded, search: _term),
               sorts: const [],
-              emptyMessage: 'No scenes match "$_term"',
+              emptyMessage: context.l10n.searchNoScenes(_term),
               emptyIcon: Icons.search_off,
-              emptyHint: 'Try other words or check the spelling.',
+              emptyHint: context.l10n.searchNoScenesHint,
               headerSlivers: [_PerformerResults(term: _term)],
             ),
     );
@@ -129,7 +130,7 @@ class _PerformerResults extends ConsumerWidget {
         children: [
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
-            child: Text('Performers', style: Theme.of(context).textTheme.titleMedium),
+            child: Text(context.l10n.performersTitle, style: Theme.of(context).textTheme.titleMedium),
           ),
           SizedBox(
             height: 100,
@@ -170,10 +171,10 @@ class _Discover extends ConsumerWidget {
               padding: const EdgeInsets.fromLTRB(16, 8, 4, 0),
               child: Row(
                 children: [
-                  Expanded(child: Text('Recent searches', style: theme.textTheme.titleMedium)),
+                  Expanded(child: Text(context.l10n.recentSearches, style: theme.textTheme.titleMedium)),
                   TextButton(
                     onPressed: () => ref.read(searchHistoryProvider.notifier).clear(),
-                    child: const Text('Clear'),
+                    child: Text(context.l10n.clear),
                   ),
                 ],
               ),
@@ -187,7 +188,7 @@ class _Discover extends ConsumerWidget {
               title: Text(history[i]),
               onTap: () => onPick(history[i]),
               trailing: IconButton(
-                tooltip: 'Remove',
+                tooltip: context.l10n.remove,
                 icon: const Icon(Icons.close, size: 18),
                 onPressed: () => ref.read(searchHistoryProvider.notifier).remove(history[i]),
               ),
@@ -200,8 +201,8 @@ class _Discover extends ConsumerWidget {
               padding: const EdgeInsets.fromLTRB(16, 12, 4, 4),
               child: Row(
                 children: [
-                  Expanded(child: Text('Popular tags', style: theme.textTheme.titleMedium)),
-                  TextButton(onPressed: () => openTags(ref), child: const Text('See all')),
+                  Expanded(child: Text(context.l10n.popularTags, style: theme.textTheme.titleMedium)),
+                  TextButton(onPressed: () => openTags(ref), child: Text(context.l10n.seeAll)),
                 ],
               ),
             ),
@@ -225,7 +226,7 @@ class _Discover extends ConsumerWidget {
                 children: [
                   Icon(Icons.search, size: 64, color: theme.colorScheme.onSurfaceVariant),
                   const SizedBox(height: 12),
-                  Text('Search scenes and performers', style: theme.textTheme.titleMedium),
+                  Text(context.l10n.searchIntro, style: theme.textTheme.titleMedium),
                 ],
               ),
             ),

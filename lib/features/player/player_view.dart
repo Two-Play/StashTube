@@ -18,6 +18,7 @@ import 'player_transition.dart';
 import '../tags/tag_editor.dart';
 import 'scene_actions.dart';
 import 'scene_edits.dart';
+import '../../l10n/l10n.dart';
 
 /// Content of the miniplayer panel: one layout that [PlayerTransition]
 /// morphs continuously from the collapsed bar into the full player page.
@@ -184,7 +185,7 @@ class _MiniInfo extends ConsumerWidget {
             ),
           ),
         IconButton(
-          tooltip: 'Close',
+          tooltip: context.l10n.close,
           icon: const Icon(Icons.close),
           onPressed: () => ref.read(nowPlayingProvider.notifier).dismiss(),
         ),
@@ -247,7 +248,7 @@ class _SceneDetails extends ConsumerWidget {
       // A downward swipe at the top minimizes the player instead.
       refreshable: false,
       physics: const ClampingScrollPhysics(),
-      emptyMessage: 'Nothing else to watch here',
+      emptyMessage: context.l10n.upNextEmpty,
       emptyIcon: Icons.playlist_play,
       headerSlivers: [
         SliverToBoxAdapter(child: _SceneInfo(scene: scene)),
@@ -255,7 +256,7 @@ class _SceneDetails extends ConsumerWidget {
           child: Padding(
             padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
             child: Text(
-              scene.studio != null ? 'More from ${scene.studio!.name}' : 'Up next',
+              scene.studio != null ? context.l10n.moreFrom(scene.studio!.name) : context.l10n.upNext,
               style: Theme.of(context).textTheme.titleMedium,
             ),
           ),
@@ -335,7 +336,7 @@ class _SceneInfoState extends ConsumerState<_SceneInfo> {
     final tags = effectiveTags(ref, scene);
 
     final meta = [
-      if (scene.playCount > 0) formatCount(scene.playCount, 'play'),
+      if (scene.playCount > 0) context.l10n.playsCount(scene.playCount),
       if (scene.date != null) formatDate(scene.date!),
       if (resolutionLabel(scene.height) != null) resolutionLabel(scene.height)!,
     ].join(' • ');
@@ -401,7 +402,7 @@ class _SceneInfoState extends ConsumerState<_SceneInfo> {
               if (i == tags.length) {
                 return ActionChip(
                   avatar: Icon(tags.isEmpty ? Icons.add : Icons.edit_outlined, size: 16),
-                  label: Text(tags.isEmpty ? 'Add tags' : 'Edit tags'),
+                  label: Text(tags.isEmpty ? context.l10n.addTags : context.l10n.editTags),
                   visualDensity: VisualDensity.compact,
                   onPressed: () => showSceneTagEditor(context, scene, tags),
                 );
@@ -437,7 +438,7 @@ class _SceneInfoState extends ConsumerState<_SceneInfo> {
                         overflow: _expanded ? null : TextOverflow.ellipsis,
                         style: theme.textTheme.bodyMedium,
                       ),
-                      Text(_expanded ? 'Show less' : '...more', style: theme.textTheme.labelMedium),
+                      Text(_expanded ? context.l10n.showLess : context.l10n.showMore, style: theme.textTheme.labelMedium),
                     ],
                   ),
                 ),

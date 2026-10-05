@@ -3,6 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/config/server_config.dart';
 
+import '../../l10n/l10n.dart';
+import '../library/library_page.dart';
 import '../performers/performer_page.dart';
 import '../player/player_providers.dart';
 import '../search/search_page.dart';
@@ -11,21 +13,46 @@ import '../tags/tag_page.dart';
 import '../tags/tags_page.dart';
 import 'nav_bar_config.dart';
 
+/// A destination of the bottom navigation bar. Which ones are shown, and in
+/// which order, is configured in the settings ([navBarConfigProvider]).
+/// Tabs with a [section] show that part of the library on its own.
 enum AppTab {
-  home('Home', Icons.home_outlined, Icons.home),
-  performers('Performers', Icons.people_outline, Icons.people),
-  studios('Studios', Icons.subscriptions_outlined, Icons.subscriptions),
-  library('Library', Icons.video_library_outlined, Icons.video_library),
-  tags('Tags', Icons.sell_outlined, Icons.sell),
-  search('Search', Icons.search, Icons.saved_search),
-  watchLater('Later', Icons.watch_later_outlined, Icons.watch_later),
-  settings('Settings', Icons.settings_outlined, Icons.settings);
+  home(Icons.home_outlined, Icons.home),
+  performers(Icons.people_outline, Icons.people),
+  studios(Icons.subscriptions_outlined, Icons.subscriptions),
+  library(Icons.video_library_outlined, Icons.video_library),
+  scenes(Icons.movie_outlined, Icons.movie, LibrarySection.scenes),
+  history(Icons.history, Icons.history, LibrarySection.history),
+  watchLater(Icons.watch_later_outlined, Icons.watch_later, LibrarySection.watchLater),
+  groups(Icons.playlist_play, Icons.playlist_play, LibrarySection.groups),
+  images(Icons.image_outlined, Icons.image, LibrarySection.images),
+  galleries(Icons.photo_library_outlined, Icons.photo_library, LibrarySection.galleries),
+  stats(Icons.insights_outlined, Icons.insights, LibrarySection.stats),
+  tags(Icons.sell_outlined, Icons.sell),
+  search(Icons.search, Icons.saved_search),
+  settings(Icons.settings_outlined, Icons.settings);
 
-  const AppTab(this.label, this.icon, this.selectedIcon);
+  const AppTab(this.icon, this.selectedIcon, [this.section]);
 
-  final String label;
   final IconData icon;
   final IconData selectedIcon;
+  final LibrarySection? section;
+
+  /// Short label under the icon in the bar.
+  String label(AppLocalizations l) => switch (this) {
+        home => l.tabHome,
+        performers => l.tabPerformers,
+        studios => l.tabStudios,
+        library => l.tabLibrary,
+        watchLater => l.tabWatchLater,
+        tags => l.tabTags,
+        search => l.tabSearch,
+        settings => l.tabSettings,
+        _ => section!.label(l),
+      };
+
+  /// Full name in the settings list.
+  String title(AppLocalizations l) => section?.label(l) ?? label(l);
 }
 
 /// The selected tab. Starts on the first tab of the bar, and moves there

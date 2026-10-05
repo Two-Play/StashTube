@@ -3,9 +3,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:stash_app_mobile/core/config/server_config.dart';
+import 'package:stash_app_mobile/features/library/library_page.dart';
 import 'package:stash_app_mobile/features/settings/nav_bar_settings_page.dart';
 import 'package:stash_app_mobile/features/shell/nav_bar_config.dart';
 import 'package:stash_app_mobile/features/shell/navigation.dart';
+import 'package:stash_app_mobile/l10n/l10n.dart';
 
 Future<ProviderContainer> _container([Map<String, Object> prefs = const {}]) async {
   SharedPreferences.setMockInitialValues(prefs);
@@ -19,6 +21,30 @@ void main() {
   test('the standard bar keeps the tabs the app always had', () {
     expect(NavBarConfig.standard.visible,
         [AppTab.home, AppTab.performers, AppTab.studios, AppTab.library, AppTab.settings]);
+  });
+
+  test('every part of the library can be its own tab', () {
+    for (final section in LibrarySection.values) {
+      expect(AppTab.values.where((t) => t.section == section), hasLength(1), reason: section.name);
+    }
+  });
+
+  testWidgets('the bar is translated', (tester) async {
+    final c = (await tester.runAsync(_container))!;
+    await tester.pumpWidget(UncontrolledProviderScope(
+      container: c,
+      child: MaterialApp(
+        locale: const Locale('de'),
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        home: Builder(
+          builder: (context) => Text(
+            [for (final tab in c.read(navBarConfigProvider).visible) tab.label(context.l10n)].join(','),
+          ),
+        ),
+      ),
+    ));
+    expect(find.text('Start,Performer,Studios,Bibliothek,Einstellungen'), findsOneWidget);
   });
 
   test('settings cannot be hidden, and the bar keeps 2 to 5 tabs', () {
@@ -87,6 +113,10 @@ void main() {
 
   testWidgets('the settings page shows and hides tabs', (tester) async {
     final c = (await tester.runAsync(_container))!;
+    // Tall enough to build every tab of the list.
+    tester.view.physicalSize = const Size(800, 2400);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
     await tester.pumpWidget(UncontrolledProviderScope(
       container: c,
       child: const MaterialApp(home: NavBarSettingsPage()),

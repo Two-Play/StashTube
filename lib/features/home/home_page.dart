@@ -8,6 +8,7 @@ import '../../widgets/scene_shelf.dart';
 import '../cast/cast_ui.dart';
 import '../player/player_providers.dart';
 import '../shell/navigation.dart';
+import '../../l10n/l10n.dart';
 
 /// YouTube-style home: logo app bar, filter chips and an endless scene feed.
 class HomePage extends ConsumerStatefulWidget {
@@ -72,7 +73,7 @@ class _HomePageState extends ConsumerState<HomePage> {
               actions: [
                 const CastButton(),
                 IconButton(
-                  tooltip: 'Search',
+                  tooltip: context.l10n.search,
                   icon: const Icon(Icons.search),
                   onPressed: () => openSearch(ref),
                 ),
@@ -80,7 +81,7 @@ class _HomePageState extends ConsumerState<HomePage> {
             ),
             SliverToBoxAdapter(
               child: SceneShelf(
-                title: 'Continue watching',
+                title: context.l10n.continueWatching,
                 icon: Icons.history,
                 query: _continueWatching,
                 hideFinished: true,
@@ -88,7 +89,7 @@ class _HomePageState extends ConsumerState<HomePage> {
             ),
             SliverToBoxAdapter(
               child: SceneShelf(
-                title: 'New from favorites',
+                title: context.l10n.newFromFavorites,
                 icon: Icons.favorite_border,
                 query: _fromFavorites,
               ),

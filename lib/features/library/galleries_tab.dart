@@ -10,6 +10,7 @@ import '../../widgets/paged_sliver.dart';
 import '../../widgets/stash_image.dart';
 import '../shell/navigation.dart';
 import 'gallery_page.dart';
+import '../../l10n/l10n.dart';
 
 /// All galleries as a grid of covers.
 class GalleriesTab extends ConsumerStatefulWidget {
@@ -43,7 +44,7 @@ class _GalleriesTabState extends ConsumerState<GalleriesTab> with AutomaticKeepA
               child: ChipBar<GallerySort>(
                 values: GallerySort.values,
                 selected: _query.sort,
-                labelOf: (s) => s.label,
+                labelOf: (s) => s.label(context.l10n),
                 onSelected: (s) => setState(() => _query = GalleryQuery(sort: s)),
               ),
             ),
@@ -52,16 +53,16 @@ class _GalleriesTabState extends ConsumerState<GalleriesTab> with AutomaticKeepA
                 child: Padding(
                   padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
                   child: Text(
-                    '${formatNumber(state.totalCount)} galleries',
+                    context.l10n.galleriesCount(state.totalCount),
                     style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurfaceVariant),
                   ),
                 ),
               ),
             PagedSliver<Gallery>(
               value: value,
-              emptyMessage: 'No galleries yet',
+              emptyMessage: context.l10n.galleriesEmpty,
               emptyIcon: Icons.photo_library_outlined,
-              emptyHint: 'Add image folders or zip files to your Stash library.',
+              emptyHint: context.l10n.galleriesEmptyHint,
               padding: const EdgeInsets.symmetric(horizontal: 12),
               gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
                 maxCrossAxisExtent: 220,

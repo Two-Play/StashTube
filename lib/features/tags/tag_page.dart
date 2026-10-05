@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../core/utils/format.dart';
 import '../../data/models/list_queries.dart';
 import '../../data/models/scene_filter.dart';
 import '../../data/models/tag.dart';
@@ -11,6 +10,7 @@ import '../../widgets/scene_feed.dart';
 import '../../widgets/status_views.dart';
 import '../edit/edit_pages.dart';
 import '../shell/navigation.dart';
+import '../../l10n/l10n.dart';
 
 /// All scenes with one tag (8.1).
 class TagPage extends ConsumerWidget {
@@ -30,7 +30,7 @@ class TagPage extends ConsumerWidget {
         actions: [
           if (tag.value case final value?)
             IconButton(
-              tooltip: 'Edit',
+              tooltip: context.l10n.edit,
               icon: const Icon(Icons.edit_outlined),
               onPressed: () => openPage(ref, TagEditPage(tag: value)),
             ),
@@ -51,7 +51,7 @@ class TagPage extends ConsumerWidget {
               data: (t) => ChannelHeader(
                 name: '#${t.name}',
                 imageUrl: t.imageUrl,
-                subtitle: formatCount(t.sceneCount, 'scene'),
+                subtitle: context.l10n.scenesCount(t.sceneCount),
                 description: t.description,
               ),
             ),

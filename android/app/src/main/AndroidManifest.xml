@@ -48,7 +48,7 @@
             android:targetActivity=".MainActivity"
             android:enabled="false"
             android:exported="true"
-            android:label="Notes"
+            android:label="@string/app_icon_notes"
             android:icon="@mipmap/ic_launcher_notes">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
@@ -60,7 +60,7 @@
             android:targetActivity=".MainActivity"
             android:enabled="false"
             android:exported="true"
-            android:label="Calculator"
+            android:label="@string/app_icon_calculator"
             android:icon="@mipmap/ic_launcher_calculator">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>

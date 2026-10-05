@@ -8,6 +8,7 @@ import '../../widgets/chip_bar.dart';
 import '../../widgets/paged_sliver.dart';
 import '../../widgets/performer_tile.dart';
 import '../shell/navigation.dart';
+import '../../l10n/l10n.dart';
 
 class PerformersPage extends ConsumerStatefulWidget {
   const PerformersPage({super.key});
@@ -25,7 +26,7 @@ class _PerformersPageState extends ConsumerState<PerformersPage> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Performers'),
+        title: Text(context.l10n.performersTitle),
         actions: [
           IconButton(icon: const Icon(Icons.search), onPressed: () => openSearch(ref)),
         ],
@@ -41,13 +42,13 @@ class _PerformersPageState extends ConsumerState<PerformersPage> {
                 child: ChipBar<PerformerSort>(
                   values: PerformerSort.values,
                   selected: _query.sort,
-                  labelOf: (s) => s.label,
+                  labelOf: (s) => s.label(context.l10n),
                   onSelected: (s) => setState(() => _query = PerformerQuery(sort: s)),
                 ),
               ),
               PagedSliver<Performer>(
                 value: ref.watch(provider),
-                emptyMessage: 'No performers found',
+                emptyMessage: context.l10n.performersEmpty,
                 emptyIcon: Icons.people_outline,
                 padding: const EdgeInsets.all(12),
                 gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(

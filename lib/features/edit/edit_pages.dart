@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../l10n/l10n.dart';
 import '../../data/models/gallery.dart';
 import '../../data/models/performer.dart';
 import '../../data/models/scene.dart';
@@ -101,28 +102,28 @@ class _SceneEditPageState extends ConsumerState<SceneEditPage> with _UrlsLoader 
 
   @override
   Widget build(BuildContext context) => EditScaffold(
-        title: 'Edit scene',
+        title: context.l10n.editScene,
         onSave: _save,
         children: [
           ImageEditField(
-            label: 'Cover',
+            label: context.l10n.fieldCover,
             currentUrl: widget.scene.screenshotUrl,
             choice: _cover,
             onChanged: (c) => setState(() => _cover = c),
           ),
           TextField(
             controller: _title,
-            decoration: const InputDecoration(labelText: 'Title', border: OutlineInputBorder()),
+            decoration: InputDecoration(labelText: context.l10n.fieldTitle, border: const OutlineInputBorder()),
           ),
           TextField(
             controller: _details,
             minLines: 3,
             maxLines: 8,
-            decoration: const InputDecoration(labelText: 'Details', border: OutlineInputBorder()),
+            decoration: InputDecoration(labelText: context.l10n.fieldDetails, border: const OutlineInputBorder()),
           ),
-          DateField(label: 'Date', value: _date, onChanged: (d) => setState(() => _date = d)),
+          DateField(label: context.l10n.fieldDate, value: _date, onChanged: (d) => setState(() => _date = d)),
           PickerField(
-            label: 'Studio',
+            label: context.l10n.fieldStudio,
             text: _studio?.name,
             onTap: () async {
               final picked = await showStudioPicker(context);
@@ -131,7 +132,7 @@ class _SceneEditPageState extends ConsumerState<SceneEditPage> with _UrlsLoader 
             onClear: () => setState(() => _studio = null),
           ),
           PickerField(
-            label: 'Performers',
+            label: context.l10n.fieldPerformers,
             text: _performers.isEmpty ? null : _performers.map((p) => p.name).join(', '),
             onTap: () async {
               final picked = await showPerformerPicker(context, _performers);
@@ -140,8 +141,8 @@ class _SceneEditPageState extends ConsumerState<SceneEditPage> with _UrlsLoader 
           ),
           SwitchListTile(
             contentPadding: EdgeInsets.zero,
-            title: const Text('Organized'),
-            subtitle: const Text('Metadata is complete'),
+            title: Text(context.l10n.organized),
+            subtitle: Text(context.l10n.organizedSubtitle),
             value: _organized,
             onChanged: (v) => setState(() => _organized = v),
           ),
@@ -152,14 +153,16 @@ class _SceneEditPageState extends ConsumerState<SceneEditPage> with _UrlsLoader 
 
 // ---------------------------------------------------------------- Performer
 
-const _genders = {
-  'FEMALE': 'Female',
-  'MALE': 'Male',
-  'TRANSGENDER_FEMALE': 'Trans female',
-  'TRANSGENDER_MALE': 'Trans male',
-  'INTERSEX': 'Intersex',
-  'NON_BINARY': 'Non-binary',
-};
+const _genders = ['FEMALE', 'MALE', 'TRANSGENDER_FEMALE', 'TRANSGENDER_MALE', 'INTERSEX', 'NON_BINARY'];
+
+String _genderLabel(AppLocalizations l, String gender) => switch (gender) {
+      'FEMALE' => l.genderFemale,
+      'MALE' => l.genderMale,
+      'TRANSGENDER_FEMALE' => l.genderTransFemale,
+      'TRANSGENDER_MALE' => l.genderTransMale,
+      'INTERSEX' => l.genderIntersex,
+      _ => l.genderNonBinary,
+    };
 
 class PerformerEditPage extends ConsumerStatefulWidget {
   const PerformerEditPage({super.key, required this.performer});
@@ -175,7 +178,7 @@ class _PerformerEditPageState extends ConsumerState<PerformerEditPage> with _Url
   late final _disambiguation = TextEditingController(text: widget.performer.disambiguation ?? '');
   late final _country = TextEditingController(text: widget.performer.country ?? '');
   late final _details = TextEditingController(text: widget.performer.details ?? '');
-  late String? _gender = _genders.containsKey(widget.performer.gender) ? widget.performer.gender : null;
+  late String? _gender = _genders.contains(widget.performer.gender) ? widget.performer.gender : null;
   late DateTime? _birthdate = widget.performer.birthdate;
   ImageChoice? _image;
 
@@ -192,13 +195,13 @@ class _PerformerEditPageState extends ConsumerState<PerformerEditPage> with _Url
 
   Future<bool> _save() async {
     final p = widget.performer;
-    if (_name.text.trim().isEmpty) throw StateError('A name is required');
+    if (_name.text.trim().isEmpty) throw StateError(context.l10n.nameRequired);
     final changes = <String, dynamic>{};
     _diff(changes, 'name', p.name, _name.text.trim());
     _diff(changes, 'disambiguation', p.disambiguation, _blankToNull(_disambiguation.text));
     _diff(changes, 'country', p.country, _blankToNull(_country.text)?.toUpperCase());
     _diff(changes, 'details', p.details, _blankToNull(_details.text));
-    _diff(changes, 'gender', _genders.containsKey(p.gender) ? p.gender : null, _gender);
+    _diff(changes, 'gender', _genders.contains(p.gender) ? p.gender : null, _gender);
     _diff(changes, 'birthdate', stashDate(p.birthdate), stashDate(_birthdate));
     if (_image != null) changes['image'] = _image!.value;
     diffUrls(changes);
@@ -212,46 +215,46 @@ class _PerformerEditPageState extends ConsumerState<PerformerEditPage> with _Url
 
   @override
   Widget build(BuildContext context) => EditScaffold(
-        title: 'Edit performer',
+        title: context.l10n.editPerformer,
         onSave: _save,
         children: [
           ImageEditField(
-            label: 'Image',
+            label: context.l10n.fieldImage,
             currentUrl: widget.performer.imageUrl,
             choice: _image,
             aspectRatio: 2 / 3,
             onChanged: (c) => setState(() => _image = c),
           ),
-          TextField(controller: _name, decoration: const InputDecoration(labelText: 'Name', border: OutlineInputBorder())),
+          TextField(controller: _name, decoration: InputDecoration(labelText: context.l10n.fieldName, border: const OutlineInputBorder())),
           TextField(
             controller: _disambiguation,
-            decoration: const InputDecoration(labelText: 'Disambiguation', border: OutlineInputBorder()),
+            decoration: InputDecoration(labelText: context.l10n.fieldDisambiguation, border: const OutlineInputBorder()),
           ),
           DropdownButtonFormField<String?>(
             initialValue: _gender,
-            decoration: const InputDecoration(labelText: 'Gender', border: OutlineInputBorder()),
+            decoration: InputDecoration(labelText: context.l10n.fieldGender, border: const OutlineInputBorder()),
             items: [
               const DropdownMenuItem(value: null, child: Text('—')),
-              for (final MapEntry(:key, :value) in _genders.entries) DropdownMenuItem(value: key, child: Text(value)),
+              for (final gender in _genders) DropdownMenuItem(value: gender, child: Text(_genderLabel(context.l10n, gender))),
             ],
             onChanged: (v) => setState(() => _gender = v),
           ),
-          DateField(label: 'Birthdate', value: _birthdate, onChanged: (d) => setState(() => _birthdate = d)),
+          DateField(label: context.l10n.fieldBirthdate, value: _birthdate, onChanged: (d) => setState(() => _birthdate = d)),
           TextField(
             controller: _country,
             maxLength: 2,
             textCapitalization: TextCapitalization.characters,
-            decoration: const InputDecoration(
-              labelText: 'Country code',
-              hintText: 'e.g. DE',
-              border: OutlineInputBorder(),
+            decoration: InputDecoration(
+              labelText: context.l10n.fieldCountryCode,
+              hintText: context.l10n.countryCodeHint,
+              border: const OutlineInputBorder(),
             ),
           ),
           TextField(
             controller: _details,
             minLines: 3,
             maxLines: 8,
-            decoration: const InputDecoration(labelText: 'Details', border: OutlineInputBorder()),
+            decoration: InputDecoration(labelText: context.l10n.fieldDetails, border: const OutlineInputBorder()),
           ),
           ?urlsField(),
         ],
@@ -286,7 +289,7 @@ class _StudioEditPageState extends ConsumerState<StudioEditPage> {
 
   Future<bool> _save() async {
     final s = widget.studio;
-    if (_name.text.trim().isEmpty) throw StateError('A name is required');
+    if (_name.text.trim().isEmpty) throw StateError(context.l10n.nameRequired);
     final changes = <String, dynamic>{};
     _diff(changes, 'name', s.name, _name.text.trim());
     _diff(changes, 'details', s.details, _blankToNull(_details.text));
@@ -303,19 +306,19 @@ class _StudioEditPageState extends ConsumerState<StudioEditPage> {
 
   @override
   Widget build(BuildContext context) => EditScaffold(
-        title: 'Edit studio',
+        title: context.l10n.editStudio,
         onSave: _save,
         children: [
           ImageEditField(
-            label: 'Logo',
+            label: context.l10n.fieldLogo,
             currentUrl: widget.studio.imageUrl,
             choice: _image,
             aspectRatio: 1,
             onChanged: (c) => setState(() => _image = c),
           ),
-          TextField(controller: _name, decoration: const InputDecoration(labelText: 'Name', border: OutlineInputBorder())),
+          TextField(controller: _name, decoration: InputDecoration(labelText: context.l10n.fieldName, border: const OutlineInputBorder())),
           PickerField(
-            label: 'Parent studio',
+            label: context.l10n.fieldParentStudio,
             text: _parent?.name,
             onTap: () async {
               final picked = await showStudioPicker(context);
@@ -323,7 +326,7 @@ class _StudioEditPageState extends ConsumerState<StudioEditPage> {
               if (!context.mounted) return;
               if (picked.id == widget.studio.id) {
                 ScaffoldMessenger.of(context)
-                    .showSnackBar(const SnackBar(content: Text('A studio can\'t be its own parent')));
+                    .showSnackBar(SnackBar(content: Text(context.l10n.studioOwnParent)));
                 return;
               }
               setState(() => _parent = picked);
@@ -333,13 +336,13 @@ class _StudioEditPageState extends ConsumerState<StudioEditPage> {
           TextField(
             controller: _url,
             keyboardType: TextInputType.url,
-            decoration: const InputDecoration(labelText: 'Website', border: OutlineInputBorder()),
+            decoration: InputDecoration(labelText: context.l10n.fieldWebsite, border: const OutlineInputBorder()),
           ),
           TextField(
             controller: _details,
             minLines: 3,
             maxLines: 8,
-            decoration: const InputDecoration(labelText: 'Details', border: OutlineInputBorder()),
+            decoration: InputDecoration(labelText: context.l10n.fieldDetails, border: const OutlineInputBorder()),
           ),
         ],
       );
@@ -370,7 +373,7 @@ class _TagEditPageState extends ConsumerState<TagEditPage> {
 
   Future<bool> _save() async {
     final t = widget.tag;
-    if (_name.text.trim().isEmpty) throw StateError('A name is required');
+    if (_name.text.trim().isEmpty) throw StateError(context.l10n.nameRequired);
     final changes = <String, dynamic>{};
     _diff(changes, 'name', t.name, _name.text.trim());
     _diff(changes, 'description', t.description, _blankToNull(_description.text));
@@ -385,11 +388,11 @@ class _TagEditPageState extends ConsumerState<TagEditPage> {
 
   @override
   Widget build(BuildContext context) => EditScaffold(
-        title: 'Edit tag',
+        title: context.l10n.editTag,
         onSave: _save,
         children: [
           ImageEditField(
-            label: 'Image',
+            label: context.l10n.fieldImage,
             currentUrl: widget.tag.imageUrl,
             choice: _image,
             aspectRatio: 1,
@@ -397,13 +400,13 @@ class _TagEditPageState extends ConsumerState<TagEditPage> {
           ),
           TextField(
             controller: _name,
-            decoration: const InputDecoration(labelText: 'Name', prefixText: '#', border: OutlineInputBorder()),
+            decoration: InputDecoration(labelText: context.l10n.fieldName, prefixText: '#', border: const OutlineInputBorder()),
           ),
           TextField(
             controller: _description,
             minLines: 2,
             maxLines: 6,
-            decoration: const InputDecoration(labelText: 'Description', border: OutlineInputBorder()),
+            decoration: InputDecoration(labelText: context.l10n.fieldDescription, border: const OutlineInputBorder()),
           ),
         ],
       );
@@ -452,16 +455,16 @@ class _GalleryEditPageState extends ConsumerState<GalleryEditPage> with _UrlsLoa
 
   @override
   Widget build(BuildContext context) => EditScaffold(
-        title: 'Edit gallery',
+        title: context.l10n.editGallery,
         onSave: _save,
         children: [
-          TextField(controller: _title, decoration: const InputDecoration(labelText: 'Title', border: OutlineInputBorder())),
-          DateField(label: 'Date', value: _date, onChanged: (d) => setState(() => _date = d)),
+          TextField(controller: _title, decoration: InputDecoration(labelText: context.l10n.fieldTitle, border: const OutlineInputBorder())),
+          DateField(label: context.l10n.fieldDate, value: _date, onChanged: (d) => setState(() => _date = d)),
           TextField(
             controller: _details,
             minLines: 3,
             maxLines: 8,
-            decoration: const InputDecoration(labelText: 'Details', border: OutlineInputBorder()),
+            decoration: InputDecoration(labelText: context.l10n.fieldDetails, border: const OutlineInputBorder()),
           ),
           ?urlsField(),
         ],

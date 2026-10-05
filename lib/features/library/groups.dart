@@ -12,6 +12,7 @@ import '../../widgets/stash_image.dart';
 import '../../widgets/status_views.dart';
 import '../player/player_providers.dart';
 import '../shell/navigation.dart';
+import '../../l10n/l10n.dart';
 
 /// Groups (formerly "movies") as playlists (9.3). Needs Stash v0.27+.
 class GroupsTab extends ConsumerWidget {
@@ -31,9 +32,9 @@ class GroupsTab extends ConsumerWidget {
           slivers: [
             PagedSliver<Group>(
               value: ref.watch(provider),
-              emptyMessage: 'No groups yet',
+              emptyMessage: context.l10n.groupsEmpty,
               emptyIcon: Icons.video_library_outlined,
-              emptyHint: 'Groups need Stash v0.27 or newer.',
+              emptyHint: context.l10n.groupsEmptyHint,
               padding: const EdgeInsets.all(12),
               gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
                 maxCrossAxisExtent: 160,
@@ -76,7 +77,7 @@ class GroupTile extends ConsumerWidget {
           const SizedBox(height: 6),
           Text(group.name, maxLines: 2, overflow: TextOverflow.ellipsis, style: theme.textTheme.titleSmall),
           Text(
-            formatCount(group.sceneCount, 'scene'),
+            context.l10n.scenesCount(group.sceneCount),
             style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurfaceVariant),
           ),
         ],
@@ -93,13 +94,14 @@ class GroupPage extends ConsumerWidget {
 
   Future<void> _playAll(BuildContext context, WidgetRef ref, Group group) async {
     final messenger = ScaffoldMessenger.of(context);
+    final l = context.l10n;
     try {
       final result = await ref
           .read(stashRepositoryProvider)
           .findScenes(SceneQuery(groupId: groupId, sort: SceneSort.groupOrder), perPage: 500);
       ref.read(nowPlayingProvider.notifier).playQueue(result.items, title: group.name);
     } catch (e) {
-      messenger.showSnackBar(SnackBar(content: Text('Couldn\'t load the group: $e')));
+      messenger.showSnackBar(SnackBar(content: Text(l.groupLoadFailed(errorText(l, e)))));
     }
   }
 
@@ -114,7 +116,7 @@ class GroupPage extends ConsumerWidget {
         initialQuery: SceneQuery(groupId: groupId, sort: SceneSort.groupOrder),
         sorts: const [],
         layout: SceneFeedLayout.list,
-        emptyMessage: 'This group has no scenes',
+        emptyMessage: context.l10n.groupNoScenes,
         emptyIcon: Icons.playlist_remove,
         headerSlivers: [
           SliverToBoxAdapter(
@@ -145,7 +147,7 @@ class GroupPage extends ConsumerWidget {
                           const SizedBox(height: 4),
                           Text(
                             [
-                              formatCount(g.sceneCount, 'scene'),
+                              context.l10n.scenesCount(g.sceneCount),
                               if (g.duration > 0) formatLongDuration(g.duration),
                               if (g.date != null) formatDate(g.date!),
                               if (g.studio != null) g.studio!.name,
@@ -154,12 +156,17 @@ class GroupPage extends ConsumerWidget {
                           ),
                           if (g.synopsis != null) ...[
                             const SizedBox(height: 8),
-                            Text(g.synopsis!, maxLines: 4, overflow: TextOverflow.ellipsis, style: theme.textTheme.bodySmall),
+                            Text(
+                              g.synopsis!,
+                              maxLines: 4,
+                              overflow: TextOverflow.ellipsis,
+                              style: theme.textTheme.bodySmall,
+                            ),
                           ],
                           const SizedBox(height: 12),
                           FilledButton.icon(
                             icon: const Icon(Icons.play_arrow),
-                            label: const Text('Play all'),
+                            label: Text(context.l10n.playAll),
                             onPressed: g.sceneCount == 0 ? null : () => _playAll(context, ref, g),
                           ),
                         ],

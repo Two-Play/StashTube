@@ -3,17 +3,23 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/config/server_config.dart';
+import '../../l10n/gen/app_localizations.dart';
 
 /// Launcher icons (11.3). On Android the name changes too; iOS can only
 /// change the icon (and shows a system confirmation).
 enum AppIconChoice {
-  stash('Stash', 'DefaultIcon', null, 'assets/icons/stash.png'),
-  notes('Notes', 'NotesIcon', 'AppIcon-Notes', 'assets/icons/notes.png'),
-  calculator('Calculator', 'CalculatorIcon', 'AppIcon-Calculator', 'assets/icons/calculator.png');
+  stash('DefaultIcon', null, 'assets/icons/stash.png'),
+  notes('NotesIcon', 'AppIcon-Notes', 'assets/icons/notes.png'),
+  calculator('CalculatorIcon', 'AppIcon-Calculator', 'assets/icons/calculator.png');
 
-  const AppIconChoice(this.label, this.androidAlias, this.iosIconName, this.preview);
+  const AppIconChoice(this.androidAlias, this.iosIconName, this.preview);
 
-  final String label;
+  /// Matches the alias's label on Android (`@string/` resources).
+  String label(AppLocalizations l) => switch (this) {
+        stash => l.appIconStash,
+        notes => l.appIconNotes,
+        calculator => l.appIconCalculator,
+      };
 
   /// activity-alias name in AndroidManifest.xml.
   final String androidAlias;

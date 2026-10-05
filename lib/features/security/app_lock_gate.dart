@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screen_lock/flutter_screen_lock.dart';
 
 import 'app_lock.dart';
+import '../../l10n/l10n.dart';
 
 /// Sits above every page and dialog (MaterialApp.builder): shows the lock
 /// screen while locked (11.1) and covers the app while it is inactive or in
@@ -79,7 +80,7 @@ class LockScreen extends ConsumerStatefulWidget {
 
 class _LockScreenState extends ConsumerState<LockScreen> {
   Future<void> _biometric() async {
-    final ok = await ref.read(biometricAuthProvider).authenticate('Unlock Stash');
+    final ok = await ref.read(biometricAuthProvider).authenticate(context.l10n.unlockReason);
     if (ok && mounted) ref.read(appLockedProvider.notifier).unlock();
   }
 
@@ -97,7 +98,7 @@ class _LockScreenState extends ConsumerState<LockScreen> {
               correctString: '0' * settings.pinLength,
               onValidate: (input) async => ref.read(appLockSettingsProvider.notifier).verify(input),
               onUnlocked: () => ref.read(appLockedProvider.notifier).unlock(),
-              title: const Text('Enter PIN'),
+              title: Text(context.l10n.enterPin),
               useBlur: false,
               onOpened: settings.biometrics ? _biometric : null,
               customizedButtonChild: settings.biometrics ? const Icon(Icons.fingerprint) : null,
@@ -115,8 +116,8 @@ Future<String?> showCreatePin(BuildContext context) async {
   String? pin;
   await screenLockCreate(
     context: context,
-    title: const Text('Choose a PIN'),
-    confirmTitle: const Text('Repeat the PIN'),
+    title: Text(context.l10n.choosePin),
+    confirmTitle: Text(context.l10n.repeatPin),
     canCancel: true,
     onConfirmed: (value) {
       pin = value;
@@ -131,7 +132,7 @@ Future<bool> confirmPin(BuildContext context, WidgetRef ref) async {
   var ok = false;
   await screenLock(
     context: context,
-    title: const Text('Enter your PIN'),
+    title: Text(context.l10n.enterYourPin),
     correctString: '0' * ref.read(appLockSettingsProvider).pinLength,
     onValidate: (input) async => ref.read(appLockSettingsProvider.notifier).verify(input),
     canCancel: true,

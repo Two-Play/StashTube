@@ -10,6 +10,7 @@ import '../cast/cast_providers.dart';
 import '../cast/cast_ui.dart';
 import 'player_providers.dart';
 import 'preview_seek_bar.dart';
+import '../../l10n/l10n.dart';
 
 /// The player's own controls, used instead of media_kit's so that we decide
 /// when they hide: never while the user scrubs (media_kit's hide timer
@@ -171,7 +172,7 @@ class _StashVideoControlsState extends ConsumerState<StashVideoControls> {
                       children: [
                         if (!fullscreen)
                           IconButton(
-                            tooltip: 'Minimize',
+                            tooltip: context.l10n.minimize,
                             icon: const Icon(Icons.keyboard_arrow_down, size: 30),
                             onPressed: () => ref.read(nowPlayingProvider.notifier).collapse(),
                           ),
@@ -179,7 +180,7 @@ class _StashVideoControlsState extends ConsumerState<StashVideoControls> {
                         const CastButton(color: Colors.white),
                         ...widget.topActions,
                         IconButton(
-                          tooltip: 'Quality',
+                          tooltip: context.l10n.quality,
                           icon: const Icon(Icons.settings_outlined),
                           onPressed: () => _act(widget.onQuality),
                         ),
@@ -200,7 +201,7 @@ class _StashVideoControlsState extends ConsumerState<StashVideoControls> {
                                   initialData: player.state.playing,
                                   builder: (_, playing) => IconButton(
                                     iconSize: 56,
-                                    tooltip: playing.data == true ? 'Pause' : 'Play',
+                                    tooltip: playing.data == true ? context.l10n.pause : context.l10n.play,
                                     icon: Icon(playing.data == true ? Icons.pause : Icons.play_arrow),
                                     onPressed: () => _act(player.playOrPause),
                                   ),
@@ -215,7 +216,7 @@ class _StashVideoControlsState extends ConsumerState<StashVideoControls> {
                           IgnorePointer(child: _TimeLabel(player: player)),
                           const Spacer(),
                           IconButton(
-                            tooltip: fullscreen ? 'Exit fullscreen' : 'Fullscreen',
+                            tooltip: fullscreen ? context.l10n.exitFullscreen : context.l10n.fullscreen,
                             icon: Icon(fullscreen ? Icons.fullscreen_exit : Icons.fullscreen),
                             onPressed: () => _act(widget.onToggleFullscreen),
                           ),

@@ -18,7 +18,10 @@ class NavBarConfig {
   /// The bar as it ships: the tabs the app had before 13.7.
   static final standard = NavBarConfig(
     order: AppTab.values,
-    hidden: {AppTab.tags, AppTab.search, AppTab.watchLater},
+    hidden: {
+      for (final tab in AppTab.values)
+        if (tab.section != null || tab == AppTab.tags || tab == AppTab.search) tab,
+    },
   );
 
   /// Material's navigation bar is meant for 3 to 5 destinations.

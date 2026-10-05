@@ -1,3 +1,5 @@
+import '../../l10n/l10n.dart';
+
 /// `12:34` or `1:02:03`, like YouTube duration badges.
 String formatDuration(double seconds) {
   final total = seconds.isFinite && seconds > 0 ? seconds.round() : 0;
@@ -8,19 +10,16 @@ String formatDuration(double seconds) {
 }
 
 /// `3 days ago`, `2 years ago`, ... relative to [now].
-String formatTimeAgo(DateTime date, DateTime now) {
+String formatTimeAgo(AppLocalizations l, DateTime date, DateTime now) {
   final diff = now.difference(date);
-  if (diff.isNegative) return 'upcoming';
-
-  String plural(int n, String unit) => '$n $unit${n == 1 ? '' : 's'} ago';
-
-  if (diff.inDays >= 365) return plural(diff.inDays ~/ 365, 'year');
-  if (diff.inDays >= 30) return plural(diff.inDays ~/ 30, 'month');
-  if (diff.inDays >= 7) return plural(diff.inDays ~/ 7, 'week');
-  if (diff.inDays >= 1) return plural(diff.inDays, 'day');
-  if (diff.inHours >= 1) return plural(diff.inHours, 'hour');
-  if (diff.inMinutes >= 1) return plural(diff.inMinutes, 'minute');
-  return 'just now';
+  if (diff.isNegative) return l.timeUpcoming;
+  if (diff.inDays >= 365) return l.timeYearsAgo(diff.inDays ~/ 365);
+  if (diff.inDays >= 30) return l.timeMonthsAgo(diff.inDays ~/ 30);
+  if (diff.inDays >= 7) return l.timeWeeksAgo(diff.inDays ~/ 7);
+  if (diff.inDays >= 1) return l.timeDaysAgo(diff.inDays);
+  if (diff.inHours >= 1) return l.timeHoursAgo(diff.inHours);
+  if (diff.inMinutes >= 1) return l.timeMinutesAgo(diff.inMinutes);
+  return l.timeJustNow;
 }
 
 /// `2024-01-31`
@@ -37,8 +36,6 @@ String? resolutionLabel(int? height) {
   if (height >= 480) return '480p';
   return '${height}p';
 }
-
-String formatCount(int n, String unit) => '$n $unit${n == 1 ? '' : 's'}';
 
 /// `1.2 TB`, `340 MB`, ... (binary units, as Stash shows them).
 String formatBytes(double bytes) {

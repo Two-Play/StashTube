@@ -8,6 +8,7 @@ import '../../data/models/scene_details.dart';
 import '../../data/providers.dart';
 import 'player_providers.dart';
 import 'video_controls.dart';
+import '../../l10n/l10n.dart';
 
 /// Claims single taps inside the expanded player.
 ///
@@ -61,10 +62,10 @@ class PlayerVideo extends ConsumerWidget {
 /// would stay visible in the miniplayer.
 Widget _noControls(VideoState state) => const SizedBox.shrink();
 
-String _streamDescription(SceneStream stream) {
-  if (stream.isDirect) return 'Original file';
-  if (stream.isHls) return 'Adaptive streaming';
-  return 'Transcoded – seeking may be limited';
+String _streamDescription(AppLocalizations l, SceneStream stream) {
+  if (stream.isDirect) return l.streamOriginal;
+  if (stream.isHls) return l.streamAdaptive;
+  return l.streamTranscoded;
 }
 
 /// Bottom sheet listing the scene's `sceneStreams`.
@@ -95,7 +96,7 @@ class _QualitySheet extends ConsumerWidget {
               children: [
                 Padding(
                   padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
-                  child: Text('Quality', style: Theme.of(context).textTheme.titleMedium),
+                  child: Text(context.l10n.quality, style: Theme.of(context).textTheme.titleMedium),
                 ),
                 for (final stream in value.streams)
                   ListTile(
@@ -105,7 +106,7 @@ class _QualitySheet extends ConsumerWidget {
                           : null,
                     ),
                     title: Text(stream.label),
-                    subtitle: Text(_streamDescription(stream)),
+                    subtitle: Text(_streamDescription(context.l10n, stream)),
                     onTap: () {
                       Navigator.pop(context);
                       ref.read(nowPlayingProvider.notifier).selectStream(stream);
@@ -113,11 +114,11 @@ class _QualitySheet extends ConsumerWidget {
                   ),
               ],
             ),
-          AsyncData() => const ListTile(title: Text('No alternative streams available')),
+          AsyncData() => ListTile(title: Text(context.l10n.noAlternativeStreams)),
           AsyncError(:final error) => ListTile(
               leading: const Icon(Icons.error_outline),
-              title: const Text('Couldn\'t load streams'),
-              subtitle: Text(error.toString()),
+              title: Text(context.l10n.streamsLoadFailed),
+              subtitle: Text(errorText(context.l10n, error)),
             ),
           _ => const Padding(padding: EdgeInsets.all(32), child: Center(child: CircularProgressIndicator())),
         },
@@ -214,7 +215,7 @@ class ChapterList extends ConsumerWidget {
       children: [
         Padding(
           padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
-          child: Text('Chapters', style: theme.textTheme.titleSmall),
+          child: Text(context.l10n.chapters, style: theme.textTheme.titleSmall),
         ),
         SizedBox(
           height: 64,

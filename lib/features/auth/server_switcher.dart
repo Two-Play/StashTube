@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/config/server_config.dart';
 import 'login_page.dart';
+import '../../l10n/l10n.dart';
 
 /// Sheet listing saved servers (2.6): switch, rename, remove, add.
 Future<void> showServerSwitcher(BuildContext context) => showModalBottomSheet<void>(
@@ -17,11 +18,11 @@ Future<bool> confirmRemoveServer(BuildContext context, ServerProfile server) asy
     await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text('Remove "${server.name}"?'),
-        content: const Text('Its URL and API key, watch later list and search history are removed from this device.'),
+        title: Text(context.l10n.removeServerTitle(server.name)),
+        content: Text(context.l10n.removeServerBody),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancel')),
-          FilledButton(onPressed: () => Navigator.pop(context, true), child: const Text('Remove')),
+          TextButton(onPressed: () => Navigator.pop(context, false), child: Text(context.l10n.cancel)),
+          FilledButton(onPressed: () => Navigator.pop(context, true), child: Text(context.l10n.remove)),
         ],
       ),
     ) ??
@@ -47,7 +48,7 @@ class ServerSwitcher extends ConsumerWidget {
         children: [
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
-            child: Text('Servers', style: theme.textTheme.titleMedium),
+            child: Text(context.l10n.servers, style: theme.textTheme.titleMedium),
           ),
           Flexible(
             child: ListView(
@@ -66,7 +67,7 @@ class ServerSwitcher extends ConsumerWidget {
                       if (server.id != state.activeId) ref.read(serverProfilesProvider.notifier).activate(server.id);
                     },
                     trailing: PopupMenuButton<String>(
-                      tooltip: 'Server options',
+                      tooltip: context.l10n.serverOptions,
                       onSelected: (action) async {
                         if (action == 'rename') {
                           await _rename(context, ref, server);
@@ -74,9 +75,9 @@ class ServerSwitcher extends ConsumerWidget {
                           await ref.read(serverProfilesProvider.notifier).remove(server.id);
                         }
                       },
-                      itemBuilder: (_) => const [
-                        PopupMenuItem(value: 'rename', child: Text('Rename')),
-                        PopupMenuItem(value: 'remove', child: Text('Remove')),
+                      itemBuilder: (_) => [
+                        PopupMenuItem(value: 'rename', child: Text(context.l10n.rename)),
+                        PopupMenuItem(value: 'remove', child: Text(context.l10n.remove)),
                       ],
                     ),
                   ),
@@ -86,7 +87,7 @@ class ServerSwitcher extends ConsumerWidget {
           const Divider(),
           ListTile(
             leading: const Icon(Icons.add),
-            title: const Text('Add server'),
+            title: Text(context.l10n.addServer),
             onTap: () {
               Navigator.pop(context);
               Navigator.of(context, rootNavigator: true)
@@ -119,11 +120,11 @@ class _RenameDialogState extends State<_RenameDialog> {
 
   @override
   Widget build(BuildContext context) => AlertDialog(
-        title: const Text('Rename server'),
-        content: TextField(controller: _controller, autofocus: true, decoration: const InputDecoration(labelText: 'Name')),
+        title: Text(context.l10n.renameServer),
+        content: TextField(controller: _controller, autofocus: true, decoration: InputDecoration(labelText: context.l10n.name)),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
-          FilledButton(onPressed: () => Navigator.pop(context, _controller.text), child: const Text('Save')),
+          TextButton(onPressed: () => Navigator.pop(context), child: Text(context.l10n.cancel)),
+          FilledButton(onPressed: () => Navigator.pop(context, _controller.text), child: Text(context.l10n.save)),
         ],
       );
 }

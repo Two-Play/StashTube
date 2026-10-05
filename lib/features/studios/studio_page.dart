@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../core/utils/format.dart';
 import '../../data/models/list_queries.dart';
 import '../../data/models/studio.dart';
 import '../../data/providers.dart';
@@ -11,6 +10,7 @@ import '../../widgets/stash_image.dart';
 import '../../widgets/status_views.dart';
 import '../edit/edit_pages.dart';
 import '../shell/navigation.dart';
+import '../../l10n/l10n.dart';
 
 /// Studio "channel": header, parent studio and sub-studios (7.3), and all
 /// scenes of the studio, optionally including its sub-studios.
@@ -42,7 +42,7 @@ class _StudioPageState extends ConsumerState<StudioPage> {
         actions: [
           if (studio.value case final value?)
             IconButton(
-              tooltip: 'Edit',
+              tooltip: context.l10n.edit,
               icon: const Icon(Icons.edit_outlined),
               onPressed: () => openPage(ref, StudioEditPage(studio: value)),
             ),
@@ -67,8 +67,8 @@ class _StudioPageState extends ConsumerState<StudioPage> {
                     name: s.name,
                     imageUrl: s.imageUrl,
                     subtitle: [
-                      formatCount(s.sceneCount, 'scene'),
-                      if (s.children.isNotEmpty) formatCount(s.children.length, 'sub-studio'),
+                      context.l10n.scenesCount(s.sceneCount),
+                      if (s.children.isNotEmpty) context.l10n.subStudiosCount(s.children.length),
                     ].join(' • '),
                     description: s.details,
                   ),
@@ -77,7 +77,7 @@ class _StudioPageState extends ConsumerState<StudioPage> {
                       padding: const EdgeInsets.fromLTRB(12, 0, 12, 4),
                       child: ActionChip(
                         avatar: ChannelAvatar(name: parent.name, imageUrl: parent.imageUrl, radius: 12),
-                        label: Text('Part of ${parent.name}'),
+                        label: Text(context.l10n.partOf(parent.name)),
                         onPressed: () => openStudio(ref, parent.id),
                       ),
                     ),
@@ -86,7 +86,7 @@ class _StudioPageState extends ConsumerState<StudioPage> {
                     Padding(
                       padding: const EdgeInsets.fromLTRB(12, 4, 12, 0),
                       child: FilterChip(
-                        label: const Text('Include sub-studios'),
+                        label: Text(context.l10n.includeSubStudios),
                         selected: includeSubStudios,
                         onSelected: (v) => setState(() => _includeSubStudios = v),
                       ),
@@ -115,7 +115,7 @@ class _SubStudios extends ConsumerWidget {
       children: [
         Padding(
           padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
-          child: Text('Sub-studios', style: theme.textTheme.titleSmall),
+          child: Text(context.l10n.subStudios, style: theme.textTheme.titleSmall),
         ),
         SizedBox(
           height: 112,
@@ -143,7 +143,7 @@ class _SubStudios extends ConsumerWidget {
                         style: theme.textTheme.bodySmall,
                       ),
                       Text(
-                        formatCount(child.sceneCount, 'scene'),
+                        context.l10n.scenesCount(child.sceneCount),
                         maxLines: 1,
                         style: theme.textTheme.labelSmall?.copyWith(color: theme.colorScheme.onSurfaceVariant),
                       ),

@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/config/server_config.dart';
 import '../../data/repositories/stash_repository.dart';
+import '../../l10n/l10n.dart';
 
 /// Connects the app to a Stash server (URL + optional API key and name).
 /// Lists saved servers to pick from (2.6). Pushed from the settings with
@@ -53,7 +54,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
       if (mounted && widget.addServer) Navigator.of(context).pop();
     } catch (e) {
       HapticFeedback.vibrate();
-      if (mounted) setState(() => _error = e.toString());
+      if (mounted) setState(() => _error = errorText(context.l10n, e));
     } finally {
       if (mounted) setState(() => _connecting = false);
     }
@@ -64,7 +65,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
     final theme = Theme.of(context);
     final saved = widget.addServer ? const <ServerProfile>[] : ref.watch(serverProfilesProvider).profiles;
     return Scaffold(
-      appBar: widget.addServer ? AppBar(title: const Text('Add server')) : null,
+      appBar: widget.addServer ? AppBar(title: Text(context.l10n.addServer)) : null,
       body: SafeArea(
         child: Center(
           child: SingleChildScrollView(
@@ -78,17 +79,17 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                     if (!widget.addServer) ...[
                       Icon(Icons.play_circle_fill, size: 72, color: theme.colorScheme.primary),
                       const SizedBox(height: 12),
-                      Text('Connect to Stash', textAlign: TextAlign.center, style: theme.textTheme.headlineSmall),
+                      Text(context.l10n.connectToStash, textAlign: TextAlign.center, style: theme.textTheme.headlineSmall),
                     ],
                     const SizedBox(height: 8),
                     Text(
-                      'Enter the address of your Stash server, e.g. http://192.168.1.10:9999',
+                      context.l10n.loginIntro,
                       textAlign: TextAlign.center,
                       style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.onSurfaceVariant),
                     ),
                     if (saved.isNotEmpty) ...[
                       const SizedBox(height: 24),
-                      Text('Saved servers', style: theme.textTheme.titleSmall),
+                      Text(context.l10n.savedServers, style: theme.textTheme.titleSmall),
                       for (final server in saved)
                         Card(
                           margin: const EdgeInsets.only(top: 8),
@@ -101,17 +102,17 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                           ),
                         ),
                       const SizedBox(height: 16),
-                      Text('Or add another server', style: theme.textTheme.titleSmall),
+                      Text(context.l10n.orAddAnotherServer, style: theme.textTheme.titleSmall),
                     ],
                     const SizedBox(height: 32),
                     TextFormField(
                       controller: _nameController,
                       textInputAction: TextInputAction.next,
-                      decoration: const InputDecoration(
-                        border: OutlineInputBorder(),
-                        labelText: 'Name (optional)',
-                        hintText: 'e.g. Home',
-                        prefixIcon: Icon(Icons.label_outline),
+                      decoration: InputDecoration(
+                        border: const OutlineInputBorder(),
+                        labelText: context.l10n.nameOptional,
+                        hintText: context.l10n.nameHint,
+                        prefixIcon: const Icon(Icons.label_outline),
                       ),
                     ),
                     const SizedBox(height: 16),
@@ -121,12 +122,12 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                       autocorrect: false,
                       autofillHints: const [AutofillHints.url],
                       textInputAction: TextInputAction.next,
-                      decoration: const InputDecoration(
-                        border: OutlineInputBorder(),
-                        labelText: 'Server URL',
-                        prefixIcon: Icon(Icons.dns_outlined),
+                      decoration: InputDecoration(
+                        border: const OutlineInputBorder(),
+                        labelText: context.l10n.serverUrl,
+                        prefixIcon: const Icon(Icons.dns_outlined),
                       ),
-                      validator: (v) => ServerConfig.normalizeUrl(v ?? '') == null ? 'Enter a valid http(s) URL' : null,
+                      validator: (v) => ServerConfig.normalizeUrl(v ?? '') == null ? context.l10n.serverUrlInvalid : null,
                     ),
                     const SizedBox(height: 16),
                     TextFormField(
@@ -138,8 +139,8 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                       onFieldSubmitted: (_) => _connect(),
                       decoration: InputDecoration(
                         border: const OutlineInputBorder(),
-                        labelText: 'API key (optional)',
-                        helperText: 'Required if your server has a password. Stash → Settings → Security.',
+                        labelText: context.l10n.apiKeyOptional,
+                        helperText: context.l10n.apiKeyHelper,
                         helperMaxLines: 2,
                         prefixIcon: const Icon(Icons.key_outlined),
                         suffixIcon: IconButton(
@@ -158,7 +159,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                       style: FilledButton.styleFrom(minimumSize: const Size.fromHeight(48)),
                       child: _connecting
                           ? const SizedBox.square(dimension: 20, child: CircularProgressIndicator(strokeWidth: 2))
-                          : const Text('Connect'),
+                          : Text(context.l10n.connect),
                     ),
                   ],
                 ),

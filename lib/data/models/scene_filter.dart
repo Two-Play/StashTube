@@ -3,14 +3,10 @@ import 'package:flutter/foundation.dart';
 import 'tag.dart';
 
 enum DurationFilter {
-  any('Any length'),
-  short('Under 10 min'),
-  medium('10–30 min'),
-  long('Over 30 min');
-
-  const DurationFilter(this.label);
-
-  final String label;
+  any,
+  short,
+  medium,
+  long;
 
   Map<String, dynamic>? toCriterion() => switch (this) {
         DurationFilter.any => null,
@@ -23,14 +19,13 @@ enum DurationFilter {
 /// Minimum resolution. Stash compares resolutions by category, so "at least
 /// 720p" is "greater than" the category just below it.
 enum ResolutionFilter {
-  any('Any quality', null),
-  hd('720p+', 'WEB_HD'),
-  fullHd('1080p+', 'STANDARD_HD'),
-  uhd('4K+', 'QUAD_HD');
+  any(null),
+  hd('WEB_HD'),
+  fullHd('STANDARD_HD'),
+  uhd('QUAD_HD');
 
-  const ResolutionFilter(this.label, this._above);
+  const ResolutionFilter(this._above);
 
-  final String label;
   final String? _above;
 
   Map<String, dynamic>? toCriterion() => _above == null ? null : {'value': _above, 'modifier': 'GREATER_THAN'};

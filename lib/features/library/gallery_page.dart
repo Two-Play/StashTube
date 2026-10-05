@@ -8,6 +8,7 @@ import '../../widgets/status_views.dart';
 import '../edit/edit_pages.dart';
 import '../shell/navigation.dart';
 import 'images_tab.dart';
+import '../../l10n/l10n.dart';
 
 /// One gallery: header with its details, then all of its images in file
 /// order; tapping one opens the fullscreen viewer.
@@ -27,7 +28,7 @@ class GalleryPage extends ConsumerWidget {
         actions: [
           if (gallery.value case final value?)
             IconButton(
-              tooltip: 'Edit',
+              tooltip: context.l10n.edit,
               icon: const Icon(Icons.edit_outlined),
               onPressed: () => openPage(ref, GalleryEditPage(gallery: value)),
             ),
@@ -48,7 +49,7 @@ class GalleryPage extends ConsumerWidget {
                   children: [
                     Text(
                       [
-                        formatCount(g.imageCount, 'image'),
+                        context.l10n.imagesCount(g.imageCount),
                         if (g.date != null) formatDate(g.date!),
                       ].join(' • '),
                       style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.onSurfaceVariant),

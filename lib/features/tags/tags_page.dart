@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../core/utils/format.dart';
 import '../../data/models/list_queries.dart';
 import '../../data/models/tag.dart';
 import '../../data/providers.dart';
@@ -10,6 +9,7 @@ import '../../widgets/paged_sliver.dart';
 import '../../widgets/stash_image.dart';
 import '../shell/navigation.dart';
 import 'tag_editor.dart';
+import '../../l10n/l10n.dart';
 
 /// Discover: every tag that has scenes, most used first (8.2).
 class TagsPage extends ConsumerStatefulWidget {
@@ -26,10 +26,10 @@ class _TagsPageState extends ConsumerState<TagsPage> {
   Widget build(BuildContext context) {
     final provider = tagListProvider(_query);
     return Scaffold(
-      appBar: AppBar(title: const Text('Tags')),
+      appBar: AppBar(title: Text(context.l10n.tagsTitle)),
       floatingActionButton: FloatingActionButton.extended(
         icon: const Icon(Icons.add),
-        label: const Text('New tag'),
+        label: Text(context.l10n.newTag),
         onPressed: () async {
           final tag = await showCreateTagDialog(context, ref);
           if (tag != null) openTag(ref, tag.id);
@@ -46,15 +46,15 @@ class _TagsPageState extends ConsumerState<TagsPage> {
                 child: ChipBar<TagSort>(
                   values: TagSort.values,
                   selected: _query.sort,
-                  labelOf: (s) => s.label,
+                  labelOf: (s) => s.label(context.l10n),
                   onSelected: (s) => setState(() => _query = TagQuery(sort: s)),
                 ),
               ),
               PagedSliver<Tag>(
                 value: ref.watch(provider),
-                emptyMessage: 'No tags yet',
+                emptyMessage: context.l10n.tagsEmpty,
                 emptyIcon: Icons.sell_outlined,
-                emptyHint: 'Create one with "New tag".',
+                emptyHint: context.l10n.tagsEmptyHint,
                 padding: const EdgeInsets.all(12),
                 gridDelegate: tagGridDelegate,
                 onRetry: () => ref.invalidate(provider),
@@ -87,7 +87,7 @@ class TagTile extends ConsumerWidget {
     final colors = Theme.of(context).colorScheme;
     return Semantics(
       button: true,
-      label: '${tag.name}, ${formatCount(tag.sceneCount, 'scene')}',
+      label: '${tag.name}, ${context.l10n.scenesCount(tag.sceneCount)}',
       excludeSemantics: true,
       child: Material(
         color: colors.primaryContainer,
@@ -113,7 +113,7 @@ class TagTile extends ConsumerWidget {
                       style: TextStyle(color: colors.onPrimaryContainer, fontWeight: FontWeight.w700, fontSize: 15),
                     ),
                     Text(
-                      formatCount(tag.sceneCount, 'scene'),
+                      context.l10n.scenesCount(tag.sceneCount),
                       style: TextStyle(color: colors.onPrimaryContainer, fontSize: 12),
                     ),
                   ],

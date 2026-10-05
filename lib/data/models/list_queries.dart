@@ -4,20 +4,19 @@ import 'scene_filter.dart';
 
 /// Sort orders offered for scene lists, mapped to Stash `FindFilterType.sort`.
 enum SceneSort {
-  recentlyAdded('Recently added', 'created_at'),
-  newest('Newest', 'date'),
-  random('Shuffle', 'random'),
-  topRated('Top rated', 'rating'),
-  mostPlayed('Most played', 'play_count'),
-  lastPlayed('Recently watched', 'last_played_at'),
-  title('A–Z', 'title'),
+  recentlyAdded('created_at'),
+  newest('date'),
+  random('random'),
+  topRated('rating'),
+  mostPlayed('play_count'),
+  lastPlayed('last_played_at'),
+  title('title'),
 
   /// Order within a group (playlist); only meaningful with a group filter.
-  groupOrder('Group order', 'group_scene_number');
+  groupOrder('group_scene_number');
 
-  const SceneSort(this.label, this.field);
+  const SceneSort(this.field);
 
-  final String label;
   final String field;
 
   /// Sorts offered in general scene feeds.
@@ -25,43 +24,40 @@ enum SceneSort {
 }
 
 enum PerformerSort {
-  name('Name', 'name'),
-  mostScenes('Most scenes', 'scenes_count'),
-  favorites('Favorites', 'name'),
-  random('Shuffle', 'random');
+  name('name'),
+  mostScenes('scenes_count'),
+  favorites('name'),
+  random('random');
 
-  const PerformerSort(this.label, this.field);
+  const PerformerSort(this.field);
 
-  final String label;
   final String field;
 }
 
 enum ImageSort {
-  recentlyAdded('Recently added', 'created_at'),
-  newest('Newest', 'date'),
-  random('Shuffle', 'random'),
-  topRated('Top rated', 'rating'),
-  title('A–Z', 'title'),
+  recentlyAdded('created_at'),
+  newest('date'),
+  random('random'),
+  topRated('rating'),
+  title('title'),
 
   /// File order, used inside galleries.
-  path('File name', 'path');
+  path('path');
 
-  const ImageSort(this.label, this.field);
+  const ImageSort(this.field);
 
-  final String label;
   final String field;
 }
 
 enum GallerySort {
-  recentlyAdded('Recently added', 'created_at'),
-  newest('Newest', 'date'),
-  random('Shuffle', 'random'),
-  mostImages('Most images', 'images_count'),
-  title('A–Z', 'title');
+  recentlyAdded('created_at'),
+  newest('date'),
+  random('random'),
+  mostImages('images_count'),
+  title('title');
 
-  const GallerySort(this.label, this.field);
+  const GallerySort(this.field);
 
-  final String label;
   final String field;
 }
 
@@ -216,13 +212,12 @@ class PerformerQuery {
 }
 
 enum TagSort {
-  mostScenes('Most scenes', 'scenes_count'),
-  name('A–Z', 'name'),
-  recentlyAdded('Recently added', 'created_at');
+  mostScenes('scenes_count'),
+  name('name'),
+  recentlyAdded('created_at');
 
-  const TagSort(this.label, this.field);
+  const TagSort(this.field);
 
-  final String label;
   final String field;
 }
 

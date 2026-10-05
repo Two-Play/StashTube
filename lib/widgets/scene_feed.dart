@@ -3,13 +3,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../data/models/list_queries.dart';
 import '../data/models/scene.dart';
-import '../core/utils/format.dart';
 import '../data/models/saved_filter.dart';
 import '../data/providers.dart';
 import 'chip_bar.dart';
 import 'paged_sliver.dart';
 import 'scene_card.dart';
 import 'scene_filter_sheet.dart';
+import '../l10n/l10n.dart';
 
 enum SceneFeedLayout {
   /// Full-width YouTube cards ([SceneCard]).
@@ -37,7 +37,7 @@ class SceneFeedView extends ConsumerStatefulWidget {
     this.filterable = false,
     this.showSavedFilters = false,
     this.physics,
-    this.emptyMessage = 'No scenes found',
+    this.emptyMessage,
     this.emptyIcon = Icons.movie_outlined,
     this.emptyHint,
     this.onRefresh,
@@ -64,7 +64,7 @@ class SceneFeedView extends ConsumerStatefulWidget {
 
   /// Scroll physics; defaults to always-scrollable platform physics.
   final ScrollPhysics? physics;
-  final String emptyMessage;
+  final String? emptyMessage;
   final IconData emptyIcon;
   final String? emptyHint;
 
@@ -110,7 +110,7 @@ class _SceneFeedViewState extends ConsumerState<SceneFeedView> {
     });
     if (saved.unsupportedCriteria.isNotEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: Text('"${saved.name}": ignored unsupported criteria (${saved.unsupportedCriteria.join(', ')})'),
+        content: Text(context.l10n.savedFilterUnsupported(saved.name, saved.unsupportedCriteria.join(', '))),
       ));
     }
   }
@@ -142,7 +142,7 @@ class _SceneFeedViewState extends ConsumerState<SceneFeedView> {
                       Padding(
                         padding: const EdgeInsets.only(left: 4),
                         child: IconButton(
-                          tooltip: 'Filter',
+                          tooltip: context.l10n.filter,
                           onPressed: _openFilters,
                           icon: Badge(
                             isLabelVisible: _query.filter.activeCount > 0,
@@ -155,7 +155,7 @@ class _SceneFeedViewState extends ConsumerState<SceneFeedView> {
                       child: ChipBar<SceneSort>(
                         values: widget.sorts,
                         selected: _query.sort,
-                        labelOf: (s) => s.label,
+                        labelOf: (s) => s.label(context.l10n),
                         onSelected: (s) => setState(() => _query = _query.copyWith(sort: s)),
                       ),
                     ),
@@ -171,7 +171,7 @@ class _SceneFeedViewState extends ConsumerState<SceneFeedView> {
                 child: Padding(
                   padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
                   child: Text(
-                    '${formatNumber(value.current!.totalCount)} scenes',
+                    context.l10n.scenesCount(value.current!.totalCount),
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
                           color: Theme.of(context).colorScheme.onSurfaceVariant,
                         ),
@@ -180,7 +180,7 @@ class _SceneFeedViewState extends ConsumerState<SceneFeedView> {
               ),
             PagedSliver<Scene>(
               value: value,
-              emptyMessage: widget.emptyMessage,
+              emptyMessage: widget.emptyMessage ?? context.l10n.scenesEmpty,
               emptyIcon: widget.emptyIcon,
               emptyHint: widget.emptyHint,
               onRetry: () => ref.invalidate(provider),

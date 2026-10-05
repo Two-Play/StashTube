@@ -6,6 +6,7 @@ import '../../core/utils/format.dart';
 import '../../data/models/stats.dart';
 import '../../data/providers.dart';
 import '../../widgets/status_views.dart';
+import '../../l10n/l10n.dart';
 
 /// Library and watch statistics as stat tiles (headline numbers, no charts).
 class StatsTab extends ConsumerWidget {
@@ -34,60 +35,60 @@ class StatsTab extends ConsumerWidget {
         padding: const EdgeInsets.fromLTRB(12, 8, 12, 24),
         children: [
           ...switch (library) {
-            AsyncData(:final value) => _libraryTiles(value),
+            AsyncData(:final value) => _libraryTiles(context.l10n, value),
             AsyncError(:final error) => [ErrorView(error: error, onRetry: () => ref.invalidate(libraryStatsProvider))],
             _ => [const LoadingView()],
           },
           // Activity stats are optional: hidden on servers that don't support them.
-          if (activity.value case final value?) ..._activityTiles(value),
+          if (activity.value case final value?) ..._activityTiles(context.l10n, value),
         ],
       ),
     );
   }
 
-  List<Widget> _libraryTiles(LibraryStats s) => [
-        const _SectionHeader('Library'),
+  List<Widget> _libraryTiles(AppLocalizations l, LibraryStats s) => [
+        _SectionHeader(l.statsLibrary),
         _TileGrid(tiles: [
           _StatTile(
             icon: Icons.movie_outlined,
-            label: 'Scenes',
+            label: l.statsScenes,
             value: formatNumber(s.sceneCount),
             detail: '${formatBytes(s.scenesSize)} • ${formatLongDuration(s.scenesDuration)}',
           ),
           _StatTile(
             icon: Icons.image_outlined,
-            label: 'Images',
+            label: l.statsImages,
             value: formatNumber(s.imageCount),
             detail: formatBytes(s.imagesSize),
           ),
-          _StatTile(icon: Icons.photo_library_outlined, label: 'Galleries', value: formatNumber(s.galleryCount)),
-          _StatTile(icon: Icons.people_outline, label: 'Performers', value: formatNumber(s.performerCount)),
-          _StatTile(icon: Icons.subscriptions_outlined, label: 'Studios', value: formatNumber(s.studioCount)),
-          _StatTile(icon: Icons.sell_outlined, label: 'Tags', value: formatNumber(s.tagCount)),
+          _StatTile(icon: Icons.photo_library_outlined, label: l.statsGalleries, value: formatNumber(s.galleryCount)),
+          _StatTile(icon: Icons.people_outline, label: l.statsPerformers, value: formatNumber(s.performerCount)),
+          _StatTile(icon: Icons.subscriptions_outlined, label: l.statsStudios, value: formatNumber(s.studioCount)),
+          _StatTile(icon: Icons.sell_outlined, label: l.statsTags, value: formatNumber(s.tagCount)),
         ]),
-        const _SectionHeader('Storage'),
+        _SectionHeader(l.statsStorage),
         _TileGrid(tiles: [
           _StatTile(
             icon: Icons.storage_outlined,
-            label: 'Total size',
+            label: l.statsTotalSize,
             value: formatBytes(s.scenesSize + s.imagesSize),
           ),
           _StatTile(
             icon: Icons.timer_outlined,
-            label: 'Average scene',
+            label: l.statsAverageScene,
             value: s.sceneCount == 0 ? '–' : formatLongDuration(s.scenesDuration / s.sceneCount),
             detail: s.sceneCount == 0 ? null : formatBytes(s.scenesSize / s.sceneCount),
           ),
         ]),
       ];
 
-  List<Widget> _activityTiles(ActivityStats a) => [
-        const _SectionHeader('Watching'),
+  List<Widget> _activityTiles(AppLocalizations l, ActivityStats a) => [
+        _SectionHeader(l.statsWatching),
         _TileGrid(tiles: [
-          _StatTile(icon: Icons.play_circle_outline, label: 'Plays', value: formatNumber(a.playCount)),
-          _StatTile(icon: Icons.schedule, label: 'Watch time', value: formatLongDuration(a.playDuration)),
-          _StatTile(icon: Icons.check_circle_outline, label: 'Scenes watched', value: formatNumber(a.scenesPlayed)),
-          _StatTile(icon: Icons.favorite_border, label: 'O-count', value: formatNumber(a.oCount)),
+          _StatTile(icon: Icons.play_circle_outline, label: l.statsPlays, value: formatNumber(a.playCount)),
+          _StatTile(icon: Icons.schedule, label: l.statsWatchTime, value: formatLongDuration(a.playDuration)),
+          _StatTile(icon: Icons.check_circle_outline, label: l.statsScenesWatched, value: formatNumber(a.scenesPlayed)),
+          _StatTile(icon: Icons.favorite_border, label: l.statsOCount, value: formatNumber(a.oCount)),
         ]),
       ];
 }

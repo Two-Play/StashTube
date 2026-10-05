@@ -8,15 +8,16 @@ import '../features/library/watch_later.dart';
 import '../features/player/player_providers.dart';
 import '../features/shell/navigation.dart';
 import 'stash_image.dart';
+import '../l10n/l10n.dart';
 
 /// "Uploader" line for a scene: studio, else the first performer.
-String _channelName(Scene scene) =>
-    scene.studio?.name ?? (scene.performers.isEmpty ? 'Unknown' : scene.performers.first.name);
+String _channelName(AppLocalizations l, Scene scene) =>
+    scene.studio?.name ?? (scene.performers.isEmpty ? l.channelUnknown : scene.performers.first.name);
 
-String _metaLine(Scene scene) {
+String _metaLine(AppLocalizations l, Scene scene) {
   final parts = <String>[
-    if (scene.playCount > 0) formatCount(scene.playCount, 'play'),
-    if (scene.displayDate != null) formatTimeAgo(scene.displayDate!, DateTime.now()),
+    if (scene.playCount > 0) l.playsCount(scene.playCount),
+    if (scene.displayDate != null) formatTimeAgo(l, scene.displayDate!, DateTime.now()),
   ];
   return parts.join(' • ');
 }
@@ -32,7 +33,7 @@ class SceneCard extends ConsumerWidget {
     final theme = Theme.of(context);
     final studio = scene.studio;
     final performer = scene.performers.isEmpty ? null : scene.performers.first;
-    final meta = [_channelName(scene), _metaLine(scene)].where((s) => s.isNotEmpty).join(' • ');
+    final meta = [_channelName(context.l10n, scene), _metaLine(context.l10n, scene)].where((s) => s.isNotEmpty).join(' • ');
 
     return InkWell(
       onTap: () => ref.read(nowPlayingProvider.notifier).play(scene),
@@ -56,7 +57,7 @@ class SceneCard extends ConsumerWidget {
                       }
                     },
                     child: ChannelAvatar(
-                      name: _channelName(scene),
+                      name: _channelName(context.l10n, scene),
                       imageUrl: studio?.imageUrl ?? performer?.imageUrl,
                     ),
                   ),
@@ -129,8 +130,8 @@ class SceneListTile extends ConsumerWidget {
                 children: [
                   Text(scene.title, maxLines: 2, overflow: TextOverflow.ellipsis, style: theme.textTheme.titleSmall),
                   const SizedBox(height: 4),
-                  Text(_channelName(scene), maxLines: 1, overflow: TextOverflow.ellipsis, style: muted),
-                  Text(_metaLine(scene), maxLines: 1, overflow: TextOverflow.ellipsis, style: muted),
+                  Text(_channelName(context.l10n, scene), maxLines: 1, overflow: TextOverflow.ellipsis, style: muted),
+                  Text(_metaLine(context.l10n, scene), maxLines: 1, overflow: TextOverflow.ellipsis, style: muted),
                 ],
               ),
             ),
@@ -167,7 +168,7 @@ class SceneGridTile extends ConsumerWidget {
             child: Text(scene.title, maxLines: 2, overflow: TextOverflow.ellipsis, style: theme.textTheme.titleSmall),
           ),
           Text(
-            _channelName(scene),
+            _channelName(context.l10n, scene),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurfaceVariant),
@@ -259,32 +260,32 @@ void showSceneMenu(BuildContext context, WidgetRef ref, Scene scene) => showModa
             children: [
               ListTile(
                 leading: const Icon(Icons.play_arrow),
-                title: const Text('Play'),
+                title: Text(context.l10n.sceneMenuPlay),
                 onTap: () => go(() => ref.read(nowPlayingProvider.notifier).play(scene)),
               ),
               Consumer(builder: (context, ref, _) {
                 final saved = ref.watch(watchLaterProvider).contains(scene.id);
                 return ListTile(
                   leading: Icon(saved ? Icons.watch_later : Icons.watch_later_outlined),
-                  title: Text(saved ? 'Remove from Watch later' : 'Save to Watch later'),
+                  title: Text(saved ? context.l10n.watchLaterRemove : context.l10n.watchLaterSave),
                   onTap: () => go(() => ref.read(watchLaterProvider.notifier).toggle(scene.id)),
                 );
               }),
               ListTile(
                 leading: const Icon(Icons.edit_outlined),
-                title: const Text('Edit details'),
+                title: Text(context.l10n.editDetails),
                 onTap: () => go(() => openPage(ref, SceneEditPage(scene: scene))),
               ),
               if (studio != null)
                 ListTile(
                   leading: const Icon(Icons.subscriptions_outlined),
-                  title: Text('Go to ${studio.name}'),
+                  title: Text(context.l10n.goTo(studio.name)),
                   onTap: () => go(() => openStudio(ref, studio.id)),
                 ),
               for (final p in scene.performers)
                 ListTile(
                   leading: const Icon(Icons.person_outline),
-                  title: Text('Go to ${p.name}'),
+                  title: Text(context.l10n.goTo(p.name)),
                   onTap: () => go(() => openPerformer(ref, p.id)),
                 ),
             ],

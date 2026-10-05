@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../l10n/l10n.dart';
 
 /// Shown when a list has no entries: a symbol for what is missing in a soft
 /// accent-tinted circle, a title and an optional hint.
@@ -63,10 +64,10 @@ class ErrorView extends StatelessWidget {
         children: [
           Icon(Icons.cloud_off, size: 56, color: theme.colorScheme.error),
           const SizedBox(height: 16),
-          Text('Something went wrong', style: theme.textTheme.titleMedium),
+          Text(context.l10n.errorTitle, style: theme.textTheme.titleMedium),
           const SizedBox(height: 8),
           Text(
-            error.toString(),
+            errorText(context.l10n, error),
             style: theme.textTheme.bodySmall,
             textAlign: TextAlign.center,
             maxLines: 6,
@@ -74,7 +75,7 @@ class ErrorView extends StatelessWidget {
           ),
           if (onRetry != null) ...[
             const SizedBox(height: 16),
-            FilledButton.tonal(onPressed: onRetry, child: const Text('Retry')),
+            FilledButton.tonal(onPressed: onRetry, child: Text(context.l10n.retry)),
           ],
         ],
       ),

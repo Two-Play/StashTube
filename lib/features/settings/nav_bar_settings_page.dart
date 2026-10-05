@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../shell/nav_bar_config.dart';
 import '../shell/navigation.dart';
+import '../../l10n/l10n.dart';
 
 /// Choose and order the tabs of the bottom navigation bar (13.7). Changes
 /// apply right away, so the bar below shows the result.
@@ -14,22 +15,22 @@ class NavBarSettingsPage extends ConsumerWidget {
     final config = ref.watch(navBarConfigProvider);
     final notifier = ref.read(navBarConfigProvider.notifier);
     final theme = Theme.of(context);
+    final l = context.l10n;
 
-    String? subtitle(AppTab tab) {
-      if (tab == AppTab.settings) return 'Always shown';
-      if (!config.canToggle(tab)) {
-        return config.isVisible(tab) ? 'At least ${NavBarConfig.minVisible} tabs' : 'At most ${NavBarConfig.maxVisible} tabs';
-      }
-      return null;
-    }
+    // A full bar is explained once by the count in the header.
+    String? subtitle(AppTab tab) => switch (tab) {
+          AppTab.settings => l.navBarAlwaysShown,
+          _ when config.isVisible(tab) && !config.canToggle(tab) => l.navBarAtLeast(NavBarConfig.minVisible),
+          _ => null,
+        };
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Navigation bar'),
+        title: Text(l.navBarTitle),
         actions: [
           TextButton(
             onPressed: config == NavBarConfig.standard ? null : notifier.reset,
-            child: const Text('Reset'),
+            child: Text(l.reset),
           ),
         ],
       ),
@@ -37,10 +38,19 @@ class NavBarSettingsPage extends ConsumerWidget {
         buildDefaultDragHandles: false,
         header: Padding(
           padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
-          child: Text(
-            'Choose up to ${NavBarConfig.maxVisible} tabs and drag them into order. '
-            'The first tab opens when the app starts.',
-            style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                l.navBarIntro(NavBarConfig.maxVisible),
+                style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                l.navBarCount(config.visible.length, NavBarConfig.maxVisible),
+                style: theme.textTheme.labelLarge?.copyWith(color: theme.colorScheme.primary),
+              ),
+            ],
           ),
         ),
         onReorderItem: notifier.move,
@@ -59,7 +69,7 @@ class NavBarSettingsPage extends ConsumerWidget {
                 children: [
                   Icon(tab.icon, size: 20),
                   const SizedBox(width: 12),
-                  Flexible(child: Text(tab.label, maxLines: 1, overflow: TextOverflow.ellipsis)),
+                  Flexible(child: Text(tab.title(l), maxLines: 1, overflow: TextOverflow.ellipsis)),
                 ],
               ),
               subtitle: switch (subtitle(tab)) {

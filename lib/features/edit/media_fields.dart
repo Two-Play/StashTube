@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 
 import '../../widgets/stash_image.dart';
+import '../../l10n/l10n.dart';
 
 /// A new image for an entity, as Stash's update inputs accept it: a data URI
 /// with the image bytes, or a URL Stash downloads itself.
@@ -64,7 +65,7 @@ class ImageEditField extends StatelessWidget {
     if (url == null || url.isEmpty) return;
     if (!(Uri.tryParse(url)?.isAbsolute ?? false)) {
       if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('That is not a valid URL')));
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(context.l10n.invalidUrl)));
       }
       return;
     }
@@ -106,7 +107,7 @@ class ImageEditField extends StatelessWidget {
                 children: [
                   OutlinedButton.icon(
                     icon: const Icon(Icons.photo_library_outlined),
-                    label: const Text('Choose photo'),
+                    label: Text(context.l10n.choosePhoto),
                     onPressed: () async {
                       final picked = await picker();
                       if (picked != null) onChanged(picked);
@@ -114,11 +115,11 @@ class ImageEditField extends StatelessWidget {
                   ),
                   OutlinedButton.icon(
                     icon: const Icon(Icons.link),
-                    label: const Text('From URL'),
+                    label: Text(context.l10n.fromUrl),
                     onPressed: () => _fromUrl(context),
                   ),
                   if (choice != null)
-                    TextButton(onPressed: () => onChanged(null), child: const Text('Keep current image')),
+                    TextButton(onPressed: () => onChanged(null), child: Text(context.l10n.keepCurrentImage)),
                 ],
               ),
             ),
@@ -149,7 +150,7 @@ class _UrlDialogState extends State<_UrlDialog> {
 
   @override
   Widget build(BuildContext context) => AlertDialog(
-        title: const Text('Image from URL'),
+        title: Text(context.l10n.imageFromUrl),
         content: TextField(
           controller: _controller,
           autofocus: true,
@@ -157,8 +158,8 @@ class _UrlDialogState extends State<_UrlDialog> {
           decoration: const InputDecoration(hintText: 'https://…'),
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
-          FilledButton(onPressed: () => Navigator.pop(context, _controller.text.trim()), child: const Text('Use')),
+          TextButton(onPressed: () => Navigator.pop(context), child: Text(context.l10n.cancel)),
+          FilledButton(onPressed: () => Navigator.pop(context, _controller.text.trim()), child: Text(context.l10n.use)),
         ],
       );
 }
@@ -188,7 +189,7 @@ class _UrlListFieldState extends State<UrlListField> {
     final url = _input.text.trim();
     if (url.isEmpty) return;
     if (!(Uri.tryParse(url)?.isAbsolute ?? false)) {
-      setState(() => _error = 'Enter a full URL, e.g. https://…');
+      setState(() => _error = context.l10n.enterFullUrl);
       return;
     }
     setState(() => _error = null);
@@ -200,7 +201,7 @@ class _UrlListFieldState extends State<UrlListField> {
   Widget build(BuildContext context) => Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('URLs', style: Theme.of(context).textTheme.labelLarge),
+          Text(context.l10n.urls, style: Theme.of(context).textTheme.labelLarge),
           for (final url in widget.urls)
             ListTile(
               contentPadding: EdgeInsets.zero,
@@ -208,7 +209,7 @@ class _UrlListFieldState extends State<UrlListField> {
               leading: const Icon(Icons.link),
               title: Text(url, maxLines: 1, overflow: TextOverflow.ellipsis),
               trailing: IconButton(
-                tooltip: 'Remove URL',
+                tooltip: context.l10n.removeUrl,
                 icon: const Icon(Icons.close),
                 onPressed: () => widget.onChanged(widget.urls.where((u) => u != url).toList()),
               ),
@@ -218,11 +219,11 @@ class _UrlListFieldState extends State<UrlListField> {
             keyboardType: TextInputType.url,
             onSubmitted: (_) => _add(),
             decoration: InputDecoration(
-              hintText: 'Add URL',
+              hintText: context.l10n.addUrl,
               errorText: _error,
               border: const OutlineInputBorder(),
               isDense: true,
-              suffixIcon: IconButton(tooltip: 'Add URL', icon: const Icon(Icons.add), onPressed: _add),
+              suffixIcon: IconButton(tooltip: context.l10n.addUrl, icon: const Icon(Icons.add), onPressed: _add),
             ),
           ),
         ],

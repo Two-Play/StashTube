@@ -9,6 +9,7 @@ import '../../data/models/tag.dart';
 import '../../data/providers.dart';
 import '../../data/repositories/stash_repository.dart';
 import '../player/scene_edits.dart';
+import '../../l10n/l10n.dart';
 
 /// Creates a tag and refreshes tag lists. Throws [StashApiException] on errors
 /// (e.g. the name already exists).
@@ -19,8 +20,10 @@ Future<Tag> createTag(WidgetRef ref, String name) async {
 }
 
 /// Dialog asking for a new tag's name; returns the created tag.
-Future<Tag?> showCreateTagDialog(BuildContext context, WidgetRef ref, {String initialName = ''}) =>
-    showDialog<Tag>(context: context, builder: (_) => _CreateTagDialog(initialName: initialName));
+Future<Tag?> showCreateTagDialog(BuildContext context, WidgetRef ref, {String initialName = ''}) => showDialog<Tag>(
+  context: context,
+  builder: (_) => _CreateTagDialog(initialName: initialName),
+);
 
 class _CreateTagDialog extends ConsumerStatefulWidget {
   const _CreateTagDialog({required this.initialName});
@@ -55,7 +58,7 @@ class _CreateTagDialogState extends ConsumerState<_CreateTagDialog> {
       if (mounted) {
         setState(() {
           _saving = false;
-          _error = e.toString();
+          _error = errorText(context.l10n, e);
         });
       }
     }
@@ -63,29 +66,28 @@ class _CreateTagDialogState extends ConsumerState<_CreateTagDialog> {
 
   @override
   Widget build(BuildContext context) => AlertDialog(
-        title: const Text('New tag'),
-        content: TextField(
-          controller: _name,
-          autofocus: true,
-          textInputAction: TextInputAction.done,
-          onSubmitted: (_) => _save(),
-          decoration: InputDecoration(labelText: 'Name', errorText: _error, prefixText: '#'),
-        ),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
-          FilledButton(onPressed: _saving ? null : _save, child: const Text('Create')),
-        ],
-      );
+    title: Text(context.l10n.newTag),
+    content: TextField(
+      controller: _name,
+      autofocus: true,
+      textInputAction: TextInputAction.done,
+      onSubmitted: (_) => _save(),
+      decoration: InputDecoration(labelText: context.l10n.name, errorText: _error, prefixText: '#'),
+    ),
+    actions: [
+      TextButton(onPressed: () => Navigator.pop(context), child: Text(context.l10n.cancel)),
+      FilledButton(onPressed: _saving ? null : _save, child: Text(context.l10n.create)),
+    ],
+  );
 }
 
-Future<void> showSceneTagEditor(BuildContext context, Scene scene, List<Tag> current) =>
-    showModalBottomSheet<void>(
-      context: context,
-      useRootNavigator: true,
-      isScrollControlled: true,
-      showDragHandle: true,
-      builder: (_) => SceneTagEditor(scene: scene, initial: current),
-    );
+Future<void> showSceneTagEditor(BuildContext context, Scene scene, List<Tag> current) => showModalBottomSheet<void>(
+  context: context,
+  useRootNavigator: true,
+  isScrollControlled: true,
+  showDragHandle: true,
+  builder: (_) => SceneTagEditor(scene: scene, initial: current),
+);
 
 /// Edits a scene's tags from the player: remove, add from search, or create
 /// a new tag on the fly.
@@ -127,7 +129,9 @@ class _SceneTagEditorState extends ConsumerState<SceneTagEditor> {
       _add(await createTag(ref, _term));
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Couldn\'t create tag: $e')));
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(context.l10n.tagCreateFailed(errorText(context.l10n, e)))));
       }
     } finally {
       if (mounted) setState(() => _busy = false);
@@ -137,13 +141,14 @@ class _SceneTagEditorState extends ConsumerState<SceneTagEditor> {
   Future<void> _save() async {
     setState(() => _busy = true);
     final messenger = ScaffoldMessenger.of(context);
+    final l = context.l10n;
     final navigator = Navigator.of(context);
     try {
       await ref.read(sceneEditsProvider.notifier).setTags(widget.scene, _tags);
       navigator.pop();
     } catch (e) {
       if (mounted) setState(() => _busy = false);
-      messenger.showSnackBar(SnackBar(content: Text('Couldn\'t save tags: $e')));
+      messenger.showSnackBar(SnackBar(content: Text(l.tagsSaveFailed(errorText(l, e)))));
     }
   }
 
@@ -164,10 +169,13 @@ class _SceneTagEditorState extends ConsumerState<SceneTagEditor> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Text('Tags', style: theme.textTheme.titleMedium),
+              Text(context.l10n.tagsTitle, style: theme.textTheme.titleMedium),
               const SizedBox(height: 8),
               if (_tags.isEmpty)
-                Text('No tags yet', style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.onSurfaceVariant))
+                Text(
+                  context.l10n.tagsEmpty,
+                  style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+                )
               else
                 Wrap(
                   spacing: 6,
@@ -183,10 +191,10 @@ class _SceneTagEditorState extends ConsumerState<SceneTagEditor> {
               const SizedBox(height: 12),
               TextField(
                 controller: _search,
-                decoration: const InputDecoration(
-                  hintText: 'Add or create a tag',
-                  prefixIcon: Icon(Icons.sell_outlined),
-                  border: OutlineInputBorder(),
+                decoration: InputDecoration(
+                  hintText: context.l10n.tagAddOrCreate,
+                  prefixIcon: const Icon(Icons.sell_outlined),
+                  border: const OutlineInputBorder(),
                   isDense: true,
                 ),
                 onChanged: (v) {
@@ -204,18 +212,14 @@ class _SceneTagEditorState extends ConsumerState<SceneTagEditor> {
                   if (_term.isNotEmpty && !exists)
                     ActionChip(
                       avatar: const Icon(Icons.add, size: 18),
-                      label: Text('Create #$_term'),
+                      label: Text(context.l10n.tagCreate(_term)),
                       onPressed: _busy ? null : _create,
                     ),
-                  for (final tag in suggestions)
-                    ActionChip(label: Text('#${tag.name}'), onPressed: () => _add(tag)),
+                  for (final tag in suggestions) ActionChip(label: Text('#${tag.name}'), onPressed: () => _add(tag)),
                 ],
               ),
               const SizedBox(height: 16),
-              FilledButton(
-                onPressed: _busy ? null : _save,
-                child: const Text('Save tags'),
-              ),
+              FilledButton(onPressed: _busy ? null : _save, child: Text(context.l10n.tagsSave)),
             ],
           ),
         ),

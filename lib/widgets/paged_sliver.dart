@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/misc.dart' show Refreshable;
 
 import '../core/pagination/paged_notifier.dart';
 import 'status_views.dart';
+import '../l10n/l10n.dart';
 
 /// Calls [onLoadMore] when the user scrolls near the end of the wrapped scroll view.
 class LoadMoreListener extends StatelessWidget {
@@ -42,7 +43,7 @@ class PagedSliver<T> extends StatelessWidget {
     required this.itemBuilder,
     required this.onRetry,
     required this.onLoadMore,
-    this.emptyMessage = 'Nothing here yet',
+    this.emptyMessage,
     this.emptyIcon = Icons.inbox_outlined,
     this.emptyHint,
     this.gridDelegate,
@@ -53,7 +54,7 @@ class PagedSliver<T> extends StatelessWidget {
   final Widget Function(BuildContext context, T item) itemBuilder;
   final VoidCallback onRetry;
   final VoidCallback onLoadMore;
-  final String emptyMessage;
+  final String? emptyMessage;
   final IconData emptyIcon;
   final String? emptyHint;
 
@@ -71,7 +72,7 @@ class PagedSliver<T> extends StatelessWidget {
       return const SliverToBoxAdapter(child: LoadingView());
     }
     if (state.items.isEmpty) {
-      return SliverToBoxAdapter(child: EmptyView(message: emptyMessage, icon: emptyIcon, hint: emptyHint));
+      return SliverToBoxAdapter(child: EmptyView(message: emptyMessage ?? context.l10n.emptyDefault, icon: emptyIcon, hint: emptyHint));
     }
 
     final delegate = SliverChildBuilderDelegate(
@@ -112,7 +113,7 @@ class _Footer extends StatelessWidget {
           child: TextButton.icon(
             onPressed: onLoadMore,
             icon: const Icon(Icons.refresh),
-            label: const Text('Couldn\'t load more – tap to retry'),
+            label: Text(context.l10n.loadMoreFailed),
           ),
         ),
       );

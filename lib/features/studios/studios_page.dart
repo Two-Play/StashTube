@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../core/utils/format.dart';
 import '../../data/models/list_queries.dart';
 import '../../data/models/studio.dart';
 import '../../data/providers.dart';
 import '../../widgets/paged_sliver.dart';
 import '../../widgets/stash_image.dart';
 import '../shell/navigation.dart';
+import '../../l10n/l10n.dart';
 
 /// All studios as a channel list.
 class StudiosPage extends ConsumerWidget {
@@ -21,7 +21,7 @@ class StudiosPage extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Studios'),
+        title: Text(context.l10n.studiosTitle),
         actions: [
           IconButton(icon: const Icon(Icons.search), onPressed: () => openSearch(ref)),
         ],
@@ -35,17 +35,17 @@ class StudiosPage extends ConsumerWidget {
             slivers: [
               PagedSliver<Studio>(
                 value: ref.watch(provider),
-                emptyMessage: 'No studios yet',
+                emptyMessage: context.l10n.studiosEmpty,
                 emptyIcon: Icons.subscriptions_outlined,
-                emptyHint: 'Studios appear here once scenes in Stash have one.',
+                emptyHint: context.l10n.studiosEmptyHint,
                 onRetry: () => ref.invalidate(provider),
                 onLoadMore: () => ref.read(provider.notifier).loadMore(),
                 itemBuilder: (_, studio) => ListTile(
                   leading: ChannelAvatar(name: studio.name, imageUrl: studio.imageUrl, radius: 24),
                   title: Text(studio.name, maxLines: 1, overflow: TextOverflow.ellipsis),
                   subtitle: Text([
-                    formatCount(studio.sceneCount, 'scene'),
-                    if (studio.parent != null) 'Part of ${studio.parent!.name}',
+                    context.l10n.scenesCount(studio.sceneCount),
+                    if (studio.parent != null) context.l10n.partOf(studio.parent!.name),
                   ].join(' • ')),
                   onTap: () => openStudio(ref, studio.id),
                 ),

@@ -3,9 +3,9 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:miniplayer/miniplayer.dart';
 
+import '../../l10n/l10n.dart';
 import '../home/home_page.dart';
 import '../library/library_page.dart';
-import '../library/watch_later_tab.dart';
 import '../performers/performers_page.dart';
 import '../player/closing_slide.dart';
 import '../player/player_providers.dart';
@@ -23,14 +23,15 @@ class AppShell extends ConsumerWidget {
   const AppShell({super.key});
 
   static Widget _rootPage(AppTab tab) => switch (tab) {
+        AppTab(:final section?) => LibrarySectionPage(section: section),
         AppTab.home => const HomePage(),
         AppTab.performers => const PerformersPage(),
         AppTab.studios => const StudiosPage(),
         AppTab.library => const LibraryPage(),
         AppTab.tags => const TagsPage(),
         AppTab.search => const SearchPage(autofocus: false),
-        AppTab.watchLater => const WatchLaterPage(),
         AppTab.settings => const SettingsPage(),
+        _ => throw StateError('No page for $tab'),
       };
 
   @override
@@ -122,7 +123,7 @@ class AppShell extends ConsumerWidget {
                 NavigationDestination(
                   icon: Icon(tab.icon),
                   selectedIcon: Icon(tab.selectedIcon),
-                  label: tab.label,
+                  label: tab.label(context.l10n),
                 ),
             ],
           ),

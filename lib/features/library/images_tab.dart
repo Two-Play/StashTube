@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../core/utils/format.dart';
 import '../../data/models/image_item.dart';
 import '../../data/models/list_queries.dart';
 import '../../data/providers.dart';
@@ -9,6 +8,7 @@ import '../../widgets/chip_bar.dart';
 import '../../widgets/paged_sliver.dart';
 import '../../widgets/stash_image.dart';
 import 'image_viewer_page.dart';
+import '../../l10n/l10n.dart';
 
 /// All images, newest first.
 class ImagesTab extends StatefulWidget {
@@ -74,7 +74,7 @@ class _ImageGridViewState extends ConsumerState<ImageGridView> {
                 child: ChipBar<ImageSort>(
                   values: widget.sorts,
                   selected: _query.sort,
-                  labelOf: (s) => s.label,
+                  labelOf: (s) => s.label(context.l10n),
                   onSelected: (s) => setState(() => _query = ImageQuery(sort: s, galleryId: _query.galleryId)),
                 ),
               ),
@@ -83,14 +83,14 @@ class _ImageGridViewState extends ConsumerState<ImageGridView> {
                 child: Padding(
                   padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
                   child: Text(
-                    '${formatNumber(state.totalCount)} images',
+                    context.l10n.imagesCount(state.totalCount),
                     style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurfaceVariant),
                   ),
                 ),
               ),
             PagedSliver<ImageItem>(
               value: value,
-              emptyMessage: 'No images yet',
+              emptyMessage: context.l10n.imagesEmpty,
               emptyIcon: Icons.image_outlined,
               padding: const EdgeInsets.symmetric(horizontal: 2),
               gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(

@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Launcher names of the disguised app icons (11.3); see values-de. -->
+    <string name="app_icon_notes">Notes</string>
+    <string name="app_icon_calculator">Calculator</string>
+</resources>

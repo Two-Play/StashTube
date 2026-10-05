@@ -9,6 +9,7 @@ import '../../data/models/performer.dart';
 import '../../data/models/studio.dart';
 import '../../data/providers.dart';
 import '../../widgets/stash_image.dart';
+import '../../l10n/l10n.dart';
 
 /// Page frame for edit forms: "Save" in the app bar, busy state, errors.
 /// [onSave] returns false when there was nothing to save.
@@ -30,13 +31,14 @@ class _EditScaffoldState extends State<EditScaffold> {
     setState(() => _saving = true);
     final messenger = ScaffoldMessenger.of(context);
     final navigator = Navigator.of(context);
+    final l = context.l10n;
     try {
       final saved = await widget.onSave();
       navigator.pop();
-      if (saved) messenger.showSnackBar(const SnackBar(content: Text('Saved')));
+      if (saved) messenger.showSnackBar(SnackBar(content: Text(l.saved)));
     } catch (e) {
       if (mounted) setState(() => _saving = false);
-      messenger.showSnackBar(SnackBar(content: Text('Couldn\'t save: $e')));
+      messenger.showSnackBar(SnackBar(content: Text(l.saveFailed(errorText(l, e)))));
     }
   }
 
@@ -51,7 +53,7 @@ class _EditScaffoldState extends State<EditScaffold> {
                 onPressed: _saving ? null : _save,
                 child: _saving
                     ? const SizedBox.square(dimension: 18, child: CircularProgressIndicator(strokeWidth: 2))
-                    : const Text('Save'),
+                    : Text(context.l10n.save),
               ),
             ),
           ],
@@ -94,7 +96,7 @@ class DateField extends StatelessWidget {
             border: const OutlineInputBorder(),
             suffixIcon: value == null
                 ? const Icon(Icons.calendar_today_outlined)
-                : IconButton(tooltip: 'Clear', icon: const Icon(Icons.clear), onPressed: () => onChanged(null)),
+                : IconButton(tooltip: context.l10n.clearField, icon: const Icon(Icons.clear), onPressed: () => onChanged(null)),
           ),
           child: Text(value == null ? '—' : formatDate(value!)),
         ),
@@ -119,7 +121,7 @@ class PickerField extends StatelessWidget {
             labelText: label,
             border: const OutlineInputBorder(),
             suffixIcon: text != null && onClear != null
-                ? IconButton(tooltip: 'Clear', icon: const Icon(Icons.clear), onPressed: onClear)
+                ? IconButton(tooltip: context.l10n.clearField, icon: const Icon(Icons.clear), onPressed: onClear)
                 : const Icon(Icons.chevron_right),
           ),
           child: Text(text ?? '—', maxLines: 1, overflow: TextOverflow.ellipsis),
@@ -134,7 +136,7 @@ Future<Studio?> showStudioPicker(BuildContext context) => showModalBottomSheet<S
       isScrollControlled: true,
       showDragHandle: true,
       builder: (_) => _SearchSheet<Studio>(
-        hint: 'Search studios',
+        hint: context.l10n.searchStudios,
         results: (ref, term) =>
             ref.watch(studioListProvider(StudioQuery(search: term.isEmpty ? null : term))).current?.items ?? const [],
         tile: (context, studio, _) => ListTile(
@@ -169,7 +171,7 @@ class _PerformerPickerState extends State<_PerformerPicker> {
 
   @override
   Widget build(BuildContext context) => _SearchSheet<Performer>(
-        hint: 'Search performers',
+        hint: context.l10n.searchPerformers,
         header: Wrap(
           spacing: 6,
           runSpacing: 6,
@@ -195,7 +197,7 @@ class _PerformerPickerState extends State<_PerformerPicker> {
                 : [..._selected, performer]),
           );
         },
-        footer: FilledButton(onPressed: () => Navigator.pop(context, _selected), child: const Text('Done')),
+        footer: FilledButton(onPressed: () => Navigator.pop(context, _selected), child: Text(context.l10n.done)),
       );
 }
 

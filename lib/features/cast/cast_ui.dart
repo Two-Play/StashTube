@@ -5,6 +5,7 @@ import '../../core/utils/format.dart';
 import '../player/player_providers.dart';
 import 'cast_providers.dart';
 import 'cast_service.dart';
+import '../../l10n/l10n.dart';
 
 /// Cast icon like YouTube's: opens the device picker, or the "casting to"
 /// sheet while connected. Hidden where Google Cast isn't available.
@@ -18,7 +19,7 @@ class CastButton extends ConsumerWidget {
     if (!ref.watch(castServiceProvider).isSupported) return const SizedBox.shrink();
     final connection = ref.watch(castConnectionProvider).value;
     return IconButton(
-      tooltip: connection == null ? 'Cast' : 'Casting to ${connection.deviceName}',
+      tooltip: connection == null ? context.l10n.cast : context.l10n.castingTo(connection.deviceName),
       icon: Icon(
         connection == null ? Icons.cast : Icons.cast_connected,
         color: connection == null ? color : Theme.of(context).colorScheme.primary,
@@ -29,11 +30,11 @@ class CastButton extends ConsumerWidget {
 }
 
 Future<void> showCastSheet(BuildContext context) => showModalBottomSheet<void>(
-      context: context,
-      useRootNavigator: true,
-      showDragHandle: true,
-      builder: (_) => const _CastSheet(),
-    );
+  context: context,
+  useRootNavigator: true,
+  showDragHandle: true,
+  builder: (_) => const _CastSheet(),
+);
 
 class _CastSheet extends ConsumerWidget {
   const _CastSheet();
@@ -51,7 +52,7 @@ class _CastSheet extends ConsumerWidget {
           children: [
             ListTile(
               leading: Icon(Icons.cast_connected, color: theme.colorScheme.primary),
-              title: Text('Casting to ${connection.deviceName}'),
+              title: Text(context.l10n.castingTo(connection.deviceName)),
             ),
             Padding(
               padding: const EdgeInsets.all(16),
@@ -62,7 +63,7 @@ class _CastSheet extends ConsumerWidget {
                     Navigator.pop(context);
                     service.disconnect();
                   },
-                  child: const Text('Stop casting'),
+                  child: Text(context.l10n.stopCasting),
                 ),
               ),
             ),
@@ -82,13 +83,13 @@ class _CastSheet extends ConsumerWidget {
             children: [
               Padding(
                 padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
-                child: Text('Cast to', style: theme.textTheme.titleMedium),
+                child: Text(context.l10n.castTo, style: theme.textTheme.titleMedium),
               ),
               if (devices.isEmpty)
-                const ListTile(
-                  leading: SizedBox.square(dimension: 24, child: CircularProgressIndicator(strokeWidth: 2)),
-                  title: Text('Searching for devices…'),
-                  subtitle: Text('Chromecast and the phone must be on the same Wi-Fi.'),
+                ListTile(
+                  leading: const SizedBox.square(dimension: 24, child: CircularProgressIndicator(strokeWidth: 2)),
+                  title: Text(context.l10n.castSearching),
+                  subtitle: Text(context.l10n.castSearchingHint),
                 ),
               for (final device in devices)
                 ListTile(
@@ -97,11 +98,14 @@ class _CastSheet extends ConsumerWidget {
                   subtitle: device.model == null ? null : Text(device.model!),
                   onTap: () async {
                     final messenger = ScaffoldMessenger.of(context);
+                    final l = context.l10n;
                     Navigator.pop(context);
                     try {
                       await service.connect(device);
                     } catch (e) {
-                      messenger.showSnackBar(SnackBar(content: Text('Couldn\'t connect to ${device.name}: $e')));
+                      messenger.showSnackBar(
+                        SnackBar(content: Text(l.castConnectFailed(device.name, errorText(l, e)))),
+                      );
                     }
                   },
                 ),
@@ -142,7 +146,7 @@ class CastingControls extends ConsumerWidget {
               children: [
                 if (showMinimize)
                   IconButton(
-                    tooltip: 'Minimize',
+                    tooltip: context.l10n.minimize,
                     icon: const Icon(Icons.keyboard_arrow_down, size: 30),
                     onPressed: () => ref.read(nowPlayingProvider.notifier).collapse(),
                   ),
@@ -154,29 +158,31 @@ class CastingControls extends ConsumerWidget {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Text(
-                    'Casting to ${connection.deviceName}',
-                    style: const TextStyle(color: Colors.white70),
-                  ),
+                  Text(context.l10n.castingTo(connection.deviceName), style: const TextStyle(color: Colors.white70)),
                   const SizedBox(height: 8),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      IconButton(tooltip: 'Back 10 s', icon: const Icon(Icons.replay_10), onPressed: () => seekBy(-10)),
+                      IconButton(
+                        tooltip: context.l10n.back10,
+                        icon: const Icon(Icons.replay_10),
+                        onPressed: () => seekBy(-10),
+                      ),
                       const SizedBox(width: 16),
                       playback.loading
-                          ? const SizedBox.square(
-                              dimension: 48,
-                              child: CircularProgressIndicator(color: Colors.white),
-                            )
+                          ? const SizedBox.square(dimension: 48, child: CircularProgressIndicator(color: Colors.white))
                           : IconButton(
                               iconSize: 48,
-                              tooltip: playback.playing ? 'Pause' : 'Play',
+                              tooltip: playback.playing ? context.l10n.pause : context.l10n.play,
                               icon: Icon(playback.playing ? Icons.pause : Icons.play_arrow),
                               onPressed: playback.playing ? service.pause : service.play,
                             ),
                       const SizedBox(width: 16),
-                      IconButton(tooltip: 'Forward 10 s', icon: const Icon(Icons.forward_10), onPressed: () => seekBy(10)),
+                      IconButton(
+                        tooltip: context.l10n.forward10,
+                        icon: const Icon(Icons.forward_10),
+                        onPressed: () => seekBy(10),
+                      ),
                     ],
                   ),
                   Text(

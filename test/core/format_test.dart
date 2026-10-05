@@ -1,6 +1,8 @@
+import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:stash_app_mobile/core/config/server_config.dart';
 import 'package:stash_app_mobile/core/utils/format.dart';
+import 'package:stash_app_mobile/l10n/l10n.dart';
 
 void main() {
   test('formatDuration', () {
@@ -12,9 +14,14 @@ void main() {
 
   test('formatTimeAgo', () {
     final now = DateTime(2024, 6, 1);
-    expect(formatTimeAgo(now.subtract(const Duration(days: 1)), now), '1 day ago');
-    expect(formatTimeAgo(now.subtract(const Duration(days: 14)), now), '2 weeks ago');
-    expect(formatTimeAgo(now.subtract(const Duration(days: 800)), now), '2 years ago');
+    final l = lookupAppLocalizations(const Locale('en'));
+    expect(formatTimeAgo(l, now.subtract(const Duration(days: 1)), now), '1 day ago');
+    expect(formatTimeAgo(l, now.subtract(const Duration(days: 14)), now), '2 weeks ago');
+    expect(formatTimeAgo(l, now.subtract(const Duration(days: 800)), now), '2 years ago');
+
+    final de = lookupAppLocalizations(const Locale('de'));
+    expect(formatTimeAgo(de, now.subtract(const Duration(days: 1)), now), 'vor 1 Tag');
+    expect(formatTimeAgo(de, now.subtract(const Duration(days: 800)), now), 'vor 2 Jahren');
   });
 
   test('resolutionLabel', () {
