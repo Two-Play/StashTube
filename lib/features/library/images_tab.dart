@@ -78,7 +78,7 @@ class _ImageGridViewState extends ConsumerState<ImageGridView> {
                   onSelected: (s) => setState(() => _query = ImageQuery(sort: s, galleryId: _query.galleryId)),
                 ),
               ),
-            if (value.value case final state?)
+            if (value.current case final state?)
               SliverToBoxAdapter(
                 child: Padding(
                   padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
@@ -101,7 +101,7 @@ class _ImageGridViewState extends ConsumerState<ImageGridView> {
               onLoadMore: () => ref.read(provider.notifier).loadMore(),
               itemBuilder: (context, image) => GestureDetector(
                 onTap: () {
-                  final items = ref.read(provider).value?.items ?? const [];
+                  final items = ref.read(provider).current?.items ?? const [];
                   Navigator.of(context, rootNavigator: true).push(MaterialPageRoute<void>(
                     builder: (_) => ImageViewerPage(query: _query, initialIndex: items.indexOf(image)),
                   ));

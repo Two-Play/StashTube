@@ -136,7 +136,7 @@ Future<Studio?> showStudioPicker(BuildContext context) => showModalBottomSheet<S
       builder: (_) => _SearchSheet<Studio>(
         hint: 'Search studios',
         results: (ref, term) =>
-            ref.watch(studioListProvider(StudioQuery(search: term.isEmpty ? null : term))).value?.items ?? const [],
+            ref.watch(studioListProvider(StudioQuery(search: term.isEmpty ? null : term))).current?.items ?? const [],
         tile: (context, studio, _) => ListTile(
           leading: ChannelAvatar(name: studio.name, imageUrl: studio.imageUrl),
           title: Text(studio.name, maxLines: 1, overflow: TextOverflow.ellipsis),
@@ -182,7 +182,7 @@ class _PerformerPickerState extends State<_PerformerPicker> {
           ],
         ),
         results: (ref, term) =>
-            ref.watch(performerListProvider(PerformerQuery(search: term.isEmpty ? null : term))).value?.items ??
+            ref.watch(performerListProvider(PerformerQuery(search: term.isEmpty ? null : term))).current?.items ??
             const [],
         tile: (context, performer, _) {
           final isSelected = _selected.any((p) => p.id == performer.id);

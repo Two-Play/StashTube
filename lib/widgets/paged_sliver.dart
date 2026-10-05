@@ -59,7 +59,7 @@ class PagedSliver<T> extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final state = value.value;
+    final state = value.current;
     if (state == null) {
       if (value.hasError) {
         return SliverToBoxAdapter(child: ErrorView(error: value.error!, onRetry: onRetry));

@@ -23,7 +23,7 @@ class SceneShelf extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    var scenes = ref.watch(sceneListProvider(query)).value?.items ?? const <Scene>[];
+    var scenes = ref.watch(sceneListProvider(query)).current?.items ?? const <Scene>[];
     if (hideFinished) {
       final resumeTimes = ref.watch(resumeTimesProvider);
       scenes = scenes.where((s) => (resumeTimes[s.id] ?? s.resumeTime) > 0).toList();

@@ -151,7 +151,7 @@ class _SceneTagEditorState extends ConsumerState<SceneTagEditor> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final query = _term.isEmpty ? const TagQuery() : TagQuery(search: _term, sort: TagSort.name);
-    final results = ref.watch(tagListProvider(query)).value?.items ?? const <Tag>[];
+    final results = ref.watch(tagListProvider(query)).current?.items ?? const <Tag>[];
     final suggestions = results.where((t) => !_tags.any((s) => s.id == t.id)).take(12).toList();
     final exists = results.any((t) => t.name.toLowerCase() == _term.toLowerCase());
 

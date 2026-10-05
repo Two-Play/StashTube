@@ -49,7 +49,7 @@ class _SceneFilterSheetState extends ConsumerState<SceneFilterSheet> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final query = _tagSearch.isEmpty ? const TagQuery() : TagQuery(search: _tagSearch, sort: TagSort.name);
-    final suggestions = (ref.watch(tagListProvider(query)).value?.items ?? const <Tag>[])
+    final suggestions = (ref.watch(tagListProvider(query)).current?.items ?? const <Tag>[])
         .where((t) => !_filter.tags.any((s) => s.id == t.id))
         .take(10)
         .toList();

@@ -156,7 +156,7 @@ class _AddMarkerSheetState extends ConsumerState<AddMarkerSheet> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final query = _tagSearch.isEmpty ? const TagQuery() : TagQuery(search: _tagSearch, sort: TagSort.name);
-    final tags = ref.watch(tagListProvider(query)).value?.items ?? const <Tag>[];
+    final tags = ref.watch(tagListProvider(query)).current?.items ?? const <Tag>[];
 
     return Padding(
       padding: EdgeInsets.only(bottom: MediaQuery.viewInsetsOf(context).bottom),

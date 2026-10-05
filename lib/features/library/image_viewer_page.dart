@@ -44,7 +44,7 @@ class _ImageViewerPageState extends ConsumerState<ImageViewerPage> {
       _index = index;
       _zoomed = false;
     });
-    final state = ref.read(imageListProvider(widget.query)).value;
+    final state = ref.read(imageListProvider(widget.query)).current;
     if (state != null && index >= state.items.length - 5) {
       ref.read(imageListProvider(widget.query).notifier).loadMore();
     }
@@ -52,7 +52,7 @@ class _ImageViewerPageState extends ConsumerState<ImageViewerPage> {
 
   @override
   Widget build(BuildContext context) {
-    final items = ref.watch(imageListProvider(widget.query)).value?.items ?? const <ImageItem>[];
+    final items = ref.watch(imageListProvider(widget.query)).current?.items ?? const <ImageItem>[];
     final current = _index < items.length ? items[_index] : null;
 
     return Scaffold(

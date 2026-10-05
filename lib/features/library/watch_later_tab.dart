@@ -15,6 +15,9 @@ class WatchLaterTab extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final scenes = ref.watch(watchLaterScenesProvider);
     return switch (scenes) {
+      // A server switch reloads the list: don't show the old server's scenes.
+      _ when scenes.isReloading => const LoadingView(),
+      AsyncError(:final error) => ErrorView(error: error, onRetry: () => ref.invalidate(watchLaterScenesProvider)),
       AsyncValue(:final value?) when value.isEmpty => const Center(
           child: EmptyView(message: 'Nothing saved yet.\nUse "Later" on a scene to add it.'),
         ),
@@ -57,7 +60,6 @@ class WatchLaterTab extends ConsumerWidget {
             );
           },
         ),
-      AsyncError(:final error) => ErrorView(error: error, onRetry: () => ref.invalidate(watchLaterScenesProvider)),
       _ => const LoadingView(),
     };
   }

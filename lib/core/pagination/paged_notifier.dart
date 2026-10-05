@@ -43,6 +43,17 @@ class PagedState<T> {
       );
 }
 
+extension PagedValue<T> on AsyncValue<PagedState<T>> {
+  /// The list to show, or null to show loading/error instead.
+  ///
+  /// Unlike [AsyncValue.value] this drops the previous list when the
+  /// provider rebuilds because a dependency changed ([isReloading]) – for
+  /// paged lists that is a server switch, whose old items must not stay on
+  /// screen – and when loading failed. A pull-to-refresh ([isRefreshing])
+  /// keeps showing the list while it reloads.
+  PagedState<T>? get current => isReloading || hasError ? null : value;
+}
+
 /// Base for infinite lists: loads page 1 in [build], further pages via [loadMore].
 ///
 /// Used with `AsyncNotifierProvider.autoDispose.family`; the family argument

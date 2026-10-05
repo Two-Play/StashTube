@@ -162,12 +162,12 @@ class _SceneFeedViewState extends ConsumerState<SceneFeedView> {
               SliverToBoxAdapter(
                 child: _SavedFilterChips(activeId: _savedFilterId, onSelected: _toggleSavedFilter),
               ),
-            if (widget.showCount && value.value != null)
+            if (widget.showCount && value.current != null)
               SliverToBoxAdapter(
                 child: Padding(
                   padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
                   child: Text(
-                    '${formatNumber(value.requireValue.totalCount)} scenes',
+                    '${formatNumber(value.current!.totalCount)} scenes',
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
                           color: Theme.of(context).colorScheme.onSurfaceVariant,
                         ),

@@ -1,6 +1,10 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../core/pagination/paged_notifier.dart';
+
+// List widgets read paged lists through `current` (drops a previous
+// server's items while reloading).
+export '../core/pagination/paged_notifier.dart' show PagedState, PagedValue;
 import 'models/gallery.dart';
 import 'models/group.dart';
 import 'models/image_item.dart';

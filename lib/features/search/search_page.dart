@@ -113,7 +113,7 @@ class _PerformerResults extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final performers = ref.watch(performerListProvider(PerformerQuery(search: term))).value?.items ?? const [];
+    final performers = ref.watch(performerListProvider(PerformerQuery(search: term))).current?.items ?? const [];
     if (performers.isEmpty) return const SliverToBoxAdapter();
 
     return SliverToBoxAdapter(
@@ -152,7 +152,7 @@ class _Discover extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
-    final tags = ref.watch(tagListProvider(const TagQuery())).value?.items ?? const [];
+    final tags = ref.watch(tagListProvider(const TagQuery())).current?.items ?? const [];
     final history = ref.watch(searchHistoryProvider);
 
     return CustomScrollView(
