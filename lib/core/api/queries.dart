@@ -1,0 +1,96 @@
+/// GraphQL documents for the Stash API (https://github.com/stashapp/stash/tree/develop/graphql).
+abstract final class StashQueries {
+  static const _sceneFields = r'''
+fragment SceneFields on Scene {
+  id
+  title
+  details
+  date
+  created_at
+  rating100
+  play_count
+  o_counter
+  files { basename duration width height }
+  paths { screenshot preview stream }
+  studio { id name image_path }
+  performers { id name image_path country favorite }
+  tags { id name }
+}
+''';
+
+  static const _performerFields = r'''
+fragment PerformerFields on Performer {
+  id
+  name
+  disambiguation
+  image_path
+  country
+  birthdate
+  gender
+  favorite
+  rating100
+  scene_count
+}
+''';
+
+  static const _studioFields = r'''
+fragment StudioFields on Studio {
+  id
+  name
+  image_path
+  url
+  scene_count
+}
+''';
+
+  static const systemStatus = r'''
+query SystemStatus {
+  systemStatus { status }
+}
+''';
+
+  static const version = r'''
+query Version {
+  version { version }
+}
+''';
+
+  static const findScenes = r'''
+query FindScenes($filter: FindFilterType, $scene_filter: SceneFilterType) {
+  findScenes(filter: $filter, scene_filter: $scene_filter) {
+    count
+    scenes { ...SceneFields }
+  }
+}
+''' '$_sceneFields';
+
+  static const findPerformers = r'''
+query FindPerformers($filter: FindFilterType, $performer_filter: PerformerFilterType) {
+  findPerformers(filter: $filter, performer_filter: $performer_filter) {
+    count
+    performers { ...PerformerFields }
+  }
+}
+''' '$_performerFields';
+
+  static const findPerformer = r'''
+query FindPerformer($id: ID!) {
+  findPerformer(id: $id) { ...PerformerFields details }
+}
+''' '$_performerFields';
+
+  static const findStudios = r'''
+query FindStudios($filter: FindFilterType) {
+  findStudios(filter: $filter) {
+    count
+    studios { ...StudioFields }
+  }
+}
+''' '$_studioFields';
+
+  static const findStudio = r'''
+query FindStudio($id: ID!) {
+  findStudio(id: $id) { ...StudioFields details }
+}
+''' '$_studioFields';
+}

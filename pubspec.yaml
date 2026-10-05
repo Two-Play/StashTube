@@ -1,5 +1,5 @@
 name: stash_app_mobile
-description: "A new Flutter project."
+description: "YouTube-style mobile client for a self-hosted Stash server."
 # The following line prevents the package from being accidentally published to
 # pub.dev using `flutter pub publish`. This is preferred for private packages.
 publish_to: 'none' # Remove this line if you wish to publish to pub.dev
@@ -30,25 +30,24 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-  theme_manager: ^2.0.4
 
 
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.
   cupertino_icons: ^1.0.6
   shared_preferences: ^2.2.2
-  graphql_flutter: ^5.1.2
+  graphql_flutter: ^5.3.0
   local_auth: ^2.2.0
   flutter_screen_lock: ^9.0.2
   flutter_svg: ^2.0.9
   cached_network_image: ^3.3.1
-  flutter_riverpod: ^2.5.1
+  flutter_riverpod: ^2.6.1
   riverpod_annotation: ^2.3.5
   miniplayer: ^1.0.1
   country_flags: ^2.2.0
-  media_kit: ^1.1.10+1
-  media_kit_video: ^1.2.4
-  media_kit_libs_video: ^1.0.4
+  media_kit: ^1.2.6
+  media_kit_video: ^1.3.1
+  media_kit_libs_video: ^1.0.7
 
 dev_dependencies:
   flutter_test:
