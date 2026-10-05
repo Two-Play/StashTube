@@ -277,6 +277,36 @@ class StashRepository implements PlaybackActivityApi {
     }
   }
 
+  /// [rating100] null removes the rating.
+  Future<void> setSceneRating(String sceneId, int? rating100) =>
+      _mutate(StashQueries.sceneSetRating, {'id': sceneId, 'rating100': rating100});
+
+  /// Increments the O-counter; returns the new count.
+  Future<int> addSceneO(String sceneId) async {
+    final data = await _mutate(StashQueries.sceneAddO, {'id': sceneId});
+    return readInt(readObject(data, 'sceneAddO') ?? const {}, 'count');
+  }
+
+  /// Removes the latest O; returns the new count.
+  Future<int> removeSceneO(String sceneId) async {
+    final data = await _mutate(StashQueries.sceneDeleteO, {'id': sceneId});
+    return readInt(readObject(data, 'sceneDeleteO') ?? const {}, 'count');
+  }
+
+  Future<SceneMarker> createMarker({
+    required String sceneId,
+    required double seconds,
+    required String primaryTagId,
+    String title = '',
+  }) async {
+    final data = await _mutate(StashQueries.sceneMarkerCreate, {
+      'input': {'scene_id': sceneId, 'seconds': seconds, 'primary_tag_id': primaryTagId, 'title': title},
+    });
+    final json = readObject(data, 'sceneMarkerCreate');
+    if (json == null) throw const StashApiException('Marker was not created.');
+    return SceneMarker.fromJson(json);
+  }
+
   Future<void> setPerformerFavorite(String performerId, bool favorite) =>
       _mutate(StashQueries.performerSetFavorite, {'id': performerId, 'favorite': favorite});
 

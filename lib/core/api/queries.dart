@@ -69,6 +69,30 @@ mutation SceneAddPlay($id: ID!) {
 }
 ''';
 
+  static const sceneSetRating = r'''
+mutation SceneSetRating($id: ID!, $rating100: Int) {
+  sceneUpdate(input: { id: $id, rating100: $rating100 }) { id rating100 }
+}
+''';
+
+  static const sceneAddO = r'''
+mutation SceneAddO($id: ID!) {
+  sceneAddO(id: $id) { count }
+}
+''';
+
+  static const sceneDeleteO = r'''
+mutation SceneDeleteO($id: ID!) {
+  sceneDeleteO(id: $id) { count }
+}
+''';
+
+  static const sceneMarkerCreate = r'''
+mutation SceneMarkerCreate($input: SceneMarkerCreateInput!) {
+  sceneMarkerCreate(input: $input) { id title seconds primary_tag { name } }
+}
+''';
+
   static const performerSetFavorite = r'''
 mutation PerformerSetFavorite($id: ID!, $favorite: Boolean!) {
   performerUpdate(input: { id: $id, favorite: $favorite }) { id favorite }

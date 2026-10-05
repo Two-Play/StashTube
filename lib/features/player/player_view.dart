@@ -14,6 +14,7 @@ import 'drag_to_minimize.dart';
 import 'player_controls.dart';
 import 'player_providers.dart';
 import 'player_transition.dart';
+import 'scene_actions.dart';
 
 /// Content of the miniplayer panel: one layout that [PlayerTransition]
 /// morphs continuously from the collapsed bar into the full player page.
@@ -274,7 +275,6 @@ class _SceneInfoState extends ConsumerState<_SceneInfo> {
     final theme = Theme.of(context);
     final muted = theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurfaceVariant);
     final studio = scene.studio;
-    final rating = scene.rating100;
     final details = ref.watch(sceneDetailsProvider(scene.id)).value;
 
     final meta = [
@@ -292,17 +292,9 @@ class _SceneInfoState extends ConsumerState<_SceneInfo> {
         ),
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16),
-          child: Row(
-            children: [
-              Expanded(child: Text(meta, style: muted)),
-              if (rating != null) ...[
-                Icon(Icons.star, size: 16, color: Colors.amber.shade600),
-                const SizedBox(width: 2),
-                Text((rating / 20).toStringAsFixed(1), style: muted),
-              ],
-            ],
-          ),
+          child: Text(meta, style: muted),
         ),
+        SceneActions(scene: scene),
         if (studio != null)
           ListTile(
             leading: ChannelAvatar(name: studio.name, imageUrl: studio.imageUrl),

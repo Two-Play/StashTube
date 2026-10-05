@@ -116,9 +116,9 @@ Eine wartbare Basis, damit Features unabhängig voneinander wachsen können.
 
 | # | User Story | Akzeptanzkriterien | Prio | Status |
 |---|---|---|---|---|
-| 10.1 | Als Nutzer möchte ich eine Szene im Player bewerten (1–5 Sterne). | `sceneUpdate(rating100)`. | Next | ⬜ (Anzeige ✅) |
-| 10.2 | Als Nutzer möchte ich den O-Counter erhöhen. | `sceneAddO`. | Later | ⬜ |
-| 10.3 | Als Nutzer möchte ich einen Scene Marker an der aktuellen Position setzen. | `sceneMarkerCreate`. | Later | ⬜ |
+| 10.1 | Als Nutzer möchte ich eine Szene im Player bewerten (1–5 Sterne). | Sterne unter dem Titel; Tippen setzt `rating100` (Sterne × 20) per `sceneUpdate`, erneutes Tippen auf den aktuellen Wert entfernt die Bewertung; sofort sichtbar, bei Fehler zurückgesetzt. | Next | ✅ |
+| 10.2 | Als Nutzer möchte ich den O-Counter erhöhen. | Zähler-Button im Player (`sceneAddO`), Snackbar mit „Undo“ (`sceneDeleteO`). | Later | ✅ |
+| 10.3 | Als Nutzer möchte ich einen Scene Marker an der aktuellen Position setzen. | „Marker“-Button öffnet ein Sheet mit Position, optionalem Titel und Pflicht-Tag (Suche); `sceneMarkerCreate`, danach erscheint das Kapitel sofort. | Later | ✅ |
 
 ## Epic 11 – Sicherheit & Privatsphäre
 
