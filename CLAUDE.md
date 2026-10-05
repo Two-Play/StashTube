@@ -48,4 +48,10 @@ lib/
 
 **Watch progress and play count.** `playbackTrackerProvider` feeds the player streams into `PlaybackTracker`. That class has no widget or media_kit dependencies and is unit-tested. It calls `sceneSaveActivity` and `sceneAddPlay` through the `PlaybackActivityApi` interface that `StashRepository` implements. Saved positions also go into `resumeTimesProvider`, so thumbnails show current progress without refetching. Read a scene's position with `effectiveResumeTime`.
 
+**Library.** The `library` tab (`features/library/`) has three sub-tabs: all scenes (`SceneFeedView` with `SceneFeedLayout.grid`), images (`imageListProvider`, `ImageViewerPage` pushed on the root navigator so it covers the shell and the player), and stats (`libraryStatsProvider` plus the optional `activityStatsProvider`, which returns null on Stash versions without those fields).
+
+**Errors.** `StashRepository._run` maps failures to `StashApiException`. Stash answers invalid queries with HTTP 422 plus GraphQL errors, which gql_http_link raises as `HttpLinkServerException`; these count as query errors (`isNetworkError == false`), and 401/403 become "check the API key". Fields that only newer Stash versions have should go into a separate, optional query (see `activityStats`).
+
+**Theme.** `accentColorProvider` (persisted) feeds `AppTheme.light/dark(accent)`. Use `colorScheme.primary` and the other scheme colors instead of hard-coded colors, so the user's accent applies everywhere.
+
 **Images and auth.** Always load server images through `StashImage` or `ChannelAvatar`, which add the `ApiKey` header. Stash serves SVG placeholders for missing images, which fall back to an icon or the name's initial.

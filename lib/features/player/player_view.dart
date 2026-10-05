@@ -173,7 +173,7 @@ class _SceneDetails extends ConsumerWidget {
       key: ValueKey(scene.id),
       initialQuery: upNext,
       sorts: const [],
-      compact: true,
+      layout: SceneFeedLayout.list,
       emptyMessage: 'Nothing else to watch here',
       headerSlivers: [
         SliverToBoxAdapter(child: _SceneInfo(scene: scene)),

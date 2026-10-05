@@ -137,6 +137,42 @@ class SceneListTile extends ConsumerWidget {
   }
 }
 
+/// Dense grid cell: thumbnail with title and channel below.
+class SceneGridTile extends ConsumerWidget {
+  const SceneGridTile({super.key, required this.scene});
+
+  final Scene scene;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final theme = Theme.of(context);
+    return InkWell(
+      borderRadius: BorderRadius.circular(8),
+      onTap: () => ref.read(nowPlayingProvider.notifier).play(scene),
+      onLongPress: () => showSceneMenu(context, ref, scene),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          ClipRRect(
+            borderRadius: BorderRadius.circular(8),
+            child: SceneThumbnail(scene: scene, compact: true),
+          ),
+          const SizedBox(height: 6),
+          Flexible(
+            child: Text(scene.title, maxLines: 2, overflow: TextOverflow.ellipsis, style: theme.textTheme.titleSmall),
+          ),
+          Text(
+            _channelName(scene),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 class SceneThumbnail extends ConsumerWidget {
   const SceneThumbnail({super.key, required this.scene, this.compact = false});
 
@@ -200,7 +236,46 @@ class _Badge extends StatelessWidget {
       );
 }
 
-/// "⋮" menu with navigation to the scene's channels.
+/// Bottom sheet with actions for a scene: play and go to its channels.
+void showSceneMenu(BuildContext context, WidgetRef ref, Scene scene) => showModalBottomSheet<void>(
+      context: context,
+      useRootNavigator: true,
+      showDragHandle: true,
+      builder: (sheetContext) {
+        void go(VoidCallback action) {
+          Navigator.pop(sheetContext);
+          action();
+        }
+
+        final studio = scene.studio;
+        return SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ListTile(
+                leading: const Icon(Icons.play_arrow),
+                title: const Text('Play'),
+                onTap: () => go(() => ref.read(nowPlayingProvider.notifier).play(scene)),
+              ),
+              if (studio != null)
+                ListTile(
+                  leading: const Icon(Icons.subscriptions_outlined),
+                  title: Text('Go to ${studio.name}'),
+                  onTap: () => go(() => openStudio(ref, studio.id)),
+                ),
+              for (final p in scene.performers)
+                ListTile(
+                  leading: const Icon(Icons.person_outline),
+                  title: Text('Go to ${p.name}'),
+                  onTap: () => go(() => openPerformer(ref, p.id)),
+                ),
+            ],
+          ),
+        );
+      },
+    );
+
+/// "⋮" button opening [showSceneMenu].
 class SceneMenuButton extends ConsumerWidget {
   const SceneMenuButton({super.key, required this.scene});
 
@@ -210,42 +285,6 @@ class SceneMenuButton extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) => IconButton(
         icon: const Icon(Icons.more_vert, size: 20),
         visualDensity: VisualDensity.compact,
-        onPressed: () => showModalBottomSheet<void>(
-          context: context,
-          useRootNavigator: true,
-          showDragHandle: true,
-          builder: (sheetContext) {
-            void go(VoidCallback action) {
-              Navigator.pop(sheetContext);
-              action();
-            }
-
-            final studio = scene.studio;
-            return SafeArea(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  ListTile(
-                    leading: const Icon(Icons.play_arrow),
-                    title: const Text('Play'),
-                    onTap: () => go(() => ref.read(nowPlayingProvider.notifier).play(scene)),
-                  ),
-                  if (studio != null)
-                    ListTile(
-                      leading: const Icon(Icons.subscriptions_outlined),
-                      title: Text('Go to ${studio.name}'),
-                      onTap: () => go(() => openStudio(ref, studio.id)),
-                    ),
-                  for (final p in scene.performers)
-                    ListTile(
-                      leading: const Icon(Icons.person_outline),
-                      title: Text('Go to ${p.name}'),
-                      onTap: () => go(() => openPerformer(ref, p.id)),
-                    ),
-                ],
-              ),
-            );
-          },
-        ),
+        onPressed: () => showSceneMenu(context, ref, scene),
       );
 }

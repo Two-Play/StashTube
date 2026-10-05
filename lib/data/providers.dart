@@ -1,11 +1,13 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../core/pagination/paged_notifier.dart';
+import 'models/image_item.dart';
 import 'models/list_queries.dart';
 import 'models/page_result.dart';
 import 'models/performer.dart';
 import 'models/scene.dart';
 import 'models/scene_details.dart';
+import 'models/stats.dart';
 import 'models/studio.dart';
 import 'repositories/stash_repository.dart';
 
@@ -57,4 +59,23 @@ final serverVersionProvider = FutureProvider.autoDispose<String?>(
 /// Streams and markers of a scene; loaded when the scene is played.
 final sceneDetailsProvider = FutureProvider.autoDispose.family<SceneDetails, String>(
   (ref, id) => ref.watch(stashRepositoryProvider).findSceneDetails(id),
+);
+
+class ImageListNotifier extends PagedNotifier<ImageItem, ImageQuery> {
+  @override
+  Future<PageResult<ImageItem>> fetchPage(ImageQuery arg, int page, int perPage) =>
+      ref.read(stashRepositoryProvider).findImages(arg, page: page, perPage: perPage);
+}
+
+final imageListProvider =
+    AsyncNotifierProvider.autoDispose.family<ImageListNotifier, PagedState<ImageItem>, ImageQuery>(
+  ImageListNotifier.new,
+);
+
+final libraryStatsProvider = FutureProvider.autoDispose<LibraryStats>(
+  (ref) => ref.watch(stashRepositoryProvider).libraryStats(),
+);
+
+final activityStatsProvider = FutureProvider.autoDispose<ActivityStats?>(
+  (ref) => ref.watch(stashRepositoryProvider).activityStats(),
 );

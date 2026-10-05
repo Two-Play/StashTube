@@ -15,6 +15,7 @@ class SettingsPage extends ConsumerWidget {
     final version = ref.watch(serverVersionProvider);
     final themeMode = ref.watch(themeModeProvider);
     final preferredStream = ref.watch(preferredStreamProvider);
+    final accent = ref.watch(accentColorProvider);
     final theme = Theme.of(context);
 
     return Scaffold(
@@ -47,6 +48,26 @@ class SettingsPage extends ConsumerWidget {
               ],
               selected: {themeMode},
               onSelectionChanged: (s) => ref.read(themeModeProvider.notifier).set(s.first),
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
+            child: Text('Accent color', style: theme.textTheme.bodyLarge),
+          ),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+            child: Wrap(
+              spacing: 4,
+              runSpacing: 4,
+              children: [
+                for (final MapEntry(key: name, value: color) in accentColors.entries)
+                  _AccentSwatch(
+                    name: name,
+                    color: color,
+                    selected: color.toARGB32() == accent.toARGB32(),
+                    onTap: () => ref.read(accentColorProvider.notifier).set(color),
+                  ),
+              ],
             ),
           ),
           const _SectionTitle('Playback'),
@@ -83,6 +104,43 @@ class SettingsPage extends ConsumerWidget {
             },
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _AccentSwatch extends StatelessWidget {
+  const _AccentSwatch({required this.name, required this.color, required this.selected, required this.onTap});
+
+  final String name;
+  final Color color;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final onColor = ThemeData.estimateBrightnessForColor(color) == Brightness.dark ? Colors.white : Colors.black;
+    return Tooltip(
+      message: name,
+      child: Semantics(
+        label: '$name accent color',
+        selected: selected,
+        button: true,
+        child: InkResponse(
+          onTap: onTap,
+          radius: 26,
+          child: Container(
+            width: 44,
+            height: 44,
+            margin: const EdgeInsets.all(2),
+            decoration: BoxDecoration(
+              color: color,
+              shape: BoxShape.circle,
+              border: selected ? Border.all(color: Theme.of(context).colorScheme.onSurface, width: 3) : null,
+            ),
+            child: selected ? Icon(Icons.check, color: onColor) : null,
+          ),
+        ),
       ),
     );
   }

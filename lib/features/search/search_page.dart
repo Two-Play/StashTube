@@ -68,7 +68,7 @@ class _SearchPageState extends ConsumerState<SearchPage> {
           ? const _SearchHint()
           : SceneFeedView(
               key: ValueKey(_term),
-              compact: true,
+              layout: SceneFeedLayout.list,
               initialQuery: SceneQuery(sort: SceneSort.recentlyAdded, search: _term),
               sorts: const [],
               emptyMessage: 'No scenes match "$_term"',

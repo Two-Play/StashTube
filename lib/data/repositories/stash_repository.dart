@@ -4,12 +4,14 @@ import 'package:graphql_flutter/graphql_flutter.dart';
 import '../../core/api/queries.dart';
 import '../../core/config/server_config.dart';
 import '../../features/player/playback_tracker.dart';
+import '../models/image_item.dart';
 import '../models/json.dart';
 import '../models/list_queries.dart';
 import '../models/page_result.dart';
 import '../models/performer.dart';
 import '../models/scene.dart';
 import '../models/scene_details.dart';
+import '../models/stats.dart';
 import '../models/studio.dart';
 
 class StashApiException implements Exception {
@@ -148,6 +150,37 @@ class StashRepository implements PlaybackActivityApi {
   @override
   Future<void> addPlay(String sceneId) => _mutate(StashQueries.sceneAddPlay, {'id': sceneId});
 
+  Future<PageResult<ImageItem>> findImages(
+    ImageQuery query, {
+    int page = 1,
+    int perPage = defaultPageSize,
+  }) async {
+    final data = await _query(StashQueries.findImages, {
+      'filter': _findFilter(page: page, perPage: perPage, sort: query.sortField, direction: query.direction),
+    });
+    final result = readObject(data, 'findImages') ?? const {};
+    return PageResult(
+      items: readList(result, 'images').map(ImageItem.fromJson).toList(),
+      totalCount: readInt(result, 'count'),
+    );
+  }
+
+  Future<LibraryStats> libraryStats() async {
+    final data = await _query(StashQueries.stats);
+    return LibraryStats.fromJson(readObject(data, 'stats') ?? const {});
+  }
+
+  /// Null when the server doesn't support activity stats (older Stash).
+  Future<ActivityStats?> activityStats() async {
+    try {
+      final data = await _query(StashQueries.activityStats);
+      return ActivityStats.fromJson(readObject(data, 'stats') ?? const {});
+    } on StashApiException catch (e) {
+      if (e.isNetworkError) rethrow;
+      return null;
+    }
+  }
+
   Future<SceneDetails> findSceneDetails(String sceneId) async {
     final data = await _query(StashQueries.findSceneDetails, {'id': sceneId});
     final json = readObject(data, 'findScene');
@@ -190,6 +223,15 @@ class StashRepository implements PlaybackActivityApi {
     final exception = result.exception;
     if (exception != null) {
       final link = exception.linkException;
+      if (link is HttpLinkServerException) {
+        // Stash answers invalid queries (e.g. fields unknown to older
+        // versions) with HTTP 422 plus GraphQL errors: not a network problem.
+        final errors = link.parsedResponse?.errors ?? const [];
+        if (errors.isNotEmpty) throw StashApiException(errors.map((e) => e.message).join('\n'));
+        if (link.response.statusCode == 401 || link.response.statusCode == 403) {
+          throw const StashApiException('Not authorized – check the API key.');
+        }
+      }
       if (link != null) {
         final cause = link.originalException ?? link;
         throw StashApiException('Could not reach the server: $cause', isNetworkError: true);

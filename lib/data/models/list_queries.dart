@@ -28,6 +28,19 @@ enum PerformerSort {
   final String field;
 }
 
+enum ImageSort {
+  recentlyAdded('Recently added', 'created_at'),
+  newest('Newest', 'date'),
+  random('Shuffle', 'random'),
+  topRated('Top rated', 'rating'),
+  title('A–Z', 'title');
+
+  const ImageSort(this.label, this.field);
+
+  final String label;
+  final String field;
+}
+
 int newRandomSeed() => Random().nextInt(1 << 30);
 
 /// Arguments for a paginated scene list. Used as a provider family key, so it
@@ -151,4 +164,21 @@ class StudioQuery {
 
   @override
   int get hashCode => search.hashCode;
+}
+
+class ImageQuery {
+  ImageQuery({this.sort = ImageSort.recentlyAdded, int? seed})
+      : seed = seed ?? (sort == ImageSort.random ? newRandomSeed() : 0);
+
+  final ImageSort sort;
+  final int seed;
+
+  String get sortField => sort == ImageSort.random ? 'random_$seed' : sort.field;
+  String get direction => sort == ImageSort.title ? 'ASC' : 'DESC';
+
+  @override
+  bool operator ==(Object other) => other is ImageQuery && other.sort == sort && other.seed == seed;
+
+  @override
+  int get hashCode => Object.hash(sort, seed);
 }

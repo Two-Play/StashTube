@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:miniplayer/miniplayer.dart';
 
 import '../home/home_page.dart';
+import '../library/library_page.dart';
 import '../performers/performers_page.dart';
 import '../player/player_providers.dart';
 import '../player/player_view.dart';
@@ -20,6 +21,7 @@ class AppShell extends ConsumerWidget {
         AppTab.home => const HomePage(),
         AppTab.performers => const PerformersPage(),
         AppTab.studios => const StudiosPage(),
+        AppTab.library => const LibraryPage(),
         AppTab.settings => const SettingsPage(),
       };
 

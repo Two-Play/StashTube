@@ -10,6 +10,7 @@ enum AppTab {
   home('Home', Icons.home_outlined, Icons.home),
   performers('Performers', Icons.people_outline, Icons.people),
   studios('Studios', Icons.subscriptions_outlined, Icons.subscriptions),
+  library('Library', Icons.video_library_outlined, Icons.video_library),
   settings('Settings', Icons.settings_outlined, Icons.settings);
 
   const AppTab(this.label, this.icon, this.selectedIcon);

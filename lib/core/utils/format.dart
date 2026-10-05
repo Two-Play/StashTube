@@ -39,3 +39,38 @@ String? resolutionLabel(int? height) {
 }
 
 String formatCount(int n, String unit) => '$n $unit${n == 1 ? '' : 's'}';
+
+/// `1.2 TB`, `340 MB`, ... (binary units, as Stash shows them).
+String formatBytes(double bytes) {
+  const units = ['B', 'KB', 'MB', 'GB', 'TB', 'PB'];
+  var value = bytes < 0 ? 0.0 : bytes;
+  var unit = 0;
+  while (value >= 1024 && unit < units.length - 1) {
+    value /= 1024;
+    unit++;
+  }
+  final digits = unit == 0 || value >= 100 ? 0 : 1;
+  return '${value.toStringAsFixed(digits)} ${units[unit]}';
+}
+
+/// `3d 4h`, `5h 12m`, `42m` for long totals like library duration.
+String formatLongDuration(double seconds) {
+  final total = seconds.isFinite && seconds > 0 ? seconds.round() : 0;
+  final d = total ~/ 86400;
+  final h = (total % 86400) ~/ 3600;
+  final m = (total % 3600) ~/ 60;
+  if (d > 0) return '${d}d ${h}h';
+  if (h > 0) return '${h}h ${m}m';
+  return '${m}m';
+}
+
+/// `12,345` with thousands separators.
+String formatNumber(int n) {
+  final s = n.abs().toString();
+  final buffer = StringBuffer(n < 0 ? '-' : '');
+  for (var i = 0; i < s.length; i++) {
+    if (i > 0 && (s.length - i) % 3 == 0) buffer.write(',');
+    buffer.write(s[i]);
+  }
+  return buffer.toString();
+}

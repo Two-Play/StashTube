@@ -84,6 +84,53 @@ query FindSceneDetails($id: ID!) {
 }
 ''';
 
+  static const findImages = r'''
+query FindImages($filter: FindFilterType) {
+  findImages(filter: $filter) {
+    count
+    images {
+      id
+      title
+      date
+      rating100
+      paths { thumbnail image }
+      studio { id name image_path }
+      performers { id name image_path }
+    }
+  }
+}
+''';
+
+  /// Library totals; supported by all Stash versions this app targets.
+  static const stats = r'''
+query Stats {
+  stats {
+    scene_count
+    scenes_size
+    scenes_duration
+    image_count
+    images_size
+    gallery_count
+    performer_count
+    studio_count
+    tag_count
+  }
+}
+''';
+
+  /// Watch activity totals; only on newer Stash versions, queried separately
+  /// so older servers still get the library totals.
+  static const activityStats = r'''
+query ActivityStats {
+  stats {
+    total_play_count
+    total_play_duration
+    scenes_played
+    total_o_count
+  }
+}
+''';
+
   static const findScenes = r'''
 query FindScenes($filter: FindFilterType, $scene_filter: SceneFilterType) {
   findScenes(filter: $filter, scene_filter: $scene_filter) {

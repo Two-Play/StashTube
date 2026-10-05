@@ -106,6 +106,7 @@ Eine wartbare Basis, damit Features unabhängig voneinander wachsen können.
 |---|---|---|---|---|
 | 9.1 | Als Nutzer möchte ich meinen Wiedergabeverlauf sehen. | Sortierung `last_played_at`. | Next | ⬜ |
 | 9.2 | Als Nutzer möchte ich „Weiterschauen“ mit Fortschrittsbalken auf dem Thumbnail. | Szenen mit `resume_time > 0`. | Next | ✅ |
+| 9.5 | Als Nutzer möchte ich alle Szenen meiner Bibliothek als kompaktes Raster durchsehen. | Tab „Library“ → „Scenes“: Raster mit Gesamtzahl, Sortier-Chips, Endlos-Scroll, langer Druck öffnet das Szenen-Menü. | Next | ✅ |
 | 9.3 | Als Nutzer möchte ich Groups/Movies wie Playlists durchsehen und abspielen. | Gruppenseite. Autoplay der nächsten Szene. | Later | ⬜ |
 | 9.4 | Als Nutzer möchte ich eine Warteschlange („Später ansehen“). | Lokale Queue, die der Player abarbeitet. | Later | ⬜ |
 
@@ -138,6 +139,7 @@ Eine wartbare Basis, damit Features unabhängig voneinander wachsen können.
 |---|---|---|---|---|
 | 13.1 | Als Nutzer möchte ich Hell, Dunkel oder System wählen. | Wird gespeichert. YouTube-artiges Farbschema (Material 3, roter Akzent). | MVP | ✅ |
 | 13.2 | Als Nutzer möchte ich Server-Infos (URL, Stash-Version) sehen. | Abschnitt in den Einstellungen. | MVP | ✅ |
+| 13.6 | Als Nutzer möchte ich die Primärfarbe der App wählen. | 9 Farben in den Einstellungen (Standard: Rot), werden gespeichert. Textfarbe auf Buttons passt sich hellen Farben an. | Next | ✅ |
 | 13.3 | Als Nutzer möchte ich die App auf Deutsch und Englisch nutzen. | `flutter_localizations` und ARB-Dateien. | Next | ⬜ |
 | 13.4 | Als Nutzer möchte ich ein App-Icon und einen Splashscreen. | `flutter_launcher_icons`, `flutter_native_splash`. | Next | ⬜ |
 | 13.5 | Als Nutzer möchte ich Tablet- und Querformat-Layouts. | Mehrspaltiges Raster ab 600 dp. | Later | ⬜ |
@@ -150,3 +152,20 @@ Eine wartbare Basis, damit Features unabhängig voneinander wachsen können.
 | 14.2 | Als Entwickler möchte ich Abhängigkeiten aktualisieren (Riverpod 3, graphql 5.2, media_kit 1.2). | Upgrade in eigenem PR, danach Tests grün. | Next | 🟡 (graphql 5.2, media_kit 1.2 ✅; Riverpod 3 offen) |
 | 14.4 | Als Entwickler möchte ich mit aktuellem JDK für Android bauen. | Gradle 9.3.1, AGP 9.1.0, Kotlin 2.4.0, Kotlin-DSL nach aktuellem Flutter-Template. | MVP | ✅ |
 | 14.3 | Als Entwickler möchte ich signierte Release-Builds (APK/AAB, TestFlight). | Signing-Konfiguration, Fastlane o. Ä. | Later | ⬜ |
+
+## Epic 15 – Bilder & Galerien
+
+| # | User Story | Akzeptanzkriterien | Prio | Status |
+|---|---|---|---|---|
+| 15.1 | Als Nutzer möchte ich alle Bilder als Raster durchsehen. | Tab „Library“ → „Images“: Thumbnail-Raster mit Gesamtzahl, Sortierung, Endlos-Scroll. | Next | ✅ |
+| 15.2 | Als Nutzer möchte ich Bilder im Vollbild ansehen. | Wischen zwischen Bildern, Pinch-Zoom, Tippen blendet Infos (Titel, Studio, Performer, Datum, Position) ein/aus, lädt beim Blättern nach. | Next | ✅ |
+| 15.3 | Als Nutzer möchte ich Galerien durchsehen. | Galerie-Liste und Galerie-Ansicht mit dem Bild-Viewer. | Later | ⬜ |
+| 15.4 | Als Nutzer möchte ich Bilder nach Performer/Studio/Tag filtern. | Filter wie bei Szenen; Bilder auf den Kanalseiten. | Later | ⬜ |
+
+## Epic 16 – Statistik
+
+| # | User Story | Akzeptanzkriterien | Prio | Status |
+|---|---|---|---|---|
+| 16.1 | Als Nutzer möchte ich Statistiken zu meiner Bibliothek sehen. | Tab „Library“ → „Stats“: Szenen (Anzahl, Größe, Gesamtdauer), Bilder, Galerien, Performer, Studios, Tags, Speicher, Durchschnitt pro Szene. | Next | ✅ |
+| 16.2 | Als Nutzer möchte ich meine Seh-Statistik sehen. | Aufrufe, Sehzeit, gesehene Szenen, O-Count; wird bei älteren Stash-Versionen ohne diese Felder ausgeblendet. | Next | ✅ |
+| 16.3 | Als Nutzer möchte ich Verläufe sehen (z. B. Sehzeit pro Woche). | Diagramm aus dem Wiedergabeverlauf. | Later | ⬜ |

@@ -12,12 +12,13 @@ class StashApp extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final config = ref.watch(serverConfigProvider);
+    final accent = ref.watch(accentColorProvider);
 
     return MaterialApp(
       title: 'Stash',
       debugShowCheckedModeBanner: false,
-      theme: AppTheme.light(),
-      darkTheme: AppTheme.dark(),
+      theme: AppTheme.light(accent),
+      darkTheme: AppTheme.dark(accent),
       themeMode: ref.watch(themeModeProvider),
       // Keyed by server so all per-server state is rebuilt after switching.
       home: config == null ? const LoginPage() : AppShell(key: ValueKey(config.baseUrl)),

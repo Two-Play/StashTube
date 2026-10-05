@@ -3,10 +3,22 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../data/models/list_queries.dart';
 import '../data/models/scene.dart';
+import '../core/utils/format.dart';
 import '../data/providers.dart';
 import 'chip_bar.dart';
 import 'paged_sliver.dart';
 import 'scene_card.dart';
+
+enum SceneFeedLayout {
+  /// Full-width YouTube cards ([SceneCard]).
+  cards,
+
+  /// Compact rows ([SceneListTile]).
+  list,
+
+  /// Dense thumbnail grid ([SceneGridTile]).
+  grid,
+}
 
 /// A scrollable, refreshable, infinitely loading scene feed with sort chips.
 ///
@@ -17,7 +29,8 @@ class SceneFeedView extends ConsumerStatefulWidget {
     required this.initialQuery,
     this.headerSlivers = const [],
     this.sorts = SceneSort.values,
-    this.compact = false,
+    this.layout = SceneFeedLayout.cards,
+    this.showCount = false,
     this.emptyMessage = 'No scenes found',
     this.onRefresh,
   });
@@ -26,8 +39,10 @@ class SceneFeedView extends ConsumerStatefulWidget {
   final List<Widget> headerSlivers;
   final List<SceneSort> sorts;
 
-  /// Use [SceneListTile] rows instead of full-width cards.
-  final bool compact;
+  final SceneFeedLayout layout;
+
+  /// Show the total number of matching scenes above the list.
+  final bool showCount;
   final String emptyMessage;
 
   /// Called on pull-to-refresh in addition to reloading the feed, e.g. to
@@ -74,13 +89,37 @@ class _SceneFeedViewState extends ConsumerState<SceneFeedView> {
                   onSelected: (s) => setState(() => _query = _query.copyWith(sort: s)),
                 ),
               ),
+            if (widget.showCount && value.valueOrNull != null)
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
+                  child: Text(
+                    '${formatNumber(value.requireValue.totalCount)} scenes',
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: Theme.of(context).colorScheme.onSurfaceVariant,
+                        ),
+                  ),
+                ),
+              ),
             PagedSliver<Scene>(
               value: value,
               emptyMessage: widget.emptyMessage,
               onRetry: () => ref.invalidate(provider),
               onLoadMore: () => ref.read(provider.notifier).loadMore(),
-              itemBuilder: (_, scene) =>
-                  widget.compact ? SceneListTile(scene: scene) : SceneCard(scene: scene),
+              padding: widget.layout == SceneFeedLayout.grid ? const EdgeInsets.symmetric(horizontal: 12) : EdgeInsets.zero,
+              gridDelegate: widget.layout == SceneFeedLayout.grid
+                  ? const SliverGridDelegateWithMaxCrossAxisExtent(
+                      maxCrossAxisExtent: 240,
+                      childAspectRatio: 0.95,
+                      mainAxisSpacing: 12,
+                      crossAxisSpacing: 12,
+                    )
+                  : null,
+              itemBuilder: (_, scene) => switch (widget.layout) {
+                SceneFeedLayout.cards => SceneCard(scene: scene),
+                SceneFeedLayout.list => SceneListTile(scene: scene),
+                SceneFeedLayout.grid => SceneGridTile(scene: scene),
+              },
             ),
           ],
         ),
