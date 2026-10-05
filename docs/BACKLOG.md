@@ -125,8 +125,8 @@ Eine wartbare Basis, damit Features unabhängig voneinander wachsen können.
 
 | # | User Story | Akzeptanzkriterien | Prio | Status |
 |---|---|---|---|---|
-| 11.1 | Als Nutzer möchte ich die App mit PIN oder Biometrie sperren. | `local_auth` und `flutter_screen_lock` (bereits Abhängigkeiten). Sperre beim Start und nach Rückkehr aus dem Hintergrund. | Next | ⬜ |
-| 11.2 | Als Nutzer möchte ich, dass im App-Switcher kein Inhalt sichtbar ist. | Android `FLAG_SECURE`, iOS-Blur-Overlay. | Next | ⬜ |
+| 11.1 | Als Nutzer möchte ich die App mit PIN oder Biometrie sperren. | Einstellungen → „Privacy & security“: App-Sperre mit 4-stelliger PIN (nur gesalzener SHA-256-Hash gespeichert), optional Face ID/Fingerabdruck, Sperre beim Start und nach Rückkehr aus dem Hintergrund (sofort / 1 / 5 / 15 min), PIN ändern, Abschalten nur mit PIN. | Next | ✅ |
+| 11.2 | Als Nutzer möchte ich, dass im App-Switcher kein Inhalt sichtbar ist. | Schalter „Hide in app switcher“: Abdeckung, sobald die App inaktiv ist (iOS-Snapshot); Android zusätzlich `FLAG_SECURE` (blockiert auch Screenshots). | Next | ✅ |
 | 11.3 | Als Nutzer möchte ich die App-Icons bzw. den Namen tarnen können. | Alternative Icons. | Later | ⬜ |
 
 ## Epic 12 – Offline & Downloads

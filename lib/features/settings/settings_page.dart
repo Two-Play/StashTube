@@ -5,6 +5,8 @@ import '../../core/config/server_config.dart';
 import '../../core/config/theme.dart';
 import '../../data/providers.dart';
 import '../player/player_providers.dart';
+import '../security/app_lock.dart';
+import '../security/app_lock_gate.dart';
 
 class SettingsPage extends ConsumerWidget {
   const SettingsPage({super.key});
@@ -82,6 +84,8 @@ class SettingsPage extends ConsumerWidget {
                     child: const Text('Reset'),
                   ),
           ),
+          const _SectionTitle('Privacy & security'),
+          const _SecuritySettings(),
           const SizedBox(height: 16),
           ListTile(
             leading: Icon(Icons.logout, color: theme.colorScheme.error),
@@ -108,6 +112,87 @@ class SettingsPage extends ConsumerWidget {
     );
   }
 }
+
+/// App lock (11.1) and app switcher privacy (11.2).
+class _SecuritySettings extends ConsumerWidget {
+  const _SecuritySettings();
+
+  static final _delays = {
+    Duration.zero: 'Immediately',
+    const Duration(minutes: 1): 'After 1 minute',
+    const Duration(minutes: 5): 'After 5 minutes',
+    const Duration(minutes: 15): 'After 15 minutes',
+  };
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final settings = ref.watch(appLockSettingsProvider);
+    final notifier = ref.read(appLockSettingsProvider.notifier);
+    final biometricsAvailable = ref.watch(_biometricsAvailableProvider).value ?? false;
+
+    return Column(
+      children: [
+        SwitchListTile(
+          secondary: const Icon(Icons.lock_outline),
+          title: const Text('App lock'),
+          subtitle: const Text('Ask for a PIN when opening the app'),
+          value: settings.enabled,
+          onChanged: (on) async {
+            if (on) {
+              final pin = await showCreatePin(context);
+              if (pin != null) await notifier.enable(pin);
+            } else if (await confirmPin(context, ref)) {
+              await notifier.disable();
+            }
+          },
+        ),
+        if (settings.enabled) ...[
+          if (biometricsAvailable)
+            SwitchListTile(
+              secondary: const Icon(Icons.fingerprint),
+              title: const Text('Unlock with Face ID / fingerprint'),
+              value: settings.biometrics,
+              onChanged: notifier.setBiometrics,
+            ),
+          ListTile(
+            leading: const Icon(Icons.timer_outlined),
+            title: const Text('Lock'),
+            trailing: DropdownButton<Duration>(
+              value: _delays.containsKey(settings.lockAfter) ? settings.lockAfter : Duration.zero,
+              underline: const SizedBox.shrink(),
+              items: [
+                for (final MapEntry(:key, :value) in _delays.entries) DropdownMenuItem(value: key, child: Text(value)),
+              ],
+              onChanged: (v) {
+                if (v != null) notifier.setLockAfter(v);
+              },
+            ),
+          ),
+          ListTile(
+            leading: const Icon(Icons.pin_outlined),
+            title: const Text('Change PIN'),
+            onTap: () async {
+              if (!await confirmPin(context, ref)) return;
+              if (!context.mounted) return;
+              final pin = await showCreatePin(context);
+              if (pin != null) await notifier.enable(pin);
+            },
+          ),
+        ],
+        SwitchListTile(
+          secondary: const Icon(Icons.visibility_off_outlined),
+          title: const Text('Hide in app switcher'),
+          subtitle: const Text('Covers the app in the recent apps view. On Android this also blocks screenshots.'),
+          value: settings.hideInSwitcher,
+          onChanged: notifier.setHideInSwitcher,
+        ),
+      ],
+    );
+  }
+}
+
+final _biometricsAvailableProvider =
+    FutureProvider.autoDispose<bool>((ref) => ref.watch(biometricAuthProvider).isAvailable());
 
 class _AccentSwatch extends StatelessWidget {
   const _AccentSwatch({required this.name, required this.color, required this.selected, required this.onTap});

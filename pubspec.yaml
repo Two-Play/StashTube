@@ -51,6 +51,7 @@ dependencies:
   # 1.5 pulls in permission_handler 13, which needs compileSdk 37 (beyond AGP 9.1).
   flutter_chrome_cast: '>=1.4.8 <1.5.0'
   image_picker: ^1.2.3
+  crypto: ^3.0.7
 
 dev_dependencies:
   flutter_test:

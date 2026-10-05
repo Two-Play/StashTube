@@ -33,6 +33,8 @@
 		<key>NSAllowsArbitraryLoadsForMedia</key>
 		<true/>
 	</dict>
+	<key>NSFaceIDUsageDescription</key>
+	<string>Unlock Stash with Face ID.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>Choose photos to use as covers and images in Stash.</string>
 	<key>NSLocalNetworkUsageDescription</key>

@@ -47,6 +47,8 @@
          In particular, this is used by the Flutter engine in io.flutter.plugin.text.ProcessTextPlugin. -->
 
     <uses-permission android:name="android.permission.INTERNET"/>
+    <!-- App lock: biometric unlock -->
+    <uses-permission android:name="android.permission.USE_BIOMETRIC"/>
     <!-- Cast media notification -->
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK"/>
 
