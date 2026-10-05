@@ -7,6 +7,7 @@ import 'models/page_result.dart';
 import 'models/performer.dart';
 import 'models/scene.dart';
 import 'models/scene_details.dart';
+import 'models/scrub_thumbnails.dart';
 import 'models/stats.dart';
 import 'models/studio.dart';
 import 'repositories/stash_repository.dart';
@@ -79,3 +80,9 @@ final libraryStatsProvider = FutureProvider.autoDispose<LibraryStats>(
 final activityStatsProvider = FutureProvider.autoDispose<ActivityStats?>(
   (ref) => ref.watch(stashRepositoryProvider).activityStats(),
 );
+
+/// Seek preview thumbnails of a scene, or null when there are none.
+final scrubThumbnailsProvider = FutureProvider.autoDispose.family<ScrubThumbnails?, String>((ref, id) async {
+  final details = await ref.watch(sceneDetailsProvider(id).future);
+  return ref.watch(stashRepositoryProvider).scrubThumbnails(details);
+});

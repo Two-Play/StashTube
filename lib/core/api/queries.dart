@@ -78,6 +78,7 @@ mutation PerformerSetFavorite($id: ID!, $favorite: Boolean!) {
 query FindSceneDetails($id: ID!) {
   findScene(id: $id) {
     id
+    paths { sprite vtt }
     sceneStreams { url mime_type label }
     scene_markers { id title seconds primary_tag { name } }
   }

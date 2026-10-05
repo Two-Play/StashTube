@@ -38,14 +38,21 @@ class SceneMarker {
 
 /// Per-scene data that is only needed while the scene is playing.
 class SceneDetails {
-  const SceneDetails({this.streams = const [], this.markers = const []});
+  const SceneDetails({this.streams = const [], this.markers = const [], this.spriteUrl, this.vttUrl});
 
   final List<SceneStream> streams;
 
   /// Sorted by position.
   final List<SceneMarker> markers;
 
+  /// Seek preview thumbnails: one sprite image plus a WebVTT file mapping
+  /// time ranges to regions of it. Null when Stash hasn't generated them.
+  final String? spriteUrl;
+  final String? vttUrl;
+
   factory SceneDetails.fromJson(Json json) => SceneDetails(
+        spriteUrl: readNullableString(readObject(json, 'paths') ?? const {}, 'sprite'),
+        vttUrl: readNullableString(readObject(json, 'paths') ?? const {}, 'vtt'),
         streams: readList(json, 'sceneStreams').map(SceneStream.fromJson).where((s) => s.url.isNotEmpty).toList(),
         markers: readList(json, 'scene_markers').map(SceneMarker.fromJson).toList()
           ..sort((a, b) => a.seconds.compareTo(b.seconds)),

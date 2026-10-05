@@ -7,6 +7,7 @@ import '../../data/models/scene.dart';
 import '../../data/models/scene_details.dart';
 import '../../data/providers.dart';
 import 'player_providers.dart';
+import 'preview_seek_bar.dart';
 
 /// Claims single taps inside the expanded player.
 ///
@@ -55,6 +56,23 @@ class PlayerVideo extends ConsumerWidget {
             Spacer(flex: 2),
             MaterialPlayOrPauseButton(iconSize: 48),
             Spacer(flex: 2),
+          ],
+          // Own seek bar with preview thumbnails instead of media_kit's.
+          displaySeekBar: false,
+          buttonBarHeight: 76,
+          bottomButtonBarMargin: const EdgeInsets.symmetric(horizontal: 12),
+          bottomButtonBar: [
+            Expanded(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  const Row(
+                    children: [MaterialPositionIndicator(), Spacer(), MaterialFullscreenButton()],
+                  ),
+                  PreviewSeekBar(sceneId: scene.id),
+                ],
+              ),
+            ),
           ],
           seekBarPositionColor: Theme.of(context).colorScheme.primary,
           seekBarThumbColor: Theme.of(context).colorScheme.primary,

@@ -64,6 +64,8 @@ Eine wartbare Basis, damit Features unabhängig voneinander wachsen können.
 | 4.11 | Als Nutzer möchte ich per Doppeltipp ±10 s springen und Kapitel (Scene Markers) sehen. | Doppeltipp links/rechts im Video. Marker als Segment-Lücken auf einer Leiste unter dem Video und als antippbare Kapitel-Liste mit Hervorhebung des aktuellen Kapitels. (Marker im media_kit-Seekbar selbst sind nicht möglich.) | Later | ✅ |
 | 4.12 | Als Nutzer möchte ich Bild-in-Bild und Hintergrundwiedergabe. | Android-PiP, iOS-AVPictureInPicture, Audio-Session. | Later | ⬜ |
 | 4.13 | Als Nutzer möchte ich auf einen Chromecast oder AirPlay streamen. | Cast-Button im Player. | Later | ⬜ |
+| 4.14 | Als Nutzer möchte ich beim Spulen ein Vorschaubild der Stelle sehen. | Eigener Fortschrittsbalken: Beim Ziehen/Tippen erscheint über dem Finger der passende Ausschnitt aus Stashs Sprite (WebVTT) plus Zielzeit; Sprung beim Loslassen. Ohne generierte Sprites nur die Zeit. | Next | ✅ |
+| 4.15 | Als Nutzer möchte ich den großen Player per Wischen nach unten minimieren. | Wischen auf dem Video oder in den Details (ganz oben) folgt dem Finger und rastet ein; kein Pull-to-Refresh im Player. | MVP | ✅ |
 
 ## Epic 5 – Suche & Filter
 

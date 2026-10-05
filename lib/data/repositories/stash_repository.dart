@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:graphql_flutter/graphql_flutter.dart';
+import 'package:http/http.dart' as http;
 
 import '../../core/api/queries.dart';
 import '../../core/config/server_config.dart';
@@ -11,6 +12,7 @@ import '../models/page_result.dart';
 import '../models/performer.dart';
 import '../models/scene.dart';
 import '../models/scene_details.dart';
+import '../models/scrub_thumbnails.dart';
 import '../models/stats.dart';
 import '../models/studio.dart';
 
@@ -38,9 +40,15 @@ GraphQLClient createGraphQLClient(ServerConfig config) => GraphQLClient(
 
 /// All access to the Stash GraphQL API goes through this class.
 class StashRepository implements PlaybackActivityApi {
-  StashRepository(this._client);
+  StashRepository(this._client, {Map<String, String> authHeaders = const {}, http.Client? httpClient})
+      : _authHeaders = authHeaders,
+        _http = httpClient ?? http.Client();
 
   final GraphQLClient _client;
+  final Map<String, String> _authHeaders;
+
+  /// For non-GraphQL server files such as the sprite VTT.
+  final http.Client _http;
 
   static const defaultPageSize = 24;
 
@@ -188,6 +196,20 @@ class StashRepository implements PlaybackActivityApi {
     return SceneDetails.fromJson(json);
   }
 
+  /// Seek preview thumbnails of a scene; null if Stash hasn't generated
+  /// sprites for it or they can't be loaded (previews are optional).
+  Future<ScrubThumbnails?> scrubThumbnails(SceneDetails details) async {
+    final vttUrl = details.vttUrl;
+    if (vttUrl == null) return null;
+    try {
+      final response = await _http.get(Uri.parse(vttUrl), headers: _authHeaders);
+      if (response.statusCode != 200) return null;
+      return ScrubThumbnails.parse(response.body, spriteUrl: details.spriteUrl, vttUrl: vttUrl);
+    } catch (_) {
+      return null;
+    }
+  }
+
   Future<void> setPerformerFavorite(String performerId, bool favorite) =>
       _mutate(StashQueries.performerSetFavorite, {'id': performerId, 'favorite': favorite});
 
@@ -250,6 +272,12 @@ final graphQLClientProvider = Provider<GraphQLClient>((ref) {
   return createGraphQLClient(config);
 });
 
-final stashRepositoryProvider = Provider<StashRepository>(
-  (ref) => StashRepository(ref.watch(graphQLClientProvider)),
-);
+final stashRepositoryProvider = Provider<StashRepository>((ref) {
+  final httpClient = http.Client();
+  ref.onDispose(httpClient.close);
+  return StashRepository(
+    ref.watch(graphQLClientProvider),
+    authHeaders: ref.watch(authHeadersProvider),
+    httpClient: httpClient,
+  );
+});
