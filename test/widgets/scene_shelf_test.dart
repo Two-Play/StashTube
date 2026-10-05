@@ -28,7 +28,7 @@ void main() {
 
   Future<ProviderContainer> pumpShelf(WidgetTester tester, List<Scene> scenes) async {
     final container = ProviderContainer(overrides: [
-      testServer,
+      ...testServer,
       stashRepositoryProvider.overrideWithValue(FakeRepository(scenes)),
     ]);
     addTearDown(container.dispose);

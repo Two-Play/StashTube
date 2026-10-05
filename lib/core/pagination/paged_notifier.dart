@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../data/models/page_result.dart';
+import '../config/server_config.dart';
 
 class PagedState<T> {
   const PagedState({
@@ -57,6 +58,10 @@ abstract class PagedNotifier<T, A> extends AsyncNotifier<PagedState<T>> {
 
   @override
   Future<PagedState<T>> build() async {
+    // Subclasses read the repository in fetchPage (also used by loadMore,
+    // outside build), so watch the server here: switching servers reloads
+    // every list, even ones the UI keeps subscribed during the switch.
+    ref.watch(serverConfigProvider);
     final result = await fetchPage(_arg, 1, pageSize);
     return PagedState(items: result.items, totalCount: result.totalCount, page: 1, perPage: pageSize);
   }

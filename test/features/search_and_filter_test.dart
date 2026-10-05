@@ -57,7 +57,7 @@ void main() {
 
   ProviderContainer container() {
     final c = ProviderContainer(overrides: [
-      testServer,
+      ...testServer,
       sharedPreferencesProvider.overrideWithValue(prefs),
       stashRepositoryProvider.overrideWithValue(repo),
     ]);

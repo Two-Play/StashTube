@@ -6,6 +6,8 @@ import 'package:stash_app_mobile/data/models/scene.dart';
 import 'package:stash_app_mobile/data/providers.dart';
 import 'package:stash_app_mobile/data/repositories/stash_repository.dart';
 
+import '../helpers.dart';
+
 class FakeRepository implements StashRepository {
   FakeRepository(this.total);
 
@@ -39,7 +41,7 @@ void main() {
 
   setUp(() {
     repo = FakeRepository(50);
-    container = ProviderContainer(overrides: [stashRepositoryProvider.overrideWithValue(repo)]);
+    container = ProviderContainer(overrides: [stashRepositoryProvider.overrideWithValue(repo), ...testServer]);
     // Keep the auto-dispose provider alive for the test.
     container.listen(sceneListProvider(query), (_, __) {});
   });

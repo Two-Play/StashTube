@@ -33,7 +33,7 @@ void main() {
 
   setUp(() {
     repo = FakeRepository();
-    container = ProviderContainer(overrides: [stashRepositoryProvider.overrideWithValue(repo), testServer]);
+    container = ProviderContainer(overrides: [stashRepositoryProvider.overrideWithValue(repo), ...testServer]);
   });
   tearDown(() => container.dispose());
 

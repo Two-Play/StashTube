@@ -18,7 +18,7 @@ void main() {
     );
 
     await tester.pumpWidget(ProviderScope(
-      overrides: [testServer],
+      overrides: [...testServer],
       child: const MaterialApp(home: Scaffold(body: SingleChildScrollView(child: SceneCard(scene: scene)))),
     ));
 
@@ -30,7 +30,7 @@ void main() {
 
   testWidgets('shows a progress bar only for partially watched scenes', (tester) async {
     Future<void> pump(Scene scene) => tester.pumpWidget(ProviderScope(
-          overrides: [testServer],
+          overrides: [...testServer],
           child: MaterialApp(home: Scaffold(body: SceneThumbnail(scene: scene))),
         ));
 
