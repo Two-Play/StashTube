@@ -52,6 +52,7 @@ class AppLocalizationsDe extends AppLocalizations {
       locale: localeName,
       other: '$countString Wiedergaben',
       one: '1 Wiedergabe',
+      zero: 'Keine Wiedergaben',
     );
     return '$_temp0';
   }
@@ -210,7 +211,7 @@ class AppLocalizationsDe extends AppLocalizations {
   String get tabSearch => 'Suche';
 
   @override
-  String get tabSettings => 'Einstellungen';
+  String get tabSettings => 'Optionen';
 
   @override
   String get emptyDefault => 'Hier ist noch nichts';
@@ -1247,4 +1248,22 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get shortsFullVideo => 'Ganzes Video';
+
+  @override
+  String get sectionSceneCards => 'Videokarten';
+
+  @override
+  String get cardChannel => 'Kanal auf den Karten';
+
+  @override
+  String get cardChannelStudio => 'Studio';
+
+  @override
+  String get cardChannelPerformers => 'Performer';
+
+  @override
+  String get cardShowPlays => 'Wiedergaben anzeigen';
+
+  @override
+  String get cardShowRating => 'Bewertung anzeigen';
 }

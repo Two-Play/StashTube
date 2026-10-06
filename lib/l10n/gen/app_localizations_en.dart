@@ -52,6 +52,7 @@ class AppLocalizationsEn extends AppLocalizations {
       locale: localeName,
       other: '$countString plays',
       one: '1 play',
+      zero: 'No plays',
     );
     return '$_temp0';
   }
@@ -1244,4 +1245,22 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get shortsFullVideo => 'Full video';
+
+  @override
+  String get sectionSceneCards => 'Video cards';
+
+  @override
+  String get cardChannel => 'Channel on cards';
+
+  @override
+  String get cardChannelStudio => 'Studio';
+
+  @override
+  String get cardChannelPerformers => 'Performers';
+
+  @override
+  String get cardShowPlays => 'Show plays';
+
+  @override
+  String get cardShowRating => 'Show rating';
 }

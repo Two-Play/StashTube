@@ -19,7 +19,7 @@
       }
     }
   },
-  "playsCount": "{count, plural, =1{1 play} other{{count} plays}}",
+  "playsCount": "{count, plural, =0{No plays} =1{1 play} other{{count} plays}}",
   "@playsCount": {
     "placeholders": {
       "count": {
@@ -663,5 +663,11 @@
   "shortsPortraitOnly": "Portrait videos only",
   "shortsEmpty": "No shorts found",
   "shortsEmptyHint": "Shorts are short portrait videos. Try a longer maximum length or other tags.",
-  "shortsFullVideo": "Full video"
+  "shortsFullVideo": "Full video",
+  "sectionSceneCards": "Video cards",
+  "cardChannel": "Channel on cards",
+  "cardChannelStudio": "Studio",
+  "cardChannelPerformers": "Performers",
+  "cardShowPlays": "Show plays",
+  "cardShowRating": "Show rating"
 }

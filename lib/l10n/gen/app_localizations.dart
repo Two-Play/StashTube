@@ -119,7 +119,7 @@ abstract class AppLocalizations {
   /// No description provided for @playsCount.
   ///
   /// In en, this message translates to:
-  /// **'{count, plural, =1{1 play} other{{count} plays}}'**
+  /// **'{count, plural, =0{No plays} =1{1 play} other{{count} plays}}'**
   String playsCount(int count);
 
   /// No description provided for @savedServersCount.
@@ -2143,6 +2143,42 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Full video'**
   String get shortsFullVideo;
+
+  /// No description provided for @sectionSceneCards.
+  ///
+  /// In en, this message translates to:
+  /// **'Video cards'**
+  String get sectionSceneCards;
+
+  /// No description provided for @cardChannel.
+  ///
+  /// In en, this message translates to:
+  /// **'Channel on cards'**
+  String get cardChannel;
+
+  /// No description provided for @cardChannelStudio.
+  ///
+  /// In en, this message translates to:
+  /// **'Studio'**
+  String get cardChannelStudio;
+
+  /// No description provided for @cardChannelPerformers.
+  ///
+  /// In en, this message translates to:
+  /// **'Performers'**
+  String get cardChannelPerformers;
+
+  /// No description provided for @cardShowPlays.
+  ///
+  /// In en, this message translates to:
+  /// **'Show plays'**
+  String get cardShowPlays;
+
+  /// No description provided for @cardShowRating.
+  ///
+  /// In en, this message translates to:
+  /// **'Show rating'**
+  String get cardShowRating;
 }
 
 class _AppLocalizationsDelegate

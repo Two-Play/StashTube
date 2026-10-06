@@ -44,7 +44,7 @@ class SceneShelf extends ConsumerWidget {
           ),
         ),
         SizedBox(
-          height: 212,
+          height: 230,
           child: ListView.separated(
             scrollDirection: Axis.horizontal,
             padding: const EdgeInsets.symmetric(horizontal: 12),
@@ -67,6 +67,8 @@ class _ShelfCard extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
+    final muted = theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurfaceVariant);
+    final meta = sceneMetaLine(context, ref, scene, withDate: false);
     return SizedBox(
       width: 240,
       child: InkWell(
@@ -81,12 +83,8 @@ class _ShelfCard extends ConsumerWidget {
             ),
             const SizedBox(height: 6),
             Text(scene.title, maxLines: 2, overflow: TextOverflow.ellipsis, style: theme.textTheme.titleSmall),
-            Text(
-              scene.studio?.name ?? scene.performers.firstOrNull?.name ?? '',
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurfaceVariant),
-            ),
+            Text(sceneChannel(context, ref, scene).name, maxLines: 1, overflow: TextOverflow.ellipsis, style: muted),
+            if (meta.isNotEmpty) Text(meta, maxLines: 1, overflow: TextOverflow.ellipsis, style: muted),
           ],
         ),
       ),

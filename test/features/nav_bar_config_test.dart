@@ -44,7 +44,7 @@ void main() {
         ),
       ),
     ));
-    expect(find.text('Start,Performer,Studios,Bibliothek,Einstellungen'), findsOneWidget);
+    expect(find.text('Start,Performer,Studios,Bibliothek,Optionen'), findsOneWidget);
   });
 
   test('settings cannot be hidden, and the bar keeps 2 to 5 tabs', () {

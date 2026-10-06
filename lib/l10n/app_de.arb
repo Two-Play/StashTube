@@ -3,7 +3,7 @@
   "appTitle": "Stash",
   "scenesCount": "{count, plural, =1{1 Szene} other{{count} Szenen}}",
   "imagesCount": "{count, plural, =1{1 Bild} other{{count} Bilder}}",
-  "playsCount": "{count, plural, =1{1 Wiedergabe} other{{count} Wiedergaben}}",
+  "playsCount": "{count, plural, =0{Keine Wiedergaben} =1{1 Wiedergabe} other{{count} Wiedergaben}}",
   "savedServersCount": "{count, plural, =1{1 gespeicherter Server} other{{count} gespeicherte Server}}",
   "subStudiosCount": "{count, plural, =1{1 Unterstudio} other{{count} Unterstudios}}",
   "timeUpcoming": "demnächst",
@@ -31,7 +31,7 @@
   "tabWatchLater": "Später",
   "tabTags": "Tags",
   "tabSearch": "Suche",
-  "tabSettings": "Einstellungen",
+  "tabSettings": "Optionen",
   "emptyDefault": "Hier ist noch nichts",
   "loadMoreFailed": "Weitere konnten nicht geladen werden – zum Wiederholen tippen",
   "channelUnknown": "Unbekannt",
@@ -340,5 +340,11 @@
   "shortsPortraitOnly": "Nur Hochkant-Videos",
   "shortsEmpty": "Keine Shorts gefunden",
   "shortsEmptyHint": "Shorts sind kurze Hochkant-Videos. Versuche eine längere Maximallänge oder andere Tags.",
-  "shortsFullVideo": "Ganzes Video"
+  "shortsFullVideo": "Ganzes Video",
+  "sectionSceneCards": "Videokarten",
+  "cardChannel": "Kanal auf den Karten",
+  "cardChannelStudio": "Studio",
+  "cardChannelPerformers": "Performer",
+  "cardShowPlays": "Wiedergaben anzeigen",
+  "cardShowRating": "Bewertung anzeigen"
 }

@@ -6,18 +6,50 @@ import '../data/models/scene.dart';
 import '../features/edit/edit_pages.dart';
 import '../features/library/watch_later.dart';
 import '../features/player/player_providers.dart';
+import '../features/player/scene_edits.dart';
+import '../features/settings/scene_card_config.dart';
 import '../features/shell/navigation.dart';
 import 'stash_image.dart';
 import '../l10n/l10n.dart';
 
-/// "Uploader" line for a scene: studio, else the first performer.
-String _channelName(AppLocalizations l, Scene scene) =>
-    scene.studio?.name ?? (scene.performers.isEmpty ? l.channelUnknown : scene.performers.first.name);
+/// The "uploader" of a scene as the settings choose it: the studio or the
+/// performers, falling back to the other one.
+class SceneChannel {
+  SceneChannel(AppLocalizations l, Scene scene, CardChannel channel) {
+    final studio = scene.studio;
+    final performers = scene.performers;
+    final useStudio = studio != null && (channel == CardChannel.studio || performers.isEmpty);
+    if (useStudio) {
+      name = studio.name;
+      imageUrl = studio.imageUrl;
+      open = (ref) => openStudio(ref, studio.id);
+    } else if (performers.isNotEmpty) {
+      name = performers.map((p) => p.name).join(', ');
+      imageUrl = performers.first.imageUrl;
+      open = (ref) => openPerformer(ref, performers.first.id);
+    } else {
+      name = l.channelUnknown;
+    }
+  }
 
-String _metaLine(AppLocalizations l, Scene scene) {
+  late final String name;
+  String? imageUrl;
+  void Function(WidgetRef ref)? open;
+}
+
+/// The channel of [scene] for a card (watches the card settings).
+SceneChannel sceneChannel(BuildContext context, WidgetRef ref, Scene scene) =>
+    SceneChannel(context.l10n, scene, ref.watch(sceneCardConfigProvider.select((c) => c.channel)));
+
+/// Plays, rating and date, as far as the settings show them.
+String sceneMetaLine(BuildContext context, WidgetRef ref, Scene scene, {bool withDate = true}) {
+  final l = context.l10n;
+  final config = ref.watch(sceneCardConfigProvider);
+  final stars = config.showRating ? effectiveStars(ref, scene) : 0;
   final parts = <String>[
-    if (scene.playCount > 0) l.playsCount(scene.playCount),
-    if (scene.displayDate != null) formatTimeAgo(l, scene.displayDate!, DateTime.now()),
+    if (config.showPlays) l.playsCount(scene.playCount),
+    if (stars > 0) '★ $stars',
+    if (withDate && scene.displayDate != null) formatTimeAgo(l, scene.displayDate!, DateTime.now()),
   ];
   return parts.join(' • ');
 }
@@ -31,9 +63,8 @@ class SceneCard extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
-    final studio = scene.studio;
-    final performer = scene.performers.isEmpty ? null : scene.performers.first;
-    final meta = [_channelName(context.l10n, scene), _metaLine(context.l10n, scene)].where((s) => s.isNotEmpty).join(' • ');
+    final channel = sceneChannel(context, ref, scene);
+    final meta = [channel.name, sceneMetaLine(context, ref, scene)].where((s) => s.isNotEmpty).join(' • ');
 
     return InkWell(
       onTap: () => ref.read(nowPlayingProvider.notifier).play(scene),
@@ -49,17 +80,8 @@ class SceneCard extends ConsumerWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   GestureDetector(
-                    onTap: () {
-                      if (studio != null) {
-                        openStudio(ref, studio.id);
-                      } else if (performer != null) {
-                        openPerformer(ref, performer.id);
-                      }
-                    },
-                    child: ChannelAvatar(
-                      name: _channelName(context.l10n, scene),
-                      imageUrl: studio?.imageUrl ?? performer?.imageUrl,
-                    ),
+                    onTap: channel.open == null ? null : () => channel.open!(ref),
+                    child: ChannelAvatar(name: channel.name, imageUrl: channel.imageUrl),
                   ),
                   const SizedBox(width: 12),
                   Expanded(
@@ -130,8 +152,8 @@ class SceneListTile extends ConsumerWidget {
                 children: [
                   Text(scene.title, maxLines: 2, overflow: TextOverflow.ellipsis, style: theme.textTheme.titleSmall),
                   const SizedBox(height: 4),
-                  Text(_channelName(context.l10n, scene), maxLines: 1, overflow: TextOverflow.ellipsis, style: muted),
-                  Text(_metaLine(context.l10n, scene), maxLines: 1, overflow: TextOverflow.ellipsis, style: muted),
+                  Text(sceneChannel(context, ref, scene).name, maxLines: 1, overflow: TextOverflow.ellipsis, style: muted),
+                  Text(sceneMetaLine(context, ref, scene), maxLines: 1, overflow: TextOverflow.ellipsis, style: muted),
                 ],
               ),
             ),
@@ -152,6 +174,9 @@ class SceneGridTile extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
+    final muted = theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurfaceVariant);
+    // The grid is dense: no date, only plays and rating.
+    final meta = sceneMetaLine(context, ref, scene, withDate: false);
     return InkWell(
       borderRadius: BorderRadius.circular(8),
       onTap: () => ref.read(nowPlayingProvider.notifier).play(scene),
@@ -167,12 +192,8 @@ class SceneGridTile extends ConsumerWidget {
           Flexible(
             child: Text(scene.title, maxLines: 2, overflow: TextOverflow.ellipsis, style: theme.textTheme.titleSmall),
           ),
-          Text(
-            _channelName(context.l10n, scene),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurfaceVariant),
-          ),
+          Text(sceneChannel(context, ref, scene).name, maxLines: 1, overflow: TextOverflow.ellipsis, style: muted),
+          if (meta.isNotEmpty) Text(meta, maxLines: 1, overflow: TextOverflow.ellipsis, style: muted),
         ],
       ),
     );

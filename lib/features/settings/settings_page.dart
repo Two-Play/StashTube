@@ -13,6 +13,7 @@ import '../security/app_lock_gate.dart';
 import '../shell/nav_bar_config.dart';
 import '../shell/navigation.dart';
 import 'nav_bar_settings_page.dart';
+import 'scene_card_config.dart';
 import '../../l10n/l10n.dart';
 
 class SettingsPage extends ConsumerWidget {
@@ -30,6 +31,7 @@ class SettingsPage extends ConsumerWidget {
     final theme = Theme.of(context);
     final l = context.l10n;
     final locale = ref.watch(appLocaleProvider);
+    final cardConfig = ref.watch(sceneCardConfigProvider);
 
     return Scaffold(
       appBar: AppBar(title: Text(l.settingsTitle)),
@@ -127,6 +129,32 @@ class SettingsPage extends ConsumerWidget {
               onChanged: (code) =>
                   ref.read(appLocaleProvider.notifier).set(code == null || code.isEmpty ? null : Locale(code)),
             ),
+          ),
+          _SectionTitle(l.sectionSceneCards),
+          ListTile(
+            leading: const Icon(Icons.account_circle_outlined),
+            title: Text(l.cardChannel),
+            trailing: DropdownButton<CardChannel>(
+              value: cardConfig.channel,
+              underline: const SizedBox.shrink(),
+              items: [
+                DropdownMenuItem(value: CardChannel.studio, child: Text(l.cardChannelStudio)),
+                DropdownMenuItem(value: CardChannel.performers, child: Text(l.cardChannelPerformers)),
+              ],
+              onChanged: (channel) => ref.read(sceneCardConfigProvider.notifier).set(cardConfig.copyWith(channel: channel)),
+            ),
+          ),
+          SwitchListTile(
+            secondary: const Icon(Icons.visibility_outlined),
+            title: Text(l.cardShowPlays),
+            value: cardConfig.showPlays,
+            onChanged: (v) => ref.read(sceneCardConfigProvider.notifier).set(cardConfig.copyWith(showPlays: v)),
+          ),
+          SwitchListTile(
+            secondary: const Icon(Icons.star_outline),
+            title: Text(l.cardShowRating),
+            value: cardConfig.showRating,
+            onChanged: (v) => ref.read(sceneCardConfigProvider.notifier).set(cardConfig.copyWith(showRating: v)),
           ),
           _SectionTitle(l.sectionPlayback),
           ListTile(

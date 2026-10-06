@@ -189,7 +189,7 @@ class _SceneFeedViewState extends ConsumerState<SceneFeedView> {
               gridDelegate: widget.layout == SceneFeedLayout.grid
                   ? const SliverGridDelegateWithMaxCrossAxisExtent(
                       maxCrossAxisExtent: 240,
-                      childAspectRatio: 0.95,
+                      childAspectRatio: 0.88,
                       mainAxisSpacing: 12,
                       crossAxisSpacing: 12,
                     )
