@@ -66,4 +66,21 @@ void main() {
     expect(at(maxHeight - 5).isExpanded, isFalse);
     expect(at(maxHeight).isExpanded, isTrue);
   });
+
+  test('portrait videos get a taller video area, capped so details stay visible', () {
+    PlayerTransition expanded(double aspect) => PlayerTransition(
+          height: maxHeight,
+          minHeight: minHeight,
+          maxHeight: maxHeight,
+          screenWidth: width,
+          topInset: topInset,
+          videoAspect: aspect,
+        );
+    expect(expanded(16 / 9).videoHeight, closeTo(width * 9 / 16, 0.01));
+    expect(expanded(4 / 3).videoHeight, closeTo(width * 3 / 4, 0.01));
+    expect(expanded(9 / 16).videoHeight, closeTo(maxHeight * PlayerTransition.maxVideoShare, 0.01));
+    expect(expanded(2.39).videoHeight, closeTo(width * 9 / 16, 0.01), reason: 'wide videos keep the 16:9 box');
+    // Collapsed it is the same small tile for every video.
+    expect(at(minHeight).videoHeight, 62);
+  });
 }

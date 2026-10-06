@@ -69,7 +69,15 @@ class _HomePageState extends ConsumerState<HomePage> {
                     child: Icon(Icons.play_arrow, color: colors.onPrimary, size: 20),
                   ),
                   const SizedBox(width: 6),
-                  const Text('Stash', style: TextStyle(fontWeight: FontWeight.w700, letterSpacing: -0.5)),
+                  const Flexible(
+                    child: Text(
+                      'Stash',
+                      maxLines: 1,
+                      overflow: TextOverflow.fade,
+                      softWrap: false,
+                      style: TextStyle(fontWeight: FontWeight.w700, letterSpacing: -0.5),
+                    ),
+                  ),
                 ],
               ),
               actions: [

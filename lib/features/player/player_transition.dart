@@ -6,7 +6,8 @@ import 'package:flutter/animation.dart';
 /// the miniplayer morphs continuously into the full player (YouTube-style):
 ///
 /// * the video grows from the small tile on the left to full width during
-///   the first [growPhase] of the way up,
+///   the first [growPhase] of the way up; expanded it is 16:9, or taller for
+///   portrait videos (at most [maxVideoShare] of the panel),
 /// * the mini bar's title and buttons fade out early,
 /// * details fade in during the second half,
 /// * controls appear only once the panel is fully open.
@@ -17,6 +18,7 @@ class PlayerTransition {
     required double maxHeight,
     required double screenWidth,
     required double topInset,
+    double videoAspect = 16 / 9,
     double progressBarHeight = 2,
   }) {
     final range = maxHeight - minHeight;
@@ -25,7 +27,10 @@ class PlayerTransition {
 
     final miniVideoHeight = minHeight - progressBarHeight;
     final miniVideoWidth = miniVideoHeight * 16 / 9;
-    final expandedVideoHeight = screenWidth * 9 / 16;
+    // Wider than 16:9 keeps the 16:9 box (letterboxed), portrait videos get
+    // more height.
+    final expandedVideoHeight = (screenWidth / videoAspect)
+        .clamp(screenWidth * 9 / 16, (maxHeight * maxVideoShare).clamp(screenWidth * 9 / 16, double.infinity));
 
     final topPadding = topInset * grow;
     // Never taller than the space the panel currently has.
@@ -54,6 +59,10 @@ class PlayerTransition {
 
   /// Share of the drag distance after which the video has its full size.
   static const growPhase = 0.4;
+
+  /// The most of the expanded panel a portrait video takes, so the details
+  /// stay reachable.
+  static const maxVideoShare = 0.6;
 
   /// 0 = collapsed miniplayer, 1 = fully expanded.
   final double progress;

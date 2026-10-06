@@ -34,49 +34,102 @@ class PanelTapGuard extends StatelessWidget {
       GestureDetector(behavior: HitTestBehavior.opaque, onTap: enabled ? () {} : null, child: child);
 }
 
+/// media_kit's state of the one [PlayerVideo], to enter fullscreen when the
+/// phone is turned.
+final playerVideoKey = GlobalKey<VideoState>();
+
+/// True while the fullscreen was entered by turning the phone; turning it
+/// back to portrait then leaves it again.
+final fullscreenByRotation = ValueNotifier<bool>(false);
+
+/// Width / height of [scene]'s video: the decoded size once known (it
+/// accounts for rotation metadata), else the file's size from Stash. With
+/// [sceneFirst], Stash's size wins: right after switching scenes the
+/// player still reports the previous video.
+double? videoAspect(PlayerState state, Scene scene, {bool sceneFirst = false}) {
+  final width = sceneFirst ? scene.width ?? state.width : state.width ?? scene.width;
+  final height = sceneFirst ? scene.height ?? state.height : state.height ?? scene.height;
+  return width == null || height == null || width <= 0 || height <= 0 ? null : width / height;
+}
+
 /// The one video surface of the player, used both in the miniplayer and in
 /// the expanded view so it is never rebuilt during the transition.
 ///
 /// With [showControls] it shows [StashVideoControls]: double tap to seek
 /// ±10 s (4.11), quality (4.10), scrubbing with previews (4.14), and outside
-/// fullscreen a collapse button.
-class PlayerVideo extends ConsumerWidget {
+/// fullscreen a collapse button. Turning the phone to landscape then opens
+/// fullscreen for wide videos (4.19).
+class PlayerVideo extends ConsumerStatefulWidget {
   const PlayerVideo({super.key, required this.scene, required this.showControls});
 
   final Scene scene;
   final bool showControls;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) => Video(
-        controller: ref.watch(videoControllerProvider),
-        onEnterFullscreen: () => _enterFullscreen(ref.read(playerProvider).state, scene),
-        // The same builder is used by media_kit's fullscreen route.
-        controls: showControls
-            ? (state) => StashVideoControls(
-                  fullscreen: state.isFullscreen(),
-                  onToggleFullscreen: state.toggleFullscreen,
-                  scene: scene,
-                  onQuality: () => showQualitySheet(context, scene.id),
-                )
-            : _noControls,
-      );
+  ConsumerState<PlayerVideo> createState() => _PlayerVideoState();
+}
+
+class _PlayerVideoState extends ConsumerState<PlayerVideo> {
+  Orientation? _orientation;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final orientation = MediaQuery.orientationOf(context);
+    final turned = _orientation != null && orientation != _orientation;
+    _orientation = orientation;
+    if (turned && orientation == Orientation.landscape) _onTurnedToLandscape();
+  }
+
+  void _onTurnedToLandscape() {
+    final aspect = videoAspect(ref.read(playerProvider).state, widget.scene);
+    final video = playerVideoKey.currentState;
+    if (!widget.showControls || video == null || video.isFullscreen() || (aspect ?? 16 / 9) <= 1) return;
+    fullscreenByRotation.value = true;
+    // Not while the dependencies change.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) video.enterFullscreen();
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final scene = widget.scene;
+    return Video(
+      key: playerVideoKey,
+      controller: ref.watch(videoControllerProvider),
+      onEnterFullscreen: () => _enterFullscreen(ref.read(playerProvider).state, scene),
+      onExitFullscreen: () {
+        fullscreenByRotation.value = false;
+        return defaultExitNativeFullscreen();
+      },
+      // The same builder is used by media_kit's fullscreen route.
+      controls: widget.showControls
+          ? (state) => StashVideoControls(
+                fullscreen: state.isFullscreen(),
+                onToggleFullscreen: state.toggleFullscreen,
+                scene: scene,
+                onQuality: () => showQualitySheet(context, scene.id),
+              )
+          : _noControls,
+    );
+  }
 }
 
 /// Like media_kit's default, but locks the orientation to match the video:
 /// landscape for wide videos, portrait for portrait videos (the default
-/// always rotates to landscape, so portrait videos end up small and pillarboxed).
+/// always rotates to landscape, so portrait videos end up small and
+/// pillarboxed). Entered by turning the phone, portrait stays allowed so
+/// that turning it back leaves fullscreen.
 Future<void> _enterFullscreen(PlayerState state, Scene scene) async {
   if (!Platform.isAndroid && !Platform.isIOS) return defaultEnterNativeFullscreen();
-  // The decoded size accounts for rotation metadata; the scene's file size
-  // is the fallback before the first frame.
-  final width = state.width ?? scene.width;
-  final height = state.height ?? scene.height;
-  final portrait = width != null && height != null && height > width;
+  final portrait = (videoAspect(state, scene) ?? 16 / 9) < 1;
   await Future.wait([
     SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky, overlays: []),
-    SystemChrome.setPreferredOrientations(
-      portrait ? [DeviceOrientation.portraitUp] : [DeviceOrientation.landscapeLeft, DeviceOrientation.landscapeRight],
-    ),
+    SystemChrome.setPreferredOrientations([
+      if (portrait || fullscreenByRotation.value) DeviceOrientation.portraitUp,
+      if (!portrait) ...[DeviceOrientation.landscapeLeft, DeviceOrientation.landscapeRight],
+    ]),
   ]);
 }
 
