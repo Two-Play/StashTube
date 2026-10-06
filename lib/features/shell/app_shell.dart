@@ -44,6 +44,7 @@ class AppShell extends ConsumerWidget {
     final scene = ref.watch(nowPlayingProvider);
     // No miniplayer in the shorts (they pause the main player meanwhile).
     final hidePlayer = ref.watch(shortsActiveProvider);
+    final hideNavBar = ref.watch(shortsFullscreenProvider);
     final playerHeight = ref.watch(miniplayerHeightProvider);
     final maxPlayerHeight = MediaQuery.sizeOf(context).height;
 
@@ -108,33 +109,35 @@ class AppShell extends ConsumerWidget {
               ),
           ],
         ),
-        bottomNavigationBar: ValueListenableBuilder<double>(
-          valueListenable: playerHeight,
-          builder: (context, height, child) {
-            final expanded = scene == null
-                ? 0.0
-                : ((height - kMiniPlayerHeight) / (maxPlayerHeight - kMiniPlayerHeight)).clamp(0.0, 1.0);
-            return ClipRect(
-              child: Align(
-                alignment: Alignment.topCenter,
-                heightFactor: 1 - expanded,
-                child: child,
-              ),
-            );
-          },
-          child: NavigationBar(
-            selectedIndex: tabs.indexOf(currentTab).clamp(0, tabs.length - 1),
-            onDestinationSelected: (i) => selectTab(tabs[i]),
-            destinations: [
-              for (final tab in tabs)
-                NavigationDestination(
-                  icon: Icon(tab.icon),
-                  selectedIcon: Icon(tab.selectedIcon),
-                  label: tab.label(context.l10n),
+        bottomNavigationBar: hideNavBar
+            ? null
+            : ValueListenableBuilder<double>(
+                valueListenable: playerHeight,
+                builder: (context, height, child) {
+                  final expanded = scene == null
+                      ? 0.0
+                      : ((height - kMiniPlayerHeight) / (maxPlayerHeight - kMiniPlayerHeight)).clamp(0.0, 1.0);
+                  return ClipRect(
+                    child: Align(
+                      alignment: Alignment.topCenter,
+                      heightFactor: 1 - expanded,
+                      child: child,
+                    ),
+                  );
+                },
+                child: NavigationBar(
+                  selectedIndex: tabs.indexOf(currentTab).clamp(0, tabs.length - 1),
+                  onDestinationSelected: (i) => selectTab(tabs[i]),
+                  destinations: [
+                    for (final tab in tabs)
+                      NavigationDestination(
+                        icon: Icon(tab.icon),
+                        selectedIcon: Icon(tab.selectedIcon),
+                        label: tab.label(context.l10n),
+                      ),
+                  ],
                 ),
-            ],
-          ),
-        ),
+              ),
       ),
     );
   }

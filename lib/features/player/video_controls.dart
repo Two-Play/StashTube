@@ -7,6 +7,7 @@ import 'package:media_kit/media_kit.dart';
 
 import '../../core/utils/format.dart';
 import '../../data/models/scene.dart';
+import '../../widgets/hold_detector.dart';
 import '../cast/cast_providers.dart';
 import '../cast/cast_ui.dart';
 import 'player_providers.dart';
@@ -151,19 +152,20 @@ class _StashVideoControlsState extends ConsumerState<StashVideoControls> {
     return Stack(
       fit: StackFit.expand,
       children: [
-        GestureDetector(
-          behavior: HitTestBehavior.opaque,
-          onTap: () => _visible ? _hide() : _show(),
-          onDoubleTapDown: (d) => _doubleTapPosition = d.localPosition,
-          onDoubleTap: _onDoubleTap,
-          onLongPressStart: (_) => _startHold(),
-          onLongPressEnd: (_) => _endHold(),
-          onLongPressCancel: _endHold,
-          // Claim vertical drags so the miniplayer's own pan doesn't fight
-          // with DragToMinimize, which handles the swipe-down from raw
-          // pointer events.
-          onVerticalDragStart: (_) {},
-          onVerticalDragUpdate: (_) {},
+        HoldDetector(
+          onHoldStart: _startHold,
+          onHoldEnd: _endHold,
+          child: GestureDetector(
+            behavior: HitTestBehavior.opaque,
+            onTap: () => _visible ? _hide() : _show(),
+            onDoubleTapDown: (d) => _doubleTapPosition = d.localPosition,
+            onDoubleTap: _onDoubleTap,
+            // Claim vertical drags so the miniplayer's own pan doesn't fight
+            // with DragToMinimize, which handles the swipe-down from raw
+            // pointer events.
+            onVerticalDragStart: (_) {},
+            onVerticalDragUpdate: (_) {},
+          ),
         ),
         if (_seekFeedback != 0)
           IgnorePointer(

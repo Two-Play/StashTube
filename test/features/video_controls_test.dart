@@ -8,6 +8,7 @@ import 'package:stash_app_mobile/data/providers.dart';
 import 'package:stash_app_mobile/features/player/player_providers.dart';
 import 'package:stash_app_mobile/features/player/preview_seek_bar.dart';
 import 'package:stash_app_mobile/features/player/video_controls.dart';
+import 'package:stash_app_mobile/widgets/hold_detector.dart';
 
 import 'fake_player.dart';
 
@@ -128,7 +129,7 @@ void main() {
     await pump(tester);
     final rect = tester.getRect(find.byType(StashVideoControls));
     final gesture = await tester.startGesture(Offset(rect.left + 100, rect.center.dy));
-    await tester.pump(kLongPressTimeout + const Duration(milliseconds: 50));
+    await tester.pump(kHoldDelay + const Duration(milliseconds: 50));
     expect(player.rates, [2.0]);
     expect(find.text('2× speed'), findsOneWidget);
     await gesture.up();

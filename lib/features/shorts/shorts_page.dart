@@ -12,11 +12,13 @@ import '../../core/utils/format.dart';
 import '../../data/models/scene.dart';
 import '../../data/repositories/stash_repository.dart';
 import '../../l10n/l10n.dart';
+import '../../widgets/hold_detector.dart';
 import '../../widgets/scene_card.dart';
 import '../../widgets/stash_image.dart';
 import '../../widgets/status_views.dart';
 import '../library/watch_later.dart';
 import '../player/player_providers.dart';
+import '../player/preview_seek_bar.dart';
 import '../player/scene_edits.dart';
 import '../shell/navigation.dart';
 import 'shorts_feed.dart';
@@ -33,6 +35,21 @@ class ShortsActiveNotifier extends Notifier<bool> {
 }
 
 final shortsActiveProvider = NotifierProvider<ShortsActiveNotifier, bool>(ShortsActiveNotifier.new);
+
+/// True while the shorts are shown in fullscreen (UI hidden); the shell
+/// then also hides the navigation bar.
+final shortsFullscreenProvider = NotifierProvider<ShortsActiveNotifier, bool>(ShortsActiveNotifier.new);
+
+/// Snappier than the default page physics, so the next short settles fast.
+class _FastPageScrollPhysics extends PageScrollPhysics {
+  const _FastPageScrollPhysics({super.parent});
+
+  @override
+  _FastPageScrollPhysics applyTo(ScrollPhysics? ancestor) => _FastPageScrollPhysics(parent: buildParent(ancestor));
+
+  @override
+  SpringDescription get spring => const SpringDescription(mass: 0.5, stiffness: 500, damping: 32);
+}
 
 /// Whether the app's main player is playing.
 final _mainPlayingProvider = StreamProvider.autoDispose<bool>((ref) => ref.watch(playerProvider).stream.playing);
@@ -70,6 +87,7 @@ class _ShortsPageState extends ConsumerState<ShortsPage> {
   late final AppLifecycleListener _lifecycle;
   late final ValueNotifier<double> _miniplayerHeight;
   late final ShortsActiveNotifier _active = ref.read(shortsActiveProvider.notifier);
+  late final ShortsActiveNotifier _fullscreenNotifier = ref.read(shortsFullscreenProvider.notifier);
 
   List<Player>? _players;
   List<VideoController>? _controllers;
@@ -88,6 +106,10 @@ class _ShortsPageState extends ConsumerState<ShortsPage> {
   /// Paused by a tap, or because the main player started playing.
   bool _paused = false;
   bool _muted = false;
+
+  /// Hides the UI (and the navigation bar and system bars) for the video.
+  bool _fullscreen = false;
+  bool _immersive = false;
   bool _appVisible = true;
   bool _mainExpanded = false;
 
@@ -113,7 +135,12 @@ class _ShortsPageState extends ConsumerState<ShortsPage> {
   void dispose() {
     // Not during the tree's teardown: providers can't change then.
     final active = _active;
-    Future.microtask(() => active.set(false));
+    final fullscreen = _fullscreenNotifier;
+    Future.microtask(() {
+      active.set(false);
+      fullscreen.set(false);
+    });
+    if (_immersive) SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
     _miniplayerHeight.removeListener(_onMiniplayerHeight);
     _lifecycle.dispose();
     _positionSub?.cancel();
@@ -225,6 +252,20 @@ class _ShortsPageState extends ConsumerState<ShortsPage> {
     _applyPlayback();
   }
 
+  void _toggleFullscreen() {
+    HapticFeedback.selectionClick();
+    setState(() => _fullscreen = !_fullscreen);
+  }
+
+  /// Applies fullscreen to the shell and the system bars while visible.
+  void _applyFullscreen() {
+    final immersive = _visible && _fullscreen;
+    _fullscreenNotifier.set(immersive);
+    if (immersive == _immersive) return;
+    _immersive = immersive;
+    SystemChrome.setEnabledSystemUIMode(immersive ? SystemUiMode.immersiveSticky : SystemUiMode.edgeToEdge);
+  }
+
   void _toggleMute() {
     setState(() => _muted = !_muted);
     for (final player in _players ?? const <Player>[]) {
@@ -277,6 +318,7 @@ class _ShortsPageState extends ConsumerState<ShortsPage> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       _active.set(_visible);
+      _applyFullscreen();
       _sync(items);
     });
 
@@ -292,6 +334,7 @@ class _ShortsPageState extends ConsumerState<ShortsPage> {
                 PageView.builder(
                   controller: _pageController,
                   scrollDirection: Axis.vertical,
+                  physics: const _FastPageScrollPhysics(),
                   itemCount: items.length,
                   onPageChanged: (i) => _onPageChanged(i, items),
                   itemBuilder: (_, i) {
@@ -302,6 +345,7 @@ class _ShortsPageState extends ConsumerState<ShortsPage> {
                       scene: items[i],
                       controller: controller,
                       paused: i == _index && _paused,
+                      fullscreen: _fullscreen,
                       onTap: _togglePause,
                       onFullVideo: () => _openFullVideo(items[i]),
                     );
@@ -318,6 +362,8 @@ class _ShortsPageState extends ConsumerState<ShortsPage> {
                   icon: Icons.slow_motion_video,
                 ),
               _TopBar(
+                fullscreen: _fullscreen,
+                onToggleFullscreen: _toggleFullscreen,
                 muted: _muted,
                 onToggleMute: _toggleMute,
                 onRefresh: () => ref.read(shortsFeedProvider.notifier).refresh(),
@@ -331,8 +377,16 @@ class _ShortsPageState extends ConsumerState<ShortsPage> {
 }
 
 class _TopBar extends StatelessWidget {
-  const _TopBar({required this.muted, required this.onToggleMute, required this.onRefresh});
+  const _TopBar({
+    required this.fullscreen,
+    required this.onToggleFullscreen,
+    required this.muted,
+    required this.onToggleMute,
+    required this.onRefresh,
+  });
 
+  final bool fullscreen;
+  final VoidCallback onToggleFullscreen;
   final bool muted;
   final VoidCallback onToggleMute;
   final VoidCallback onRefresh;
@@ -340,6 +394,23 @@ class _TopBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l = context.l10n;
+    // In fullscreen only a faint button to leave it again.
+    if (fullscreen) {
+      return SafeArea(
+        child: Align(
+          alignment: Alignment.topRight,
+          child: Opacity(
+            opacity: 0.6,
+            child: IconButton(
+              tooltip: l.exitFullscreen,
+              color: Colors.white,
+              icon: const Icon(Icons.fullscreen_exit, shadows: _shadow),
+              onPressed: onToggleFullscreen,
+            ),
+          ),
+        ),
+      );
+    }
     return DecoratedBox(
       decoration: const BoxDecoration(
         gradient: LinearGradient(
@@ -355,6 +426,12 @@ class _TopBar extends StatelessWidget {
             if (Navigator.of(context).canPop()) const BackButton(color: Colors.white) else const SizedBox(width: 16),
             Text(l.tabShorts, style: const TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.w700)),
             const Spacer(),
+            IconButton(
+              tooltip: l.fullscreen,
+              color: Colors.white,
+              icon: const Icon(Icons.fullscreen),
+              onPressed: onToggleFullscreen,
+            ),
             IconButton(
               tooltip: muted ? l.unmute : l.mute,
               color: Colors.white,
@@ -390,6 +467,7 @@ class _ShortView extends ConsumerStatefulWidget {
     required this.scene,
     required this.controller,
     required this.paused,
+    required this.fullscreen,
     required this.onTap,
     required this.onFullVideo,
   });
@@ -397,6 +475,9 @@ class _ShortView extends ConsumerStatefulWidget {
   final Scene scene;
   final VideoController? controller;
   final bool paused;
+
+  /// Hides everything but the video and the seek bar.
+  final bool fullscreen;
   final VoidCallback onTap;
   final VoidCallback onFullVideo;
 
@@ -462,6 +543,8 @@ class _ShortViewState extends ConsumerState<_ShortView> {
     final performer = scene.performers.firstOrNull;
     final studio = scene.studio;
     final controller = widget.controller;
+    // Above the home indicator when the navigation bar is hidden.
+    final bottom = MediaQuery.paddingOf(context).bottom;
 
     return Stack(
       fit: StackFit.expand,
@@ -469,20 +552,21 @@ class _ShortViewState extends ConsumerState<_ShortView> {
         if (scene.screenshotUrl != null) StashImage(scene.screenshotUrl!, fit: fit),
         if (controller != null)
           Video(controller: controller, fit: fit, fill: Colors.transparent, controls: _noControls),
-        GestureDetector(
-          behavior: HitTestBehavior.opaque,
-          onTap: () {
-            if (_rating) {
-              setState(() => _rating = false);
-            } else {
-              widget.onTap();
-            }
-          },
-          // Hold for double speed, like TikTok.
-          onLongPressStart: (_) => _setFast(true),
-          onLongPressEnd: (_) => _setFast(false),
-          onLongPressCancel: () => _setFast(false),
-          child: Center(child: _CenterIndicator(player: _player, paused: widget.paused)),
+        // Hold for double speed, like TikTok.
+        HoldDetector(
+          onHoldStart: () => _setFast(true),
+          onHoldEnd: () => _setFast(false),
+          child: GestureDetector(
+            behavior: HitTestBehavior.opaque,
+            onTap: () {
+              if (_rating) {
+                setState(() => _rating = false);
+              } else {
+                widget.onTap();
+              }
+            },
+            child: Center(child: _CenterIndicator(player: _player, paused: widget.paused)),
+          ),
         ),
         if (_fast)
           Positioned(
@@ -491,137 +575,146 @@ class _ShortViewState extends ConsumerState<_ShortView> {
             right: 0,
             child: Center(child: _Pill(child: Text(l.fastForward2x, style: const TextStyle(color: Colors.white)))),
           ),
-        const Positioned(
-          left: 0,
-          right: 0,
-          bottom: 0,
-          height: 260,
-          child: IgnorePointer(
-            child: DecoratedBox(
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.bottomCenter,
-                  end: Alignment.topCenter,
-                  colors: [Colors.black87, Colors.transparent],
+        if (!widget.fullscreen) ...[
+          const Positioned(
+            left: 0,
+            right: 0,
+            bottom: 0,
+            height: 260,
+            child: IgnorePointer(
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.bottomCenter,
+                    end: Alignment.topCenter,
+                    colors: [Colors.black87, Colors.transparent],
+                  ),
                 ),
               ),
             ),
           ),
-        ),
-        Positioned(
-          left: 16,
-          right: 88,
-          bottom: 28,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Wrap(
-                spacing: 8,
-                children: [
-                  if (studio != null)
-                    _Link(
-                      text: studio.name,
-                      bold: true,
-                      onTap: () => openStudio(ref, studio.id),
-                    ),
-                  for (final p in scene.performers)
-                    _Link(text: '@${p.name}', bold: true, onTap: () => openPerformer(ref, p.id)),
-                ],
-              ),
-              const SizedBox(height: 4),
-              Text(
-                scene.title,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-                style: const TextStyle(color: Colors.white, fontSize: 15, shadows: _shadow),
-              ),
-              if (tags.isNotEmpty) ...[
-                const SizedBox(height: 4),
+          Positioned(
+            left: 16,
+            right: 88,
+            bottom: bottom + 32,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
                 Wrap(
                   spacing: 8,
                   children: [
-                    for (final t in tags.take(5)) _Link(text: '#${t.name}', onTap: () => openTag(ref, t.id)),
+                    if (studio != null)
+                      _Link(
+                        text: studio.name,
+                        bold: true,
+                        onTap: () => openStudio(ref, studio.id),
+                      ),
+                    for (final p in scene.performers)
+                      _Link(text: '@${p.name}', bold: true, onTap: () => openPerformer(ref, p.id)),
                   ],
                 ),
-              ],
-              const SizedBox(height: 4),
-              Text(
-                [
-                  l.playsCount(scene.playCount),
-                  if (scene.duration > 0) formatDuration(scene.duration),
-                ].join(' • '),
-                style: const TextStyle(color: Colors.white70, fontSize: 12, shadows: _shadow),
-              ),
-            ],
-          ),
-        ),
-        Positioned(
-          right: 4,
-          bottom: 24,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: [
-              if (performer != null)
-                _Action(
-                  label: performer.name,
-                  onTap: () => openPerformer(ref, performer.id),
-                  child: DecoratedBox(
-                    decoration: BoxDecoration(shape: BoxShape.circle, border: Border.all(color: Colors.white, width: 2)),
-                    child: ChannelAvatar(name: performer.name, imageUrl: performer.imageUrl, radius: 22),
-                  ),
+                const SizedBox(height: 4),
+                Text(
+                  scene.title,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(color: Colors.white, fontSize: 15, shadows: _shadow),
                 ),
-              Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  AnimatedSize(
-                    duration: const Duration(milliseconds: 150),
-                    child: _rating ? _StarPicker(stars: stars, onRate: _rate) : const SizedBox.shrink(),
-                  ),
-                  _Action(
-                    label: stars == 0 ? l.shortsRate : '$stars',
-                    onTap: () => setState(() => _rating = !_rating),
-                    child: Icon(
-                      stars == 0 ? Icons.star_outline_rounded : Icons.star_rounded,
-                      color: stars == 0 ? Colors.white : Colors.amber,
-                      size: 36,
-                      shadows: _shadow,
-                    ),
+                if (tags.isNotEmpty) ...[
+                  const SizedBox(height: 4),
+                  Wrap(
+                    spacing: 8,
+                    children: [
+                      for (final t in tags.take(5)) _Link(text: '#${t.name}', onTap: () => openTag(ref, t.id)),
+                    ],
                   ),
                 ],
-              ),
-              _Action(
-                label: '$oCount',
-                tooltip: l.addO,
-                onTap: _addO,
-                child: const Icon(Icons.water_drop_outlined, color: Colors.white, size: 32, shadows: _shadow),
-              ),
-              _Action(
-                label: l.tabWatchLater,
-                onTap: () => ref.read(watchLaterProvider.notifier).toggle(scene.id),
-                child: Icon(
-                  saved ? Icons.watch_later : Icons.watch_later_outlined,
-                  color: Colors.white,
-                  size: 32,
-                  shadows: _shadow,
+                const SizedBox(height: 4),
+                Text(
+                  [
+                    l.playsCount(scene.playCount),
+                    if (scene.duration > 0) formatDuration(scene.duration),
+                  ].join(' • '),
+                  style: const TextStyle(color: Colors.white70, fontSize: 12, shadows: _shadow),
                 ),
-              ),
-              _Action(
-                label: l.shortsFullVideo,
-                onTap: widget.onFullVideo,
-                child: const Icon(Icons.open_in_full, color: Colors.white, size: 30, shadows: _shadow),
-              ),
-              _Action(
-                label: l.moreActions,
-                onTap: () => showSceneMenu(context, ref, scene),
-                child: const Icon(Icons.more_horiz, color: Colors.white, size: 30, shadows: _shadow),
-              ),
-            ],
+              ],
+            ),
           ),
-        ),
+          Positioned(
+            right: 4,
+            bottom: bottom + 28,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                if (performer != null)
+                  _Action(
+                    label: performer.name,
+                    onTap: () => openPerformer(ref, performer.id),
+                    child: DecoratedBox(
+                      decoration: BoxDecoration(shape: BoxShape.circle, border: Border.all(color: Colors.white, width: 2)),
+                      child: ChannelAvatar(name: performer.name, imageUrl: performer.imageUrl, radius: 22),
+                    ),
+                  ),
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    AnimatedSize(
+                      duration: const Duration(milliseconds: 150),
+                      child: _rating ? _StarPicker(stars: stars, onRate: _rate) : const SizedBox.shrink(),
+                    ),
+                    _Action(
+                      label: stars == 0 ? l.shortsRate : '$stars',
+                      onTap: () => setState(() => _rating = !_rating),
+                      child: Icon(
+                        stars == 0 ? Icons.star_outline_rounded : Icons.star_rounded,
+                        color: stars == 0 ? Colors.white : Colors.amber,
+                        size: 36,
+                        shadows: _shadow,
+                      ),
+                    ),
+                  ],
+                ),
+                _Action(
+                  label: '$oCount',
+                  tooltip: l.addO,
+                  onTap: _addO,
+                  child: const Icon(Icons.water_drop_outlined, color: Colors.white, size: 32, shadows: _shadow),
+                ),
+                _Action(
+                  label: l.tabWatchLater,
+                  onTap: () => ref.read(watchLaterProvider.notifier).toggle(scene.id),
+                  child: Icon(
+                    saved ? Icons.watch_later : Icons.watch_later_outlined,
+                    color: Colors.white,
+                    size: 32,
+                    shadows: _shadow,
+                  ),
+                ),
+                _Action(
+                  label: l.shortsFullVideo,
+                  onTap: widget.onFullVideo,
+                  child: const Icon(Icons.open_in_full, color: Colors.white, size: 30, shadows: _shadow),
+                ),
+                _Action(
+                  label: l.moreActions,
+                  onTap: () => showSceneMenu(context, ref, scene),
+                  child: const Icon(Icons.more_horiz, color: Colors.white, size: 30, shadows: _shadow),
+                ),
+              ],
+            ),
+          ),
+        ],
         if (controller != null)
-          Positioned(left: 0, right: 0, bottom: 0, child: _ProgressBar(player: controller.player)),
+          Positioned(
+            left: 8,
+            right: 8,
+            bottom: bottom,
+            // The player's seek bar: sprite thumbnails and marker dots, loaded
+            // once touched.
+            child: PreviewSeekBar(sceneId: scene.id, player: controller.player, visible: false),
+          ),
       ],
     );
   }
@@ -762,81 +855,6 @@ class _Action extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.only(top: 14),
       child: tooltip == null ? action : Tooltip(message: tooltip, child: action),
-    );
-  }
-}
-
-/// Progress line; tap or drag along it to seek. Thicker and with the time
-/// while dragging.
-class _ProgressBar extends StatefulWidget {
-  const _ProgressBar({required this.player});
-
-  final Player player;
-
-  @override
-  State<_ProgressBar> createState() => _ProgressBarState();
-}
-
-class _ProgressBarState extends State<_ProgressBar> {
-  /// Fraction while dragging.
-  double? _drag;
-
-  double _fraction(double dx) {
-    final width = context.size?.width ?? 0;
-    return width <= 0 ? 0 : (dx / width).clamp(0.0, 1.0);
-  }
-
-  void _seek(double fraction) {
-    final duration = widget.player.state.duration;
-    if (duration > Duration.zero) widget.player.seek(duration * fraction);
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final player = widget.player;
-    return GestureDetector(
-      behavior: HitTestBehavior.opaque,
-      onTapUp: (d) => _seek(_fraction(d.localPosition.dx)),
-      onHorizontalDragStart: (d) => setState(() => _drag = _fraction(d.localPosition.dx)),
-      onHorizontalDragUpdate: (d) => setState(() => _drag = _fraction(d.localPosition.dx)),
-      onHorizontalDragEnd: (_) {
-        final drag = _drag;
-        if (drag != null) _seek(drag);
-        setState(() => _drag = null);
-      },
-      onHorizontalDragCancel: () => setState(() => _drag = null),
-      child: SizedBox(
-        height: 24,
-        child: StreamBuilder<Duration>(
-          stream: player.stream.position,
-          initialData: player.state.position,
-          builder: (context, snapshot) {
-            final duration = player.state.duration;
-            final ms = duration.inMilliseconds;
-            final value = _drag ?? (ms == 0 ? 0.0 : snapshot.data!.inMilliseconds / ms);
-            return Stack(
-              alignment: Alignment.bottomCenter,
-              // The time sits above the bar.
-              clipBehavior: Clip.none,
-              children: [
-                if (_drag != null)
-                  Positioned(
-                    bottom: 8,
-                    child: Text(
-                      '${formatDuration(duration.inMilliseconds * _drag! / 1000)} / ${formatDuration(ms / 1000)}',
-                      style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600, shadows: _shadow),
-                    ),
-                  ),
-                LinearProgressIndicator(
-                  value: value.clamp(0.0, 1.0),
-                  minHeight: _drag == null ? 2 : 5,
-                  backgroundColor: Colors.white24,
-                ),
-              ],
-            );
-          },
-        ),
-      ),
     );
   }
 }

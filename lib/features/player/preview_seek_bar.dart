@@ -5,6 +5,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:media_kit/media_kit.dart';
 
 import '../../core/config/server_config.dart';
 import '../../core/utils/format.dart';
@@ -25,12 +26,17 @@ class PreviewSeekBar extends ConsumerStatefulWidget {
   const PreviewSeekBar({
     super.key,
     required this.sceneId,
+    this.player,
     this.visible = true,
     this.onInteractionStart,
     this.onInteractionEnd,
   });
 
   final String sceneId;
+
+  /// The player to show and seek; defaults to the app's main player
+  /// (the shorts pass one of theirs).
+  final Player? player;
 
   /// Whether the bar is shown. The controls stay mounted while hidden, so
   /// this keeps a hidden bar from loading the thumbnails.
@@ -81,10 +87,20 @@ class _PreviewSeekBarState extends ConsumerState<PreviewSeekBar> {
   late bool _loadThumbnails = widget.visible;
   String? _precachedSprite;
 
+  Player get _player => widget.player ?? ref.read(playerProvider);
+
   @override
   void initState() {
     super.initState();
-    final player = ref.read(playerProvider);
+    _subscribe();
+  }
+
+  void _subscribe() {
+    for (final s in _subscriptions) {
+      s.cancel();
+    }
+    _subscriptions.clear();
+    final player = _player;
     _position = player.state.position;
     _duration = player.state.duration;
     _buffer = player.state.buffer;
@@ -98,6 +114,7 @@ class _PreviewSeekBarState extends ConsumerState<PreviewSeekBar> {
   @override
   void didUpdateWidget(PreviewSeekBar oldWidget) {
     super.didUpdateWidget(oldWidget);
+    if (oldWidget.player != widget.player) _subscribe();
     if (oldWidget.sceneId != widget.sceneId) _loadThumbnails = false;
     if (widget.visible) _loadThumbnails = true;
   }
@@ -131,7 +148,7 @@ class _PreviewSeekBarState extends ConsumerState<PreviewSeekBar> {
   void _end() {
     final drag = _drag;
     if (drag != null && _totalMs > 0) {
-      ref.read(playerProvider).seek(Duration(milliseconds: (drag * _totalMs).round()));
+      _player.seek(Duration(milliseconds: (drag * _totalMs).round()));
     }
     _reset();
   }
