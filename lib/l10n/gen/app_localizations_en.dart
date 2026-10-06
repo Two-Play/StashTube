@@ -1263,4 +1263,19 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get cardShowRating => 'Show rating';
+
+  @override
+  String get shortsRate => 'Rate';
+
+  @override
+  String get mute => 'Mute';
+
+  @override
+  String get unmute => 'Unmute';
+
+  @override
+  String get moreActions => 'More';
+
+  @override
+  String get shortsFastForward => '2× speed';
 }

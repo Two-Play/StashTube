@@ -2179,6 +2179,36 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Show rating'**
   String get cardShowRating;
+
+  /// No description provided for @shortsRate.
+  ///
+  /// In en, this message translates to:
+  /// **'Rate'**
+  String get shortsRate;
+
+  /// No description provided for @mute.
+  ///
+  /// In en, this message translates to:
+  /// **'Mute'**
+  String get mute;
+
+  /// No description provided for @unmute.
+  ///
+  /// In en, this message translates to:
+  /// **'Unmute'**
+  String get unmute;
+
+  /// No description provided for @moreActions.
+  ///
+  /// In en, this message translates to:
+  /// **'More'**
+  String get moreActions;
+
+  /// No description provided for @shortsFastForward.
+  ///
+  /// In en, this message translates to:
+  /// **'2× speed'**
+  String get shortsFastForward;
 }
 
 class _AppLocalizationsDelegate

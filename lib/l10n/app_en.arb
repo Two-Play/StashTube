@@ -669,5 +669,10 @@
   "cardChannelStudio": "Studio",
   "cardChannelPerformers": "Performers",
   "cardShowPlays": "Show plays",
-  "cardShowRating": "Show rating"
+  "cardShowRating": "Show rating",
+  "shortsRate": "Rate",
+  "mute": "Mute",
+  "unmute": "Unmute",
+  "moreActions": "More",
+  "shortsFastForward": "2× speed"
 }

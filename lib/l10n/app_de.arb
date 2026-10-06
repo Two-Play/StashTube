@@ -346,5 +346,10 @@
   "cardChannelStudio": "Studio",
   "cardChannelPerformers": "Performer",
   "cardShowPlays": "Wiedergaben anzeigen",
-  "cardShowRating": "Bewertung anzeigen"
+  "cardShowRating": "Bewertung anzeigen",
+  "shortsRate": "Bewerten",
+  "mute": "Ton aus",
+  "unmute": "Ton an",
+  "moreActions": "Mehr",
+  "shortsFastForward": "2× Tempo"
 }

@@ -1266,4 +1266,19 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get cardShowRating => 'Bewertung anzeigen';
+
+  @override
+  String get shortsRate => 'Bewerten';
+
+  @override
+  String get mute => 'Ton aus';
+
+  @override
+  String get unmute => 'Ton an';
+
+  @override
+  String get moreActions => 'Mehr';
+
+  @override
+  String get shortsFastForward => '2× Tempo';
 }
