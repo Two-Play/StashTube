@@ -1277,11 +1277,27 @@ class AppLocalizationsEn extends AppLocalizations {
   String get moreActions => 'More';
 
   @override
-  String get shortsFastForward => '2× speed';
+  String get fastForward2x => '2× speed';
 
   @override
   String get unknownStudio => 'Unknown studio';
 
   @override
   String get unknownPerformer => 'Unknown performer';
+
+  @override
+  String get playbackSpeed => 'Playback speed';
+
+  @override
+  String get speedNormal => 'Normal';
+
+  @override
+  String speedValue(double rate) {
+    final intl.NumberFormat rateNumberFormat = intl.NumberFormat.decimalPattern(
+      localeName,
+    );
+    final String rateString = rateNumberFormat.format(rate);
+
+    return '$rateString×';
+  }
 }

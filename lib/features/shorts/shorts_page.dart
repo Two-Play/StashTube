@@ -22,6 +22,18 @@ import '../shell/navigation.dart';
 import 'shorts_feed.dart';
 import 'shorts_settings_sheet.dart';
 
+/// True while the shorts are on screen; the shell then hides the miniplayer.
+class ShortsActiveNotifier extends Notifier<bool> {
+  @override
+  bool build() => false;
+
+  void set(bool active) {
+    if (state != active) state = active;
+  }
+}
+
+final shortsActiveProvider = NotifierProvider<ShortsActiveNotifier, bool>(ShortsActiveNotifier.new);
+
 /// Whether the app's main player is playing.
 final _mainPlayingProvider = StreamProvider.autoDispose<bool>((ref) => ref.watch(playerProvider).stream.playing);
 
@@ -31,8 +43,8 @@ final _mainPlayingProvider = StreamProvider.autoDispose<bool>((ref) => ref.watch
 /// Has its own small pool of players next to the app's main player: the
 /// current short plays, its neighbours are opened paused so swiping starts
 /// them without delay. Plays only while its tab and route are on top, the
-/// main player isn't expanded and the app is visible; starting it pauses
-/// the main player.
+/// main player isn't open and the app is visible. Meanwhile the shell hides
+/// the miniplayer and the main player is paused.
 class ShortsPage extends ConsumerStatefulWidget {
   const ShortsPage({super.key});
 
@@ -44,12 +56,20 @@ class _ShortsPageState extends ConsumerState<ShortsPage> {
   static const _poolSize = 3;
 
   /// The tab this page lives in; it stays mounted (IndexedStack) while
-  /// another tab is shown.
-  late final AppTab _tab = ref.read(currentTabProvider);
+  /// another tab is shown. Found through the tab's navigator, because a tab
+  /// root is built at startup while another tab is selected.
+  AppTab? _tabOf(BuildContext context) {
+    final navigator = Navigator.maybeOf(context);
+    for (final entry in ref.watch(tabNavigatorKeysProvider).entries) {
+      if (entry.value.currentState == navigator) return entry.key;
+    }
+    return null;
+  }
   // Not restored from page storage: a new feed starts at its first short.
   final _pageController = PageController(keepPage: false);
   late final AppLifecycleListener _lifecycle;
   late final ValueNotifier<double> _miniplayerHeight;
+  late final ShortsActiveNotifier _active = ref.read(shortsActiveProvider.notifier);
 
   List<Player>? _players;
   List<VideoController>? _controllers;
@@ -70,7 +90,10 @@ class _ShortsPageState extends ConsumerState<ShortsPage> {
   bool _muted = false;
   bool _appVisible = true;
   bool _mainExpanded = false;
-  bool _wasCoveredByMain = false;
+
+  /// "Full video" opened the main player; the shorts wait until it is
+  /// collapsed again.
+  bool _handedToPlayer = false;
 
   StreamSubscription<Duration>? _positionSub;
   String? _watchedScene;
@@ -88,6 +111,9 @@ class _ShortsPageState extends ConsumerState<ShortsPage> {
 
   @override
   void dispose() {
+    // Not during the tree's teardown: providers can't change then.
+    final active = _active;
+    Future.microtask(() => active.set(false));
     _miniplayerHeight.removeListener(_onMiniplayerHeight);
     _lifecycle.dispose();
     _positionSub?.cancel();
@@ -100,7 +126,18 @@ class _ShortsPageState extends ConsumerState<ShortsPage> {
 
   void _onMiniplayerHeight() {
     final expanded = _miniplayerHeight.value > kMiniPlayerHeight + 1;
-    if (expanded != _mainExpanded) setState(() => _mainExpanded = expanded);
+    if (expanded == _mainExpanded) return;
+    setState(() {
+      _mainExpanded = expanded;
+      // Collapsing the player returns to the shorts.
+      if (!expanded) _handedToPlayer = false;
+    });
+  }
+
+  void _openFullVideo(Scene scene) {
+    setState(() => _handedToPlayer = true);
+    _active.set(false);
+    ref.read(nowPlayingProvider.notifier).play(scene);
   }
 
   int _slot(int index) => index % _poolSize;
@@ -195,16 +232,10 @@ class _ShortsPageState extends ConsumerState<ShortsPage> {
     }
   }
 
-  void _onVisibilityChanged(bool visible, {required bool fromMainPlayer}) {
-    if (visible && ref.read(nowPlayingProvider) != null) {
-      final main = ref.read(playerProvider);
-      if (fromMainPlayer && main.state.playing) {
-        // Collapsing the main player keeps it playing; the short waits.
-        _paused = true;
-      } else {
-        main.pause();
-      }
-    }
+  /// The shell hides the miniplayer while the shorts are shown, so the
+  /// main player pauses.
+  void _onVisibilityChanged(bool visible) {
+    if (visible && ref.read(nowPlayingProvider) != null) ref.read(playerProvider).pause();
     _visible = visible;
   }
 
@@ -219,13 +250,13 @@ class _ShortsPageState extends ConsumerState<ShortsPage> {
   @override
   Widget build(BuildContext context) {
     final nowPlaying = ref.watch(nowPlayingProvider);
-    final mainCovers = nowPlaying != null && _mainExpanded;
-    final visible = ref.watch(currentTabProvider) == _tab &&
+    final mainCovers = nowPlaying != null && (_mainExpanded || _handedToPlayer);
+    final tab = _tabOf(context);
+    final visible = (tab == null || ref.watch(currentTabProvider) == tab) &&
         (ModalRoute.of(context)?.isCurrent ?? true) &&
         _appVisible &&
         !mainCovers;
-    if (visible != _visible) _onVisibilityChanged(visible, fromMainPlayer: !mainCovers && _wasCoveredByMain);
-    _wasCoveredByMain = mainCovers;
+    if (visible != _visible) _onVisibilityChanged(visible);
     if (visible) _started = true;
 
     if (nowPlaying != null) {
@@ -244,7 +275,9 @@ class _ShortsPageState extends ConsumerState<ShortsPage> {
       });
     }
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) _sync(items);
+      if (!mounted) return;
+      _active.set(_visible);
+      _sync(items);
     });
 
     return Theme(
@@ -270,6 +303,7 @@ class _ShortsPageState extends ConsumerState<ShortsPage> {
                       controller: controller,
                       paused: i == _index && _paused,
                       onTap: _togglePause,
+                      onFullVideo: () => _openFullVideo(items[i]),
                     );
                   },
                 )
@@ -357,12 +391,14 @@ class _ShortView extends ConsumerStatefulWidget {
     required this.controller,
     required this.paused,
     required this.onTap,
+    required this.onFullVideo,
   });
 
   final Scene scene;
   final VideoController? controller;
   final bool paused;
   final VoidCallback onTap;
+  final VoidCallback onFullVideo;
 
   @override
   ConsumerState<_ShortView> createState() => _ShortViewState();
@@ -453,7 +489,7 @@ class _ShortViewState extends ConsumerState<_ShortView> {
             top: MediaQuery.paddingOf(context).top + 56,
             left: 0,
             right: 0,
-            child: Center(child: _Pill(child: Text(l.shortsFastForward, style: const TextStyle(color: Colors.white)))),
+            child: Center(child: _Pill(child: Text(l.fastForward2x, style: const TextStyle(color: Colors.white)))),
           ),
         const Positioned(
           left: 0,
@@ -573,7 +609,7 @@ class _ShortViewState extends ConsumerState<_ShortView> {
               ),
               _Action(
                 label: l.shortsFullVideo,
-                onTap: () => ref.read(nowPlayingProvider.notifier).play(scene),
+                onTap: widget.onFullVideo,
                 child: const Icon(Icons.open_in_full, color: Colors.white, size: 30, shadows: _shadow),
               ),
               _Action(

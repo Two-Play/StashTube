@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:media_kit/media_kit.dart';
 
@@ -18,7 +19,8 @@ import '../../l10n/l10n.dart';
 ///
 /// * tap: show/hide; auto-hide after [hideAfter] while playing
 /// * double tap on the left/right third: seek ∓/± 10 s
-/// * top: collapse (outside fullscreen), [topActions], quality
+/// * hold: double speed until released
+/// * top: collapse (outside fullscreen), [topActions], speed, quality
 /// * center: play/pause or a buffering spinner
 /// * bottom: time, fullscreen toggle, [PreviewSeekBar]
 class StashVideoControls extends ConsumerStatefulWidget {
@@ -53,6 +55,9 @@ class _StashVideoControlsState extends ConsumerState<StashVideoControls> {
   bool _interacting = false;
   Timer? _hideTimer;
   Offset? _doubleTapPosition;
+
+  /// The speed before holding for 2×; null while not holding.
+  double? _rateBeforeHold;
 
   /// -1 = rewound, 1 = skipped forward; shown briefly as feedback.
   int _seekFeedback = 0;
@@ -115,6 +120,21 @@ class _StashVideoControlsState extends ConsumerState<StashVideoControls> {
     });
   }
 
+  void _startHold() {
+    final player = ref.read(playerProvider);
+    if (_rateBeforeHold != null || !player.state.playing) return;
+    HapticFeedback.lightImpact();
+    setState(() => _rateBeforeHold = player.state.rate);
+    player.setRate(2);
+  }
+
+  void _endHold() {
+    final rate = _rateBeforeHold;
+    if (rate == null) return;
+    setState(() => _rateBeforeHold = null);
+    ref.read(playerProvider).setRate(rate);
+  }
+
   @override
   Widget build(BuildContext context) {
     final player = ref.watch(playerProvider);
@@ -136,6 +156,9 @@ class _StashVideoControlsState extends ConsumerState<StashVideoControls> {
           onTap: () => _visible ? _hide() : _show(),
           onDoubleTapDown: (d) => _doubleTapPosition = d.localPosition,
           onDoubleTap: _onDoubleTap,
+          onLongPressStart: (_) => _startHold(),
+          onLongPressEnd: (_) => _endHold(),
+          onLongPressCancel: _endHold,
           // Claim vertical drags so the miniplayer's own pan doesn't fight
           // with DragToMinimize, which handles the swipe-down from raw
           // pointer events.
@@ -147,6 +170,26 @@ class _StashVideoControlsState extends ConsumerState<StashVideoControls> {
             child: Align(
               alignment: _seekFeedback < 0 ? const Alignment(-0.6, 0) : const Alignment(0.6, 0),
               child: _SeekFeedback(forward: _seekFeedback > 0),
+            ),
+          ),
+        if (_rateBeforeHold != null)
+          IgnorePointer(
+            child: Align(
+              alignment: const Alignment(0, -0.75),
+              child: DecoratedBox(
+                decoration: BoxDecoration(color: Colors.black54, borderRadius: BorderRadius.circular(16)),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(Icons.fast_forward, color: Colors.white, size: 18),
+                      const SizedBox(width: 4),
+                      Text(context.l10n.fastForward2x, style: const TextStyle(color: Colors.white)),
+                    ],
+                  ),
+                ),
+              ),
             ),
           ),
         IgnorePointer(
@@ -179,6 +222,18 @@ class _StashVideoControlsState extends ConsumerState<StashVideoControls> {
                         const Spacer(),
                         const CastButton(color: Colors.white),
                         ...widget.topActions,
+                        StreamBuilder<double>(
+                          stream: player.stream.rate,
+                          initialData: player.state.rate,
+                          builder: (_, rate) => TextButton(
+                            style: TextButton.styleFrom(foregroundColor: Colors.white),
+                            onPressed: () => _act(() => showSpeedSheet(context, player)),
+                            child: Tooltip(
+                              message: context.l10n.playbackSpeed,
+                              child: Text(context.l10n.speedValue(rate.data ?? 1)),
+                            ),
+                          ),
+                        ),
                         IconButton(
                           tooltip: context.l10n.quality,
                           icon: const Icon(Icons.settings_outlined),
@@ -291,3 +346,38 @@ class _SeekFeedback extends StatelessWidget {
         ),
       );
 }
+
+/// Playback speeds offered in [showSpeedSheet].
+const playbackSpeeds = [0.5, 0.75, 1.0, 1.25, 1.5, 1.75, 2.0];
+
+/// Bottom sheet to pick the playback speed. mpv keeps the speed across
+/// files, so it stays for the next scenes.
+Future<void> showSpeedSheet(BuildContext context, Player player) => showModalBottomSheet<void>(
+      context: context,
+      useRootNavigator: true,
+      showDragHandle: true,
+      builder: (sheetContext) {
+        final l = sheetContext.l10n;
+        final current = player.state.rate;
+        return SafeArea(
+          child: ListView(
+            shrinkWrap: true,
+            children: [
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+                child: Text(l.playbackSpeed, style: Theme.of(sheetContext).textTheme.titleMedium),
+              ),
+              for (final speed in playbackSpeeds)
+                ListTile(
+                  leading: Icon((speed - current).abs() < 0.01 ? Icons.check : null),
+                  title: Text(speed == 1 ? l.speedNormal : l.speedValue(speed)),
+                  onTap: () {
+                    Navigator.pop(sheetContext);
+                    player.setRate(speed);
+                  },
+                ),
+            ],
+          ),
+        );
+      },
+    );

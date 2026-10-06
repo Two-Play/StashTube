@@ -1280,11 +1280,27 @@ class AppLocalizationsDe extends AppLocalizations {
   String get moreActions => 'Mehr';
 
   @override
-  String get shortsFastForward => '2× Tempo';
+  String get fastForward2x => '2× Tempo';
 
   @override
   String get unknownStudio => 'Unbekanntes Studio';
 
   @override
   String get unknownPerformer => 'Unbekannter Performer';
+
+  @override
+  String get playbackSpeed => 'Wiedergabetempo';
+
+  @override
+  String get speedNormal => 'Normal';
+
+  @override
+  String speedValue(double rate) {
+    final intl.NumberFormat rateNumberFormat = intl.NumberFormat.decimalPattern(
+      localeName,
+    );
+    final String rateString = rateNumberFormat.format(rate);
+
+    return '$rateString×';
+  }
 }

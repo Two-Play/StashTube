@@ -2204,11 +2204,11 @@ abstract class AppLocalizations {
   /// **'More'**
   String get moreActions;
 
-  /// No description provided for @shortsFastForward.
+  /// No description provided for @fastForward2x.
   ///
   /// In en, this message translates to:
   /// **'2× speed'**
-  String get shortsFastForward;
+  String get fastForward2x;
 
   /// No description provided for @unknownStudio.
   ///
@@ -2221,6 +2221,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Unknown performer'**
   String get unknownPerformer;
+
+  /// No description provided for @playbackSpeed.
+  ///
+  /// In en, this message translates to:
+  /// **'Playback speed'**
+  String get playbackSpeed;
+
+  /// No description provided for @speedNormal.
+  ///
+  /// In en, this message translates to:
+  /// **'Normal'**
+  String get speedNormal;
+
+  /// No description provided for @speedValue.
+  ///
+  /// In en, this message translates to:
+  /// **'{rate}×'**
+  String speedValue(double rate);
 }
 
 class _AppLocalizationsDelegate

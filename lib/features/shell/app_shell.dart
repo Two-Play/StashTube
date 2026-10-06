@@ -42,6 +42,8 @@ class AppShell extends ConsumerWidget {
     final tabs = ref.watch(navBarConfigProvider).visible;
     final navigatorKeys = ref.watch(tabNavigatorKeysProvider);
     final scene = ref.watch(nowPlayingProvider);
+    // No miniplayer in the shorts (they pause the main player meanwhile).
+    final hidePlayer = ref.watch(shortsActiveProvider);
     final playerHeight = ref.watch(miniplayerHeightProvider);
     final maxPlayerHeight = MediaQuery.sizeOf(context).height;
 
@@ -73,7 +75,7 @@ class AppShell extends ConsumerWidget {
           children: [
             Padding(
               // Keep the end of every list visible above the collapsed player.
-              padding: EdgeInsets.only(bottom: scene == null ? 0 : kMiniPlayerHeight),
+              padding: EdgeInsets.only(bottom: scene == null || hidePlayer ? 0 : kMiniPlayerHeight),
               // Only the tabs in the bar; the GlobalKeys keep each navigator's
               // pages when the tabs are reordered.
               child: IndexedStack(
@@ -88,17 +90,20 @@ class AppShell extends ConsumerWidget {
               ),
             ),
             if (scene != null)
-              ClosingSlide(
-                closing: ref.watch(playerClosingProvider),
-                distance: kMiniPlayerHeight,
-                onClosed: () => ref.read(nowPlayingProvider.notifier).close(),
-                child: Miniplayer(
-                  controller: ref.watch(miniplayerControllerProvider),
-                  valueNotifier: playerHeight,
-                  minHeight: kMiniPlayerHeight,
-                  maxHeight: maxPlayerHeight,
-                  onDismissed: () => ref.read(nowPlayingProvider.notifier).close(),
-                  builder: (height, _) => PlayerPanel(scene: scene, height: height, maxHeight: maxPlayerHeight),
+              Offstage(
+                offstage: hidePlayer,
+                child: ClosingSlide(
+                  closing: ref.watch(playerClosingProvider),
+                  distance: kMiniPlayerHeight,
+                  onClosed: () => ref.read(nowPlayingProvider.notifier).close(),
+                  child: Miniplayer(
+                    controller: ref.watch(miniplayerControllerProvider),
+                    valueNotifier: playerHeight,
+                    minHeight: kMiniPlayerHeight,
+                    maxHeight: maxPlayerHeight,
+                    onDismissed: () => ref.read(nowPlayingProvider.notifier).close(),
+                    builder: (height, _) => PlayerPanel(scene: scene, height: height, maxHeight: maxPlayerHeight),
+                  ),
                 ),
               ),
           ],

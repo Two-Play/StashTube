@@ -72,6 +72,14 @@ class FakePlayer implements Player {
   @override
   Future<void> stop() async {}
 
+  final rates = <double>[];
+
+  @override
+  Future<void> setRate(double rate) async {
+    rates.add(rate);
+    _state = _state.copyWith(rate: rate);
+  }
+
   @override
   Future<void> playOrPause() async => playOrPauseCalls++;
 

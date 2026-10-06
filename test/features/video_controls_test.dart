@@ -123,4 +123,28 @@ void main() {
     await tester.tap(find.byTooltip('Fullscreen'));
     expect(fullscreenToggles, 1);
   });
+
+  testWidgets('holding the video plays at double speed until released', (tester) async {
+    await pump(tester);
+    final rect = tester.getRect(find.byType(StashVideoControls));
+    final gesture = await tester.startGesture(Offset(rect.left + 100, rect.center.dy));
+    await tester.pump(kLongPressTimeout + const Duration(milliseconds: 50));
+    expect(player.rates, [2.0]);
+    expect(find.text('2× speed'), findsOneWidget);
+    await gesture.up();
+    await tester.pump();
+    expect(player.rates, [2.0, 1.0]);
+    expect(find.text('2× speed'), findsNothing);
+  });
+
+  testWidgets('the speed button picks a playback speed', (tester) async {
+    await pump(tester);
+    await tapVideo(tester);
+    await tester.tap(find.text('1×'));
+    await tester.pumpAndSettle();
+    expect(find.text('Normal'), findsOneWidget);
+    await tester.tap(find.text('1.5×'));
+    await tester.pumpAndSettle();
+    expect(player.rates, [1.5]);
+  });
 }

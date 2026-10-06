@@ -674,7 +674,18 @@
   "mute": "Mute",
   "unmute": "Unmute",
   "moreActions": "More",
-  "shortsFastForward": "2× speed",
+  "fastForward2x": "2× speed",
   "unknownStudio": "Unknown studio",
-  "unknownPerformer": "Unknown performer"
+  "unknownPerformer": "Unknown performer",
+  "playbackSpeed": "Playback speed",
+  "speedNormal": "Normal",
+  "speedValue": "{rate}×",
+  "@speedValue": {
+    "placeholders": {
+      "rate": {
+        "type": "double",
+        "format": "decimalPattern"
+      }
+    }
+  }
 }
