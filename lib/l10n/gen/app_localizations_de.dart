@@ -1281,4 +1281,10 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get shortsFastForward => '2× Tempo';
+
+  @override
+  String get unknownStudio => 'Unbekanntes Studio';
+
+  @override
+  String get unknownPerformer => 'Unbekannter Performer';
 }

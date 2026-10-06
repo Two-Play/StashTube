@@ -3,7 +3,23 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:stash_app_mobile/data/models/gallery.dart';
 import 'package:stash_app_mobile/data/models/list_queries.dart';
+import 'package:stash_app_mobile/data/models/image_item.dart';
+import 'package:stash_app_mobile/data/models/page_result.dart';
+import 'package:stash_app_mobile/data/providers.dart';
+import 'package:stash_app_mobile/data/repositories/stash_repository.dart';
 import 'package:stash_app_mobile/features/library/galleries_tab.dart';
+import 'package:stash_app_mobile/features/library/gallery_page.dart';
+
+import '../helpers.dart';
+
+class _NoImages implements StashRepository {
+  @override
+  Future<PageResult<ImageItem>> findImages(ImageQuery query, {int page = 1, int perPage = 24}) async =>
+      const PageResult(items: [], totalCount: 0);
+
+  @override
+  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
+}
 
 void main() {
   group('Gallery.fromJson', () {
@@ -66,5 +82,20 @@ void main() {
     ));
     expect(find.text('Holiday'), findsOneWidget);
     expect(find.text('1,234'), findsOneWidget);
+    expect(find.text('Unknown studio'), findsOneWidget);
+  });
+
+  testWidgets('the gallery page says when studio and performers are unknown', (tester) async {
+    await tester.pumpWidget(ProviderScope(
+      overrides: [
+        ...testServer,
+        stashRepositoryProvider.overrideWithValue(_NoImages()),
+        galleryProvider('1').overrideWith((ref) async => const Gallery(id: '1', title: 'Holiday')),
+      ],
+      child: const MaterialApp(home: GalleryPage(galleryId: '1')),
+    ));
+    await tester.pumpAndSettle();
+    expect(find.text('Unknown studio'), findsOneWidget);
+    expect(find.text('Unknown performer'), findsOneWidget);
   });
 }

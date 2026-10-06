@@ -351,5 +351,7 @@
   "mute": "Ton aus",
   "unmute": "Ton an",
   "moreActions": "Mehr",
-  "shortsFastForward": "2× Tempo"
+  "shortsFastForward": "2× Tempo",
+  "unknownStudio": "Unbekanntes Studio",
+  "unknownPerformer": "Unbekannter Performer"
 }

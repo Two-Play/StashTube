@@ -2209,6 +2209,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'2× speed'**
   String get shortsFastForward;
+
+  /// No description provided for @unknownStudio.
+  ///
+  /// In en, this message translates to:
+  /// **'Unknown studio'**
+  String get unknownStudio;
+
+  /// No description provided for @unknownPerformer.
+  ///
+  /// In en, this message translates to:
+  /// **'Unknown performer'**
+  String get unknownPerformer;
 }
 
 class _AppLocalizationsDelegate

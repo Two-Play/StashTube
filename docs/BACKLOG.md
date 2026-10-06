@@ -173,8 +173,8 @@ Eine wartbare Basis, damit Features unabhängig voneinander wachsen können.
 | # | User Story | Akzeptanzkriterien | Prio | Status |
 |---|---|---|---|---|
 | 15.1 | Als Nutzer möchte ich alle Bilder als Raster durchsehen. | Tab „Library“ → „Images“: Thumbnail-Raster mit Gesamtzahl, Sortierung, Endlos-Scroll. | Next | ✅ |
-| 15.2 | Als Nutzer möchte ich Bilder im Vollbild ansehen. | Wischen zwischen Bildern, Pinch-Zoom und Doppeltipp-Zoom (an der getippten Stelle, erneut tippen zoomt heraus), Tippen blendet Infos (Titel, Studio, Datum, Position) ein/aus. Performer als antippbare Chips mit Avatar, die die Performer-Seite öffnen. Lädt beim Blättern nach. | Next | ✅ |
-| 15.3 | Als Nutzer möchte ich Galerien durchsehen. | Library → „Galleries“: Cover-Raster mit Bildanzahl, Sortierung, Endlos-Scroll. Galerieseite mit Details, Studio/Performer-Chips und allen Bildern in Dateireihenfolge; Vollbild-Viewer zum Durchblättern. | Next | ✅ |
+| 15.2 | Als Nutzer möchte ich Bilder im Vollbild ansehen. | Wischen zwischen Bildern, Pinch-Zoom und Doppeltipp-Zoom (an der getippten Stelle, erneut tippen zoomt heraus), Tippen blendet Infos (Titel, Studio, Datum, Position) ein/aus. Performer als antippbare Chips mit Avatar, die die Performer-Seite öffnen; fehlen Studio oder Performer, steht „Unbekanntes Studio“ bzw. „Unbekannter Performer“ da. Lädt beim Blättern nach. | Next | ✅ |
+| 15.3 | Als Nutzer möchte ich Galerien durchsehen. | Library → „Galleries“: Cover-Raster mit Bildanzahl, Sortierung, Endlos-Scroll. Galerieseite mit Details, Studio/Performer-Chips (auch „Unbekannt“) und allen Bildern in Dateireihenfolge; Vollbild-Viewer zum Durchblättern. | Next | ✅ |
 | 15.4 | Als Nutzer möchte ich Bilder nach Performer/Studio/Tag filtern. | Filter wie bei Szenen; Bilder auf den Kanalseiten. | Later | ⬜ |
 
 ## Epic 16 – Statistik

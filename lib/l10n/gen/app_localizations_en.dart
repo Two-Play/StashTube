@@ -1278,4 +1278,10 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get shortsFastForward => '2× speed';
+
+  @override
+  String get unknownStudio => 'Unknown studio';
+
+  @override
+  String get unknownPerformer => 'Unknown performer';
 }

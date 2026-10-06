@@ -58,28 +58,37 @@ class GalleryPage extends ConsumerWidget {
                       const SizedBox(height: 4),
                       Text(g.details!, maxLines: 3, overflow: TextOverflow.ellipsis, style: theme.textTheme.bodySmall),
                     ],
-                    if (g.studio != null || g.performers.isNotEmpty)
-                      Padding(
-                        padding: const EdgeInsets.only(top: 8),
-                        child: Wrap(
-                          spacing: 8,
-                          runSpacing: 4,
-                          children: [
-                            if (g.studio != null)
-                              ActionChip(
-                                avatar: const Icon(Icons.subscriptions_outlined, size: 16),
-                                label: Text(g.studio!.name),
-                                onPressed: () => openStudio(ref, g.studio!.id),
-                              ),
-                            for (final p in g.performers)
-                              ActionChip(
-                                avatar: const Icon(Icons.person_outline, size: 16),
-                                label: Text(p.name),
-                                onPressed: () => openPerformer(ref, p.id),
-                              ),
-                          ],
-                        ),
+                    Padding(
+                      padding: const EdgeInsets.only(top: 8),
+                      child: Wrap(
+                        spacing: 8,
+                        runSpacing: 4,
+                        children: [
+                          if (g.studio != null)
+                            ActionChip(
+                              avatar: const Icon(Icons.subscriptions_outlined, size: 16),
+                              label: Text(g.studio!.name),
+                              onPressed: () => openStudio(ref, g.studio!.id),
+                            )
+                          else
+                            Chip(
+                              avatar: const Icon(Icons.subscriptions_outlined, size: 16),
+                              label: Text(context.l10n.unknownStudio),
+                            ),
+                          if (g.performers.isEmpty)
+                            Chip(
+                              avatar: const Icon(Icons.person_outline, size: 16),
+                              label: Text(context.l10n.unknownPerformer),
+                            ),
+                          for (final p in g.performers)
+                            ActionChip(
+                              avatar: const Icon(Icons.person_outline, size: 16),
+                              label: Text(p.name),
+                              onPressed: () => openPerformer(ref, p.id),
+                            ),
+                        ],
                       ),
+                    ),
                   ],
                 ),
               ),

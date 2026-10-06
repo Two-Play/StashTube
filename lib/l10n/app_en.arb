@@ -674,5 +674,7 @@
   "mute": "Mute",
   "unmute": "Unmute",
   "moreActions": "More",
-  "shortsFastForward": "2× speed"
+  "shortsFastForward": "2× speed",
+  "unknownStudio": "Unknown studio",
+  "unknownPerformer": "Unknown performer"
 }

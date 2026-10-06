@@ -131,7 +131,7 @@ class GalleryTile extends ConsumerWidget {
           Text(gallery.title, maxLines: 1, overflow: TextOverflow.ellipsis, style: theme.textTheme.titleSmall),
           Text(
             [
-              if (gallery.studio != null) gallery.studio!.name,
+              gallery.studio?.name ?? context.l10n.unknownStudio,
               if (gallery.date != null) formatDate(gallery.date!),
             ].join(' • '),
             maxLines: 1,

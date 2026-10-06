@@ -5,7 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/utils/format.dart';
 import '../../data/models/image_item.dart';
 import '../../data/models/list_queries.dart';
-import '../../data/models/performer.dart';
+import '../../l10n/l10n.dart';
 import '../../data/providers.dart';
 import '../shell/navigation.dart';
 import '../../widgets/stash_image.dart';
@@ -171,8 +171,9 @@ class _Overlay extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final image = this.image;
+    final l = context.l10n;
     final meta = [
-      if (image?.studio != null) image!.studio!.name,
+      image?.studio?.name ?? l.unknownStudio,
       if (image?.date != null) formatDate(image!.date!),
     ].join(' • ');
 
@@ -227,26 +228,26 @@ class _Overlay extends ConsumerWidget {
                         overflow: TextOverflow.ellipsis,
                         style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w600),
                       ),
-                      if (meta.isNotEmpty) Text(meta, style: const TextStyle(color: Colors.white70)),
-                      if (image.performers.isNotEmpty) ...[
-                        const SizedBox(height: 12),
-                        Wrap(
-                          spacing: 8,
-                          runSpacing: 8,
-                          children: [
-                            for (final performer in image.performers)
-                              _PerformerChip(
-                                performer: performer,
-                                // The viewer covers the shell, so close it to
-                                // show the performer page in the current tab.
-                                onTap: () {
-                                  openPerformer(ref, performer.id);
-                                  Navigator.of(context).pop();
-                                },
-                              ),
-                          ],
-                        ),
-                      ],
+                      Text(meta, style: const TextStyle(color: Colors.white70)),
+                      const SizedBox(height: 12),
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 8,
+                        children: [
+                          if (image.performers.isEmpty) _PerformerChip(name: l.unknownPerformer),
+                          for (final performer in image.performers)
+                            _PerformerChip(
+                              name: performer.name,
+                              imageUrl: performer.imageUrl,
+                              // The viewer covers the shell, so close it to
+                              // show the performer page in the current tab.
+                              onTap: () {
+                                openPerformer(ref, performer.id);
+                                Navigator.of(context).pop();
+                              },
+                            ),
+                        ],
+                      ),
                     ],
                   ),
                 ),
@@ -259,10 +260,13 @@ class _Overlay extends ConsumerWidget {
 }
 
 class _PerformerChip extends StatelessWidget {
-  const _PerformerChip({required this.performer, required this.onTap});
+  const _PerformerChip({required this.name, this.imageUrl, this.onTap});
 
-  final Performer performer;
-  final VoidCallback onTap;
+  final String name;
+  final String? imageUrl;
+
+  /// Null for "unknown performer".
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) => Material(
@@ -276,9 +280,9 @@ class _PerformerChip extends StatelessWidget {
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            ChannelAvatar(name: performer.name, imageUrl: performer.imageUrl, radius: 14),
+            ChannelAvatar(name: onTap == null ? '?' : name, imageUrl: imageUrl, radius: 14),
             const SizedBox(width: 8),
-            Text(performer.name, style: const TextStyle(color: Colors.white)),
+            Text(name, style: TextStyle(color: onTap == null ? Colors.white70 : Colors.white)),
           ],
         ),
       ),
