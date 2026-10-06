@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/config/server_config.dart';
@@ -14,12 +15,26 @@ import 'player_providers.dart';
 
 /// Seek bar that shows a preview frame above the finger while scrubbing
 /// (from Stash's sprite thumbnails, if generated) plus the target time and
-/// chapter. Chapters (scene markers) split the bar into segments. Seeks
+/// chapter. Chapters (scene markers) split the bar into segments and are
+/// marked with dots; scrubbing near one snaps onto it. Seeks
 /// once on release, like YouTube.
+///
+/// The thumbnails load lazily: the WebVTT once the bar is [visible] or
+/// touched, then the sprite is precached so the first scrub shows frames.
 class PreviewSeekBar extends ConsumerStatefulWidget {
-  const PreviewSeekBar({super.key, required this.sceneId, this.onInteractionStart, this.onInteractionEnd});
+  const PreviewSeekBar({
+    super.key,
+    required this.sceneId,
+    this.visible = true,
+    this.onInteractionStart,
+    this.onInteractionEnd,
+  });
 
   final String sceneId;
+
+  /// Whether the bar is shown. The controls stay mounted while hidden, so
+  /// this keeps a hidden bar from loading the thumbnails.
+  final bool visible;
 
   /// While the user touches the bar, e.g. to keep the controls visible.
   final VoidCallback? onInteractionStart;
@@ -44,6 +59,28 @@ class _PreviewSeekBarState extends ConsumerState<PreviewSeekBar> {
   double? _drag;
   double _barWidth = 1;
 
+  /// Scene markers as fractions of the duration, from the last build.
+  List<double> _markerFractions = const [];
+
+  /// The marker the drag currently snaps to.
+  double? _snappedTo;
+
+  /// Within this distance of a marker, scrubbing snaps onto it.
+  static const _snapDistance = 10.0;
+
+  double? _markerNear(double fraction) {
+    double? best;
+    for (final m in _markerFractions) {
+      final distance = (m - fraction).abs() * _barWidth;
+      if (distance <= _snapDistance && (best == null || distance < (best - fraction).abs() * _barWidth)) best = m;
+    }
+    return best;
+  }
+
+  /// Set once the user may seek; stays set for this scene.
+  late bool _loadThumbnails = widget.visible;
+  String? _precachedSprite;
+
   @override
   void initState() {
     super.initState();
@@ -56,6 +93,13 @@ class _PreviewSeekBarState extends ConsumerState<PreviewSeekBar> {
       player.stream.duration.listen((v) => setState(() => _duration = v)),
       player.stream.buffer.listen((v) => setState(() => _buffer = v)),
     ]);
+  }
+
+  @override
+  void didUpdateWidget(PreviewSeekBar oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.sceneId != widget.sceneId) _loadThumbnails = false;
+    if (widget.visible) _loadThumbnails = true;
   }
 
   @override
@@ -72,7 +116,14 @@ class _PreviewSeekBarState extends ConsumerState<PreviewSeekBar> {
 
   void _update(double dx) {
     if (_drag == null) widget.onInteractionStart?.call();
-    setState(() => _drag = (dx / _barWidth).clamp(0.0, 1.0));
+    final fraction = (dx / _barWidth).clamp(0.0, 1.0);
+    final snapped = _markerNear(fraction);
+    if (snapped != null && snapped != _snappedTo) HapticFeedback.selectionClick();
+    _snappedTo = snapped;
+    setState(() {
+      _loadThumbnails = true;
+      _drag = snapped ?? fraction;
+    });
     if (!_overlay.isShowing) _overlay.show();
   }
 
@@ -89,6 +140,7 @@ class _PreviewSeekBarState extends ConsumerState<PreviewSeekBar> {
   void _reset() {
     final wasActive = _drag != null;
     _overlay.hide();
+    _snappedTo = null;
     setState(() => _drag = null);
     if (wasActive) widget.onInteractionEnd?.call();
   }
@@ -97,10 +149,20 @@ class _PreviewSeekBarState extends ConsumerState<PreviewSeekBar> {
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
     final played = _drag ?? _fractionOf(_position);
-    final thumbs = ref.watch(scrubThumbnailsProvider(widget.sceneId)).value;
     final headers = ref.watch(authHeadersProvider);
+    final thumbs = _loadThumbnails ? ref.watch(scrubThumbnailsProvider(widget.sceneId)).value : null;
+    if (thumbs != null && thumbs.spriteUrl != _precachedSprite) {
+      _precachedSprite = thumbs.spriteUrl;
+      // Errors are fine: the preview then shows only the time.
+      unawaited(precacheImage(CachedNetworkImageProvider(thumbs.spriteUrl, headers: headers), context,
+          onError: (_, _) {}));
+    }
     final details = ref.watch(sceneDetailsProvider(widget.sceneId)).value;
     final markers = details?.markers ?? const <SceneMarker>[];
+    _markerFractions = [
+      if (_totalMs > 0)
+        for (final m in markers) (m.seconds * 1000 / _totalMs).clamp(0.0, 1.0),
+    ];
 
     return OverlayPortal(
       controller: _overlay,
@@ -132,10 +194,7 @@ class _PreviewSeekBarState extends ConsumerState<PreviewSeekBar> {
                     buffered: _fractionOf(_buffer),
                     dragging: _drag != null,
                     playedColor: colors.primary,
-                    chapters: [
-                      if (_totalMs > 0)
-                        for (final m in markers) (m.seconds * 1000 / _totalMs).clamp(0.0, 1.0),
-                    ],
+                    chapters: _markerFractions,
                   ),
                 ),
               ),
@@ -275,8 +334,11 @@ class _SeekBarPainter extends CustomPainter {
   final bool dragging;
   final Color playedColor;
 
-  /// Chapter starts as fractions of the duration.
+  /// Chapter starts (scene markers) as fractions of the duration: gaps in
+  /// the track plus a dot each.
   final List<double> chapters;
+
+  List<double> get markers => [for (final c in chapters) if (c >= 0 && c <= 1) c];
 
   static const _chapterGap = 2.0;
 
@@ -304,6 +366,14 @@ class _SeekBarPainter extends CustomPainter {
       canvas.drawRect(Rect.fromLTWH(size.width * c - _chapterGap / 2, track.top, _chapterGap, trackHeight), gap);
     }
     canvas.restore();
+    // Markers as dots on the track, so they can be found without scrubbing.
+    final markerRadius = dragging ? 4.0 : 3.0;
+    final outline = Paint()..color = Colors.black54;
+    for (final m in markers) {
+      final center = Offset(size.width * m, y);
+      canvas.drawCircle(center, markerRadius + 1, outline);
+      canvas.drawCircle(center, markerRadius, Paint()..color = Colors.white);
+    }
     canvas.drawCircle(Offset(size.width * played, y), dragging ? 9 : 6, Paint()..color = playedColor);
   }
 

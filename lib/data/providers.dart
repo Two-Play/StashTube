@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../core/pagination/paged_notifier.dart';
@@ -71,10 +73,27 @@ final serverVersionProvider = FutureProvider.autoDispose<String?>(
   (ref) => ref.watch(stashRepositoryProvider).serverVersion(),
 );
 
-/// Streams and markers of a scene; loaded when the scene is played.
-final sceneDetailsProvider = FutureProvider.autoDispose.family<SceneDetails, String>(
-  (ref, id) => ref.watch(stashRepositoryProvider).findSceneDetails(id),
-);
+/// Keeps an auto-dispose provider's value for [duration] after its last
+/// listener is gone, e.g. while the player is collapsed and expanded again.
+extension CacheFor on Ref {
+  void cacheFor(Duration duration) {
+    final link = keepAlive();
+    Timer? timer;
+    onCancel(() => timer = Timer(duration, link.close));
+    onResume(() => timer?.cancel());
+    onDispose(() => timer?.cancel());
+  }
+}
+
+/// How long per-scene player data stays cached without listeners.
+const _sceneCacheDuration = Duration(minutes: 5);
+
+/// Streams, markers, files and sprite paths of a scene; loaded when the
+/// scene is played.
+final sceneDetailsProvider = FutureProvider.autoDispose.family<SceneDetails, String>((ref, id) {
+  ref.cacheFor(_sceneCacheDuration);
+  return ref.watch(stashRepositoryProvider).findSceneDetails(id);
+});
 
 class ImageListNotifier extends PagedNotifier<ImageItem, ImageQuery> {
   ImageListNotifier(super.arg);
@@ -97,8 +116,11 @@ final activityStatsProvider = FutureProvider.autoDispose<ActivityStats?>(
   (ref) => ref.watch(stashRepositoryProvider).activityStats(),
 );
 
-/// Seek preview thumbnails of a scene, or null when there are none.
+/// Seek preview thumbnails of a scene, or null when there are none. Only
+/// read once the user is about to seek (`PreviewSeekBar`), as the WebVTT
+/// can be large for long scenes.
 final scrubThumbnailsProvider = FutureProvider.autoDispose.family<ScrubThumbnails?, String>((ref, id) async {
+  ref.cacheFor(_sceneCacheDuration);
   final details = await ref.watch(sceneDetailsProvider(id).future);
   return ref.watch(stashRepositoryProvider).scrubThumbnails(details);
 });

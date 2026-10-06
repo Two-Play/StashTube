@@ -227,6 +227,7 @@ class _StashVideoControlsState extends ConsumerState<StashVideoControls> {
                       padding: const EdgeInsets.symmetric(horizontal: 12),
                       child: PreviewSeekBar(
                         sceneId: widget.scene.id,
+                        visible: _visible,
                         onInteractionStart: () {
                           _interacting = true;
                           _hideTimer?.cancel();
