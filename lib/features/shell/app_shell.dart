@@ -11,6 +11,7 @@ import '../player/closing_slide.dart';
 import '../player/player_providers.dart';
 import '../player/player_view.dart';
 import '../settings/settings_page.dart';
+import '../shorts/shorts_page.dart';
 import '../search/search_page.dart';
 import '../studios/studios_page.dart';
 import '../tags/tags_page.dart';
@@ -25,6 +26,7 @@ class AppShell extends ConsumerWidget {
   static Widget _rootPage(AppTab tab) => switch (tab) {
         AppTab(:final section?) => LibrarySectionPage(section: section),
         AppTab.home => const HomePage(),
+        AppTab.shorts => const ShortsPage(),
         AppTab.performers => const PerformersPage(),
         AppTab.studios => const StudiosPage(),
         AppTab.library => const LibraryPage(),

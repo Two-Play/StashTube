@@ -1200,4 +1200,48 @@ class AppLocalizationsEn extends AppLocalizations {
   String megabitsPerSecond(String rate) {
     return '$rate Mbit/s';
   }
+
+  @override
+  String get tabShorts => 'Shorts';
+
+  @override
+  String get shortsSettings => 'Shorts settings';
+
+  @override
+  String get shortsTags => 'Preferred tags';
+
+  @override
+  String get shortsTagsHint =>
+      'Videos with one of these tags show up more often.';
+
+  @override
+  String get shortsOnlyTags => 'Only these tags';
+
+  @override
+  String get shortsOnlyTagsHint => 'Leave out videos without any of the tags';
+
+  @override
+  String get shortsMaxLength => 'Maximum length';
+
+  @override
+  String get shortsLengthOneMinute => 'Up to 1 min';
+
+  @override
+  String get shortsLengthThreeMinutes => 'Up to 3 min';
+
+  @override
+  String get shortsLengthTenMinutes => 'Up to 10 min';
+
+  @override
+  String get shortsPortraitOnly => 'Portrait videos only';
+
+  @override
+  String get shortsEmpty => 'No shorts found';
+
+  @override
+  String get shortsEmptyHint =>
+      'Shorts are short portrait videos. Try a longer maximum length or other tags.';
+
+  @override
+  String get shortsFullVideo => 'Full video';
 }

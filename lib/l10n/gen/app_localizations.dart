@@ -2059,6 +2059,90 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'{rate} Mbit/s'**
   String megabitsPerSecond(String rate);
+
+  /// No description provided for @tabShorts.
+  ///
+  /// In en, this message translates to:
+  /// **'Shorts'**
+  String get tabShorts;
+
+  /// No description provided for @shortsSettings.
+  ///
+  /// In en, this message translates to:
+  /// **'Shorts settings'**
+  String get shortsSettings;
+
+  /// No description provided for @shortsTags.
+  ///
+  /// In en, this message translates to:
+  /// **'Preferred tags'**
+  String get shortsTags;
+
+  /// No description provided for @shortsTagsHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Videos with one of these tags show up more often.'**
+  String get shortsTagsHint;
+
+  /// No description provided for @shortsOnlyTags.
+  ///
+  /// In en, this message translates to:
+  /// **'Only these tags'**
+  String get shortsOnlyTags;
+
+  /// No description provided for @shortsOnlyTagsHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Leave out videos without any of the tags'**
+  String get shortsOnlyTagsHint;
+
+  /// No description provided for @shortsMaxLength.
+  ///
+  /// In en, this message translates to:
+  /// **'Maximum length'**
+  String get shortsMaxLength;
+
+  /// No description provided for @shortsLengthOneMinute.
+  ///
+  /// In en, this message translates to:
+  /// **'Up to 1 min'**
+  String get shortsLengthOneMinute;
+
+  /// No description provided for @shortsLengthThreeMinutes.
+  ///
+  /// In en, this message translates to:
+  /// **'Up to 3 min'**
+  String get shortsLengthThreeMinutes;
+
+  /// No description provided for @shortsLengthTenMinutes.
+  ///
+  /// In en, this message translates to:
+  /// **'Up to 10 min'**
+  String get shortsLengthTenMinutes;
+
+  /// No description provided for @shortsPortraitOnly.
+  ///
+  /// In en, this message translates to:
+  /// **'Portrait videos only'**
+  String get shortsPortraitOnly;
+
+  /// No description provided for @shortsEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No shorts found'**
+  String get shortsEmpty;
+
+  /// No description provided for @shortsEmptyHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Shorts are short portrait videos. Try a longer maximum length or other tags.'**
+  String get shortsEmptyHint;
+
+  /// No description provided for @shortsFullVideo.
+  ///
+  /// In en, this message translates to:
+  /// **'Full video'**
+  String get shortsFullVideo;
 }
 
 class _AppLocalizationsDelegate

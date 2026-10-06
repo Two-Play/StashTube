@@ -41,12 +41,22 @@ class SceneFilter {
     this.duration = DurationFilter.any,
     this.resolution = ResolutionFilter.any,
     this.savedFilter,
+    this.anyTag = false,
+    this.portraitOnly = false,
+    this.maxSeconds,
   });
 
   static const none = SceneFilter();
 
-  /// Scenes must have all of these tags.
+  /// Scenes must have all of these tags, or with [anyTag] at least one.
   final List<Tag> tags;
+  final bool anyTag;
+
+  /// Only videos taller than wide (Stash's `orientation` criterion).
+  final bool portraitOnly;
+
+  /// At most this long, in seconds; replaces [duration] when set (shorts).
+  final int? maxSeconds;
 
   /// 0 = any rating; 1–5 = at least this many stars.
   final int minStars;
@@ -63,7 +73,9 @@ class SceneFilter {
       minStars == 0 &&
       duration == DurationFilter.any &&
       resolution == ResolutionFilter.any &&
-      savedFilter == null;
+      savedFilter == null &&
+      !portraitOnly &&
+      maxSeconds == null;
 
   /// Number of active criteria, for the filter button badge (saved filters
   /// are shown as their own chip).
@@ -78,12 +90,15 @@ class SceneFilter {
         if (tags.isNotEmpty)
           'tags': {
             'value': [for (final t in tags) t.id],
-            'modifier': 'INCLUDES_ALL',
+            'modifier': anyTag ? 'INCLUDES' : 'INCLUDES_ALL',
             'depth': 0,
           },
         if (minStars > 0) 'rating100': {'value': minStars * 20 - 1, 'modifier': 'GREATER_THAN'},
-        'duration': ?duration.toCriterion(),
+        'duration': ?(maxSeconds == null
+            ? duration.toCriterion()
+            : {'value': maxSeconds! + 1, 'modifier': 'LESS_THAN'}),
         'resolution': ?resolution.toCriterion(),
+        if (portraitOnly) 'orientation': {'value': ['PORTRAIT']},
       };
 
   SceneFilter copyWith({
@@ -93,6 +108,9 @@ class SceneFilter {
     ResolutionFilter? resolution,
     Map<String, dynamic>? savedFilter,
     bool clearSavedFilter = false,
+    bool? anyTag,
+    bool? portraitOnly,
+    int? maxSeconds,
   }) =>
       SceneFilter(
         tags: tags ?? this.tags,
@@ -100,6 +118,9 @@ class SceneFilter {
         duration: duration ?? this.duration,
         resolution: resolution ?? this.resolution,
         savedFilter: clearSavedFilter ? null : (savedFilter ?? this.savedFilter),
+        anyTag: anyTag ?? this.anyTag,
+        portraitOnly: portraitOnly ?? this.portraitOnly,
+        maxSeconds: maxSeconds ?? this.maxSeconds,
       );
 
   @override
@@ -109,7 +130,10 @@ class SceneFilter {
       other.minStars == minStars &&
       other.duration == duration &&
       other.resolution == resolution &&
-      mapEquals(other.savedFilter, savedFilter);
+      mapEquals(other.savedFilter, savedFilter) &&
+      other.anyTag == anyTag &&
+      other.portraitOnly == portraitOnly &&
+      other.maxSeconds == maxSeconds;
 
   @override
   int get hashCode => Object.hash(
@@ -118,5 +142,8 @@ class SceneFilter {
         duration,
         resolution,
         savedFilter == null ? null : Object.hashAllUnordered(savedFilter!.keys),
+        anyTag,
+        portraitOnly,
+        maxSeconds,
       );
 }

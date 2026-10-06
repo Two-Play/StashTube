@@ -649,5 +649,19 @@
         "type": "String"
       }
     }
-  }
+  },
+  "tabShorts": "Shorts",
+  "shortsSettings": "Shorts settings",
+  "shortsTags": "Preferred tags",
+  "shortsTagsHint": "Videos with one of these tags show up more often.",
+  "shortsOnlyTags": "Only these tags",
+  "shortsOnlyTagsHint": "Leave out videos without any of the tags",
+  "shortsMaxLength": "Maximum length",
+  "shortsLengthOneMinute": "Up to 1 min",
+  "shortsLengthThreeMinutes": "Up to 3 min",
+  "shortsLengthTenMinutes": "Up to 10 min",
+  "shortsPortraitOnly": "Portrait videos only",
+  "shortsEmpty": "No shorts found",
+  "shortsEmptyHint": "Shorts are short portrait videos. Try a longer maximum length or other tags.",
+  "shortsFullVideo": "Full video"
 }

@@ -326,5 +326,19 @@
   "copyPath": "Pfad kopieren",
   "pathCopied": "Pfad kopiert",
   "framesPerSecond": "{fps} fps",
-  "megabitsPerSecond": "{rate} Mbit/s"
+  "megabitsPerSecond": "{rate} Mbit/s",
+  "tabShorts": "Shorts",
+  "shortsSettings": "Shorts-Einstellungen",
+  "shortsTags": "Bevorzugte Tags",
+  "shortsTagsHint": "Videos mit einem dieser Tags kommen häufiger vor.",
+  "shortsOnlyTags": "Nur diese Tags",
+  "shortsOnlyTagsHint": "Videos ohne einen der Tags weglassen",
+  "shortsMaxLength": "Maximale Länge",
+  "shortsLengthOneMinute": "Bis 1 Min.",
+  "shortsLengthThreeMinutes": "Bis 3 Min.",
+  "shortsLengthTenMinutes": "Bis 10 Min.",
+  "shortsPortraitOnly": "Nur Hochkant-Videos",
+  "shortsEmpty": "Keine Shorts gefunden",
+  "shortsEmptyHint": "Shorts sind kurze Hochkant-Videos. Versuche eine längere Maximallänge oder andere Tags.",
+  "shortsFullVideo": "Ganzes Video"
 }

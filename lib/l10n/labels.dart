@@ -1,5 +1,6 @@
 import '../data/models/list_queries.dart';
 import '../data/models/scene_filter.dart';
+import '../features/shorts/shorts_settings.dart';
 import 'gen/app_localizations.dart';
 
 // Display names of the data models' choices. The models themselves stay
@@ -71,5 +72,14 @@ extension ResolutionFilterLabel on ResolutionFilter {
         ResolutionFilter.hd => '720p+',
         ResolutionFilter.fullHd => '1080p+',
         ResolutionFilter.uhd => '4K+',
+      };
+}
+
+extension ShortsLengthLabel on ShortsLength {
+  String label(AppLocalizations l) => switch (this) {
+        ShortsLength.oneMinute => l.shortsLengthOneMinute,
+        ShortsLength.threeMinutes => l.shortsLengthThreeMinutes,
+        ShortsLength.tenMinutes => l.shortsLengthTenMinutes,
+        ShortsLength.any => l.durationAny,
       };
 }

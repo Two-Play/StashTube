@@ -28,6 +28,7 @@ enum AppTab {
   images(Icons.image_outlined, Icons.image, LibrarySection.images),
   galleries(Icons.photo_library_outlined, Icons.photo_library, LibrarySection.galleries),
   stats(Icons.insights_outlined, Icons.insights, LibrarySection.stats),
+  shorts(Icons.slow_motion_video_outlined, Icons.slow_motion_video),
   tags(Icons.sell_outlined, Icons.sell),
   search(Icons.search, Icons.saved_search),
   settings(Icons.settings_outlined, Icons.settings);
@@ -41,6 +42,7 @@ enum AppTab {
   /// Short label under the icon in the bar.
   String label(AppLocalizations l) => switch (this) {
         home => l.tabHome,
+        shorts => l.tabShorts,
         performers => l.tabPerformers,
         studios => l.tabStudios,
         library => l.tabLibrary,
@@ -52,7 +54,7 @@ enum AppTab {
       };
 
   /// Full name in the settings list.
-  String title(AppLocalizations l) => section?.label(l) ?? label(l);
+  String title(AppLocalizations l) => this == settings ? l.settingsTitle : section?.label(l) ?? label(l);
 }
 
 /// The selected tab. Starts on the first tab of the bar, and moves there

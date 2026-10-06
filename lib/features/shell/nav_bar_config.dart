@@ -20,7 +20,7 @@ class NavBarConfig {
     order: AppTab.values,
     hidden: {
       for (final tab in AppTab.values)
-        if (tab.section != null || tab == AppTab.tags || tab == AppTab.search) tab,
+        if (tab.section != null || tab == AppTab.tags || tab == AppTab.search || tab == AppTab.shorts) tab,
     },
   );
 
@@ -81,7 +81,10 @@ class NavBarConfigNotifier extends Notifier<NavBarConfig> {
     final order = prefs.getStringList(_orderKey);
     final hidden = prefs.getStringList(_hiddenKey);
     if (order == null || hidden == null) return NavBarConfig.standard;
-    final config = NavBarConfig(order: _parse(order), hidden: _parse(hidden).toSet());
+    final known = _parse(order);
+    // Tabs added in an update start hidden, so the user's bar stays as it was.
+    final added = AppTab.values.where((tab) => !known.contains(tab));
+    final config = NavBarConfig(order: known, hidden: {..._parse(hidden), ...added});
     // A config that no longer fits the rules (e.g. edited by hand) falls back.
     final count = config.visible.length;
     return count < NavBarConfig.minVisible || count > NavBarConfig.maxVisible ? NavBarConfig.standard : config;

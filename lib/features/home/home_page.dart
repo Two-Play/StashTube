@@ -8,6 +8,7 @@ import '../../widgets/scene_shelf.dart';
 import '../cast/cast_ui.dart';
 import '../player/player_providers.dart';
 import '../shell/navigation.dart';
+import '../shorts/shorts_page.dart';
 import '../../l10n/l10n.dart';
 
 /// YouTube-style home: logo app bar, filter chips and an endless scene feed.
@@ -72,6 +73,11 @@ class _HomePageState extends ConsumerState<HomePage> {
               ),
               actions: [
                 const CastButton(),
+                IconButton(
+                  tooltip: context.l10n.tabShorts,
+                  icon: const Icon(Icons.slow_motion_video),
+                  onPressed: () => openPage(ref, const ShortsPage()),
+                ),
                 IconButton(
                   tooltip: context.l10n.search,
                   icon: const Icon(Icons.search),
