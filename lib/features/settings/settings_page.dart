@@ -49,6 +49,8 @@ class SettingsPage extends ConsumerWidget {
               }}',
             ),
             isThreeLine: true,
+            trailing: const Icon(Icons.edit_outlined),
+            onTap: server == null ? null : () => openServerEditor(context, server),
           ),
           ListTile(
             leading: const Icon(Icons.swap_horiz),
@@ -61,6 +63,8 @@ class SettingsPage extends ConsumerWidget {
             leading: const Icon(Icons.key_outlined),
             title: Text(l.apiKey),
             subtitle: Text(config?.apiKey == null ? l.notSet : l.isSet),
+            trailing: const Icon(Icons.edit_outlined),
+            onTap: server == null ? null : () => openServerEditor(context, server),
           ),
           _SectionTitle(l.sectionAppearance),
           Padding(

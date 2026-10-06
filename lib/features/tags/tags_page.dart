@@ -10,6 +10,7 @@ import '../../widgets/stash_image.dart';
 import '../shell/navigation.dart';
 import 'tag_editor.dart';
 import '../../l10n/l10n.dart';
+import '../settings/settings_button.dart';
 
 /// Discover: every tag that has scenes, most used first (8.2).
 class TagsPage extends ConsumerStatefulWidget {
@@ -26,7 +27,7 @@ class _TagsPageState extends ConsumerState<TagsPage> {
   Widget build(BuildContext context) {
     final provider = tagListProvider(_query);
     return Scaffold(
-      appBar: AppBar(title: Text(context.l10n.tagsTitle)),
+      appBar: AppBar(title: Text(context.l10n.tagsTitle), actions: const [SettingsButton()]),
       floatingActionButton: FloatingActionButton.extended(
         icon: const Icon(Icons.add),
         label: Text(context.l10n.newTag),

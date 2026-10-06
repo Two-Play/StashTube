@@ -10,6 +10,7 @@ import 'groups.dart';
 import 'images_tab.dart';
 import 'stats_tab.dart';
 import 'watch_later_tab.dart';
+import '../settings/settings_button.dart';
 
 /// The parts of the library. Each is a tab of [LibraryPage] and can also be
 /// its own tab in the navigation bar ([LibrarySectionPage], 13.7).
@@ -71,7 +72,7 @@ class LibraryPage extends ConsumerWidget {
       child: Scaffold(
         appBar: AppBar(
           title: Text(l.libraryTitle),
-          actions: [IconButton(icon: const Icon(Icons.search), onPressed: () => openSearch(ref))],
+          actions: [IconButton(icon: const Icon(Icons.search), onPressed: () => openSearch(ref)), const SettingsButton()],
           bottom: TabBar(
             isScrollable: true,
             tabAlignment: TabAlignment.start,
@@ -100,7 +101,7 @@ class LibrarySectionPage extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) => Scaffold(
         appBar: AppBar(
           title: Text(section.label(context.l10n)),
-          actions: [IconButton(icon: const Icon(Icons.search), onPressed: () => openSearch(ref))],
+          actions: [IconButton(icon: const Icon(Icons.search), onPressed: () => openSearch(ref)), const SettingsButton()],
         ),
         body: section.body(context.l10n),
       );

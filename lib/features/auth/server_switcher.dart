@@ -14,6 +14,10 @@ Future<void> showServerSwitcher(BuildContext context) => showModalBottomSheet<vo
       builder: (_) => const ServerSwitcher(),
     );
 
+/// URL, API key and name of a saved server (2.7), above the shell.
+Future<void> openServerEditor(BuildContext context, ServerProfile server) => Navigator.of(context, rootNavigator: true)
+    .push(MaterialPageRoute<void>(builder: (_) => LoginPage(edit: server)));
+
 Future<bool> confirmRemoveServer(BuildContext context, ServerProfile server) async =>
     await showDialog<bool>(
       context: context,
@@ -69,13 +73,17 @@ class ServerSwitcher extends ConsumerWidget {
                     trailing: PopupMenuButton<String>(
                       tooltip: context.l10n.serverOptions,
                       onSelected: (action) async {
-                        if (action == 'rename') {
+                        if (action == 'edit') {
+                          Navigator.pop(context);
+                          await openServerEditor(context, server);
+                        } else if (action == 'rename') {
                           await _rename(context, ref, server);
                         } else if (action == 'remove' && await confirmRemoveServer(context, server)) {
                           await ref.read(serverProfilesProvider.notifier).remove(server.id);
                         }
                       },
                       itemBuilder: (_) => [
+                        PopupMenuItem(value: 'edit', child: Text(context.l10n.edit)),
                         PopupMenuItem(value: 'rename', child: Text(context.l10n.rename)),
                         PopupMenuItem(value: 'remove', child: Text(context.l10n.remove)),
                       ],

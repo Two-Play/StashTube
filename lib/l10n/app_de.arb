@@ -31,7 +31,6 @@
   "tabWatchLater": "Später",
   "tabTags": "Tags",
   "tabSearch": "Suche",
-  "tabSettings": "Optionen",
   "emptyDefault": "Hier ist noch nichts",
   "loadMoreFailed": "Weitere konnten nicht geladen werden – zum Wiederholen tippen",
   "channelUnknown": "Unbekannt",
@@ -356,5 +355,7 @@
   "unknownPerformer": "Unbekannter Performer",
   "playbackSpeed": "Wiedergabetempo",
   "speedNormal": "Normal",
-  "speedValue": "{rate}×"
+  "speedValue": "{rate}×",
+  "editServer": "Server bearbeiten",
+  "statsAndServer": "Statistik & Server"
 }

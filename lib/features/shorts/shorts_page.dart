@@ -23,6 +23,7 @@ import '../player/scene_edits.dart';
 import '../shell/navigation.dart';
 import 'shorts_feed.dart';
 import 'shorts_settings_sheet.dart';
+import '../settings/settings_button.dart';
 
 /// True while the shorts are on screen; the shell then hides the miniplayer.
 class ShortsActiveNotifier extends Notifier<bool> {
@@ -450,6 +451,7 @@ class _TopBar extends StatelessWidget {
               icon: const Icon(Icons.tune),
               onPressed: () => showShortsSettingsSheet(context),
             ),
+            const SettingsButton(color: Colors.white),
           ],
         ),
       ),

@@ -211,9 +211,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get tabSearch => 'Search';
 
   @override
-  String get tabSettings => 'Settings';
-
-  @override
   String get emptyDefault => 'Nothing here yet';
 
   @override
@@ -1300,4 +1297,10 @@ class AppLocalizationsEn extends AppLocalizations {
 
     return '$rateString×';
   }
+
+  @override
+  String get editServer => 'Edit server';
+
+  @override
+  String get statsAndServer => 'Stats & server';
 }

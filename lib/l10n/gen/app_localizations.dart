@@ -284,12 +284,6 @@ abstract class AppLocalizations {
   /// **'Search'**
   String get tabSearch;
 
-  /// No description provided for @tabSettings.
-  ///
-  /// In en, this message translates to:
-  /// **'Settings'**
-  String get tabSettings;
-
   /// No description provided for @emptyDefault.
   ///
   /// In en, this message translates to:
@@ -2239,6 +2233,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'{rate}×'**
   String speedValue(double rate);
+
+  /// No description provided for @editServer.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit server'**
+  String get editServer;
+
+  /// No description provided for @statsAndServer.
+  ///
+  /// In en, this message translates to:
+  /// **'Stats & server'**
+  String get statsAndServer;
 }
 
 class _AppLocalizationsDelegate

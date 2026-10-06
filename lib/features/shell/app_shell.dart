@@ -10,7 +10,6 @@ import '../performers/performers_page.dart';
 import '../player/closing_slide.dart';
 import '../player/player_providers.dart';
 import '../player/player_view.dart';
-import '../settings/settings_page.dart';
 import '../shorts/shorts_page.dart';
 import '../search/search_page.dart';
 import '../studios/studios_page.dart';
@@ -32,7 +31,6 @@ class AppShell extends ConsumerWidget {
         AppTab.library => const LibraryPage(),
         AppTab.tags => const TagsPage(),
         AppTab.search => const SearchPage(autofocus: false),
-        AppTab.settings => const SettingsPage(),
         _ => throw StateError('No page for $tab'),
       };
 

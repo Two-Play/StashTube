@@ -113,7 +113,6 @@
   "tabWatchLater": "Later",
   "tabTags": "Tags",
   "tabSearch": "Search",
-  "tabSettings": "Settings",
   "emptyDefault": "Nothing here yet",
   "loadMoreFailed": "Couldn't load more – tap to retry",
   "channelUnknown": "Unknown",
@@ -687,5 +686,7 @@
         "format": "decimalPattern"
       }
     }
-  }
+  },
+  "editServer": "Edit server",
+  "statsAndServer": "Stats & server"
 }

@@ -19,7 +19,7 @@ class NavBarSettingsPage extends ConsumerWidget {
 
     // A full bar is explained once by the count in the header.
     String? subtitle(AppTab tab) => switch (tab) {
-          AppTab.settings => l.navBarAlwaysShown,
+          NavBarConfig.alwaysShown => l.navBarAlwaysShown,
           _ when config.isVisible(tab) && !config.canToggle(tab) => l.navBarAtLeast(NavBarConfig.minVisible),
           _ => null,
         };

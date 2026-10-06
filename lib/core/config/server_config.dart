@@ -68,10 +68,10 @@ class ServerProfile {
     return uri.hasPort ? '${uri.host}:${uri.port}' : uri.host;
   }
 
-  ServerProfile copyWith({String? name, String? apiKey, bool clearApiKey = false}) => ServerProfile(
+  ServerProfile copyWith({String? name, String? baseUrl, String? apiKey, bool clearApiKey = false}) => ServerProfile(
         id: id,
         name: name ?? this.name,
-        baseUrl: baseUrl,
+        baseUrl: baseUrl ?? this.baseUrl,
         apiKey: clearApiKey ? null : (apiKey ?? this.apiKey),
       );
 
@@ -170,6 +170,23 @@ class ServerProfilesNotifier extends Notifier<ServerProfiles> {
     ));
     return profile;
   }
+
+  /// Changes a saved server's URL, API key and name. Keeps its id, so the
+  /// data stored for it (watch later, settings) stays.
+  Future<void> update(String id, ServerConfig config, {String? name}) => _set(ServerProfiles(
+        profiles: [
+          for (final p in state.profiles)
+            p.id == id
+                ? p.copyWith(
+                    name: (name == null || name.trim().isEmpty) ? null : name.trim(),
+                    baseUrl: config.baseUrl,
+                    apiKey: config.apiKey,
+                    clearApiKey: config.apiKey == null,
+                  )
+                : p,
+        ],
+        activeId: state.activeId,
+      ));
 
   Future<void> activate(String id) => _set(ServerProfiles(profiles: state.profiles, activeId: id));
 

@@ -8,11 +8,15 @@ import '../../l10n/l10n.dart';
 
 /// Connects the app to a Stash server (URL + optional API key and name).
 /// Lists saved servers to pick from (2.6). Pushed from the settings with
-/// [addServer] to save another server.
+/// [addServer] to save another server, or with [edit] to change a saved
+/// one (2.7).
 class LoginPage extends ConsumerStatefulWidget {
-  const LoginPage({super.key, this.addServer = false});
+  const LoginPage({super.key, this.addServer = false, this.edit});
 
   final bool addServer;
+  final ServerProfile? edit;
+
+  bool get _pushed => addServer || edit != null;
 
   @override
   ConsumerState<LoginPage> createState() => _LoginPageState();
@@ -26,6 +30,17 @@ class _LoginPageState extends ConsumerState<LoginPage> {
   bool _connecting = false;
   bool _obscureKey = true;
   String? _error;
+
+  @override
+  void initState() {
+    super.initState();
+    final edit = widget.edit;
+    if (edit != null) {
+      _nameController.text = edit.name;
+      _urlController.text = edit.baseUrl;
+      _apiKeyController.text = edit.apiKey ?? '';
+    }
+  }
 
   @override
   void dispose() {
@@ -49,9 +64,15 @@ class _LoginPageState extends ConsumerState<LoginPage> {
     });
     try {
       await StashRepository.verifyServer(config);
-      // Activating the server swaps the app to its shell (see StashApp).
-      await ref.read(serverProfilesProvider.notifier).add(config, name: _nameController.text);
-      if (mounted && widget.addServer) Navigator.of(context).pop();
+      final servers = ref.read(serverProfilesProvider.notifier);
+      final edit = widget.edit;
+      if (edit != null) {
+        await servers.update(edit.id, config, name: _nameController.text);
+      } else {
+        // Activating the server swaps the app to its shell (see StashApp).
+        await servers.add(config, name: _nameController.text);
+      }
+      if (mounted && widget._pushed) Navigator.of(context).pop();
     } catch (e) {
       HapticFeedback.vibrate();
       if (mounted) setState(() => _error = errorText(context.l10n, e));
@@ -63,9 +84,12 @@ class _LoginPageState extends ConsumerState<LoginPage> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final saved = widget.addServer ? const <ServerProfile>[] : ref.watch(serverProfilesProvider).profiles;
+    final editing = widget.edit != null;
+    final saved = widget._pushed ? const <ServerProfile>[] : ref.watch(serverProfilesProvider).profiles;
     return Scaffold(
-      appBar: widget.addServer ? AppBar(title: Text(context.l10n.addServer)) : null,
+      appBar: widget._pushed
+          ? AppBar(title: Text(editing ? context.l10n.editServer : context.l10n.addServer))
+          : null,
       body: SafeArea(
         child: Center(
           child: SingleChildScrollView(
@@ -76,17 +100,18 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    if (!widget.addServer) ...[
+                    if (!widget._pushed) ...[
                       Icon(Icons.play_circle_fill, size: 72, color: theme.colorScheme.primary),
                       const SizedBox(height: 12),
                       Text(context.l10n.connectToStash, textAlign: TextAlign.center, style: theme.textTheme.headlineSmall),
                     ],
                     const SizedBox(height: 8),
-                    Text(
-                      context.l10n.loginIntro,
-                      textAlign: TextAlign.center,
-                      style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.onSurfaceVariant),
-                    ),
+                    if (!editing)
+                      Text(
+                        context.l10n.loginIntro,
+                        textAlign: TextAlign.center,
+                        style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+                      ),
                     if (saved.isNotEmpty) ...[
                       const SizedBox(height: 24),
                       Text(context.l10n.savedServers, style: theme.textTheme.titleSmall),
@@ -159,7 +184,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                       style: FilledButton.styleFrom(minimumSize: const Size.fromHeight(48)),
                       child: _connecting
                           ? const SizedBox.square(dimension: 20, child: CircularProgressIndicator(strokeWidth: 2))
-                          : Text(context.l10n.connect),
+                          : Text(editing ? context.l10n.save : context.l10n.connect),
                     ),
                   ],
                 ),

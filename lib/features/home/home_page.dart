@@ -10,6 +10,7 @@ import '../player/player_providers.dart';
 import '../shell/navigation.dart';
 import '../shorts/shorts_page.dart';
 import '../../l10n/l10n.dart';
+import '../settings/settings_button.dart';
 
 /// YouTube-style home: logo app bar, filter chips and an endless scene feed.
 class HomePage extends ConsumerStatefulWidget {
@@ -83,6 +84,7 @@ class _HomePageState extends ConsumerState<HomePage> {
                   icon: const Icon(Icons.search),
                   onPressed: () => openSearch(ref),
                 ),
+                const SettingsButton(),
               ],
             ),
             SliverToBoxAdapter(

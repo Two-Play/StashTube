@@ -9,8 +9,16 @@ import 'package:stash_app_mobile/data/providers.dart';
 import 'package:stash_app_mobile/features/library/stats_tab.dart';
 
 void main() {
-  Future<void> pumpStats(WidgetTester tester, {ActivityStats? activity}) => tester.pumpWidget(ProviderScope(
+  Future<void> pumpStats(WidgetTester tester, {ActivityStats? activity}) async {
+    SharedPreferences.setMockInitialValues({
+      'server_profiles': '[{"id":"a","name":"Home","url":"http://nas:9999","apiKey":"k"}]',
+      'active_server': 'a',
+    });
+    final prefs = (await tester.runAsync(SharedPreferences.getInstance))!;
+    await tester.pumpWidget(ProviderScope(
         overrides: [
+          sharedPreferencesProvider.overrideWithValue(prefs),
+          serverVersionProvider.overrideWith((ref) async => 'v0.28.1'),
           libraryStatsProvider.overrideWith((ref) async => const LibraryStats(
                 sceneCount: 1234,
                 scenesSize: 2 * 1024 * 1024 * 1024,
@@ -21,6 +29,7 @@ void main() {
         ],
         child: const MaterialApp(home: Scaffold(body: StatsTab())),
       ));
+  }
 
   testWidgets('shows library totals and hides activity on older servers', (tester) async {
     await pumpStats(tester);
@@ -30,10 +39,17 @@ void main() {
     expect(find.text('Watching'), findsNothing);
   });
 
+  testWidgets('shows the server in use with its version', (tester) async {
+    await pumpStats(tester);
+    await tester.pumpAndSettle();
+    expect(find.text('Home'), findsOneWidget);
+    expect(find.text('http://nas:9999\nStash v0.28.1 • API key: Set'), findsOneWidget);
+  });
+
   testWidgets('shows activity when the server supports it', (tester) async {
     await pumpStats(tester, activity: const ActivityStats(playCount: 42, playDuration: 5400));
     await tester.pumpAndSettle();
-    await tester.scrollUntilVisible(find.text('Watching'), 200);
+    await tester.scrollUntilVisible(find.text('1h 30m'), 200);
     expect(find.text('42'), findsOneWidget);
     expect(find.text('1h 30m'), findsOneWidget);
   });

@@ -18,9 +18,19 @@ Future<ProviderContainer> _container([Map<String, Object> prefs = const {}]) asy
 }
 
 void main() {
-  test('the standard bar keeps the tabs the app always had', () {
+  test('the standard bar ends with stats and server info', () {
     expect(NavBarConfig.standard.visible,
-        [AppTab.home, AppTab.performers, AppTab.studios, AppTab.library, AppTab.settings]);
+        [AppTab.home, AppTab.performers, AppTab.studios, AppTab.library, AppTab.stats]);
+  });
+
+  test('a stored bar with the old settings tab gets stats in its place', () async {
+    final c = await _container({
+      'nav_bar_order': ['home', 'settings', 'library', 'stats'],
+      'nav_bar_hidden': ['stats'],
+    });
+    final config = c.read(navBarConfigProvider);
+    expect(config.visible.take(3), [AppTab.home, AppTab.stats, AppTab.library]);
+    expect(config.visible, hasLength(3), reason: 'tabs missing from the stored order start hidden');
   });
 
   test('every part of the library can be its own tab', () {
@@ -44,13 +54,13 @@ void main() {
         ),
       ),
     ));
-    expect(find.text('Start,Performer,Studios,Bibliothek,Optionen'), findsOneWidget);
+    expect(find.text('Start,Performer,Studios,Bibliothek,Statistik'), findsOneWidget);
   });
 
-  test('settings cannot be hidden, and the bar keeps 2 to 5 tabs', () {
+  test('stats cannot be hidden, and the bar keeps 2 to 5 tabs', () {
     var config = NavBarConfig.standard;
-    expect(config.canToggle(AppTab.settings), isFalse);
-    expect(config.toggle(AppTab.settings), config);
+    expect(config.canToggle(AppTab.stats), isFalse);
+    expect(config.toggle(AppTab.stats), config);
 
     // Five tabs shown: nothing more can be added.
     expect(config.canToggle(AppTab.tags), isFalse);
@@ -59,20 +69,20 @@ void main() {
     expect(config.visible, isNot(contains(AppTab.studios)));
 
     config = config.toggle(AppTab.home).toggle(AppTab.performers).toggle(AppTab.library);
-    expect(config.visible, [AppTab.tags, AppTab.settings]);
+    expect(config.visible, [AppTab.tags, AppTab.stats]);
     expect(config.canToggle(AppTab.tags), isFalse);
   });
 
   test('moving a tab uses the target index', () {
-    final config = NavBarConfig.standard.move(AppTab.values.indexOf(AppTab.settings), 0);
-    expect(config.order.first, AppTab.settings);
-    expect(config.move(0, 2).order.take(3), [AppTab.home, AppTab.performers, AppTab.settings]);
+    final config = NavBarConfig.standard.move(AppTab.values.indexOf(AppTab.stats), 0);
+    expect(config.order.first, AppTab.stats);
+    expect(config.move(0, 2).order.take(3), [AppTab.home, AppTab.performers, AppTab.stats]);
   });
 
   test('a stored order missing new tabs gets them appended', () {
-    final config = NavBarConfig(order: [AppTab.settings, AppTab.home, AppTab.home]);
+    final config = NavBarConfig(order: [AppTab.stats, AppTab.home, AppTab.home]);
     expect(config.order.length, AppTab.values.length);
-    expect(config.order.take(2), [AppTab.settings, AppTab.home]);
+    expect(config.order.take(2), [AppTab.stats, AppTab.home]);
   });
 
   test('changes are stored and survive a restart', () async {
@@ -86,7 +96,7 @@ void main() {
     );
     addTearDown(restarted.dispose);
     expect(restarted.read(navBarConfigProvider).visible,
-        [AppTab.library, AppTab.home, AppTab.performers, AppTab.search, AppTab.settings]);
+        [AppTab.library, AppTab.home, AppTab.performers, AppTab.search, AppTab.stats]);
     // The app starts on the first tab of the bar.
     expect(restarted.read(currentTabProvider), AppTab.library);
 
@@ -96,7 +106,7 @@ void main() {
 
   test('a broken stored config falls back to the standard bar', () async {
     final c = await _container({
-      'nav_bar_order': ['settings'],
+      'nav_bar_order': ['stats'],
       'nav_bar_hidden': AppTab.values.map((t) => t.name).toList(),
     });
     expect(c.read(navBarConfigProvider), NavBarConfig.standard);
@@ -124,7 +134,7 @@ void main() {
 
     CheckboxListTile tile(String label) =>
         tester.widget(find.ancestor(of: find.text(label), matching: find.byType(CheckboxListTile)));
-    expect(tile('Settings').onChanged, isNull);
+    expect(tile('Stats & server').onChanged, isNull);
     expect(find.text('Always shown'), findsOneWidget);
     // The bar is full, so hidden tabs can't be switched on yet.
     expect(tile('Tags').onChanged, isNull);
@@ -134,7 +144,7 @@ void main() {
     await tester.tap(find.text('Tags'));
     await tester.pump();
     expect(c.read(navBarConfigProvider).visible,
-        [AppTab.home, AppTab.performers, AppTab.library, AppTab.tags, AppTab.settings]);
+        [AppTab.home, AppTab.performers, AppTab.library, AppTab.tags, AppTab.stats]);
 
     await tester.tap(find.text('Reset'));
     await tester.pump();
