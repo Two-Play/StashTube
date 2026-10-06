@@ -13,6 +13,7 @@ import '../../data/providers.dart';
 import '../../data/repositories/stash_repository.dart';
 import '../cast/cast_media.dart';
 import '../cast/cast_providers.dart';
+import '../cast/cast_service.dart' show CastKind;
 import 'playback_tracker.dart';
 
 const double kMiniPlayerHeight = 64;
@@ -268,6 +269,7 @@ class NowPlayingNotifier extends Notifier<Scene?> {
         await details.read().catchError((Object _) => const SceneDetails()),
         apiKey: ref.read(serverConfigProvider)?.apiKey,
         start: start,
+        kind: ref.read(castConnectionProvider).value?.kind ?? CastKind.googleCast,
       );
       if (state?.id != scene.id) return;
       await ref.read(castServiceProvider).load(media);

@@ -72,6 +72,7 @@ Eine wartbare Basis, damit Features unabhängig voneinander wachsen können.
 | 4.18 | Als Nutzer möchte ich das Wiedergabetempo ändern. | Tempo-Knopf in der Player-Steuerung (0,5× bis 2×), bleibt für weitere Szenen. Video gedrückt halten (ab 0,25 s) spielt mit doppeltem Tempo, Loslassen stellt das vorherige Tempo wieder her. | Next | ✅ |
 | 4.19 | Als Nutzer möchte ich ein Querformat-Video durch Drehen des Handys im Vollbild sehen. | Aufgeklappter Player + Querformat-Video: Drehen ins Querformat öffnet das Vollbild, zurückdrehen beendet es. Der Vollbild-Knopf sperrt die Ausrichtung weiter passend zum Video. | Next | ✅ |
 | 4.20 | Als Nutzer möchte ich Hochkant-Videos im Player größer sehen. | Die Videofläche folgt dem Seitenverhältnis: Hochkant-Videos bis 60 % der Bildschirmhöhe, breitere Videos bleiben 16:9. | Next | ✅ |
+| 4.21 | Als Nutzer möchte ich per AirPlay auf ein Apple TV streamen. | Cast-Auswahl → „AirPlay“ öffnet den System-Picker (iOS). Mit aktiver AirPlay-Route spielt ein nativer AVPlayer das Video auf dem TV (MP4/MOV direkt, sonst HLS; API-Key als `?apikey=`); die App pausiert lokal und steuert den TV wie bei Chromecast, beim Zurückwechseln aufs iPhone geht es lokal an der TV-Position weiter. Im Simulator nicht testbar. | Next | 🟡 Ungetestet auf Gerät |
 
 ## Epic 5 – Suche & Filter
 

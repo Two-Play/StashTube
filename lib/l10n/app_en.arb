@@ -688,5 +688,7 @@
     }
   },
   "editServer": "Edit server",
-  "statsAndServer": "Stats & server"
+  "statsAndServer": "Stats & server",
+  "airPlay": "AirPlay",
+  "airPlayHint": "Apple TV and AirPlay TVs"
 }

@@ -1,5 +1,6 @@
 import '../../data/models/scene.dart';
 import '../../data/models/scene_details.dart';
+import 'cast_service.dart' show CastKind;
 
 /// What gets sent to a cast device.
 class CastMedia {
@@ -47,8 +48,34 @@ String withApiKey(String url, String? apiKey) {
   return (url: scene.streamUrl ?? '', contentType: 'video/mp4');
 }
 
-CastMedia castMediaFor(Scene scene, SceneDetails? details, {String? apiKey, Duration start = Duration.zero}) {
-  final stream = pickCastStream(scene, details);
+/// Picks the stream AirPlay (AVPlayer) can play: the original file if it is
+/// MP4 or QuickTime, otherwise Stash's HLS transcode, otherwise any MP4
+/// transcode, and as a last resort the original file. WebM and MKV don't
+/// play on Apple TV.
+({String url, String contentType}) pickAirPlayStream(Scene scene, SceneDetails? details) {
+  final streams = details?.streams ?? const <SceneStream>[];
+  bool playable(String? mime) => mime == 'video/mp4' || mime == 'video/quicktime';
+
+  final direct = streams.where((s) => s.isDirect && playable(s.mimeType)).firstOrNull;
+  if (direct != null) return (url: direct.url, contentType: direct.mimeType!);
+
+  final hls = streams.where((s) => s.isHls).firstOrNull;
+  if (hls != null) return (url: hls.url, contentType: 'application/x-mpegURL');
+
+  final mp4 = streams.where((s) => s.mimeType == 'video/mp4').firstOrNull;
+  if (mp4 != null) return (url: mp4.url, contentType: 'video/mp4');
+
+  return (url: scene.streamUrl ?? '', contentType: 'video/mp4');
+}
+
+CastMedia castMediaFor(
+  Scene scene,
+  SceneDetails? details, {
+  String? apiKey,
+  Duration start = Duration.zero,
+  CastKind kind = CastKind.googleCast,
+}) {
+  final stream = kind == CastKind.airPlay ? pickAirPlayStream(scene, details) : pickCastStream(scene, details);
   final image = scene.screenshotUrl;
   return CastMedia(
     url: withApiKey(stream.url, apiKey),

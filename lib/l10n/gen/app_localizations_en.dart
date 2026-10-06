@@ -1303,4 +1303,10 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get statsAndServer => 'Stats & server';
+
+  @override
+  String get airPlay => 'AirPlay';
+
+  @override
+  String get airPlayHint => 'Apple TV and AirPlay TVs';
 }

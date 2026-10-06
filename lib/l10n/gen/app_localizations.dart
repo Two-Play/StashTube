@@ -2245,6 +2245,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Stats & server'**
   String get statsAndServer;
+
+  /// No description provided for @airPlay.
+  ///
+  /// In en, this message translates to:
+  /// **'AirPlay'**
+  String get airPlay;
+
+  /// No description provided for @airPlayHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Apple TV and AirPlay TVs'**
+  String get airPlayHint;
 }
 
 class _AppLocalizationsDelegate

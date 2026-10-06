@@ -357,5 +357,7 @@
   "speedNormal": "Normal",
   "speedValue": "{rate}×",
   "editServer": "Server bearbeiten",
-  "statsAndServer": "Statistik & Server"
+  "statsAndServer": "Statistik & Server",
+  "airPlay": "AirPlay",
+  "airPlayHint": "Apple TV und AirPlay-Fernseher"
 }

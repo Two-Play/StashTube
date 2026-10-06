@@ -7,8 +7,9 @@ import 'cast_providers.dart';
 import 'cast_service.dart';
 import '../../l10n/l10n.dart';
 
-/// Cast icon like YouTube's: opens the device picker, or the "casting to"
-/// sheet while connected. Hidden where Google Cast isn't available.
+/// Cast icon like YouTube's: opens the device picker (Chromecasts and, on
+/// iOS, AirPlay), or the "casting to" sheet while connected. Hidden where
+/// neither is available.
 class CastButton extends ConsumerWidget {
   const CastButton({super.key, this.color});
 
@@ -21,7 +22,11 @@ class CastButton extends ConsumerWidget {
     return IconButton(
       tooltip: connection == null ? context.l10n.cast : context.l10n.castingTo(connection.deviceName),
       icon: Icon(
-        connection == null ? Icons.cast : Icons.cast_connected,
+        switch (connection?.kind) {
+          null => Icons.cast,
+          CastKind.airPlay => Icons.airplay,
+          CastKind.googleCast => Icons.cast_connected,
+        },
         color: connection == null ? color : Theme.of(context).colorScheme.primary,
       ),
       onPressed: () => showCastSheet(context),
@@ -51,7 +56,10 @@ class _CastSheet extends ConsumerWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             ListTile(
-              leading: Icon(Icons.cast_connected, color: theme.colorScheme.primary),
+              leading: Icon(
+                connection.kind == CastKind.airPlay ? Icons.airplay : Icons.cast_connected,
+                color: theme.colorScheme.primary,
+              ),
               title: Text(context.l10n.castingTo(connection.deviceName)),
             ),
             Padding(
@@ -85,6 +93,17 @@ class _CastSheet extends ConsumerWidget {
                 padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
                 child: Text(context.l10n.castTo, style: theme.textTheme.titleMedium),
               ),
+              // AirPlay devices are chosen in the system's picker.
+              if (service.supportsAirPlay)
+                ListTile(
+                  leading: const Icon(Icons.airplay),
+                  title: Text(context.l10n.airPlay),
+                  subtitle: Text(context.l10n.airPlayHint),
+                  onTap: () {
+                    Navigator.pop(context);
+                    service.showAirPlayPicker();
+                  },
+                ),
               if (devices.isEmpty)
                 ListTile(
                   leading: const SizedBox.square(dimension: 24, child: CircularProgressIndicator(strokeWidth: 2)),
