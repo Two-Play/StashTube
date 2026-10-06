@@ -5,11 +5,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/utils/format.dart';
 import '../../data/models/image_item.dart';
 import '../../data/models/list_queries.dart';
+import '../../data/models/performer.dart';
 import '../../data/providers.dart';
+import '../shell/navigation.dart';
 import '../../widgets/stash_image.dart';
 
-/// Fullscreen image viewer: swipe between images, pinch to zoom, tap to
-/// toggle the info overlay. Loads more images when nearing the end.
+/// Fullscreen image viewer: swipe between images, pinch or double tap to
+/// zoom, tap to toggle the info overlay (with the performers). Loads more images when nearing the end.
 class ImageViewerPage extends ConsumerStatefulWidget {
   const ImageViewerPage({super.key, required this.query, required this.initialIndex});
 
@@ -99,40 +101,67 @@ class _ZoomableImage extends StatefulWidget {
   State<_ZoomableImage> createState() => _ZoomableImageState();
 }
 
-class _ZoomableImageState extends State<_ZoomableImage> {
+class _ZoomableImageState extends State<_ZoomableImage> with SingleTickerProviderStateMixin {
+  static const _doubleTapScale = 2.5;
+
   final _transform = TransformationController();
+  late final AnimationController _animation = AnimationController(vsync: this, duration: const Duration(milliseconds: 220))
+    ..addListener(() => _transform.value = _zoomTween!.transform(Curves.easeOut.transform(_animation.value)));
+  Matrix4Tween? _zoomTween;
+  Offset _doubleTapAt = Offset.zero;
 
   @override
   void dispose() {
+    _animation.dispose();
     _transform.dispose();
     super.dispose();
+  }
+
+  bool get _isZoomed => _transform.value.getMaxScaleOnAxis() > 1.01;
+
+  /// Zooms in around the tapped point, or back out when already zoomed.
+  void _onDoubleTap() {
+    final zoomIn = !_isZoomed;
+    final p = _doubleTapAt;
+    final end = zoomIn
+        ? (Matrix4.diagonal3Values(_doubleTapScale, _doubleTapScale, 1)
+            ..setTranslationRaw(-p.dx * (_doubleTapScale - 1), -p.dy * (_doubleTapScale - 1), 0))
+        : Matrix4.identity();
+    _zoomTween = Matrix4Tween(begin: _transform.value, end: end);
+    _animation.forward(from: 0);
+    widget.onZoomChanged(zoomIn);
   }
 
   @override
   Widget build(BuildContext context) {
     final url = widget.image.imageUrl ?? widget.image.thumbnailUrl;
-    return InteractiveViewer(
-      transformationController: _transform,
-      maxScale: 5,
-      onInteractionEnd: (_) => widget.onZoomChanged(_transform.value.getMaxScaleOnAxis() > 1.01),
-      child: Center(
-        child: url == null
-            ? const Icon(Icons.broken_image_outlined, color: Colors.white54, size: 64)
-            // Blur-up: the (usually cached) thumbnail first, then the full
-            // image at full resolution so zooming stays sharp.
-            : StashImage(
-                url,
-                previewUrl: url == widget.image.thumbnailUrl ? null : widget.image.thumbnailUrl,
-                fit: BoxFit.contain,
-                decodeAtDisplaySize: false,
-                fallbackIcon: Icons.broken_image_outlined,
-              ),
+    return GestureDetector(
+      onDoubleTapDown: (details) => _doubleTapAt = details.localPosition,
+      onDoubleTap: _onDoubleTap,
+      child: InteractiveViewer(
+        transformationController: _transform,
+        maxScale: 5,
+        onInteractionStart: (_) => _animation.stop(),
+        onInteractionEnd: (_) => widget.onZoomChanged(_isZoomed),
+        child: Center(
+          child: url == null
+              ? const Icon(Icons.broken_image_outlined, color: Colors.white54, size: 64)
+              // Blur-up: the (usually cached) thumbnail first, then the full
+              // image at full resolution so zooming stays sharp.
+              : StashImage(
+                  url,
+                  previewUrl: url == widget.image.thumbnailUrl ? null : widget.image.thumbnailUrl,
+                  fit: BoxFit.contain,
+                  decodeAtDisplaySize: false,
+                  fallbackIcon: Icons.broken_image_outlined,
+                ),
+        ),
       ),
     );
   }
 }
 
-class _Overlay extends StatelessWidget {
+class _Overlay extends ConsumerWidget {
   const _Overlay({required this.image, required this.position, required this.total});
 
   final ImageItem? image;
@@ -140,11 +169,10 @@ class _Overlay extends StatelessWidget {
   final int total;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final image = this.image;
     final meta = [
       if (image?.studio != null) image!.studio!.name,
-      ...?image?.performers.map((p) => p.name),
       if (image?.date != null) formatDate(image!.date!),
     ].join(' • ');
 
@@ -193,8 +221,32 @@ class _Overlay extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Text(image.title, maxLines: 2, overflow: TextOverflow.ellipsis, style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w600)),
+                      Text(
+                        image.title,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w600),
+                      ),
                       if (meta.isNotEmpty) Text(meta, style: const TextStyle(color: Colors.white70)),
+                      if (image.performers.isNotEmpty) ...[
+                        const SizedBox(height: 12),
+                        Wrap(
+                          spacing: 8,
+                          runSpacing: 8,
+                          children: [
+                            for (final performer in image.performers)
+                              _PerformerChip(
+                                performer: performer,
+                                // The viewer covers the shell, so close it to
+                                // show the performer page in the current tab.
+                                onTap: () {
+                                  openPerformer(ref, performer.id);
+                                  Navigator.of(context).pop();
+                                },
+                              ),
+                          ],
+                        ),
+                      ],
                     ],
                   ),
                 ),
@@ -204,4 +256,32 @@ class _Overlay extends StatelessWidget {
       ],
     );
   }
+}
+
+class _PerformerChip extends StatelessWidget {
+  const _PerformerChip({required this.performer, required this.onTap});
+
+  final Performer performer;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) => Material(
+    color: Colors.white24,
+    shape: const StadiumBorder(),
+    clipBehavior: Clip.antiAlias,
+    child: InkWell(
+      onTap: onTap,
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(4, 4, 12, 4),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ChannelAvatar(name: performer.name, imageUrl: performer.imageUrl, radius: 14),
+            const SizedBox(width: 8),
+            Text(performer.name, style: const TextStyle(color: Colors.white)),
+          ],
+        ),
+      ),
+    ),
+  );
 }

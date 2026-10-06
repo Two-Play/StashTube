@@ -1,5 +1,9 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:media_kit/media_kit.dart';
 import 'package:media_kit_video/media_kit_video.dart';
 
 import '../../core/utils/format.dart';
@@ -45,6 +49,7 @@ class PlayerVideo extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) => Video(
         controller: ref.watch(videoControllerProvider),
+        onEnterFullscreen: () => _enterFullscreen(ref.read(playerProvider).state, scene),
         // The same builder is used by media_kit's fullscreen route.
         controls: showControls
             ? (state) => StashVideoControls(
@@ -55,6 +60,24 @@ class PlayerVideo extends ConsumerWidget {
                 )
             : _noControls,
       );
+}
+
+/// Like media_kit's default, but locks the orientation to match the video:
+/// landscape for wide videos, portrait for portrait videos (the default
+/// always rotates to landscape, so portrait videos end up small and pillarboxed).
+Future<void> _enterFullscreen(PlayerState state, Scene scene) async {
+  if (!Platform.isAndroid && !Platform.isIOS) return defaultEnterNativeFullscreen();
+  // The decoded size accounts for rotation metadata; the scene's file size
+  // is the fallback before the first frame.
+  final width = state.width ?? scene.width;
+  final height = state.height ?? scene.height;
+  final portrait = width != null && height != null && height > width;
+  await Future.wait([
+    SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky, overlays: []),
+    SystemChrome.setPreferredOrientations(
+      portrait ? [DeviceOrientation.portraitUp] : [DeviceOrientation.landscapeLeft, DeviceOrientation.landscapeRight],
+    ),
+  ]);
 }
 
 /// Shown while the panel isn't fully open. media_kit's `NoVideoControls` is
