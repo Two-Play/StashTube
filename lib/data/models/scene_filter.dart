@@ -1,0 +1,149 @@
+import 'package:flutter/foundation.dart';
+
+import 'tag.dart';
+
+enum DurationFilter {
+  any,
+  short,
+  medium,
+  long;
+
+  Map<String, dynamic>? toCriterion() => switch (this) {
+        DurationFilter.any => null,
+        DurationFilter.short => {'value': 600, 'modifier': 'LESS_THAN'},
+        DurationFilter.medium => {'value': 600, 'value2': 1800, 'modifier': 'BETWEEN'},
+        DurationFilter.long => {'value': 1800, 'modifier': 'GREATER_THAN'},
+      };
+}
+
+/// Minimum resolution. Stash compares resolutions by category, so "at least
+/// 720p" is "greater than" the category just below it.
+enum ResolutionFilter {
+  any(null),
+  hd('WEB_HD'),
+  fullHd('STANDARD_HD'),
+  uhd('QUAD_HD');
+
+  const ResolutionFilter(this._above);
+
+  final String? _above;
+
+  Map<String, dynamic>? toCriterion() => _above == null ? null : {'value': _above, 'modifier': 'GREATER_THAN'};
+}
+
+/// User-chosen scene filters (5.4) and tag pages (8.1), mapped to Stash's
+/// `SceneFilterType`. Value equality, as it is part of provider keys.
+@immutable
+class SceneFilter {
+  const SceneFilter({
+    this.tags = const [],
+    this.minStars = 0,
+    this.duration = DurationFilter.any,
+    this.resolution = ResolutionFilter.any,
+    this.savedFilter,
+    this.anyTag = false,
+    this.portraitOnly = false,
+    this.maxSeconds,
+  });
+
+  static const none = SceneFilter();
+
+  /// Scenes must have all of these tags, or with [anyTag] at least one.
+  final List<Tag> tags;
+  final bool anyTag;
+
+  /// Only videos taller than wide (Stash's `orientation` criterion).
+  final bool portraitOnly;
+
+  /// At most this long, in seconds; replaces [duration] when set (shorts).
+  final int? maxSeconds;
+
+  /// 0 = any rating; 1–5 = at least this many stars.
+  final int minStars;
+  final DurationFilter duration;
+  final ResolutionFilter resolution;
+
+  /// A Stash saved filter's scene filter (5.5), already converted to
+  /// `SceneFilterType` form. Combined with the other fields. Compared
+  /// shallowly: the map instance comes from the loaded saved filter.
+  final Map<String, dynamic>? savedFilter;
+
+  bool get isEmpty =>
+      tags.isEmpty &&
+      minStars == 0 &&
+      duration == DurationFilter.any &&
+      resolution == ResolutionFilter.any &&
+      savedFilter == null &&
+      !portraitOnly &&
+      maxSeconds == null;
+
+  /// Number of active criteria, for the filter button badge (saved filters
+  /// are shown as their own chip).
+  int get activeCount =>
+      (tags.isEmpty ? 0 : 1) +
+      (minStars == 0 ? 0 : 1) +
+      (duration == DurationFilter.any ? 0 : 1) +
+      (resolution == ResolutionFilter.any ? 0 : 1);
+
+  Map<String, dynamic> toCriteria() => {
+        ...?savedFilter,
+        if (tags.isNotEmpty)
+          'tags': {
+            'value': [for (final t in tags) t.id],
+            'modifier': anyTag ? 'INCLUDES' : 'INCLUDES_ALL',
+            'depth': 0,
+          },
+        if (minStars > 0) 'rating100': {'value': minStars * 20 - 1, 'modifier': 'GREATER_THAN'},
+        'duration': ?(maxSeconds == null
+            ? duration.toCriterion()
+            : {'value': maxSeconds! + 1, 'modifier': 'LESS_THAN'}),
+        'resolution': ?resolution.toCriterion(),
+        if (portraitOnly) 'orientation': {'value': ['PORTRAIT']},
+      };
+
+  SceneFilter copyWith({
+    List<Tag>? tags,
+    int? minStars,
+    DurationFilter? duration,
+    ResolutionFilter? resolution,
+    Map<String, dynamic>? savedFilter,
+    bool clearSavedFilter = false,
+    bool? anyTag,
+    bool? portraitOnly,
+    int? maxSeconds,
+  }) =>
+      SceneFilter(
+        tags: tags ?? this.tags,
+        minStars: minStars ?? this.minStars,
+        duration: duration ?? this.duration,
+        resolution: resolution ?? this.resolution,
+        savedFilter: clearSavedFilter ? null : (savedFilter ?? this.savedFilter),
+        anyTag: anyTag ?? this.anyTag,
+        portraitOnly: portraitOnly ?? this.portraitOnly,
+        maxSeconds: maxSeconds ?? this.maxSeconds,
+      );
+
+  @override
+  bool operator ==(Object other) =>
+      other is SceneFilter &&
+      listEquals([for (final t in tags) t.id], [for (final t in other.tags) t.id]) &&
+      other.minStars == minStars &&
+      other.duration == duration &&
+      other.resolution == resolution &&
+      mapEquals(other.savedFilter, savedFilter) &&
+      other.anyTag == anyTag &&
+      other.portraitOnly == portraitOnly &&
+      other.maxSeconds == maxSeconds;
+
+  @override
+  int get hashCode => Object.hash(
+        Object.hashAll([for (final t in tags) t.id]),
+        minStars,
+        duration,
+        resolution,
+        savedFilter == null ? null : Object.hashAllUnordered(savedFilter!.keys),
+        anyTag,
+        portraitOnly,
+        maxSeconds,
+      );
+}

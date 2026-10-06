@@ -1,0 +1,691 @@
+{
+  "@@locale": "en",
+  "appTitle": "Stash",
+  "scenesCount": "{count, plural, =1{1 scene} other{{count} scenes}}",
+  "@scenesCount": {
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "format": "decimalPattern"
+      }
+    }
+  },
+  "imagesCount": "{count, plural, =1{1 image} other{{count} images}}",
+  "@imagesCount": {
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "format": "decimalPattern"
+      }
+    }
+  },
+  "playsCount": "{count, plural, =0{No plays} =1{1 play} other{{count} plays}}",
+  "@playsCount": {
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "format": "decimalPattern"
+      }
+    }
+  },
+  "savedServersCount": "{count, plural, =1{1 saved server} other{{count} saved servers}}",
+  "@savedServersCount": {
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "format": "decimalPattern"
+      }
+    }
+  },
+  "subStudiosCount": "{count, plural, =1{1 sub-studio} other{{count} sub-studios}}",
+  "@subStudiosCount": {
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "format": "decimalPattern"
+      }
+    }
+  },
+  "timeUpcoming": "upcoming",
+  "timeJustNow": "just now",
+  "timeYearsAgo": "{count, plural, =1{1 year ago} other{{count} years ago}}",
+  "@timeYearsAgo": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "timeMonthsAgo": "{count, plural, =1{1 month ago} other{{count} months ago}}",
+  "@timeMonthsAgo": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "timeWeeksAgo": "{count, plural, =1{1 week ago} other{{count} weeks ago}}",
+  "@timeWeeksAgo": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "timeDaysAgo": "{count, plural, =1{1 day ago} other{{count} days ago}}",
+  "@timeDaysAgo": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "timeHoursAgo": "{count, plural, =1{1 hour ago} other{{count} hours ago}}",
+  "@timeHoursAgo": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "timeMinutesAgo": "{count, plural, =1{1 minute ago} other{{count} minutes ago}}",
+  "@timeMinutesAgo": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "libraryTitle": "Library",
+  "libraryScenes": "Scenes",
+  "libraryHistory": "History",
+  "libraryWatchLater": "Watch later",
+  "libraryGroups": "Groups",
+  "libraryImages": "Images",
+  "libraryGalleries": "Galleries",
+  "libraryStats": "Stats",
+  "historyEmpty": "Nothing watched yet",
+  "historyEmptyHint": "Scenes you play show up here.",
+  "tabHome": "Home",
+  "tabPerformers": "Performers",
+  "tabStudios": "Studios",
+  "tabLibrary": "Library",
+  "tabWatchLater": "Later",
+  "tabTags": "Tags",
+  "tabSearch": "Search",
+  "tabSettings": "Settings",
+  "emptyDefault": "Nothing here yet",
+  "loadMoreFailed": "Couldn't load more – tap to retry",
+  "channelUnknown": "Unknown",
+  "sceneMenuPlay": "Play",
+  "watchLaterRemove": "Remove from Watch later",
+  "watchLaterSave": "Save to Watch later",
+  "editDetails": "Edit details",
+  "goTo": "Go to {name}",
+  "@goTo": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "scenesEmpty": "No scenes found",
+  "savedFilterUnsupported": "\"{name}\": ignored unsupported criteria ({criteria})",
+  "@savedFilterUnsupported": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "criteria": {
+        "type": "String"
+      }
+    }
+  },
+  "filter": "Filter",
+  "filterScenes": "Filter scenes",
+  "filterTagsAllOf": "Tags (all of)",
+  "searchTags": "Search tags",
+  "minimumRating": "Minimum rating",
+  "ratingAny": "Any",
+  "duration": "Duration",
+  "quality": "Quality",
+  "reset": "Reset",
+  "apply": "Apply",
+  "errorTitle": "Something went wrong",
+  "retry": "Retry",
+  "sortRecentlyAdded": "Recently added",
+  "sortNewest": "Newest",
+  "sortShuffle": "Shuffle",
+  "sortTopRated": "Top rated",
+  "sortMostPlayed": "Most played",
+  "sortRecentlyWatched": "Recently watched",
+  "sortAlphabetical": "A–Z",
+  "sortGroupOrder": "Group order",
+  "sortName": "Name",
+  "sortMostScenes": "Most scenes",
+  "sortFavorites": "Favorites",
+  "sortFileName": "File name",
+  "sortMostImages": "Most images",
+  "durationAny": "Any length",
+  "durationShort": "Under 10 min",
+  "durationMedium": "10–30 min",
+  "durationLong": "Over 30 min",
+  "resolutionAny": "Any quality",
+  "galleriesCount": "{count, plural, =1{1 gallery} other{{count} galleries}}",
+  "@galleriesCount": {
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "format": "decimalPattern"
+      }
+    }
+  },
+  "galleriesEmpty": "No galleries yet",
+  "galleriesEmptyHint": "Add image folders or zip files to your Stash library.",
+  "edit": "Edit",
+  "groupsEmpty": "No groups yet",
+  "groupsEmptyHint": "Groups need Stash v0.27 or newer.",
+  "groupLoadFailed": "Couldn't load the group: {error}",
+  "@groupLoadFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "groupNoScenes": "This group has no scenes",
+  "playAll": "Play all",
+  "imagesEmpty": "No images yet",
+  "statsLibrary": "Library",
+  "statsScenes": "Scenes",
+  "statsImages": "Images",
+  "statsGalleries": "Galleries",
+  "statsPerformers": "Performers",
+  "statsStudios": "Studios",
+  "statsTags": "Tags",
+  "statsStorage": "Storage",
+  "statsTotalSize": "Total size",
+  "statsAverageScene": "Average scene",
+  "statsWatching": "Watching",
+  "statsPlays": "Plays",
+  "statsWatchTime": "Watch time",
+  "statsScenesWatched": "Scenes watched",
+  "statsOCount": "O-count",
+  "watchLaterEmpty": "Nothing saved yet",
+  "watchLaterEmptyHint": "Tap \"Later\" on a scene to watch it afterwards.",
+  "favoriteUpdateFailed": "Couldn't update favorite: {error}",
+  "@favoriteUpdateFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "favorited": "Favorited",
+  "favorite": "Favorite",
+  "favoriteRemove": "Remove from favorites",
+  "favoriteAdd": "Add to favorites",
+  "ageYears": "{age} years",
+  "@ageYears": {
+    "placeholders": {
+      "age": {
+        "type": "int"
+      }
+    }
+  },
+  "performersTitle": "Performers",
+  "performersEmpty": "No performers found",
+  "partOf": "Part of {name}",
+  "@partOf": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "includeSubStudios": "Include sub-studios",
+  "subStudios": "Sub-studios",
+  "studiosTitle": "Studios",
+  "studiosEmpty": "No studios yet",
+  "studiosEmptyHint": "Studios appear here once scenes in Stash have one.",
+  "newTag": "New tag",
+  "name": "Name",
+  "cancel": "Cancel",
+  "create": "Create",
+  "tagCreateFailed": "Couldn't create tag: {error}",
+  "@tagCreateFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "tagsSaveFailed": "Couldn't save tags: {error}",
+  "@tagsSaveFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "tagsTitle": "Tags",
+  "tagsEmpty": "No tags yet",
+  "tagAddOrCreate": "Add or create a tag",
+  "tagCreate": "Create #{name}",
+  "@tagCreate": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "tagsSave": "Save tags",
+  "tagsEmptyHint": "Create one with \"New tag\".",
+  "search": "Search",
+  "continueWatching": "Continue watching",
+  "newFromFavorites": "New from favorites",
+  "searchHint": "Search Stash",
+  "searchNoScenes": "No scenes match \"{term}\"",
+  "@searchNoScenes": {
+    "placeholders": {
+      "term": {
+        "type": "String"
+      }
+    }
+  },
+  "searchNoScenesHint": "Try other words or check the spelling.",
+  "recentSearches": "Recent searches",
+  "clear": "Clear",
+  "remove": "Remove",
+  "popularTags": "Popular tags",
+  "seeAll": "See all",
+  "searchIntro": "Search scenes and performers",
+  "addServer": "Add server",
+  "connectToStash": "Connect to Stash",
+  "loginIntro": "Enter the address of your Stash server, e.g. http://192.168.1.10:9999",
+  "savedServers": "Saved servers",
+  "orAddAnotherServer": "Or add another server",
+  "nameOptional": "Name (optional)",
+  "nameHint": "e.g. Home",
+  "serverUrl": "Server URL",
+  "serverUrlInvalid": "Enter a valid http(s) URL",
+  "apiKeyOptional": "API key (optional)",
+  "apiKeyHelper": "Required if your server has a password. Stash → Settings → Security.",
+  "connect": "Connect",
+  "removeServerTitle": "Remove \"{name}\"?",
+  "@removeServerTitle": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "removeServerBody": "Its URL and API key, watch later list and search history are removed from this device.",
+  "servers": "Servers",
+  "serverOptions": "Server options",
+  "rename": "Rename",
+  "renameServer": "Rename server",
+  "save": "Save",
+  "castDevice": "Cast device",
+  "cast": "Cast",
+  "castingTo": "Casting to {device}",
+  "@castingTo": {
+    "placeholders": {
+      "device": {
+        "type": "String"
+      }
+    }
+  },
+  "stopCasting": "Stop casting",
+  "castTo": "Cast to",
+  "castSearching": "Searching for devices…",
+  "castSearchingHint": "Chromecast and the phone must be on the same Wi-Fi.",
+  "castConnectFailed": "Couldn't connect to {device}: {error}",
+  "@castConnectFailed": {
+    "placeholders": {
+      "device": {
+        "type": "String"
+      },
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "minimize": "Minimize",
+  "back10": "Back 10 s",
+  "forward10": "Forward 10 s",
+  "pause": "Pause",
+  "play": "Play",
+  "navBarTitle": "Navigation bar",
+  "navBarIntro": "Choose up to {max} tabs and drag them into order. The first tab opens when the app starts.",
+  "@navBarIntro": {
+    "placeholders": {
+      "max": {
+        "type": "int"
+      }
+    }
+  },
+  "navBarAlwaysShown": "Always shown",
+  "navBarAtLeast": "At least {count} tabs",
+  "@navBarAtLeast": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "settingsTitle": "Settings",
+  "sectionServer": "Server",
+  "stashVersion": "Stash {version}",
+  "@stashVersion": {
+    "placeholders": {
+      "version": {
+        "type": "String"
+      }
+    }
+  },
+  "unknownVersion": "unknown version",
+  "notReachable": "Not reachable",
+  "checking": "Checking…",
+  "switchServer": "Switch server",
+  "apiKey": "API key",
+  "notSet": "Not set",
+  "isSet": "Set",
+  "sectionAppearance": "Appearance",
+  "themeLight": "Light",
+  "themeSystem": "System",
+  "themeDark": "Dark",
+  "accentColor": "Accent color",
+  "accentColorLabel": "{name} accent color",
+  "@accentColorLabel": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "colorRed": "Red",
+  "colorPink": "Pink",
+  "colorPurple": "Purple",
+  "colorIndigo": "Indigo",
+  "colorBlue": "Blue",
+  "colorTeal": "Teal",
+  "colorGreen": "Green",
+  "colorOrange": "Orange",
+  "colorAmber": "Amber",
+  "language": "Language",
+  "languageSystem": "System",
+  "sectionPlayback": "Playback",
+  "preferredQuality": "Preferred quality",
+  "preferredQualityDefault": "Original file – change it via ⚙ in the player",
+  "sectionPrivacy": "Privacy & security",
+  "removeThisServer": "Remove this server",
+  "lockImmediately": "Immediately",
+  "lockAfterMinutes": "{count, plural, =1{After 1 minute} other{After {count} minutes}}",
+  "@lockAfterMinutes": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "appLock": "App lock",
+  "appLockSubtitle": "Ask for a PIN when opening the app",
+  "unlockBiometric": "Unlock with Face ID / fingerprint",
+  "lockNow": "Lock",
+  "changePin": "Change PIN",
+  "hideInSwitcher": "Hide in app switcher",
+  "hideInSwitcherSubtitle": "Covers the app in the recent apps view. On Android this also blocks screenshots.",
+  "appIcon": "App icon",
+  "appIconHint": "On Android the name on the home screen changes too and the launcher may need a moment. On iOS only the icon changes and the system shows a confirmation.",
+  "appIconFailed": "Couldn't change the icon: {error}",
+  "@appIconFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "appIconStash": "Stash",
+  "appIconNotes": "Notes",
+  "appIconCalculator": "Calculator",
+  "unlockReason": "Unlock Stash",
+  "enterPin": "Enter PIN",
+  "choosePin": "Choose a PIN",
+  "repeatPin": "Repeat the PIN",
+  "enterYourPin": "Enter your PIN",
+  "streamOriginal": "Original file",
+  "streamAdaptive": "Adaptive streaming",
+  "streamTranscoded": "Transcoded – seeking may be limited",
+  "noAlternativeStreams": "No alternative streams available",
+  "streamsLoadFailed": "Couldn't load streams",
+  "chapters": "Chapters",
+  "close": "Close",
+  "upNextEmpty": "Nothing else to watch here",
+  "moreFrom": "More from {name}",
+  "@moreFrom": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "upNext": "Up next",
+  "addTags": "Add tags",
+  "editTags": "Edit tags",
+  "showLess": "Show less",
+  "showMore": "...more",
+  "saveFailed": "Couldn't save: {error}",
+  "@saveFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "removeRating": "Remove rating",
+  "rateStars": "{count, plural, =1{Rate 1 star} other{Rate {count} stars}}",
+  "@rateStars": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "addO": "Add O",
+  "oCountValue": "O-count: {count}",
+  "@oCountValue": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "undo": "Undo",
+  "editSceneDetails": "Edit scene details",
+  "marker": "Marker",
+  "addMarkerHere": "Add a marker at the current position",
+  "markerAdded": "Marker added at {time}",
+  "@markerAdded": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "markerAddFailed": "Couldn't add marker: {error}",
+  "@markerAddFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "addMarkerAt": "Add marker at {time}",
+  "@addMarkerAt": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "titleOptional": "Title (optional)",
+  "primaryTagRequired": "Primary tag (required)",
+  "addMarker": "Add marker",
+  "saved": "Saved",
+  "later": "Later",
+  "exitFullscreen": "Exit fullscreen",
+  "fullscreen": "Fullscreen",
+  "clearField": "Clear",
+  "searchStudios": "Search studios",
+  "searchPerformers": "Search performers",
+  "done": "Done",
+  "editScene": "Edit scene",
+  "fieldCover": "Cover",
+  "fieldTitle": "Title",
+  "fieldDetails": "Details",
+  "fieldDate": "Date",
+  "fieldStudio": "Studio",
+  "fieldPerformers": "Performers",
+  "organized": "Organized",
+  "organizedSubtitle": "Metadata is complete",
+  "genderFemale": "Female",
+  "genderMale": "Male",
+  "genderTransFemale": "Trans female",
+  "genderTransMale": "Trans male",
+  "genderIntersex": "Intersex",
+  "genderNonBinary": "Non-binary",
+  "nameRequired": "A name is required",
+  "editPerformer": "Edit performer",
+  "fieldImage": "Image",
+  "fieldName": "Name",
+  "fieldDisambiguation": "Disambiguation",
+  "fieldGender": "Gender",
+  "fieldBirthdate": "Birthdate",
+  "fieldCountryCode": "Country code",
+  "countryCodeHint": "e.g. DE",
+  "editStudio": "Edit studio",
+  "fieldLogo": "Logo",
+  "fieldParentStudio": "Parent studio",
+  "studioOwnParent": "A studio can't be its own parent",
+  "fieldWebsite": "Website",
+  "editTag": "Edit tag",
+  "fieldDescription": "Description",
+  "editGallery": "Edit gallery",
+  "invalidUrl": "That is not a valid URL",
+  "choosePhoto": "Choose photo",
+  "fromUrl": "From URL",
+  "keepCurrentImage": "Keep current image",
+  "imageFromUrl": "Image from URL",
+  "use": "Use",
+  "enterFullUrl": "Enter a full URL, e.g. https://…",
+  "urls": "URLs",
+  "removeUrl": "Remove URL",
+  "addUrl": "Add URL",
+  "errorUnreachable": "Could not reach the server: {detail}",
+  "@errorUnreachable": {
+    "placeholders": {
+      "detail": {
+        "type": "String"
+      }
+    }
+  },
+  "errorUnauthorized": "Not authorized – check the API key.",
+  "errorNotReady": "Server is reachable but not ready (status: {status}).",
+  "@errorNotReady": {
+    "placeholders": {
+      "status": {
+        "type": "String"
+      }
+    }
+  },
+  "errorNotFound": "Not found.",
+  "errorNotSaved": "Nothing was saved.",
+  "navBarCount": "{count} of {max} tabs chosen",
+  "@navBarCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "max": {
+        "type": "int"
+      }
+    }
+  },
+  "fileInfo": "File info",
+  "fileInfoFiles": "{count, plural, =1{File info} other{File info ({count} files)}}",
+  "@fileInfoFiles": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "fileName": "File",
+  "filePath": "Path",
+  "fileSize": "Size",
+  "fileFormat": "Format",
+  "fileResolution": "Resolution",
+  "fileDuration": "Duration",
+  "fileVideoCodec": "Video codec",
+  "fileAudioCodec": "Audio codec",
+  "fileFrameRate": "Frame rate",
+  "fileBitRate": "Bit rate",
+  "fileModified": "Modified",
+  "copyPath": "Copy path",
+  "pathCopied": "Path copied",
+  "framesPerSecond": "{fps} fps",
+  "@framesPerSecond": {
+    "placeholders": {
+      "fps": {
+        "type": "String"
+      }
+    }
+  },
+  "megabitsPerSecond": "{rate} Mbit/s",
+  "@megabitsPerSecond": {
+    "placeholders": {
+      "rate": {
+        "type": "String"
+      }
+    }
+  },
+  "tabShorts": "Shorts",
+  "shortsSettings": "Shorts settings",
+  "shortsTags": "Preferred tags",
+  "shortsTagsHint": "Videos with one of these tags show up more often.",
+  "shortsOnlyTags": "Only these tags",
+  "shortsOnlyTagsHint": "Leave out videos without any of the tags",
+  "shortsMaxLength": "Maximum length",
+  "shortsLengthOneMinute": "Up to 1 min",
+  "shortsLengthThreeMinutes": "Up to 3 min",
+  "shortsLengthTenMinutes": "Up to 10 min",
+  "shortsPortraitOnly": "Portrait videos only",
+  "shortsEmpty": "No shorts found",
+  "shortsEmptyHint": "Shorts are short portrait videos. Try a longer maximum length or other tags.",
+  "shortsFullVideo": "Full video",
+  "sectionSceneCards": "Video cards",
+  "cardChannel": "Channel on cards",
+  "cardChannelStudio": "Studio",
+  "cardChannelPerformers": "Performers",
+  "cardShowPlays": "Show plays",
+  "cardShowRating": "Show rating",
+  "shortsRate": "Rate",
+  "mute": "Mute",
+  "unmute": "Unmute",
+  "moreActions": "More",
+  "fastForward2x": "2× speed",
+  "unknownStudio": "Unknown studio",
+  "unknownPerformer": "Unknown performer",
+  "playbackSpeed": "Playback speed",
+  "speedNormal": "Normal",
+  "speedValue": "{rate}×",
+  "@speedValue": {
+    "placeholders": {
+      "rate": {
+        "type": "double",
+        "format": "decimalPattern"
+      }
+    }
+  }
+}

@@ -1,0 +1,77 @@
+# CLAUDE.md
+
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+
+## Project
+
+A YouTube-style Flutter client (iOS/Android) for a self-hosted [Stash](https://github.com/stashapp/stash) server. It talks to the server's GraphQL API (`<server-url>/graphql`, optional `ApiKey` header) and plays scene streams in-app. Product backlog (epics and user stories, in German) is in `docs/BACKLOG.md`. Keep its status column up to date when implementing stories.
+
+## Commands
+
+```bash
+flutter pub get
+flutter run
+dart analyze                    # flutter_lints + riverpod_lint (flutter analyze does NOT run analyzer plugins)
+flutter test                    # all tests
+flutter test test/core/paged_notifier_test.dart --plain-name "loads pages"   # single test
+flutter build ios --simulator --debug
+flutter build apk --debug
+```
+
+- `pubspec.lock` is git-ignored (`*.lock`), so check resolved versions with `flutter pub deps`. Older transitive versions (`archive` 3.4, `win32` 5.4) don't compile on the current Dart SDK.
+- Android uses Gradle 9.3.1 / AGP 9.1.0 / Kotlin 2.4.0 with Kotlin DSL, matching the current Flutter template. `android.builtInKotlin=false` and `android.newDsl=false` in `gradle.properties` keep older plugins such as media_kit working.
+- Riverpod 3. All providers are written by hand: there is no codegen and no `@riverpod`. riverpod_lint 3 is enabled under `plugins:` in `analysis_options.yaml` (analysis_server_plugin, no custom_lint).
+- Family notifiers get their argument through the constructor (see `PagedNotifier`). `AsyncValue.value` is null while loading or on error (there is no `valueOrNull`). Use `Notifier` classes with methods instead of `StateProvider`. Check `ref.mounted` after `await` before touching `state`.
+- Riverpod 3 retries failed providers automatically. `main()` sets `retry: stashRetry`, which retries only network errors, at most 3 times; server-reported errors show immediately.
+- `android/app/build.gradle.kts` sets `compileSdk = 37` instead of `flutter.compileSdkVersion` (36), because `flutter_chrome_cast` 1.5 pulls in permission_handler_android, which compiles against 37.
+
+## Architecture
+
+```
+lib/
+  main.dart, app.dart     bootstrap; StashApp shows LoginPage or AppShell based on serverConfigProvider
+  core/api/queries.dart   all GraphQL documents (with fragments)
+  core/config/            ServerConfig + persistence (SharedPreferences), theme + ThemeMode provider
+  core/pagination/        PagedNotifier / PagedState: generic infinite-list notifier
+  data/models/            typed models with defensive fromJson; list query args (SceneQuery, ...)
+  data/repositories/      StashRepository: the only place that talks GraphQL
+  data/providers.dart     list/detail providers built on the repository
+  features/<feature>/     screens (auth, shell, home, player, search, performers, studios, settings)
+  widgets/                shared UI (SceneCard, PagedSliver, SceneFeedView, StashImage, ...)
+```
+
+**Server config and data flow.** `main()` overrides `sharedPreferencesProvider`. `serverProfilesProvider` holds the saved servers and the active one (stored as JSON; a single-server login from older versions is migrated once). `serverConfigProvider` (the active server's URL and API key, with value equality) and `activeServerIdProvider` derive from it, and `graphQLClientProvider`/`stashRepositoryProvider` derive from the config. `StashApp` keys `AppShell` by server id, so switching servers rebuilds the per-server UI state. Per-server data must key on `activeServerIdProvider`: stored lists use `<key>:<serverId>`, which removing a server deletes, and in-memory caches `ref.watch` it so they reset. Tests that touch such state use `testServer` from `test/helpers.dart` (it also fixes the scene card settings; use `testServerOnly` to set your own). UI code never builds GraphQL queries itself; it watches providers from `data/providers.dart`.
+
+**Paginated lists.** `sceneListProvider`, `performerListProvider` and `studioListProvider` are auto-dispose family `PagedNotifier`s keyed by query objects (`SceneQuery`, `PerformerQuery`, `StudioQuery`). These query objects must keep value equality. UI code reads paged lists through `.current` (`PagedValue` extension), not `.value`. On a server switch the lists rebuild (`isReloading`), and `.value` would keep showing the previous server's items, or would hide a failed load behind them. The random sort uses a `random_<seed>` sort field so pages stay stable, and the seed is 0 for every other sort. To get an infinite, refreshable list with sort chips, use `SceneFeedView`, or compose `RefreshIndicator`, `LoadMoreListener`, `CustomScrollView` and `PagedSliver` yourself.
+
+**Shell and navigation.** `AppShell` holds an `IndexedStack` with one nested `Navigator` per `AppTab`, with the `Miniplayer` on top. The bottom `NavigationBar` collapses as the player expands, driven by `miniplayerHeightProvider`. The bar shows only the tabs in `navBarConfigProvider` (`features/shell/nav_bar_config.dart`, configured in the settings, stored for all servers); `currentTabProvider` starts on the first one and falls back to it when its tab is hidden. Each `LibrarySection` (`features/library/library_page.dart`) is both a sub-tab of the library and an `AppTab` of its own (`AppTab.section`, shown by `LibrarySectionPage`). A new `AppTab` needs a root page in `AppShell._rootPage` and should be hidden in `NavBarConfig.standard`. To navigate, use `openPage`, `openPerformer`, `openStudio` or `openSearch` from `features/shell/navigation.dart`. They push onto the current tab's navigator and collapse the player, and they also work from inside the player, which sits outside the tab navigators.
+
+**Player.** There is a single media_kit `Player` in `playerProvider`. `nowPlayingProvider.play(scene)` opens the stream with the auth headers, starting at the resume position, and expands the panel. `PlayerPanel` is a single layout that `PlayerTransition` interpolates between the mini bar and the expanded page (video, details, "Up next") based on the panel height. The one `PlayerVideo` instance stays in place, so it is never rebuilt mid-transition. Keep the panel's widget tree structurally stable and toggle behavior with flags. Don't pass media_kit's `NoVideoControls` to `Video`: since media_kit_video 2 it is `null`, which `Video` ignores on update, so the old controls would stay; `PlayerVideo` uses an empty builder instead. With `showControls`, `PlayerVideo` (`player_controls.dart`) wraps media_kit's `MaterialVideoControls` on both platforms, with double-tap seeking, the collapse button and the quality sheet. `sceneDetailsProvider` loads `sceneStreams`, scene markers and the file infos (`SceneFile`, shown by `FileInfoCard`) lazily per scene. Chapters appear as gaps in the controls' `PreviewSeekBar` and in `ChapterList`; there is deliberately no progress line under the expanded video. `preferredStreamProvider` stores the chosen stream label, and `play` only waits for the stream list when a preference is set.
+
+**Player gestures.** media_kit's controls and the details list both claim vertical drags, so the miniplayer package can't drag the expanded panel itself. `DragToMinimize` reads raw pointer events and drives the panel through `MiniplayerController.animateToHeight(height:, duration: Duration.zero)`. That's also why the player's details have no pull-to-refresh. The player uses its own `StashVideoControls` instead of media_kit's, because media_kit's hide timer removed our seek bar mid-scrub. The controls take the fullscreen state and a toggle callback from media_kit's `VideoState`; buttons sit above the tap/double-tap gesture layer so they react without waiting for a double tap. Holding the video (`HoldDetector`, 250 ms) plays at 2× until released, and the speed button opens `showSpeedSheet` (mpv keeps the speed across files). Their `PreviewSeekBar` shows sprite thumbnails (`scrubThumbnailsProvider`, parsed from Stash's WebVTT) while scrubbing. They load lazily: the controls stay mounted while hidden, so the bar reads the provider only once it is `visible` or touched, then precaches the sprite. `sceneDetailsProvider` and `scrubThumbnailsProvider` stay cached for 5 minutes without listeners (`Ref.cacheFor`), so collapsing and expanding the player doesn't refetch.
+
+**Queue and autoplay.** `playQueueProvider` holds the playing list (watch later, a group). `NowPlayingNotifier.playQueue` starts it, `playNext` runs when `playerCompletedProvider` fires, and `play()` of a scene outside the queue ends the queue. Watch later is a list of scene ids stored on the device (`watchLaterProvider`), loaded with `findScenesByIds`.
+
+**Shorts.** `features/shorts/`. `ShortsPage` is a vertical `PageView` with its own pool of three media_kit players (previous, current, next), separate from `playerProvider`; it plays only while its tab and route are on top, the main player isn't open and the app is visible. It finds its tab through the tab navigators (`tabNavigatorKeysProvider`), since a tab root is built at startup while another tab is selected. While it plays, `shortsActiveProvider` makes `AppShell` hide the miniplayer (`Offstage`) and the main player is paused. `shortsFullscreenProvider` also hides the navigation bar. Its seek bar is the player's `PreviewSeekBar` with the short's own `player`. Its players start only after `open` finished: `open(play: false)` pauses once the file is loaded, which would undo an earlier `play()`. `shortsFeedProvider` mixes two random-sorted sources through `ShortsMixer` (three with the preferred tags, one other); `ShortsSettings` (per server) build the filters with `SceneFilter.anyTag`, `portraitOnly` (Stash's `orientation` criterion) and `maxSeconds`. Tabs added in an update start hidden in a stored nav bar config.
+
+**Editing.** `features/edit/` has the forms (`EditScaffold`, pickers, `edit_pages.dart`). Saves send only changed fields (`_diff`) through `StashRepository.update*`, then invalidate the affected providers. A saved scene also replaces the playing one (`NowPlayingNotifier.replaceScene`) and drops its local edits (`SceneEditsNotifier.forget`).
+
+**Watch progress and play count.** `playbackTrackerProvider` feeds the player streams into `PlaybackTracker`. That class has no widget or media_kit dependencies and is unit-tested. It calls `sceneSaveActivity` and `sceneAddPlay` through the `PlaybackActivityApi` interface that `StashRepository` implements. Saved positions also go into `resumeTimesProvider`, so thumbnails show current progress without refetching. Read a scene's position with `effectiveResumeTime`.
+
+**Library.** The `library` tab (`features/library/`) has four sub-tabs. All scenes uses `SceneFeedView` with `SceneFeedLayout.grid`. Images and galleries share `ImageGridView`, which takes an `ImageQuery` (optionally with a `galleryId`); tapping an image opens `ImageViewerPage` on the root navigator, so it covers the shell and the player. The fourth sub-tab is stats (`libraryStatsProvider` plus the optional `activityStatsProvider`, which returns null on Stash versions without those fields).
+
+**Errors.** `StashRepository._run` maps failures to `StashApiException`. Stash answers invalid queries with HTTP 422 plus GraphQL errors, which gql_http_link raises as `HttpLinkServerException`; these count as query errors (`isNetworkError == false`), and 401/403 become "check the API key". Fields that only newer Stash versions have should go into a separate, optional query (see `activityStats`).
+
+**Scene cards.** `SceneCard`, `SceneListTile`, `SceneGridTile` and the shelf cards get their channel and meta line from `sceneChannel` / `sceneMetaLine` (`widgets/scene_card.dart`), which follow `sceneCardConfigProvider` (`features/settings/scene_card_config.dart`: studio or performers, plays, stars). Stars come from `effectiveStars`, so ratings set in the player show right away.
+
+**Theme.** `accentColorProvider` (persisted) feeds `AppTheme.light/dark(accent)`. The accent is adapted per mode (`AppTheme.accentFor`: same hue, lightened or darkened to WCAG 4.5:1 against the surface), and `onPrimary` is whichever of black or white reads better (`readableOn`); `test/core/theme_contrast_test.dart` checks every accent in both modes. Use `colorScheme.primary` and the other scheme colors instead of hard-coded colors, so the user's accent applies everywhere.
+
+**Cast (Chromecast).** `features/cast/`. `CastService` wraps `flutter_chrome_cast` (Default Media Receiver). It is an interface so tests can use a fake, and on desktop/tests it falls back to `UnsupportedCastService`. `NowPlayingNotifier` listens to `isCastingProvider`. On connect it pauses locally and loads the scene on the TV at the current position. While casting, `play()` prepares the scene locally (paused) and casts it. On disconnect it seeks locally to the last TV position. Cast devices can't send headers, so `castMediaFor` adds the API key as `?apikey=` and prefers MP4/WebM originals, then HLS. While casting, `StashVideoControls` shows `CastingControls`.
+
+**Filters.** `SceneFilter` (`data/models/scene_filter.dart`) holds tags, minimum rating, duration, resolution and an optional saved filter. It is part of `SceneQuery` and maps to Stash's `SceneFilterType`. `SceneFeedView(filterable:, showSavedFilters:)` adds the filter sheet button and the saved-filter chips. Saved filters store Stash's web-UI criterion format; `convertSavedSceneFilter` translates it and reports criteria it can't handle.
+
+**Security.** `features/security/`. `AppLockGate` in `MaterialApp.builder` shows `LockScreen` while `appLockedProvider` is true, and a `PrivacyCover` while the app is inactive. The PIN is stored only as a salted SHA-256 hash. Native channels: `stash/privacy` (Android `FLAG_SECURE`) and `stash/appicon` (Android activity-aliases / iOS alternate icons). On Android the launcher entries are the `activity-alias`es in `src/main/AndroidManifest.xml`. MainActivity keeps a MAIN/LAUNCHER filter there only because `flutter run` looks for it; the debug/profile/release manifests remove that filter again (`tools:node="remove"`). Android uses `FlutterFragmentActivity` and an AppCompat launch theme for `local_auth`.
+
+**Localization.** English and German via `flutter gen-l10n` (`l10n.yaml`). Texts live in `lib/l10n/app_en.arb` (template) and `app_de.arb`; the generated classes in `lib/l10n/gen/` are committed and regenerated by `flutter gen-l10n` (or any `flutter run`/`build`). Never write UI text as a string literal: add the key to both ARB files and use `context.l10n.<key>` (`lib/l10n/l10n.dart`, falls back to English without app localizations, e.g. in bare test apps). Pass a captured `final l = context.l10n;` across `await`s. Counts are plural messages (`scenesCount`), not string concatenation. Data models stay free of UI text: their enums get display names through extensions in `lib/l10n/labels.dart`, and `StashApiException.kind` is turned into a message by `errorText(l, error)`, which UI code uses for every error shown to the user. `appLocaleProvider` holds the language chosen in the settings (null = device language).
+
+**Images and auth.** Always load server images through `StashImage` or `ChannelAvatar`, which add the `ApiKey` header. Stash serves SVG placeholders for missing images, which fall back to an icon or the name's initial.

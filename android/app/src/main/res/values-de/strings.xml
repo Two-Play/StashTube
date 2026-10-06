@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_icon_notes">Notizen</string>
+    <string name="app_icon_calculator">Rechner</string>
+</resources>
