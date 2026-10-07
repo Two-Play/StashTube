@@ -23,7 +23,6 @@ import '../player/scene_edits.dart';
 import '../shell/navigation.dart';
 import 'shorts_feed.dart';
 import 'shorts_settings_sheet.dart';
-import '../settings/settings_button.dart';
 
 /// True while the shorts are on screen; the shell then hides the miniplayer.
 class ShortsActiveNotifier extends Notifier<bool> {
@@ -425,7 +424,6 @@ class _TopBar extends StatelessWidget {
         child: Row(
           children: [
             if (Navigator.of(context).canPop()) const BackButton(color: Colors.white) else const SizedBox(width: 16),
-            Text(l.tabShorts, style: const TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.w700)),
             const Spacer(),
             IconButton(
               tooltip: l.fullscreen,
@@ -451,7 +449,6 @@ class _TopBar extends StatelessWidget {
               icon: const Icon(Icons.tune),
               onPressed: () => showShortsSettingsSheet(context),
             ),
-            const SettingsButton(color: Colors.white),
           ],
         ),
       ),
@@ -495,7 +492,8 @@ class _ShortViewState extends ConsumerState<_ShortView> {
 
   void _setFast(bool fast) {
     final player = _player;
-    if (player == null || fast == _fast) return;
+    // A paused short stays paused while held.
+    if (player == null || fast == _fast || (fast && widget.paused)) return;
     if (fast) HapticFeedback.lightImpact();
     player.setRate(fast ? 2 : 1);
     setState(() => _fast = fast);

@@ -8,6 +8,7 @@ import 'package:stash_app_mobile/data/providers.dart';
 import 'package:stash_app_mobile/features/player/player_providers.dart';
 import 'package:stash_app_mobile/features/player/preview_seek_bar.dart';
 import 'package:stash_app_mobile/features/player/video_controls.dart';
+import 'package:stash_app_mobile/features/player/video_zoom.dart';
 import 'package:stash_app_mobile/widgets/hold_detector.dart';
 
 import 'fake_player.dart';
@@ -147,5 +148,24 @@ void main() {
     await tester.tap(find.text('1.5×'));
     await tester.pumpAndSettle();
     expect(player.rates, [1.5]);
+  });
+
+  testWidgets('pinching zooms into the video, and the zoom stays after letting go', (tester) async {
+    await pump(tester);
+    final container = ProviderScope.containerOf(tester.element(find.byType(StashVideoControls)));
+    final center = tester.getCenter(find.byType(StashVideoControls));
+    final a = await tester.startGesture(center - const Offset(40, 0));
+    final b = await tester.startGesture(center + const Offset(40, 0));
+    await tester.pump();
+    await a.moveTo(center - const Offset(80, 0));
+    await b.moveTo(center + const Offset(80, 0));
+    await tester.pump();
+    expect(container.read(videoZoomProvider).scale, closeTo(2, 0.01));
+    expect(player.rates, isEmpty, reason: 'two fingers held still are not "hold for 2x"');
+
+    await a.up();
+    await b.up();
+    await tester.pumpAndSettle();
+    expect(container.read(videoZoomProvider).scale, closeTo(2, 0.01));
   });
 }

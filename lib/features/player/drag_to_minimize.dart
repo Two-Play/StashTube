@@ -47,8 +47,17 @@ class _DragToMinimizeState extends State<DragToMinimize> {
   bool _candidate = false;
   bool _dragging = false;
   VelocityTracker? _velocity;
+  int _pointers = 0;
 
   void _onDown(PointerDownEvent e) {
+    _pointers++;
+    if (_pointers > 1) {
+      // A second finger: a pinch on the video, not a swipe down.
+      if (_dragging) widget.controller.animateToHeight(state: PanelState.MAX);
+      _dragging = false;
+      _candidate = false;
+      return;
+    }
     _start = e.localPosition;
     _dragging = false;
     _candidate = widget.enabled && (e.localPosition.dy <= widget.videoBottom || _detailsOffset <= 0);
@@ -77,6 +86,7 @@ class _DragToMinimizeState extends State<DragToMinimize> {
   }
 
   void _onEnd(PointerEvent e) {
+    _pointers = (_pointers - 1).clamp(0, 10);
     final start = _start;
     if (_dragging && start != null) {
       final velocity = _velocity?.getVelocity().pixelsPerSecond.dy ?? 0;

@@ -690,5 +690,8 @@
   "editServer": "Edit server",
   "statsAndServer": "Stats & server",
   "airPlay": "AirPlay",
-  "airPlayHint": "Apple TV and AirPlay TVs"
+  "airPlayHint": "Apple TV and AirPlay TVs",
+  "allViews": "All views",
+  "allViewsTooltip": "Show all views",
+  "tabAll": "All"
 }

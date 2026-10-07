@@ -36,6 +36,7 @@ class PlayerTransition {
     // Never taller than the space the panel currently has.
     final maxVideoHeight = (height - topPadding - progressBarHeight).clamp(0.0, double.infinity);
     final videoHeight = lerpDouble(miniVideoHeight, expandedVideoHeight, grow)!.clamp(0.0, maxVideoHeight);
+    final baseVideoHeight = lerpDouble(miniVideoHeight, screenWidth * 9 / 16, grow)!.clamp(0.0, videoHeight);
     final videoWidth = lerpDouble(miniVideoWidth, screenWidth, grow)!.clamp(0.0, screenWidth);
 
     return PlayerTransition._(
@@ -43,6 +44,7 @@ class PlayerTransition {
       topPadding: topPadding,
       videoWidth: videoWidth,
       videoHeight: videoHeight,
+      baseVideoHeight: baseVideoHeight,
       miniBarOpacity: (1 - progress / 0.15).clamp(0.0, 1.0),
       detailsOpacity: ((progress - 0.3) / 0.7).clamp(0.0, 1.0),
     );
@@ -53,6 +55,7 @@ class PlayerTransition {
     required this.topPadding,
     required this.videoWidth,
     required this.videoHeight,
+    required this.baseVideoHeight,
     required this.miniBarOpacity,
     required this.detailsOpacity,
   });
@@ -71,6 +74,12 @@ class PlayerTransition {
   final double topPadding;
   final double videoWidth;
   final double videoHeight;
+
+  /// The height a 16:9 video would have; a portrait video's extra height
+  /// ([extraVideoHeight]) shrinks away as the details scroll.
+  final double baseVideoHeight;
+
+  double get extraVideoHeight => videoHeight - baseVideoHeight;
 
   /// Title, play/pause and close of the collapsed bar, plus its progress line.
   final double miniBarOpacity;

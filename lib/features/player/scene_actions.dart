@@ -17,7 +17,8 @@ import 'player_providers.dart';
 import 'scene_edits.dart';
 import '../../l10n/l10n.dart';
 
-/// Rating stars, O-counter and "add marker" below the title (epic 10).
+/// Rating stars on their own row, then O-counter, watch later, edit and
+/// "add marker" as chips (epic 10).
 class SceneActions extends ConsumerWidget {
   const SceneActions({super.key, required this.scene});
 
@@ -33,66 +34,77 @@ class SceneActions extends ConsumerWidget {
     void showError(Object e) =>
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(l.saveFailed(errorText(l, e)))));
 
-    return SingleChildScrollView(
-      scrollDirection: Axis.horizontal,
-      padding: const EdgeInsets.symmetric(horizontal: 8),
-      child: Row(
-        children: [
-          for (var i = 1; i <= 5; i++)
-            IconButton(
-              visualDensity: VisualDensity.compact,
-              tooltip: i == stars ? l.removeRating : l.rateStars(i),
-              icon: Icon(i <= stars ? Icons.star_rounded : Icons.star_outline_rounded,
-                  color: i <= stars ? Colors.amber.shade600 : colors.onSurfaceVariant),
-              onPressed: () {
-                HapticFeedback.selectionClick();
-                // Tapping the current rating again removes it.
-                ref.read(sceneEditsProvider.notifier).rate(scene, i == stars ? 0 : i).catchError(showError);
-              },
-            ),
-          const SizedBox(width: 8),
-          ActionChip(
-            avatar: const Icon(Icons.water_drop_outlined, size: 18),
-            label: Text('$oCount'),
-            tooltip: l.addO,
-            onPressed: () async {
-              HapticFeedback.mediumImpact();
-              final messenger = ScaffoldMessenger.of(context);
-              try {
-                final count = await ref.read(sceneEditsProvider.notifier).addO(scene);
-                messenger.showSnackBar(SnackBar(
-                  content: Text(l.oCountValue(count)),
-                  action: SnackBarAction(
-                    label: l.undo,
-                    onPressed: () => ref.read(sceneEditsProvider.notifier).removeO(scene).catchError(showError),
-                  ),
-                ));
-              } catch (e) {
-                showError(e);
-              }
-            },
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 8),
+          child: Row(
+            children: [
+              for (var i = 1; i <= 5; i++)
+                IconButton(
+                  visualDensity: VisualDensity.compact,
+                  tooltip: i == stars ? l.removeRating : l.rateStars(i),
+                  icon: Icon(i <= stars ? Icons.star_rounded : Icons.star_outline_rounded,
+                      color: i <= stars ? Colors.amber.shade600 : colors.onSurfaceVariant),
+                  onPressed: () {
+                    HapticFeedback.selectionClick();
+                    // Tapping the current rating again removes it.
+                    ref.read(sceneEditsProvider.notifier).rate(scene, i == stars ? 0 : i).catchError(showError);
+                  },
+                ),
+            ],
           ),
-          const SizedBox(width: 8),
-          WatchLaterChip(sceneId: scene.id),
-          const SizedBox(width: 8),
-          ActionChip(
-            avatar: const Icon(Icons.edit_outlined, size: 18),
-            label: Text(l.edit),
-            tooltip: l.editSceneDetails,
-            onPressed: () => openPage(ref, SceneEditPage(scene: scene)),
+        ),
+        SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          child: Row(
+            children: [
+              ActionChip(
+                avatar: const Icon(Icons.water_drop_outlined, size: 18),
+                label: Text('$oCount'),
+                tooltip: l.addO,
+                onPressed: () async {
+                  HapticFeedback.mediumImpact();
+                  final messenger = ScaffoldMessenger.of(context);
+                  try {
+                    final count = await ref.read(sceneEditsProvider.notifier).addO(scene);
+                    messenger.showSnackBar(SnackBar(
+                      content: Text(l.oCountValue(count)),
+                      action: SnackBarAction(
+                        label: l.undo,
+                        onPressed: () => ref.read(sceneEditsProvider.notifier).removeO(scene).catchError(showError),
+                      ),
+                    ));
+                  } catch (e) {
+                    showError(e);
+                  }
+                },
+              ),
+              const SizedBox(width: 8),
+              WatchLaterChip(sceneId: scene.id),
+              const SizedBox(width: 8),
+              ActionChip(
+                avatar: const Icon(Icons.edit_outlined, size: 18),
+                label: Text(l.edit),
+                tooltip: l.editSceneDetails,
+                onPressed: () => openPage(ref, SceneEditPage(scene: scene)),
+              ),
+              const SizedBox(width: 8),
+              ActionChip(
+                avatar: const Icon(Icons.bookmark_add_outlined, size: 18),
+                label: Text(l.marker),
+                tooltip: l.addMarkerHere,
+                onPressed: () {
+                  final position = ref.read(playerProvider).state.position;
+                  showAddMarkerSheet(context, scene: scene, seconds: position.inMilliseconds / 1000);
+                },
+              ),
+            ],
           ),
-          const SizedBox(width: 8),
-          ActionChip(
-            avatar: const Icon(Icons.bookmark_add_outlined, size: 18),
-            label: Text(l.marker),
-            tooltip: l.addMarkerHere,
-            onPressed: () {
-              final position = ref.read(playerProvider).state.position;
-              showAddMarkerSheet(context, scene: scene, seconds: position.inMilliseconds / 1000);
-            },
-          ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 }

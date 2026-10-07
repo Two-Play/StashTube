@@ -1309,4 +1309,13 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get airPlayHint => 'Apple TV and AirPlay TVs';
+
+  @override
+  String get allViews => 'All views';
+
+  @override
+  String get allViewsTooltip => 'Show all views';
+
+  @override
+  String get tabAll => 'All';
 }

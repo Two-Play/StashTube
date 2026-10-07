@@ -17,19 +17,25 @@ class NavBarConfig {
 
   static const alwaysShown = AppTab.stats;
 
-  /// The bar as it ships: the tabs the app had before 13.7.
+  /// The bar as it ships: home, performers, library and stats; everything
+  /// else is in the "all views" menu.
   static final standard = NavBarConfig(
     order: AppTab.values,
     hidden: {
       for (final tab in AppTab.values)
         if (tab != alwaysShown &&
-            (tab.section != null || tab == AppTab.tags || tab == AppTab.search || tab == AppTab.shorts))
+            (tab.section != null ||
+                tab == AppTab.studios ||
+                tab == AppTab.tags ||
+                tab == AppTab.search ||
+                tab == AppTab.shorts))
           tab,
     },
   );
 
-  /// Material's navigation bar is meant for 3 to 5 destinations.
-  static const maxVisible = 5;
+  /// Material's navigation bar is meant for 3 to 5 destinations; one of
+  /// them is the "all views" menu in the middle.
+  static const maxVisible = 4;
   static const minVisible = 2;
 
   final List<AppTab> order;
@@ -52,6 +58,15 @@ class NavBarConfig {
       order: order,
       hidden: isVisible(tab) ? {...hidden, tab} : hidden.difference({tab}),
     );
+  }
+
+  /// Hides the last visible tabs (except [alwaysShown]) beyond [maxVisible],
+  /// e.g. for a bar stored when five tabs were allowed.
+  NavBarConfig fitted() {
+    final extra = visible.length - maxVisible;
+    if (extra <= 0) return this;
+    final drop = visible.reversed.where((tab) => tab != alwaysShown).take(extra);
+    return NavBarConfig(order: order, hidden: {...hidden, ...drop});
   }
 
   /// Moves the tab at [from] so it ends up at index [to] (as
@@ -96,10 +111,9 @@ class NavBarConfigNotifier extends Notifier<NavBarConfig> {
     final known = _parse(order);
     // Tabs added in an update start hidden, so the user's bar stays as it was.
     final added = AppTab.values.where((tab) => !known.contains(tab));
-    final config = NavBarConfig(order: known, hidden: {..._parse(hidden), ...added});
+    final config = NavBarConfig(order: known, hidden: {..._parse(hidden), ...added}).fitted();
     // A config that no longer fits the rules (e.g. edited by hand) falls back.
-    final count = config.visible.length;
-    return count < NavBarConfig.minVisible || count > NavBarConfig.maxVisible ? NavBarConfig.standard : config;
+    return config.visible.length < NavBarConfig.minVisible ? NavBarConfig.standard : config;
   }
 
   static List<AppTab> _parse(List<String> names) => [

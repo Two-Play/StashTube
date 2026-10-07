@@ -2257,6 +2257,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Apple TV and AirPlay TVs'**
   String get airPlayHint;
+
+  /// No description provided for @allViews.
+  ///
+  /// In en, this message translates to:
+  /// **'All views'**
+  String get allViews;
+
+  /// No description provided for @allViewsTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Show all views'**
+  String get allViewsTooltip;
+
+  /// No description provided for @tabAll.
+  ///
+  /// In en, this message translates to:
+  /// **'All'**
+  String get tabAll;
 }
 
 class _AppLocalizationsDelegate

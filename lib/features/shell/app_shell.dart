@@ -14,6 +14,7 @@ import '../shorts/shorts_page.dart';
 import '../search/search_page.dart';
 import '../studios/studios_page.dart';
 import '../tags/tags_page.dart';
+import 'all_views_sheet.dart';
 import 'nav_bar_config.dart';
 import 'navigation.dart';
 
@@ -22,7 +23,8 @@ import 'navigation.dart';
 class AppShell extends ConsumerWidget {
   const AppShell({super.key});
 
-  static Widget _rootPage(AppTab tab) => switch (tab) {
+  /// The page a tab starts with; also opened from the "all views" menu.
+  static Widget rootPage(AppTab tab) => switch (tab) {
         AppTab(:final section?) => LibrarySectionPage(section: section),
         AppTab.home => const HomePage(),
         AppTab.shorts => const ShortsPage(),
@@ -83,7 +85,7 @@ class AppShell extends ConsumerWidget {
                   for (final tab in tabs)
                     Navigator(
                       key: navigatorKeys[tab],
-                      onGenerateRoute: (_) => MaterialPageRoute(builder: (_) => _rootPage(tab)),
+                      onGenerateRoute: (_) => MaterialPageRoute(builder: (_) => rootPage(tab)),
                     ),
                 ],
               ),
@@ -124,15 +126,24 @@ class AppShell extends ConsumerWidget {
                   );
                 },
                 child: NavigationBar(
-                  selectedIndex: tabs.indexOf(currentTab).clamp(0, tabs.length - 1),
-                  onDestinationSelected: (i) => selectTab(tabs[i]),
+                  selectedIndex: _barIndex(tabs.indexOf(currentTab).clamp(0, tabs.length - 1), tabs.length),
+                  onDestinationSelected: (i) {
+                    final menu = _menuIndex(tabs.length);
+                    if (i == menu) {
+                      showAllViews(context);
+                    } else {
+                      selectTab(tabs[i < menu ? i : i - 1]);
+                    }
+                  },
                   destinations: [
-                    for (final tab in tabs)
+                    for (final (i, tab) in tabs.indexed) ...[
+                      if (i == _menuIndex(tabs.length)) _menuDestination(context),
                       NavigationDestination(
                         icon: Icon(tab.icon),
                         selectedIcon: Icon(tab.selectedIcon),
                         label: tab.label(context.l10n),
                       ),
+                    ],
                   ],
                 ),
               ),
@@ -140,3 +151,15 @@ class AppShell extends ConsumerWidget {
     );
   }
 }
+
+/// The "all views" menu sits in the middle of the bar (13.10).
+int _menuIndex(int tabCount) => tabCount ~/ 2;
+
+/// Index in the bar of the tab at [tabIndex], skipping the menu.
+int _barIndex(int tabIndex, int tabCount) => tabIndex < _menuIndex(tabCount) ? tabIndex : tabIndex + 1;
+
+NavigationDestination _menuDestination(BuildContext context) => NavigationDestination(
+      icon: const Icon(Icons.apps),
+      label: context.l10n.tabAll,
+      tooltip: context.l10n.allViewsTooltip,
+    );

@@ -206,3 +206,17 @@ final class AirPlayController: NSObject, FlutterStreamHandler {
     return nil
   }
 }
+
+/// The app's view controller (Main.storyboard). Turns the phone without
+/// UIKit's rotation animation: it stretches the last frame until Flutter
+/// has drawn the new size, which distorts the video for a moment (4.19).
+@objc(RunnerViewController)
+final class RunnerViewController: FlutterViewController {
+  override func viewWillTransition(to size: CGSize, with coordinator: UIViewControllerTransitionCoordinator) {
+    UIView.setAnimationsEnabled(false)
+    super.viewWillTransition(to: size, with: coordinator)
+    coordinator.animate(alongsideTransition: nil) { _ in
+      UIView.setAnimationsEnabled(true)
+    }
+  }
+}

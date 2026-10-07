@@ -19,8 +19,15 @@ Future<ProviderContainer> _container([Map<String, Object> prefs = const {}]) asy
 
 void main() {
   test('the standard bar ends with stats and server info', () {
-    expect(NavBarConfig.standard.visible,
-        [AppTab.home, AppTab.performers, AppTab.studios, AppTab.library, AppTab.stats]);
+    expect(NavBarConfig.standard.visible, [AppTab.home, AppTab.performers, AppTab.library, AppTab.stats]);
+  });
+
+  test('a bar stored with five tabs drops the last one it may hide', () async {
+    final c = await _container({
+      'nav_bar_order': ['home', 'performers', 'studios', 'library', 'stats'],
+      'nav_bar_hidden': <String>[],
+    });
+    expect(c.read(navBarConfigProvider).visible, [AppTab.home, AppTab.performers, AppTab.studios, AppTab.stats]);
   });
 
   test('a stored bar with the old settings tab gets stats in its place', () async {
@@ -54,21 +61,21 @@ void main() {
         ),
       ),
     ));
-    expect(find.text('Start,Performer,Studios,Bibliothek,Statistik'), findsOneWidget);
+    expect(find.text('Start,Performer,Bibliothek,Statistik'), findsOneWidget);
   });
 
-  test('stats cannot be hidden, and the bar keeps 2 to 5 tabs', () {
+  test('stats cannot be hidden, and the bar keeps 2 to 4 tabs', () {
     var config = NavBarConfig.standard;
     expect(config.canToggle(AppTab.stats), isFalse);
     expect(config.toggle(AppTab.stats), config);
 
-    // Five tabs shown: nothing more can be added.
+    // Four tabs shown (plus the menu): nothing more can be added.
     expect(config.canToggle(AppTab.tags), isFalse);
-    config = config.toggle(AppTab.studios).toggle(AppTab.tags);
+    config = config.toggle(AppTab.performers).toggle(AppTab.tags);
     expect(config.visible, contains(AppTab.tags));
-    expect(config.visible, isNot(contains(AppTab.studios)));
+    expect(config.visible, isNot(contains(AppTab.performers)));
 
-    config = config.toggle(AppTab.home).toggle(AppTab.performers).toggle(AppTab.library);
+    config = config.toggle(AppTab.home).toggle(AppTab.library);
     expect(config.visible, [AppTab.tags, AppTab.stats]);
     expect(config.canToggle(AppTab.tags), isFalse);
   });
@@ -88,7 +95,7 @@ void main() {
   test('changes are stored and survive a restart', () async {
     final c = await _container();
     await c.read(navBarConfigProvider.notifier).move(AppTab.values.indexOf(AppTab.library), 0);
-    await c.read(navBarConfigProvider.notifier).toggle(AppTab.studios);
+    await c.read(navBarConfigProvider.notifier).toggle(AppTab.performers);
     await c.read(navBarConfigProvider.notifier).toggle(AppTab.search);
 
     final restarted = ProviderContainer(
@@ -96,7 +103,7 @@ void main() {
     );
     addTearDown(restarted.dispose);
     expect(restarted.read(navBarConfigProvider).visible,
-        [AppTab.library, AppTab.home, AppTab.performers, AppTab.search, AppTab.stats]);
+        [AppTab.library, AppTab.home, AppTab.search, AppTab.stats]);
     // The app starts on the first tab of the bar.
     expect(restarted.read(currentTabProvider), AppTab.library);
 
@@ -115,9 +122,9 @@ void main() {
   test('hiding the selected tab moves to the first tab', () async {
     final c = await _container();
     c.listen(currentTabProvider, (_, _) {});
-    c.read(currentTabProvider.notifier).select(AppTab.studios);
+    c.read(currentTabProvider.notifier).select(AppTab.performers);
 
-    await c.read(navBarConfigProvider.notifier).toggle(AppTab.studios);
+    await c.read(navBarConfigProvider.notifier).toggle(AppTab.performers);
     expect(c.read(currentTabProvider), AppTab.home);
   });
 
@@ -139,12 +146,11 @@ void main() {
     // The bar is full, so hidden tabs can't be switched on yet.
     expect(tile('Tags').onChanged, isNull);
 
-    await tester.tap(find.text('Studios'));
+    await tester.tap(find.text('Performers'));
     await tester.pump();
     await tester.tap(find.text('Tags'));
     await tester.pump();
-    expect(c.read(navBarConfigProvider).visible,
-        [AppTab.home, AppTab.performers, AppTab.library, AppTab.tags, AppTab.stats]);
+    expect(c.read(navBarConfigProvider).visible, [AppTab.home, AppTab.library, AppTab.tags, AppTab.stats]);
 
     await tester.tap(find.text('Reset'));
     await tester.pump();

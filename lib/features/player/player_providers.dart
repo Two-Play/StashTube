@@ -15,6 +15,7 @@ import '../cast/cast_media.dart';
 import '../cast/cast_providers.dart';
 import '../cast/cast_service.dart' show CastKind;
 import 'playback_tracker.dart';
+import 'video_zoom.dart';
 
 const double kMiniPlayerHeight = 64;
 
@@ -226,6 +227,8 @@ class NowPlayingNotifier extends Notifier<Scene?> {
     if (state == null) ref.read(miniplayerHeightProvider).value = kMiniPlayerHeight;
     ref.read(playerClosingProvider.notifier).set(false);
     if (state?.id != scene.id) {
+      // A zoom belongs to its video; mpv would keep it for the next file.
+      ref.read(videoZoomProvider.notifier).reset();
       // Prefer the position saved in this session over the (possibly stale) list data.
       final resume = ref.read(resumeTimesProvider)[scene.id] ?? scene.resumeTime;
       unawaited(ref.read(playbackTrackerProvider).start(scene.copyWith(resumeTime: resume)));
@@ -326,6 +329,7 @@ class NowPlayingNotifier extends Notifier<Scene?> {
     _autoplay?.close();
     _autoplay = null;
     unawaited(ref.read(playbackTrackerProvider).stop());
+    ref.read(videoZoomProvider.notifier).reset();
     ref.read(playerProvider).stop();
     state = null;
   }
