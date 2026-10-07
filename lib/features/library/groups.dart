@@ -44,6 +44,7 @@ class GroupsTab extends ConsumerWidget {
               ),
               onRetry: () => ref.invalidate(provider),
               onLoadMore: () => ref.read(provider.notifier).loadMore(),
+              onGoToPage: (page) => ref.read(provider.notifier).goToPage(page),
               itemBuilder: (_, group) => GroupTile(group: group),
             ),
           ],

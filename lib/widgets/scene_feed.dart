@@ -185,6 +185,7 @@ class _SceneFeedViewState extends ConsumerState<SceneFeedView> {
               emptyHint: widget.emptyHint,
               onRetry: () => ref.invalidate(provider),
               onLoadMore: () => ref.read(provider.notifier).loadMore(),
+              onGoToPage: (page) => ref.read(provider.notifier).goToPage(page),
               padding: widget.layout == SceneFeedLayout.grid ? const EdgeInsets.symmetric(horizontal: 12) : EdgeInsets.zero,
               gridDelegate: widget.layout == SceneFeedLayout.grid
                   ? const SliverGridDelegateWithMaxCrossAxisExtent(

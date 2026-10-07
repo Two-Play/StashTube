@@ -217,6 +217,35 @@ class AppLocalizationsEn extends AppLocalizations {
   String get loadMoreFailed => 'Couldn\'t load more – tap to retry';
 
   @override
+  String pageOf(int page, int count) {
+    return 'Page $page of $count';
+  }
+
+  @override
+  String get pageLoadFailed => 'Couldn\'t load the page – try again';
+
+  @override
+  String get firstPage => 'First page';
+
+  @override
+  String get previousPage => 'Previous page';
+
+  @override
+  String get nextPage => 'Next page';
+
+  @override
+  String get lastPage => 'Last page';
+
+  @override
+  String get listPaging => 'Long lists';
+
+  @override
+  String get pagingInfinite => 'Infinite scrolling';
+
+  @override
+  String get pagingPages => 'Pages';
+
+  @override
   String get channelUnknown => 'Unknown';
 
   @override
@@ -777,8 +806,11 @@ class AppLocalizationsEn extends AppLocalizations {
   String get preferredQuality => 'Preferred quality';
 
   @override
-  String get preferredQualityDefault =>
-      'Original file – change it via ⚙ in the player';
+  String get qualityOriginal => 'Original';
+
+  @override
+  String get preferredQualityHint =>
+      'Used when a scene offers it, otherwise the next lower one. Smaller videos play their original file. Also changes with ⚙ in the player.';
 
   @override
   String get sectionPrivacy => 'Privacy & security';

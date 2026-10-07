@@ -64,4 +64,40 @@ void main() {
     expect(file.bitRate, 8500000);
     expect(file.modified, DateTime.utc(2024, 3, 1, 10));
   });
+
+  group('preferred stream', () {
+    SceneStream hls(String resolution, String label) => SceneStream(
+          url: 'http://s/stream.m3u8?resolution=$resolution',
+          label: label,
+          mimeType: 'application/vnd.apple.mpegurl',
+        );
+    final streams = [
+      const SceneStream(url: 'http://s/stream', label: 'Direct stream', mimeType: 'video/mp4'),
+      hls('FULL_HD', 'HLS Full HD (1080p)'),
+      hls('STANDARD_HD', 'HLS Standard HD (720p)'),
+      hls('LOW', 'HLS Low (240p)'),
+      const SceneStream(url: 'http://s/stream.mp4?resolution=STANDARD_HD', label: 'MP4 Standard HD (720p)', mimeType: 'video/mp4'),
+    ];
+
+    test('reads the height from the URL, else the label', () {
+      expect(streams[1].height, 1080);
+      expect(streams[0].height, isNull);
+      expect(const SceneStream(url: 'http://s/x', label: 'WEBM 480p').height, 480);
+      expect(streams[1].format, 'HLS');
+    });
+
+    test('exact label, else the same format at that height, else lower', () {
+      expect(pickPreferredStream(streams, 'HLS Low (240p)'), streams[3]);
+      expect(pickPreferredStream(streams, 'HLS 720p'), streams[2], reason: 'chosen in the settings');
+      expect(pickPreferredStream(streams, 'MP4 720p'), streams[4]);
+      expect(pickPreferredStream(streams, 'HLS 480p'), streams[3]);
+    });
+
+    test('plays the original when it is no larger than preferred', () {
+      final small = [streams[0], streams[3]]; // a 240p video: only a 240p transcode
+      expect(pickPreferredStream(small, 'HLS 720p'), isNull);
+      expect(pickPreferredStream(streams, 'HLS 2160p'), isNull);
+      expect(pickPreferredStream(streams, 'DASH 720p'), isNull, reason: 'format not offered');
+    });
+  });
 }

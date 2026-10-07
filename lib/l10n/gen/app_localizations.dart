@@ -296,6 +296,60 @@ abstract class AppLocalizations {
   /// **'Couldn\'t load more – tap to retry'**
   String get loadMoreFailed;
 
+  /// No description provided for @pageOf.
+  ///
+  /// In en, this message translates to:
+  /// **'Page {page} of {count}'**
+  String pageOf(int page, int count);
+
+  /// No description provided for @pageLoadFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t load the page – try again'**
+  String get pageLoadFailed;
+
+  /// No description provided for @firstPage.
+  ///
+  /// In en, this message translates to:
+  /// **'First page'**
+  String get firstPage;
+
+  /// No description provided for @previousPage.
+  ///
+  /// In en, this message translates to:
+  /// **'Previous page'**
+  String get previousPage;
+
+  /// No description provided for @nextPage.
+  ///
+  /// In en, this message translates to:
+  /// **'Next page'**
+  String get nextPage;
+
+  /// No description provided for @lastPage.
+  ///
+  /// In en, this message translates to:
+  /// **'Last page'**
+  String get lastPage;
+
+  /// No description provided for @listPaging.
+  ///
+  /// In en, this message translates to:
+  /// **'Long lists'**
+  String get listPaging;
+
+  /// No description provided for @pagingInfinite.
+  ///
+  /// In en, this message translates to:
+  /// **'Infinite scrolling'**
+  String get pagingInfinite;
+
+  /// No description provided for @pagingPages.
+  ///
+  /// In en, this message translates to:
+  /// **'Pages'**
+  String get pagingPages;
+
   /// No description provided for @channelUnknown.
   ///
   /// In en, this message translates to:
@@ -1310,11 +1364,17 @@ abstract class AppLocalizations {
   /// **'Preferred quality'**
   String get preferredQuality;
 
-  /// No description provided for @preferredQualityDefault.
+  /// No description provided for @qualityOriginal.
   ///
   /// In en, this message translates to:
-  /// **'Original file – change it via ⚙ in the player'**
-  String get preferredQualityDefault;
+  /// **'Original'**
+  String get qualityOriginal;
+
+  /// No description provided for @preferredQualityHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Used when a scene offers it, otherwise the next lower one. Smaller videos play their original file. Also changes with ⚙ in the player.'**
+  String get preferredQualityHint;
 
   /// No description provided for @sectionPrivacy.
   ///

@@ -72,6 +72,7 @@ class _GalleriesTabState extends ConsumerState<GalleriesTab> with AutomaticKeepA
               ),
               onRetry: () => ref.invalidate(provider),
               onLoadMore: () => ref.read(provider.notifier).loadMore(),
+              onGoToPage: (page) => ref.read(provider.notifier).goToPage(page),
               itemBuilder: (_, gallery) => GalleryTile(gallery: gallery),
             ),
           ],

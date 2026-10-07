@@ -1,5 +1,8 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:stash_app_mobile/core/config/server_config.dart';
+import 'package:stash_app_mobile/core/pagination/paging_mode.dart';
 import 'package:stash_app_mobile/data/models/list_queries.dart';
 import 'package:stash_app_mobile/data/models/page_result.dart';
 import 'package:stash_app_mobile/data/models/scene.dart';
@@ -78,5 +81,53 @@ void main() {
     state = container.read(sceneListProvider(query)).requireValue;
     expect(state.items, hasLength(48));
     expect(state.loadMoreError, isNull);
+  });
+
+  group('pages mode', () {
+    late ProviderContainer pages;
+
+    setUp(() async {
+      SharedPreferences.setMockInitialValues({'paging_mode': 'pages'});
+      final prefs = await SharedPreferences.getInstance();
+      repo.requestedPages.clear(); // the outer container loaded page 1 too
+      pages = ProviderContainer(overrides: [
+        stashRepositoryProvider.overrideWithValue(repo),
+        sharedPreferencesProvider.overrideWithValue(prefs),
+        ...testServer,
+      ]);
+      pages.listen(sceneListProvider(query), (_, _) {});
+    });
+
+    tearDown(() => pages.dispose());
+
+    test('shows one page at a time and ignores scrolling to the end', () async {
+      expect(pages.read(pagingModeProvider), PagingMode.pages);
+      final notifier = pages.read(sceneListProvider(query).notifier);
+      var state = await pages.read(sceneListProvider(query).future);
+      expect(state.pageCount, 3);
+
+      await notifier.loadMore();
+      expect(pages.read(sceneListProvider(query)).requireValue.items, hasLength(24));
+
+      await notifier.goToPage(3);
+      state = pages.read(sceneListProvider(query)).requireValue;
+      expect(state.page, 3);
+      expect(state.items.map((s) => s.id), ['48', '49']);
+
+      await notifier.goToPage(4); // past the end
+      expect(pages.read(sceneListProvider(query)).requireValue.page, 3);
+      expect(repo.requestedPages, [1, 3]);
+    });
+
+    test('switching back to infinite scrolling starts over on page 1', () async {
+      final notifier = pages.read(sceneListProvider(query).notifier);
+      await pages.read(sceneListProvider(query).future);
+      await notifier.goToPage(2);
+
+      await pages.read(pagingModeProvider.notifier).set(PagingMode.infinite);
+      final state = await pages.read(sceneListProvider(query).future);
+      expect(state.page, 1);
+      expect(state.items.first.id, '0');
+    });
   });
 }

@@ -177,6 +177,7 @@ class _ImageGridViewState extends ConsumerState<ImageGridView> {
               ),
               onRetry: () => ref.invalidate(provider),
               onLoadMore: () => ref.read(provider.notifier).loadMore(),
+              onGoToPage: (page) => ref.read(provider.notifier).goToPage(page),
               itemBuilder: (context, image) => GestureDetector(
                 onTap: () {
                   final items = ref.read(provider).current?.items ?? const [];

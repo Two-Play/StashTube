@@ -218,6 +218,36 @@ class AppLocalizationsDe extends AppLocalizations {
       'Weitere konnten nicht geladen werden – zum Wiederholen tippen';
 
   @override
+  String pageOf(int page, int count) {
+    return 'Seite $page von $count';
+  }
+
+  @override
+  String get pageLoadFailed =>
+      'Die Seite konnte nicht geladen werden – nochmal versuchen';
+
+  @override
+  String get firstPage => 'Erste Seite';
+
+  @override
+  String get previousPage => 'Vorherige Seite';
+
+  @override
+  String get nextPage => 'Nächste Seite';
+
+  @override
+  String get lastPage => 'Letzte Seite';
+
+  @override
+  String get listPaging => 'Lange Listen';
+
+  @override
+  String get pagingInfinite => 'Endlos scrollen';
+
+  @override
+  String get pagingPages => 'Seiten';
+
+  @override
   String get channelUnknown => 'Unbekannt';
 
   @override
@@ -779,8 +809,11 @@ class AppLocalizationsDe extends AppLocalizations {
   String get preferredQuality => 'Bevorzugte Qualität';
 
   @override
-  String get preferredQualityDefault =>
-      'Originaldatei – im Player über ⚙ änderbar';
+  String get qualityOriginal => 'Original';
+
+  @override
+  String get preferredQualityHint =>
+      'Gilt, wenn eine Szene sie anbietet, sonst die nächstniedrigere. Kleinere Videos laufen als Originaldatei. Ändert sich auch über ⚙ im Player.';
 
   @override
   String get sectionPrivacy => 'Privatsphäre & Sicherheit';

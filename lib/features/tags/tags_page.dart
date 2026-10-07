@@ -60,6 +60,7 @@ class _TagsPageState extends ConsumerState<TagsPage> {
                 gridDelegate: tagGridDelegate,
                 onRetry: () => ref.invalidate(provider),
                 onLoadMore: () => ref.read(provider.notifier).loadMore(),
+                onGoToPage: (page) => ref.read(provider.notifier).goToPage(page),
                 itemBuilder: (_, tag) => TagTile(tag: tag),
               ),
             ],

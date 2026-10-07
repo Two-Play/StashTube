@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../data/models/page_result.dart';
 import '../config/server_config.dart';
+import 'paging_mode.dart';
 
 class PagedState<T> {
   const PagedState({
@@ -25,6 +26,8 @@ class PagedState<T> {
   // Based on pages, not items.length, because repositories may drop items
   // client-side (e.g. the currently playing scene).
   bool get hasMore => page * perPage < totalCount;
+
+  int get pageCount => totalCount <= 0 ? 1 : (totalCount + perPage - 1) ~/ perPage;
 
   PagedState<T> copyWith({
     List<T>? items,
@@ -54,7 +57,9 @@ extension PagedValue<T> on AsyncValue<PagedState<T>> {
   PagedState<T>? get current => isReloading || hasError ? null : value;
 }
 
-/// Base for infinite lists: loads page 1 in [build], further pages via [loadMore].
+/// Base for paged lists: loads page 1 in [build], then either appends
+/// further pages via [loadMore] (infinite scrolling) or shows one page at a
+/// time via [goToPage] ([PagingMode.pages]).
 ///
 /// Used with `AsyncNotifierProvider.autoDispose.family`; the family argument
 /// arrives through the constructor (Riverpod 3).
@@ -73,11 +78,14 @@ abstract class PagedNotifier<T, A> extends AsyncNotifier<PagedState<T>> {
     // outside build), so watch the server here: switching servers reloads
     // every list, even ones the UI keeps subscribed during the switch.
     ref.watch(serverConfigProvider);
+    // Switching the paging mode starts the list over on page 1.
+    ref.watch(pagingModeProvider);
     final result = await fetchPage(_arg, 1, pageSize);
     return PagedState(items: result.items, totalCount: result.totalCount, page: 1, perPage: pageSize);
   }
 
   Future<void> loadMore() async {
+    if (ref.read(pagingModeProvider) == PagingMode.pages) return;
     final current = state.value;
     if (current == null || !current.hasMore || current.isLoadingMore || state.isLoading) return;
 
@@ -92,6 +100,29 @@ abstract class PagedNotifier<T, A> extends AsyncNotifier<PagedState<T>> {
         items: [...current.items, ...result.items],
         totalCount: result.totalCount,
         page: next,
+        isLoadingMore: false,
+      ));
+    } catch (e) {
+      if (!ref.mounted || !identical(state.value, loading)) return;
+      state = AsyncData(current.copyWith(isLoadingMore: false, loadMoreError: e));
+    }
+  }
+
+  /// Replaces the shown page with [page] ([PagingMode.pages]).
+  Future<void> goToPage(int page) async {
+    final current = state.value;
+    if (current == null || current.isLoadingMore || state.isLoading) return;
+    if (page < 1 || page > current.pageCount || page == current.page) return;
+
+    final loading = current.copyWith(isLoadingMore: true);
+    state = AsyncData(loading);
+    try {
+      final result = await fetchPage(_arg, page, pageSize);
+      if (!ref.mounted || !identical(state.value, loading)) return;
+      state = AsyncData(current.copyWith(
+        items: result.items,
+        totalCount: result.totalCount,
+        page: page,
         isLoadingMore: false,
       ));
     } catch (e) {
