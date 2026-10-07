@@ -133,8 +133,9 @@ class _Footer extends StatelessWidget {
   }
 }
 
-/// First / previous / "Page 3 of 12" / next / last; scrolls back to the top
-/// once the new page is there.
+/// First / previous / "Page 3 of 12" / next / last; tapping the page
+/// number asks for a page to jump to. Scrolls back to the top once the new
+/// page is there.
 class PageBar extends StatelessWidget {
   const PageBar({super.key, required this.state, required this.onGoToPage});
 
@@ -182,7 +183,15 @@ class PageBar extends StatelessWidget {
                   child: Center(
                     child: busy
                         ? const SizedBox.square(dimension: 20, child: CircularProgressIndicator(strokeWidth: 2))
-                        : Text(l.pageOf(page, count), style: Theme.of(context).textTheme.bodyMedium),
+                        : TextButton(
+                            onPressed: count > 1
+                                ? () async {
+                                    final target = await _askPage(context, page, count);
+                                    if (target != null && target != page) await go(target);
+                                  }
+                                : null,
+                            child: Text(l.pageOf(page, count)),
+                          ),
                   ),
                 ),
                 button(Icons.chevron_right, l.nextPage, page + 1, page < count),
@@ -192,6 +201,65 @@ class PageBar extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+}
+
+/// Asks for a page between 1 and [count]; null if cancelled.
+Future<int?> _askPage(BuildContext context, int current, int count) => showDialog<int>(
+      context: context,
+      builder: (_) => _PageDialog(current: current, count: count),
+    );
+
+class _PageDialog extends StatefulWidget {
+  const _PageDialog({required this.current, required this.count});
+
+  final int current;
+  final int count;
+
+  @override
+  State<_PageDialog> createState() => _PageDialogState();
+}
+
+class _PageDialogState extends State<_PageDialog> {
+  late final _controller = TextEditingController(text: '${widget.current}')
+    ..selection = TextSelection(baseOffset: 0, extentOffset: '${widget.current}'.length);
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  int? get _page {
+    final page = int.tryParse(_controller.text.trim());
+    return page != null && page >= 1 && page <= widget.count ? page : null;
+  }
+
+  void _submit() {
+    final page = _page;
+    if (page != null) Navigator.pop(context, page);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l = context.l10n;
+    return AlertDialog(
+      title: Text(l.goToPage),
+      content: TextField(
+        controller: _controller,
+        autofocus: true,
+        keyboardType: TextInputType.number,
+        inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+        textInputAction: TextInputAction.go,
+        decoration: InputDecoration(helperText: l.pageRange(widget.count)),
+        onChanged: (_) => setState(() {}),
+        onSubmitted: (_) => _submit(),
+      ),
+      actions: [
+        TextButton(onPressed: () => Navigator.pop(context), child: Text(l.cancel)),
+        FilledButton(onPressed: _page == null ? null : _submit, child: Text(l.go)),
+      ],
     );
   }
 }

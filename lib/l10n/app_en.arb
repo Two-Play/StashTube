@@ -131,6 +131,16 @@
   "previousPage": "Previous page",
   "nextPage": "Next page",
   "lastPage": "Last page",
+  "goToPage": "Go to page",
+  "pageRange": "1–{count}",
+  "@pageRange": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "go": "Go",
   "listPaging": "Long lists",
   "pagingInfinite": "Infinite scrolling",
   "pagingPages": "Pages",

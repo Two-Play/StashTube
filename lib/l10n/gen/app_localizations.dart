@@ -332,6 +332,24 @@ abstract class AppLocalizations {
   /// **'Last page'**
   String get lastPage;
 
+  /// No description provided for @goToPage.
+  ///
+  /// In en, this message translates to:
+  /// **'Go to page'**
+  String get goToPage;
+
+  /// No description provided for @pageRange.
+  ///
+  /// In en, this message translates to:
+  /// **'1–{count}'**
+  String pageRange(int count);
+
+  /// No description provided for @go.
+  ///
+  /// In en, this message translates to:
+  /// **'Go'**
+  String get go;
+
   /// No description provided for @listPaging.
   ///
   /// In en, this message translates to:

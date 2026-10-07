@@ -237,6 +237,17 @@ class AppLocalizationsEn extends AppLocalizations {
   String get lastPage => 'Last page';
 
   @override
+  String get goToPage => 'Go to page';
+
+  @override
+  String pageRange(int count) {
+    return '1–$count';
+  }
+
+  @override
+  String get go => 'Go';
+
+  @override
   String get listPaging => 'Long lists';
 
   @override

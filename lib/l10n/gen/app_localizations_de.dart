@@ -239,6 +239,17 @@ class AppLocalizationsDe extends AppLocalizations {
   String get lastPage => 'Letzte Seite';
 
   @override
+  String get goToPage => 'Zu Seite springen';
+
+  @override
+  String pageRange(int count) {
+    return '1–$count';
+  }
+
+  @override
+  String get go => 'Los';
+
+  @override
   String get listPaging => 'Lange Listen';
 
   @override

@@ -35,4 +35,19 @@ void main() {
     await tester.pump();
     expect(requested, isEmpty);
   });
+
+  testWidgets('tapping the page number jumps to a typed page', (tester) async {
+    final requested = await pumpBar(tester, page: 1);
+    await tester.tap(find.text('Page 1 of 3'));
+    await tester.pumpAndSettle();
+
+    await tester.enterText(find.byType(TextField), '9'); // out of range
+    await tester.pump();
+    expect(tester.widget<FilledButton>(find.widgetWithText(FilledButton, 'Go')).onPressed, isNull);
+
+    await tester.enterText(find.byType(TextField), '3');
+    await tester.testTextInput.receiveAction(TextInputAction.go);
+    await tester.pumpAndSettle();
+    expect(requested, [3]);
+  });
 }
