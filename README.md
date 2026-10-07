@@ -6,7 +6,8 @@ The app talks to your own Stash server through its GraphQL API and plays the str
 
 ## Features
 
-**Watching**
+### Watching
+
 - Feed with sort chips, filters (tags, rating, length, resolution) and Stash's saved filters
 - Miniplayer that turns into the full player as you drag; swipe down to minimize
 - Controls:
@@ -19,23 +20,27 @@ The app talks to your own Stash server through its GraphQL API and plays the str
 - Resume position and play count are saved back to Stash
 - Chromecast, and AirPlay on iOS
 
-**Shorts**
+### Shorts
+
 - Vertical, looping feed of short portrait videos, with the next one preloaded
 - Your chosen tags show up more often, or exclusively
 - Rating, O-counter, watch later, and the full video in the player
 
-**Library**
+### Library
+
 - History, Watch later and groups, each played as a queue with autoplay
 - Images and galleries, with a zoomable viewer
 - Performers (favorites), studios (with sub-studios) and tags
 - Search with history
 - Library and watch statistics
 
-**Editing**
+### Editing
+
 - Edit scenes, performers, studios, tags and galleries, including images and URLs
 - Rate scenes, count O's and add markers right from the player
 
-**App**
+### App
+
 - Several Stash servers to switch between, with editable URL and API key
 - Configurable bottom bar, plus an "All" tab for everything else
 - Light and dark mode, accent colors, and a Stash blue/brown theme
