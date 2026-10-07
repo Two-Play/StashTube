@@ -252,6 +252,9 @@ class AppLocalizationsDe extends AppLocalizations {
   String get filterScenes => 'Szenen filtern';
 
   @override
+  String get filterImages => 'Bilder filtern';
+
+  @override
   String get filterTagsAllOf => 'Tags (alle)';
 
   @override
@@ -984,6 +987,13 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get searchPerformers => 'Performer suchen';
+
+  @override
+  String get searchImages => 'Bilder suchen';
+
+  @override
+  String get imagesNoMatch =>
+      'Keine Bilder passen zur Suche oder zu den Filtern.';
 
   @override
   String get done => 'Fertig';

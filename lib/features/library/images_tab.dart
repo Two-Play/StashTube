@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -6,6 +8,7 @@ import '../../data/models/list_queries.dart';
 import '../../data/providers.dart';
 import '../../widgets/chip_bar.dart';
 import '../../widgets/paged_sliver.dart';
+import '../../widgets/scene_filter_sheet.dart';
 import '../../widgets/stash_image.dart';
 import 'image_viewer_page.dart';
 import '../../l10n/l10n.dart';
@@ -34,7 +37,8 @@ class _ImagesTabState extends State<ImagesTab> with AutomaticKeepAliveClientMixi
   }
 }
 
-/// Endless, refreshable thumbnail grid of images with optional sort chips;
+/// Endless, refreshable thumbnail grid of images with a search field, a
+/// filter button (tags, rating, quality; 15.4) and optional sort chips;
 /// tapping an image opens [ImageViewerPage] on the same list.
 class ImageGridView extends ConsumerStatefulWidget {
   const ImageGridView({
@@ -54,6 +58,33 @@ class ImageGridView extends ConsumerStatefulWidget {
 
 class _ImageGridViewState extends ConsumerState<ImageGridView> {
   late ImageQuery _query = widget.initialQuery;
+  late final _search = TextEditingController(text: widget.initialQuery.search);
+  Timer? _debounce;
+
+  @override
+  void dispose() {
+    _debounce?.cancel();
+    _search.dispose();
+    super.dispose();
+  }
+
+  void _onSearchChanged(String text) {
+    _debounce?.cancel();
+    _debounce = Timer(const Duration(milliseconds: 400), () => _setSearch(text));
+    setState(() {}); // Shows or hides the clear button.
+  }
+
+  void _setSearch(String text) {
+    _debounce?.cancel();
+    final search = text.trim();
+    if (!mounted || search == (_query.search ?? '')) return;
+    setState(() => _query = _query.copyWith(search: search, clearSearch: search.isEmpty));
+  }
+
+  Future<void> _openFilters() async {
+    final next = await showSceneFilterSheet(context, _query.filter, forImages: true);
+    if (next != null && mounted) setState(() => _query = _query.copyWith(filter: next));
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -69,15 +100,59 @@ class _ImageGridViewState extends ConsumerState<ImageGridView> {
           physics: const AlwaysScrollableScrollPhysics(),
           slivers: [
             ...widget.headerSlivers,
-            if (widget.sorts.length > 1)
-              SliverToBoxAdapter(
-                child: ChipBar<ImageSort>(
-                  values: widget.sorts,
-                  selected: _query.sort,
-                  labelOf: (s) => s.label(context.l10n),
-                  onSelected: (s) => setState(() => _query = ImageQuery(sort: s, galleryId: _query.galleryId)),
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(12, 8, 12, 0),
+                child: TextField(
+                  controller: _search,
+                  textInputAction: TextInputAction.search,
+                  onChanged: _onSearchChanged,
+                  onSubmitted: _setSearch,
+                  decoration: InputDecoration(
+                    hintText: context.l10n.searchImages,
+                    prefixIcon: const Icon(Icons.search),
+                    suffixIcon: _search.text.isEmpty
+                        ? null
+                        : IconButton(
+                            tooltip: context.l10n.clearField,
+                            icon: const Icon(Icons.close),
+                            onPressed: () {
+                              _search.clear();
+                              _setSearch('');
+                            },
+                          ),
+                    border: const OutlineInputBorder(),
+                    isDense: true,
+                  ),
                 ),
               ),
+            ),
+            SliverToBoxAdapter(
+              child: Row(
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.only(left: 4),
+                    child: IconButton(
+                      tooltip: context.l10n.filter,
+                      onPressed: _openFilters,
+                      icon: Badge(
+                        isLabelVisible: _query.filter.activeCount > 0,
+                        label: Text('${_query.filter.activeCount}'),
+                        child: const Icon(Icons.tune),
+                      ),
+                    ),
+                  ),
+                  Expanded(
+                    child: ChipBar<ImageSort>(
+                      values: widget.sorts.length > 1 ? widget.sorts : const [],
+                      selected: _query.sort,
+                      labelOf: (s) => s.label(context.l10n),
+                      onSelected: (s) => setState(() => _query = _query.copyWith(sort: s)),
+                    ),
+                  ),
+                ],
+              ),
+            ),
             if (value.current case final state?)
               SliverToBoxAdapter(
                 child: Padding(
@@ -90,7 +165,9 @@ class _ImageGridViewState extends ConsumerState<ImageGridView> {
               ),
             PagedSliver<ImageItem>(
               value: value,
-              emptyMessage: context.l10n.imagesEmpty,
+              emptyMessage: _query.search == null && _query.filter.isEmpty
+                  ? context.l10n.imagesEmpty
+                  : context.l10n.imagesNoMatch,
               emptyIcon: Icons.image_outlined,
               padding: const EdgeInsets.symmetric(horizontal: 2),
               gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(

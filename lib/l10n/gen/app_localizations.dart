@@ -356,6 +356,12 @@ abstract class AppLocalizations {
   /// **'Filter scenes'**
   String get filterScenes;
 
+  /// No description provided for @filterImages.
+  ///
+  /// In en, this message translates to:
+  /// **'Filter images'**
+  String get filterImages;
+
   /// No description provided for @filterTagsAllOf.
   ///
   /// In en, this message translates to:
@@ -1657,6 +1663,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Search performers'**
   String get searchPerformers;
+
+  /// No description provided for @searchImages.
+  ///
+  /// In en, this message translates to:
+  /// **'Search images'**
+  String get searchImages;
+
+  /// No description provided for @imagesNoMatch.
+  ///
+  /// In en, this message translates to:
+  /// **'No images match the search or filters.'**
+  String get imagesNoMatch;
 
   /// No description provided for @done.
   ///

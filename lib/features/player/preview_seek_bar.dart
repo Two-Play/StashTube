@@ -30,9 +30,14 @@ class PreviewSeekBar extends ConsumerStatefulWidget {
     this.visible = true,
     this.onInteractionStart,
     this.onInteractionEnd,
+    this.remote,
   });
 
   final String sceneId;
+
+  /// While casting: the TV's playback, shown and seeked instead of the
+  /// [player]'s.
+  final RemoteSeek? remote;
 
   /// The player to show and seek; defaults to the app's main player
   /// (the shorts pass one of theirs).
@@ -100,6 +105,7 @@ class _PreviewSeekBarState extends ConsumerState<PreviewSeekBar> {
       s.cancel();
     }
     _subscriptions.clear();
+    if (widget.remote != null) return;
     final player = _player;
     _position = player.state.position;
     _duration = player.state.duration;
@@ -114,7 +120,7 @@ class _PreviewSeekBarState extends ConsumerState<PreviewSeekBar> {
   @override
   void didUpdateWidget(PreviewSeekBar oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (oldWidget.player != widget.player) _subscribe();
+    if (oldWidget.player != widget.player || (oldWidget.remote == null) != (widget.remote == null)) _subscribe();
     if (oldWidget.sceneId != widget.sceneId) _loadThumbnails = false;
     if (widget.visible) _loadThumbnails = true;
   }
@@ -127,7 +133,7 @@ class _PreviewSeekBarState extends ConsumerState<PreviewSeekBar> {
     super.dispose();
   }
 
-  double get _totalMs => _duration.inMilliseconds.toDouble();
+  double get _totalMs => (widget.remote?.duration ?? _duration).inMilliseconds.toDouble();
 
   double _fractionOf(Duration d) => _totalMs <= 0 ? 0 : (d.inMilliseconds / _totalMs).clamp(0.0, 1.0);
 
@@ -148,7 +154,9 @@ class _PreviewSeekBarState extends ConsumerState<PreviewSeekBar> {
   void _end() {
     final drag = _drag;
     if (drag != null && _totalMs > 0) {
-      _player.seek(Duration(milliseconds: (drag * _totalMs).round()));
+      final target = Duration(milliseconds: (drag * _totalMs).round());
+      final remote = widget.remote;
+      remote == null ? _player.seek(target) : remote.seek(target);
     }
     _reset();
   }
@@ -165,7 +173,8 @@ class _PreviewSeekBarState extends ConsumerState<PreviewSeekBar> {
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
-    final played = _drag ?? _fractionOf(_position);
+    final remote = widget.remote;
+    final played = _drag ?? _fractionOf(remote?.position ?? _position);
     final headers = ref.watch(authHeadersProvider);
     final thumbs = _loadThumbnails ? ref.watch(scrubThumbnailsProvider(widget.sceneId)).value : null;
     if (thumbs != null && thumbs.spriteUrl != _precachedSprite) {
@@ -208,7 +217,7 @@ class _PreviewSeekBarState extends ConsumerState<PreviewSeekBar> {
                 child: CustomPaint(
                   painter: _SeekBarPainter(
                     played: played,
-                    buffered: _fractionOf(_buffer),
+                    buffered: remote == null ? _fractionOf(_buffer) : 0,
                     dragging: _drag != null,
                     playedColor: colors.primary,
                     chapters: _markerFractions,
@@ -282,6 +291,16 @@ class _PreviewSeekBarState extends ConsumerState<PreviewSeekBar> {
       ),
     );
   }
+}
+
+/// Playback on a cast device for [PreviewSeekBar.remote].
+@immutable
+class RemoteSeek {
+  const RemoteSeek({required this.position, required this.duration, required this.seek});
+
+  final Duration position;
+  final Duration duration;
+  final ValueChanged<Duration> seek;
 }
 
 /// Shows the [cue] region of the sprite image scaled to [width] × [height].

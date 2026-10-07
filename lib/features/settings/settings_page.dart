@@ -1,3 +1,4 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -11,13 +12,16 @@ import '../auth/server_switcher.dart';
 import '../security/app_icon.dart';
 import '../security/app_lock_gate.dart';
 import '../shell/nav_bar_config.dart';
-import '../shell/navigation.dart';
 import 'nav_bar_settings_page.dart';
 import 'scene_card_config.dart';
 import '../../l10n/l10n.dart';
 
+/// Shown as a sheet by `openSettings`; [scrollController] lets swiping the
+/// list down past its top close the sheet.
 class SettingsPage extends ConsumerWidget {
-  const SettingsPage({super.key});
+  const SettingsPage({super.key, this.scrollController});
+
+  final ScrollController? scrollController;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -34,8 +38,19 @@ class SettingsPage extends ConsumerWidget {
     final cardConfig = ref.watch(sceneCardConfigProvider);
 
     return Scaffold(
-      appBar: AppBar(title: Text(l.settingsTitle)),
+      appBar: AppBar(
+        automaticallyImplyLeading: false,
+        title: Text(l.settingsTitle),
+        actions: [
+          IconButton(
+            tooltip: l.close,
+            icon: const Icon(Icons.close),
+            onPressed: () => CupertinoSheetRoute.popSheet(context),
+          ),
+        ],
+      ),
       body: ListView(
+        controller: scrollController,
         children: [
           _SectionTitle(l.sectionServer),
           ListTile(
@@ -116,7 +131,8 @@ class SettingsPage extends ConsumerWidget {
             title: Text(l.navBarTitle),
             subtitle: Text(ref.watch(navBarConfigProvider).visible.map((t) => t.label(context.l10n)).join(' · ')),
             trailing: const Icon(Icons.chevron_right),
-            onTap: () => openPage(ref, const NavBarSettingsPage()),
+            // Inside the settings sheet.
+            onTap: () => Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => const NavBarSettingsPage())),
           ),
           ListTile(
             leading: const Icon(Icons.translate),
@@ -180,6 +196,9 @@ class SettingsPage extends ConsumerWidget {
             title: Text(l.removeThisServer, style: TextStyle(color: theme.colorScheme.error)),
             onTap: () async {
               if (server == null || !await confirmRemoveServer(context, server)) return;
+              // The sheet sits on the root navigator, above the login page
+              // that follows removing the last server.
+              if (context.mounted) CupertinoSheetRoute.popSheet(context);
               ref.read(nowPlayingProvider.notifier).close();
               await ref.read(serverProfilesProvider.notifier).remove(server.id);
             },

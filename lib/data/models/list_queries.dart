@@ -261,30 +261,62 @@ class StudioQuery {
 }
 
 class ImageQuery {
-  ImageQuery({this.sort = ImageSort.recentlyAdded, this.galleryId, int? seed})
-      : seed = seed ?? (sort == ImageSort.random ? newRandomSeed() : 0);
+  ImageQuery({
+    this.sort = ImageSort.recentlyAdded,
+    this.galleryId,
+    this.search,
+    this.filter = SceneFilter.none,
+    int? seed,
+  }) : seed = seed ?? (sort == ImageSort.random ? newRandomSeed() : 0);
 
   final ImageSort sort;
 
   /// Only images of this gallery.
   final String? galleryId;
+
+  /// Free text (Stash's `q`: title, path, ...).
+  final String? search;
+
+  /// Tags, minimum rating and resolution (15.4); the duration doesn't apply
+  /// to images and isn't offered for them.
+  final SceneFilter filter;
   final int seed;
 
   String get sortField => sort == ImageSort.random ? 'random_$seed' : sort.field;
   String get direction => sort == ImageSort.title || sort == ImageSort.path ? 'ASC' : 'DESC';
 
-  Map<String, dynamic>? toImageFilter() => galleryId == null
-      ? null
-      : {
-          'galleries': {'value': [galleryId], 'modifier': 'INCLUDES'},
-        };
+  Map<String, dynamic>? toImageFilter() {
+    final criteria = {
+      ...filter.toCriteria(),
+      if (galleryId != null)
+        'galleries': {
+          'value': [galleryId],
+          'modifier': 'INCLUDES',
+        },
+    };
+    return criteria.isEmpty ? null : criteria;
+  }
+
+  ImageQuery copyWith({ImageSort? sort, String? search, bool clearSearch = false, SceneFilter? filter}) => ImageQuery(
+        sort: sort ?? this.sort,
+        galleryId: galleryId,
+        search: clearSearch ? null : (search ?? this.search),
+        filter: filter ?? this.filter,
+        // Picking a sort again (e.g. "Shuffle") starts a fresh shuffle.
+        seed: sort == null ? seed : null,
+      );
 
   @override
   bool operator ==(Object other) =>
-      other is ImageQuery && other.sort == sort && other.galleryId == galleryId && other.seed == seed;
+      other is ImageQuery &&
+      other.sort == sort &&
+      other.galleryId == galleryId &&
+      other.search == search &&
+      other.filter == filter &&
+      other.seed == seed;
 
   @override
-  int get hashCode => Object.hash(sort, galleryId, seed);
+  int get hashCode => Object.hash(sort, galleryId, search, filter, seed);
 }
 
 class GalleryQuery {

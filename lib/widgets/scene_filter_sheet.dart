@@ -10,19 +10,21 @@ import '../data/providers.dart';
 import '../l10n/l10n.dart';
 
 /// Opens the filter sheet (5.4); returns the new filter, or null if dismissed.
-Future<SceneFilter?> showSceneFilterSheet(BuildContext context, SceneFilter initial) =>
+/// With [forImages] (15.4) it leaves out the duration.
+Future<SceneFilter?> showSceneFilterSheet(BuildContext context, SceneFilter initial, {bool forImages = false}) =>
     showModalBottomSheet<SceneFilter>(
       context: context,
       useRootNavigator: true,
       isScrollControlled: true,
       showDragHandle: true,
-      builder: (_) => SceneFilterSheet(initial: initial),
+      builder: (_) => SceneFilterSheet(initial: initial, forImages: forImages),
     );
 
 class SceneFilterSheet extends ConsumerStatefulWidget {
-  const SceneFilterSheet({super.key, required this.initial});
+  const SceneFilterSheet({super.key, required this.initial, this.forImages = false});
 
   final SceneFilter initial;
+  final bool forImages;
 
   @override
   ConsumerState<SceneFilterSheet> createState() => _SceneFilterSheetState();
@@ -73,7 +75,7 @@ class _SceneFilterSheetState extends ConsumerState<SceneFilterSheet> {
                 controller: scrollController,
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 children: [
-                  Text(context.l10n.filterScenes, style: theme.textTheme.titleLarge),
+                  Text(widget.forImages ? context.l10n.filterImages : context.l10n.filterScenes, style: theme.textTheme.titleLarge),
                   section(context.l10n.filterTagsAllOf),
                   if (_filter.tags.isNotEmpty)
                     Wrap(
@@ -120,19 +122,21 @@ class _SceneFilterSheetState extends ConsumerState<SceneFilterSheet> {
                         ),
                     ],
                   ),
-                  section(context.l10n.duration),
-                  Wrap(
-                    spacing: 6,
-                    runSpacing: 6,
-                    children: [
-                      for (final d in DurationFilter.values)
-                        ChoiceChip(
-                          label: Text(d.label(context.l10n)),
-                          selected: _filter.duration == d,
-                          onSelected: (_) => setState(() => _filter = _filter.copyWith(duration: d)),
-                        ),
-                    ],
-                  ),
+                  if (!widget.forImages) ...[
+                    section(context.l10n.duration),
+                    Wrap(
+                      spacing: 6,
+                      runSpacing: 6,
+                      children: [
+                        for (final d in DurationFilter.values)
+                          ChoiceChip(
+                            label: Text(d.label(context.l10n)),
+                            selected: _filter.duration == d,
+                            onSelected: (_) => setState(() => _filter = _filter.copyWith(duration: d)),
+                          ),
+                      ],
+                    ),
+                  ],
                   section(context.l10n.quality),
                   Wrap(
                     spacing: 6,

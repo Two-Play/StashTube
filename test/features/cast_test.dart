@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -11,6 +12,8 @@ import 'package:stash_app_mobile/features/cast/cast_media.dart';
 import 'package:stash_app_mobile/features/cast/cast_providers.dart';
 import 'package:stash_app_mobile/features/cast/airplay_service.dart';
 import 'package:stash_app_mobile/features/cast/cast_service.dart';
+import 'package:stash_app_mobile/features/cast/cast_ui.dart';
+import 'package:stash_app_mobile/features/player/preview_seek_bar.dart';
 import 'package:stash_app_mobile/features/player/playback_tracker.dart';
 import 'package:stash_app_mobile/features/player/player_providers.dart';
 
@@ -133,6 +136,7 @@ void main() {
         castServiceProvider.overrideWithValue(cast),
         playbackTrackerProvider.overrideWithValue(PlaybackTracker(api: _NoopActivity())),
         sceneDetailsProvider.overrideWith((ref, id) async => _details),
+        scrubThumbnailsProvider.overrideWith((ref, id) async => null),
       ]);
       addTearDown(() async {
         await tester.pump(); // let the post-frame expand() run first
@@ -169,6 +173,39 @@ void main() {
       await tester.pumpAndSettle();
       expect(cast.loaded.single.title, 'B');
       expect(player.opened.single.play, isFalse, reason: 'prepared locally but paused');
+    });
+
+    testWidgets('the timeline seeks on the TV while casting', (tester) async {
+      await setUpCast(tester);
+      container.read(nowPlayingProvider.notifier).play(
+            const Scene(id: '1', title: 'A', streamUrl: 'http://s/scene/1/stream', duration: 100),
+          );
+      await cast.connect(const CastTarget(id: 'tv', name: 'Living room'));
+      cast.playbackController.add(const CastPlayback(playing: true, position: Duration(seconds: 20)));
+      await tester.pumpWidget(UncontrolledProviderScope(
+        container: container,
+        child: MaterialApp(
+          home: Scaffold(
+            body: SizedBox(
+              height: 240,
+              child: CastingControls(
+                connection: const CastConnection(deviceName: 'Living room', kind: CastKind.googleCast),
+                showMinimize: true,
+              ),
+            ),
+          ),
+        ),
+      ));
+      await tester.pump();
+      expect(find.text('0:20 / 1:40'), findsOneWidget);
+
+      cast.commands.clear();
+      await tester.tap(find.byType(PreviewSeekBar)); // the middle of the bar
+      await tester.pump();
+      expect(cast.commands, ['seek 50']);
+
+      await tester.pumpWidget(const SizedBox());
+      await tester.pumpAndSettle(); // let the providers settle
     });
 
     testWidgets('disconnecting continues locally where the TV was', (tester) async {

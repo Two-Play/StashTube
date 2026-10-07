@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/utils/format.dart';
 import '../player/player_providers.dart';
+import '../player/preview_seek_bar.dart';
 import 'cast_providers.dart';
 import 'cast_service.dart';
 import '../../l10n/l10n.dart';
@@ -149,6 +150,8 @@ class CastingControls extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final service = ref.watch(castServiceProvider);
     final playback = ref.watch(castPlaybackProvider).value ?? const CastPlayback();
+    final scene = ref.watch(nowPlayingProvider);
+    final duration = Duration(milliseconds: ((scene?.duration ?? 0) * 1000).round());
 
     void seekBy(int seconds) {
       final target = playback.position + Duration(seconds: seconds);
@@ -204,10 +207,30 @@ class CastingControls extends ConsumerWidget {
                       ),
                     ],
                   ),
-                  Text(
-                    formatDuration(playback.position.inMilliseconds / 1000),
-                    style: const TextStyle(color: Colors.white, fontSize: 13),
+                ],
+              ),
+            ),
+            // The timeline stays usable while the video plays on the TV.
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+              child: Column(
+                children: [
+                  Row(
+                    children: [
+                      Text(
+                        duration > Duration.zero
+                            ? '${formatDuration(playback.position.inMilliseconds / 1000)} / '
+                                '${formatDuration(duration.inMilliseconds / 1000)}'
+                            : formatDuration(playback.position.inMilliseconds / 1000),
+                        style: const TextStyle(color: Colors.white, fontSize: 13),
+                      ),
+                    ],
                   ),
+                  if (scene != null && duration > Duration.zero)
+                    PreviewSeekBar(
+                      sceneId: scene.id,
+                      remote: RemoteSeek(position: playback.position, duration: duration, seek: service.seek),
+                    ),
                 ],
               ),
             ),

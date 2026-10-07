@@ -202,7 +202,13 @@ class StashRepository implements PlaybackActivityApi {
     int perPage = defaultPageSize,
   }) async {
     final data = await _query(StashQueries.findImages, {
-      'filter': _findFilter(page: page, perPage: perPage, sort: query.sortField, direction: query.direction),
+      'filter': _findFilter(
+        search: query.search,
+        page: page,
+        perPage: perPage,
+        sort: query.sortField,
+        direction: query.direction,
+      ),
       'image_filter': query.toImageFilter(),
     });
     final result = readObject(data, 'findImages') ?? const {};

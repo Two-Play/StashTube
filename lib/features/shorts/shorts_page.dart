@@ -20,6 +20,7 @@ import '../library/watch_later.dart';
 import '../player/player_providers.dart';
 import '../player/preview_seek_bar.dart';
 import '../player/scene_edits.dart';
+import '../settings/settings_button.dart';
 import '../shell/navigation.dart';
 import 'shorts_feed.dart';
 import 'shorts_settings_sheet.dart';
@@ -323,6 +324,7 @@ class _ShortsPageState extends ConsumerState<ShortsPage> {
     final tab = _tabOf(context);
     final visible = (tab == null || ref.watch(currentTabProvider) == tab) &&
         (ModalRoute.of(context)?.isCurrent ?? true) &&
+        !ref.watch(settingsOpenProvider) &&
         _appVisible &&
         !mainCovers;
     if (visible != _visible) _onVisibilityChanged(visible);

@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:stash_app_mobile/data/models/gallery.dart';
+import 'package:stash_app_mobile/data/models/scene_filter.dart';
+import 'package:stash_app_mobile/data/models/tag.dart';
 import 'package:stash_app_mobile/data/models/list_queries.dart';
 import 'package:stash_app_mobile/data/models/image_item.dart';
 import 'package:stash_app_mobile/data/models/page_result.dart';
@@ -64,6 +66,27 @@ void main() {
     expect(q.direction, 'ASC');
     expect(ImageQuery().toImageFilter(), isNull);
     expect(q, isNot(ImageQuery(sort: ImageSort.path)));
+  });
+
+  test('ImageQuery combines search, filter and gallery', () {
+    final q = ImageQuery(galleryId: '3', filter: const SceneFilter(tags: [Tag(id: '7', name: 'beach')], minStars: 4));
+    expect(q.toImageFilter(), {
+      'tags': {
+        'value': ['7'],
+        'modifier': 'INCLUDES_ALL',
+        'depth': 0,
+      },
+      'rating100': {'value': 79, 'modifier': 'GREATER_THAN'},
+      'galleries': {
+        'value': ['3'],
+        'modifier': 'INCLUDES',
+      },
+    });
+    final searched = q.copyWith(search: 'sunset');
+    expect(searched.search, 'sunset');
+    expect(searched.galleryId, '3');
+    expect(searched, isNot(q));
+    expect(searched.copyWith(clearSearch: true), q);
   });
 
   testWidgets('GalleryTile shows title, image count and studio', (tester) async {
