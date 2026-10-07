@@ -51,6 +51,19 @@ class _FastPageScrollPhysics extends PageScrollPhysics {
   SpringDescription get spring => const SpringDescription(mass: 0.5, stiffness: 500, damping: 32);
 }
 
+/// A short the shorts tab should jump to (index in the feed), e.g. tapped
+/// on the home page; consumed by the tab's [ShortsPage].
+class ShortsJumpNotifier extends Notifier<int?> {
+  @override
+  int? build() => null;
+
+  void jumpTo(int index) => state = index;
+
+  void done() => state = null;
+}
+
+final shortsJumpProvider = NotifierProvider<ShortsJumpNotifier, int?>(ShortsJumpNotifier.new);
+
 /// Whether the app's main player is playing.
 final _mainPlayingProvider = StreamProvider.autoDispose<bool>((ref) => ref.watch(playerProvider).stream.playing);
 
@@ -86,7 +99,8 @@ class _ShortsPageState extends ConsumerState<ShortsPage> {
     return null;
   }
   // Not restored from page storage: a new feed starts at its first short.
-  late final _pageController = PageController(initialPage: widget.initialIndex, keepPage: false);
+  // Created on first use, so it starts at a short jumped to before.
+  late final _pageController = PageController(initialPage: _index, keepPage: false);
   late final AppLifecycleListener _lifecycle;
   late final ValueNotifier<double> _miniplayerHeight;
   late final ShortsActiveNotifier _active = ref.read(shortsActiveProvider.notifier);
@@ -283,6 +297,17 @@ class _ShortsPageState extends ConsumerState<ShortsPage> {
     _visible = visible;
   }
 
+  void _jumpTo(int index) {
+    ref.read(shortsJumpProvider.notifier).done();
+    _paused = false;
+    _index = index;
+    if (_pageController.hasClients) {
+      _pageController.jumpToPage(index);
+    } else {
+      setState(() {}); // the page view, once built, starts at [_index]
+    }
+  }
+
   void _resetFeed() {
     _slotScene.fillRange(0, _poolSize, null);
     _slotReady.fillRange(0, _poolSize, false);
@@ -312,6 +337,15 @@ class _ShortsPageState extends ConsumerState<ShortsPage> {
     final theme = AppTheme.dark(ref.watch(accentColorProvider));
     final feed = _started ? ref.watch(shortsFeedProvider) : const ShortsFeedState(isLoading: true);
     final items = feed.items;
+    // A short tapped on the home page, for the page in the shorts tab.
+    if (tab == AppTab.shorts) {
+      final jump = ref.watch(shortsJumpProvider);
+      if (jump != null) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted) _jumpTo(jump);
+        });
+      }
+    }
     if (_started) {
       ref.listen(shortsFeedProvider, (previous, next) {
         // A new feed (settings changed, refresh): back to the first short.

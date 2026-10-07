@@ -9,6 +9,9 @@ import 'package:stash_app_mobile/data/models/saved_filter.dart';
 import 'package:stash_app_mobile/data/models/scene.dart';
 import 'package:stash_app_mobile/data/repositories/stash_repository.dart';
 import 'package:stash_app_mobile/features/home/home_page.dart';
+import 'package:stash_app_mobile/features/shell/all_views_page.dart';
+import 'package:stash_app_mobile/features/shell/navigation.dart';
+import 'package:stash_app_mobile/features/shorts/shorts_page.dart';
 import 'package:stash_app_mobile/features/shorts/shorts_shelf.dart';
 
 import '../helpers.dart';
@@ -37,20 +40,23 @@ class _Repo implements StashRepository {
 }
 
 void main() {
-  Future<void> pumpHome(WidgetTester tester) async {
-    final prefs = (await tester.runAsync(() async {
-      SharedPreferences.setMockInitialValues({});
+  late ProviderContainer container;
+
+  Future<void> pumpHome(WidgetTester tester, {Map<String, Object> prefs = const {}, Widget home = const HomePage()}) async {
+    final instance = (await tester.runAsync(() async {
+      SharedPreferences.setMockInitialValues(prefs);
       return SharedPreferences.getInstance();
     }))!;
     await tester.pumpWidget(ProviderScope(
       overrides: [
         ...testServer,
-        sharedPreferencesProvider.overrideWithValue(prefs),
+        sharedPreferencesProvider.overrideWithValue(instance),
         stashRepositoryProvider.overrideWithValue(_Repo()),
       ],
-      child: const MaterialApp(home: HomePage()),
+      child: MaterialApp(home: home),
     ));
     await tester.pumpAndSettle();
+    container = ProviderScope.containerOf(tester.element(find.byWidget(home)));
   }
 
   double barOffset(WidgetTester tester) => tester.widget<AnimatedSlide>(find.byType(AnimatedSlide)).offset.dy;
@@ -77,5 +83,28 @@ void main() {
       expect(find.text('Short $i'), findsOneWidget);
     }
     expect(find.text('Short 4'), findsNothing);
+  });
+
+  testWidgets('a short opens in the shorts tab when the bar has it', (tester) async {
+    await pumpHome(tester, prefs: {
+      'nav_bar_order': ['home', 'shorts', 'library', 'stats', 'all'],
+      'nav_bar_hidden': <String>[],
+    });
+    container.listen(currentTabProvider, (_, _) {});
+    await tester.ensureVisible(find.text('Short 2'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Short 2'));
+    await tester.pump();
+    expect(container.read(currentTabProvider), AppTab.shorts);
+    expect(container.read(shortsJumpProvider), 2, reason: 'for the shorts tab to jump to');
+  });
+
+  testWidgets('"all views" lists only what is not in the bar, plus the settings', (tester) async {
+    await pumpHome(tester, home: const AllViewsPage());
+    expect(find.text('Studios'), findsOneWidget);
+    expect(find.text('Shorts'), findsOneWidget);
+    expect(find.text('Settings'), findsOneWidget);
+    expect(find.text('Performers'), findsNothing, reason: 'in the standard bar');
+    expect(find.text('Home'), findsNothing);
   });
 }

@@ -5,12 +5,14 @@ import '../../core/utils/format.dart';
 import '../../data/models/scene.dart';
 import '../../l10n/l10n.dart';
 import '../../widgets/stash_image.dart';
+import '../shell/nav_bar_config.dart';
 import '../shell/navigation.dart';
 import 'shorts_feed.dart';
 import 'shorts_page.dart';
 
-/// Four portrait shorts in a row on the home page (4.23); tapping one opens
-/// the shorts feed at that short. Hidden when there are no shorts.
+/// Four portrait shorts as a 2×2 grid on the home page (4.23). Tapping one
+/// opens the shorts feed at that short: in the shorts tab if the bar has
+/// it, else on top of the home page. Hidden when there are no shorts.
 class ShortsShelf extends ConsumerWidget {
   const ShortsShelf({super.key});
 
@@ -22,11 +24,24 @@ class ShortsShelf extends ConsumerWidget {
     if (shorts.isEmpty) return const SizedBox.shrink();
     final theme = Theme.of(context);
 
+    void open(int index) {
+      if (ref.read(navBarConfigProvider).isVisible(AppTab.shorts)) {
+        ref.read(shortsJumpProvider.notifier).jumpTo(index);
+        ref.read(currentTabProvider.notifier).select(AppTab.shorts);
+      } else {
+        openPage(ref, ShortsPage(initialIndex: index));
+      }
+    }
+
+    Widget tile(int i) => Expanded(
+          child: i < shorts.length ? _ShortTile(scene: shorts[i], onTap: () => open(i)) : const SizedBox.shrink(),
+        );
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         InkWell(
-          onTap: () => openPage(ref, const ShortsPage()),
+          onTap: () => open(0),
           child: Padding(
             padding: const EdgeInsets.fromLTRB(16, 8, 8, 8),
             child: Row(
@@ -46,16 +61,11 @@ class ShortsShelf extends ConsumerWidget {
         ),
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 12),
-          child: Row(
+          child: Column(
             children: [
-              for (var i = 0; i < count; i++) ...[
-                if (i > 0) const SizedBox(width: 6),
-                Expanded(
-                  child: i < shorts.length
-                      ? _ShortTile(scene: shorts[i], onTap: () => openPage(ref, ShortsPage(initialIndex: i)))
-                      : const SizedBox.shrink(),
-                ),
-              ],
+              Row(children: [tile(0), const SizedBox(width: 8), tile(1)]),
+              const SizedBox(height: 8),
+              Row(children: [tile(2), const SizedBox(width: 8), tile(3)]),
             ],
           ),
         ),
@@ -72,8 +82,10 @@ class _ShortTile extends StatelessWidget {
   final VoidCallback onTap;
 
   @override
+  // Portrait, but shorter than 9:16 so the 2×2 grid fits on screen; the
+  // screenshot is cropped to fill it.
   Widget build(BuildContext context) => AspectRatio(
-        aspectRatio: 9 / 16,
+        aspectRatio: 3 / 4,
         child: ClipRRect(
           borderRadius: BorderRadius.circular(8),
           child: Material(

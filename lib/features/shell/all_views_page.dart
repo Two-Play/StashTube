@@ -5,17 +5,20 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../l10n/l10n.dart';
 import '../settings/settings_page.dart';
 import 'app_shell.dart';
+import 'nav_bar_config.dart';
 import 'navigation.dart';
 
-/// Every view of the app (13.10): the root page of the "all" tab, which is
-/// always last in the bar. A view picked here opens inside this tab, so the
-/// tab stays selected; re-selecting the tab comes back here.
+/// The views that aren't in the navigation bar, plus the settings (13.10):
+/// the root page of the "all" tab, which is always last in the bar. A view
+/// picked here opens inside this tab, so the tab stays selected;
+/// re-selecting the tab comes back here.
 class AllViewsPage extends ConsumerWidget {
   const AllViewsPage({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l = context.l10n;
+    final config = ref.watch(navBarConfigProvider);
 
     void open(Widget page) {
       HapticFeedback.selectionClick();
@@ -30,7 +33,7 @@ class AllViewsPage extends ConsumerWidget {
         childAspectRatio: 0.95,
         children: [
           for (final tab in AppTab.values)
-            if (tab != AppTab.all)
+            if (!config.isVisible(tab))
               _ViewTile(icon: tab.icon, label: tab.label(l), onTap: () => open(AppShell.rootPage(tab))),
           _ViewTile(icon: Icons.settings_outlined, label: l.settingsTitle, onTap: () => open(const SettingsPage())),
         ],
