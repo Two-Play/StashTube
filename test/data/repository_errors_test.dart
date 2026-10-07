@@ -38,6 +38,20 @@ void main() {
     );
   });
 
+  test('HTTP 401 with an empty body (missing API key) asks to check the API key', () async {
+    final repo = _repoFailingWith(HttpLinkParserException(
+      originalException: const FormatException('Unexpected end of input'),
+      originalStackTrace: null,
+      response: http.Response('', 401),
+    ));
+    await expectLater(
+      repo.libraryStats(),
+      throwsA(isA<StashApiException>()
+          .having((e) => e.kind, 'kind', StashErrorKind.unauthorized)
+          .having((e) => e.isNetworkError, 'isNetworkError', isFalse)),
+    );
+  });
+
   test('unreachable server stays a network error', () async {
     final repo = _repoFailingWith(ServerException(originalException: Exception('connection refused')));
     await expectLater(
