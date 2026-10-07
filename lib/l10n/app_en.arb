@@ -339,7 +339,12 @@
   "serverUrl": "Server URL",
   "serverUrlInvalid": "Enter a valid http(s) URL",
   "apiKeyOptional": "API key (optional)",
-  "apiKeyHelper": "Required if your server has a password. Stash → Settings → Security.",
+  "apiKeyHelper": "For a server with a password: the API key (Stash → Settings → Security), or sign in below.",
+  "orSignIn": "Or sign in",
+  "orSignInHint": "With the username and password of your Stash server. Casting to a TV needs the API key.",
+  "username": "Username",
+  "password": "Password",
+  "loginIncomplete": "Enter username and password.",
   "connect": "Connect",
   "removeServerTitle": "Remove \"{name}\"?",
   "@removeServerTitle": {
@@ -420,6 +425,15 @@
   "apiKey": "API key",
   "notSet": "Not set",
   "isSet": "Set",
+  "serverAccess": "API key or login",
+  "signedInAs": "Signed in as {name}",
+  "@signedInAs": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
   "sectionAppearance": "Appearance",
   "themeLight": "Light",
   "themeSystem": "System",
@@ -622,7 +636,8 @@
       }
     }
   },
-  "errorUnauthorized": "Not authorized – check the API key.",
+  "errorUnauthorized": "Not authorized – check the API key or login.",
+  "errorInvalidCredentials": "Wrong username or password.",
   "errorNotReady": "Server is reachable but not ready (status: {status}).",
   "@errorNotReady": {
     "placeholders": {

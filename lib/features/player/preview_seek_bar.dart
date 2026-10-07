@@ -7,11 +7,11 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:media_kit/media_kit.dart';
 
-import '../../core/config/server_config.dart';
 import '../../core/utils/format.dart';
 import '../../data/models/scene_details.dart';
 import '../../data/models/scrub_thumbnails.dart';
 import '../../data/providers.dart';
+import '../../data/repositories/stash_session.dart';
 import 'player_providers.dart';
 
 /// Seek bar that shows a preview frame above the finger while scrubbing

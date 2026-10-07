@@ -6,11 +6,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:media_kit/media_kit.dart';
 import 'package:media_kit_video/media_kit_video.dart';
 
-import '../../core/config/server_config.dart';
 import '../../core/config/theme.dart';
 import '../../core/utils/format.dart';
 import '../../data/models/scene.dart';
 import '../../data/repositories/stash_repository.dart';
+import '../../data/repositories/stash_session.dart';
 import '../../l10n/l10n.dart';
 import '../../widgets/hold_detector.dart';
 import '../../widgets/scene_card.dart';

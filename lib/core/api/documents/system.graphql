@@ -1,0 +1,43 @@
+query SystemStatus {
+  systemStatus { status }
+}
+
+query Version {
+  version { version }
+}
+
+# Library totals; supported by all Stash versions this app targets.
+query Stats {
+  stats {
+    scene_count
+    scenes_size
+    scenes_duration
+    image_count
+    images_size
+    gallery_count
+    performer_count
+    studio_count
+    tag_count
+  }
+}
+
+# Watch activity totals; only on newer Stash versions, queried separately so
+# older servers still get the library totals.
+query ActivityStats {
+  stats {
+    total_play_count
+    total_play_duration
+    scenes_played
+    total_o_count
+  }
+}
+
+# Saved scene filters (object_filter needs Stash v0.25+).
+query SavedSceneFilters {
+  findSavedFilters(mode: SCENES) {
+    id
+    name
+    find_filter { q sort direction }
+    object_filter
+  }
+}

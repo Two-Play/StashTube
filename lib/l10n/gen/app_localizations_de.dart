@@ -639,7 +639,23 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get apiKeyHelper =>
-      'Nötig, wenn dein Server ein Passwort hat. Stash → Settings → Security.';
+      'Für einen Server mit Passwort: der API-Schlüssel (Stash → Settings → Security) oder unten anmelden.';
+
+  @override
+  String get orSignIn => 'Oder anmelden';
+
+  @override
+  String get orSignInHint =>
+      'Mit Benutzername und Passwort deines Stash-Servers. Zum Streamen auf einen Fernseher braucht es den API-Schlüssel.';
+
+  @override
+  String get username => 'Benutzername';
+
+  @override
+  String get password => 'Passwort';
+
+  @override
+  String get loginIncomplete => 'Benutzername und Passwort eingeben.';
 
   @override
   String get connect => 'Verbinden';
@@ -759,6 +775,14 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get isSet => 'Gesetzt';
+
+  @override
+  String get serverAccess => 'API-Schlüssel oder Login';
+
+  @override
+  String signedInAs(String name) {
+    return 'Angemeldet als $name';
+  }
 
   @override
   String get sectionAppearance => 'Darstellung';
@@ -1175,7 +1199,12 @@ class AppLocalizationsDe extends AppLocalizations {
   }
 
   @override
-  String get errorUnauthorized => 'Nicht berechtigt – prüfe den API-Schlüssel.';
+  String get errorUnauthorized =>
+      'Nicht berechtigt – prüfe API-Schlüssel oder Login.';
+
+  @override
+  String get errorInvalidCredentials =>
+      'Benutzername oder Passwort ist falsch.';
 
   @override
   String errorNotReady(String status) {

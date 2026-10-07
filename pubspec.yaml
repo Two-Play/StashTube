@@ -53,6 +53,10 @@ dependencies:
   flutter_chrome_cast: ^1.5.0
   image_picker: ^1.2.3
   crypto: ^3.0.7
+  flutter_secure_storage: ^11.2.0
+  # Used directly by the generated GraphQL types (lib/**/*.graphql.dart, see build.yaml).
+  graphql: ^5.2.4
+  gql: ^1.0.1
 
 dev_dependencies:
   flutter_test:
@@ -64,6 +68,9 @@ dev_dependencies:
   # package. See that file for information about deactivating specific lint
   # rules and activating additional ones.
   flutter_lints: ^6.0.0
+  # GraphQL types from Stash's schema (1.8): flutter pub run build_runner build
+  graphql_codegen: ^3.0.2
+  build_runner: ^2.16.1
 flutter:
   generate: true # lib/l10n (see l10n.yaml)
   # CocoaPods instead of Swift Package Manager on iOS: flutter_chrome_cast's

@@ -2,7 +2,16 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:graphql_flutter/graphql_flutter.dart';
 import 'package:http/http.dart' as http;
 
-import '../../core/api/queries.dart';
+import '../../core/api/documents/galleries.graphql.dart';
+import '../../core/api/documents/groups.graphql.dart';
+import '../../core/api/documents/images.graphql.dart';
+import '../../core/api/documents/performers.graphql.dart';
+import '../../core/api/documents/refs.graphql.dart';
+import '../../core/api/documents/scenes.graphql.dart';
+import '../../core/api/documents/studios.graphql.dart';
+import '../../core/api/documents/system.graphql.dart';
+import '../../core/api/documents/tags.graphql.dart';
+import '../../core/api/stash_schema.graphql.dart';
 import '../../core/config/server_config.dart';
 import '../../features/player/playback_tracker.dart';
 import '../models/gallery.dart';
@@ -19,6 +28,7 @@ import '../models/scrub_thumbnails.dart';
 import '../models/stats.dart';
 import '../models/studio.dart';
 import '../models/tag.dart';
+import 'stash_session.dart';
 
 /// What went wrong, so the UI can show the error in the user's language
 /// (`errorText`); [StashApiException.message] stays English for logs.
@@ -27,18 +37,14 @@ enum StashErrorKind {
   server,
   unreachable,
   unauthorized,
+  invalidCredentials,
   notReady,
   notFound,
   notSaved,
 }
 
 class StashApiException implements Exception {
-  const StashApiException(
-    this.message, {
-    this.isNetworkError = false,
-    this.kind = StashErrorKind.server,
-    this.detail,
-  });
+  const StashApiException(this.message, {this.isNetworkError = false, this.kind = StashErrorKind.server, this.detail});
 
   final String message;
   final StashErrorKind kind;
@@ -64,19 +70,22 @@ Duration? stashRetry(int retryCount, Object error) {
   return Duration(milliseconds: 500 * (1 << retryCount));
 }
 
-GraphQLClient createGraphQLClient(ServerConfig config) => GraphQLClient(
-      link: HttpLink(config.graphqlEndpoint, defaultHeaders: config.authHeaders),
+GraphQLClient createGraphQLClient(ServerConfig config, {http.Client? httpClient, StashSessionCookie? session}) =>
+    GraphQLClient(
+      link: HttpLink(
+        config.graphqlEndpoint,
+        defaultHeaders: {...config.authHeaders, if (session != null) 'Cookie': session.header},
+        httpClient: httpClient,
+      ),
       // Lists are paginated and refreshed manually, so no normalized caching.
       cache: GraphQLCache(),
-      defaultPolicies: DefaultPolicies(
-        query: Policies(fetch: FetchPolicy.networkOnly),
-      ),
+      defaultPolicies: DefaultPolicies(query: Policies(fetch: FetchPolicy.networkOnly)),
     );
 
 /// All access to the Stash GraphQL API goes through this class.
 class StashRepository implements PlaybackActivityApi {
   StashRepository(this._client, {this._authHeaders = const {}, http.Client? httpClient})
-      : _http = httpClient ?? http.Client();
+    : _http = httpClient ?? http.Client();
 
   final GraphQLClient _client;
   final Map<String, String> _authHeaders;
@@ -86,46 +95,55 @@ class StashRepository implements PlaybackActivityApi {
 
   static const defaultPageSize = 24;
 
-  /// Checks that [config] points to a reachable, set-up Stash server.
+  /// Checks that [config] points to a reachable, set-up Stash server and,
+  /// with a login, that it signs in.
   static Future<void> verifyServer(ServerConfig config) async {
-    final repo = StashRepository(createGraphQLClient(config));
-    final data = await repo._query(StashQueries.systemStatus);
-    final status = readObject(data, 'systemStatus')?['status'];
+    StashSessionCookie? session;
+    if (config.usesSession) {
+      final client = http.Client();
+      try {
+        session = await stashLogin(client, config);
+      } finally {
+        client.close();
+      }
+    }
+    final repo = StashRepository(createGraphQLClient(config, session: session));
+    final data = await repo._query(Options$Query$SystemStatus());
+    final status = toJson$Enum$SystemStatusEnum(data.systemStatus.status);
     if (status != 'OK') {
       throw StashApiException(
         'Server is reachable but not ready (status: $status).',
         kind: StashErrorKind.notReady,
-        detail: '$status',
+        detail: status,
       );
     }
   }
 
-  Future<String?> serverVersion() async {
-    final data = await _query(StashQueries.version);
-    return readObject(data, 'version')?['version'] as String?;
-  }
+  Future<String?> serverVersion() async => (await _query(Options$Query$Version())).version.version;
 
-  Future<PageResult<Scene>> findScenes(
-    SceneQuery query, {
-    int page = 1,
-    int perPage = defaultPageSize,
-  }) async {
-    final data = await _query(StashQueries.findScenes, {
-      'filter': _findFilter(
-        search: query.search,
-        page: page,
-        perPage: perPage,
-        sort: query.sortField,
-        direction: query.direction,
+  Future<PageResult<Scene>> findScenes(SceneQuery query, {int page = 1, int perPage = defaultPageSize}) async {
+    final data = await _query(
+      Options$Query$FindScenes(
+        variables: Variables$Query$FindScenes(
+          filter: _findFilter(
+            search: query.search,
+            page: page,
+            perPage: perPage,
+            sort: query.sortField,
+            direction: query.direction,
+          ),
+          scene_filter: _input(query.toSceneFilter(), Input$SceneFilterType.fromJson, (i) => i.toJson()),
+        ),
       ),
-      'scene_filter': query.toSceneFilter(),
-    });
-    final result = readObject(data, 'findScenes') ?? const {};
-    final scenes = readList(result, 'scenes')
-        .map(Scene.fromJson)
-        .where((s) => s.id != query.excludeSceneId)
-        .toList();
-    return PageResult(items: scenes, totalCount: readInt(result, 'count'));
+    );
+    final result = data.findScenes;
+    return PageResult(
+      items: [
+        for (final s in result.scenes)
+          if (s.id != query.excludeSceneId) Scene.fromFields(s),
+      ],
+      totalCount: result.count,
+    );
   }
 
   Future<PageResult<Performer>> findPerformers(
@@ -133,153 +151,136 @@ class StashRepository implements PlaybackActivityApi {
     int page = 1,
     int perPage = defaultPageSize,
   }) async {
-    final data = await _query(StashQueries.findPerformers, {
-      'filter': _findFilter(
-        search: query.search,
-        page: page,
-        perPage: perPage,
-        sort: query.sortField,
-        direction: query.direction,
+    final data = await _query(
+      Options$Query$FindPerformers(
+        variables: Variables$Query$FindPerformers(
+          filter: _findFilter(
+            search: query.search,
+            page: page,
+            perPage: perPage,
+            sort: query.sortField,
+            direction: query.direction,
+          ),
+          performer_filter: _input(query.toPerformerFilter(), Input$PerformerFilterType.fromJson, (i) => i.toJson()),
+        ),
       ),
-      'performer_filter': query.toPerformerFilter(),
-    });
-    final result = readObject(data, 'findPerformers') ?? const {};
-    return PageResult(
-      items: readList(result, 'performers').map(Performer.fromJson).toList(),
-      totalCount: readInt(result, 'count'),
     );
+    final result = data.findPerformers;
+    return PageResult(items: [for (final p in result.performers) Performer.fromFields(p)], totalCount: result.count);
   }
 
   Future<Performer> findPerformer(String id) async {
-    final data = await _query(StashQueries.findPerformer, {'id': id});
-    final json = readObject(data, 'findPerformer');
-    if (json == null) throw const StashApiException('Performer not found.', kind: StashErrorKind.notFound);
-    return Performer.fromJson(json);
+    final data = await _query(Options$Query$FindPerformer(variables: Variables$Query$FindPerformer(id: id)));
+    final performer = data.findPerformer;
+    if (performer == null) throw const StashApiException('Performer not found.', kind: StashErrorKind.notFound);
+    return Performer.fromFields(performer, details: performer.details);
   }
 
-  Future<PageResult<Studio>> findStudios(
-    StudioQuery query, {
-    int page = 1,
-    int perPage = defaultPageSize,
-  }) async {
-    final data = await _query(StashQueries.findStudios, {
-      'filter': _findFilter(
-        search: query.search,
-        page: page,
-        perPage: perPage,
-        sort: 'name',
-        direction: 'ASC',
+  Future<PageResult<Studio>> findStudios(StudioQuery query, {int page = 1, int perPage = defaultPageSize}) async {
+    final data = await _query(
+      Options$Query$FindStudios(
+        variables: Variables$Query$FindStudios(
+          filter: _findFilter(search: query.search, page: page, perPage: perPage, sort: 'name', direction: 'ASC'),
+        ),
       ),
-    });
-    final result = readObject(data, 'findStudios') ?? const {};
-    return PageResult(
-      items: readList(result, 'studios').map(Studio.fromJson).toList(),
-      totalCount: readInt(result, 'count'),
     );
+    final result = data.findStudios;
+    return PageResult(items: [for (final s in result.studios) Studio.fromFields(s)], totalCount: result.count);
   }
 
   Future<Studio> findStudio(String id) async {
-    final data = await _query(StashQueries.findStudio, {'id': id});
-    final json = readObject(data, 'findStudio');
-    if (json == null) throw const StashApiException('Studio not found.', kind: StashErrorKind.notFound);
-    return Studio.fromJson(json);
+    final data = await _query(Options$Query$FindStudio(variables: Variables$Query$FindStudio(id: id)));
+    final studio = data.findStudio;
+    if (studio == null) throw const StashApiException('Studio not found.', kind: StashErrorKind.notFound);
+    return Studio.fromFields(studio);
   }
 
   @override
-  Future<void> saveActivity(String sceneId, {required double resumeTime, required double playDuration}) =>
-      _mutate(StashQueries.sceneSaveActivity, {
-        'id': sceneId,
-        'resume_time': resumeTime,
-        'playDuration': playDuration,
-      });
+  Future<void> saveActivity(String sceneId, {required double resumeTime, required double playDuration}) => _mutate(
+    Options$Mutation$SceneSaveActivity(
+      variables: Variables$Mutation$SceneSaveActivity(id: sceneId, resume_time: resumeTime, playDuration: playDuration),
+    ),
+  );
 
   @override
-  Future<void> addPlay(String sceneId) => _mutate(StashQueries.sceneAddPlay, {'id': sceneId});
+  Future<void> addPlay(String sceneId) =>
+      _mutate(Options$Mutation$SceneAddPlay(variables: Variables$Mutation$SceneAddPlay(id: sceneId)));
 
-  Future<PageResult<ImageItem>> findImages(
-    ImageQuery query, {
-    int page = 1,
-    int perPage = defaultPageSize,
-  }) async {
-    final data = await _query(StashQueries.findImages, {
-      'filter': _findFilter(
-        search: query.search,
-        page: page,
-        perPage: perPage,
-        sort: query.sortField,
-        direction: query.direction,
+  Future<PageResult<ImageItem>> findImages(ImageQuery query, {int page = 1, int perPage = defaultPageSize}) async {
+    final data = await _query(
+      Options$Query$FindImages(
+        variables: Variables$Query$FindImages(
+          filter: _findFilter(
+            search: query.search,
+            page: page,
+            perPage: perPage,
+            sort: query.sortField,
+            direction: query.direction,
+          ),
+          image_filter: _input(query.toImageFilter(), Input$ImageFilterType.fromJson, (i) => i.toJson()),
+        ),
       ),
-      'image_filter': query.toImageFilter(),
-    });
-    final result = readObject(data, 'findImages') ?? const {};
-    return PageResult(
-      items: readList(result, 'images').map(ImageItem.fromJson).toList(),
-      totalCount: readInt(result, 'count'),
     );
+    final result = data.findImages;
+    return PageResult(items: [for (final i in result.images) ImageItem.fromGraphql(i)], totalCount: result.count);
   }
 
-  Future<PageResult<Gallery>> findGalleries(
-    GalleryQuery query, {
-    int page = 1,
-    int perPage = defaultPageSize,
-  }) async {
-    final data = await _query(StashQueries.findGalleries, {
-      'filter': _findFilter(page: page, perPage: perPage, sort: query.sortField, direction: query.direction),
-    });
-    final result = readObject(data, 'findGalleries') ?? const {};
-    return PageResult(
-      items: readList(result, 'galleries').map(Gallery.fromJson).toList(),
-      totalCount: readInt(result, 'count'),
+  Future<PageResult<Gallery>> findGalleries(GalleryQuery query, {int page = 1, int perPage = defaultPageSize}) async {
+    final data = await _query(
+      Options$Query$FindGalleries(
+        variables: Variables$Query$FindGalleries(
+          filter: _findFilter(page: page, perPage: perPage, sort: query.sortField, direction: query.direction),
+        ),
+      ),
     );
+    final result = data.findGalleries;
+    return PageResult(items: [for (final g in result.galleries) Gallery.fromFields(g)], totalCount: result.count);
   }
 
   Future<Gallery> findGallery(String id) async {
-    final data = await _query(StashQueries.findGallery, {'id': id});
-    final json = readObject(data, 'findGallery');
-    if (json == null) throw const StashApiException('Gallery not found.', kind: StashErrorKind.notFound);
-    return Gallery.fromJson(json);
+    final data = await _query(Options$Query$FindGallery(variables: Variables$Query$FindGallery(id: id)));
+    final gallery = data.findGallery;
+    if (gallery == null) throw const StashApiException('Gallery not found.', kind: StashErrorKind.notFound);
+    return Gallery.fromFields(gallery);
   }
 
   /// Tags; without a search only tags that have scenes.
-  Future<PageResult<Tag>> findTags(
-    TagQuery query, {
-    int page = 1,
-    int perPage = defaultPageSize,
-  }) async {
-    final data = await _query(StashQueries.findTags, {
-      'filter': _findFilter(
-        search: query.search,
-        page: page,
-        perPage: perPage,
-        sort: query.sort.field,
-        direction: query.direction,
+  Future<PageResult<Tag>> findTags(TagQuery query, {int page = 1, int perPage = defaultPageSize}) async {
+    final data = await _query(
+      Options$Query$FindTags(
+        variables: Variables$Query$FindTags(
+          filter: _findFilter(
+            search: query.search,
+            page: page,
+            perPage: perPage,
+            sort: query.sort.field,
+            direction: query.direction,
+          ),
+          tag_filter: (query.search == null || query.search!.isEmpty)
+              ? Input$TagFilterType(
+                  scene_count: Input$IntCriterionInput(value: 0, modifier: Enum$CriterionModifier.GREATER_THAN),
+                )
+              : null,
+        ),
       ),
-      'tag_filter': (query.search == null || query.search!.isEmpty)
-          ? {'scene_count': {'value': 0, 'modifier': 'GREATER_THAN'}}
-          : null,
-    });
-    final result = readObject(data, 'findTags') ?? const {};
-    return PageResult(
-      items: readList(result, 'tags').map(Tag.fromJson).toList(),
-      totalCount: readInt(result, 'count'),
     );
+    final result = data.findTags;
+    return PageResult(items: [for (final t in result.tags) Tag.fromFields(t)], totalCount: result.count);
   }
 
   Future<Tag> findTag(String id) async {
-    final data = await _query(StashQueries.findTag, {'id': id});
-    final json = readObject(data, 'findTag');
-    if (json == null) throw const StashApiException('Tag not found.', kind: StashErrorKind.notFound);
-    return Tag.fromJson(json);
+    final data = await _query(Options$Query$FindTag(variables: Variables$Query$FindTag(id: id)));
+    final tag = data.findTag;
+    if (tag == null) throw const StashApiException('Tag not found.', kind: StashErrorKind.notFound);
+    return Tag.fromFields(tag, description: tag.description);
   }
 
   /// Scene filters saved in Stash's web UI; empty on servers that don't
   /// support them in this form.
   Future<List<SavedFilter>> savedSceneFilters() async {
     try {
-      final data = await _query(StashQueries.savedSceneFilters);
-      final list = data['findSavedFilters'];
-      if (list is! List) return const [];
-      return [for (final f in list.whereType<Map>()) SavedFilter.fromJson(Map<String, dynamic>.from(f))];
+      final data = await _query(Options$Query$SavedSceneFilters());
+      return [for (final f in data.findSavedFilters) SavedFilter.fromGraphql(f)];
     } on StashApiException catch (e) {
       if (e.isNetworkError) rethrow;
       return const [];
@@ -289,41 +290,36 @@ class StashRepository implements PlaybackActivityApi {
   /// Scenes by id, in the order of [ids] (unknown ids are skipped).
   Future<List<Scene>> findScenesByIds(List<String> ids) async {
     if (ids.isEmpty) return const [];
-    final data = await _query(StashQueries.findScenesByIds, {'ids': ids});
-    final byId = {
-      for (final s in readList(readObject(data, 'findScenes') ?? const {}, 'scenes').map(Scene.fromJson)) s.id: s,
-    };
+    final data = await _query(Options$Query$FindScenesByIds(variables: Variables$Query$FindScenesByIds(ids: ids)));
+    final byId = {for (final s in data.findScenes.scenes) s.id: Scene.fromFields(s)};
     return [for (final id in ids) ?byId[id]];
   }
 
   Future<PageResult<Group>> findGroups(GroupQuery query, {int page = 1, int perPage = defaultPageSize}) async {
-    final data = await _query(StashQueries.findGroups, {
-      'filter': _findFilter(search: query.search, page: page, perPage: perPage, sort: 'name', direction: 'ASC'),
-    });
-    final result = readObject(data, 'findGroups') ?? const {};
-    return PageResult(
-      items: readList(result, 'groups').map(Group.fromJson).toList(),
-      totalCount: readInt(result, 'count'),
+    final data = await _query(
+      Options$Query$FindGroups(
+        variables: Variables$Query$FindGroups(
+          filter: _findFilter(search: query.search, page: page, perPage: perPage, sort: 'name', direction: 'ASC'),
+        ),
+      ),
     );
+    final result = data.findGroups;
+    return PageResult(items: [for (final g in result.groups) Group.fromFields(g)], totalCount: result.count);
   }
 
   Future<Group> findGroup(String id) async {
-    final data = await _query(StashQueries.findGroup, {'id': id});
-    final json = readObject(data, 'findGroup');
-    if (json == null) throw const StashApiException('Group not found.', kind: StashErrorKind.notFound);
-    return Group.fromJson(json);
+    final data = await _query(Options$Query$FindGroup(variables: Variables$Query$FindGroup(id: id)));
+    final group = data.findGroup;
+    if (group == null) throw const StashApiException('Group not found.', kind: StashErrorKind.notFound);
+    return Group.fromFields(group, synopsis: group.synopsis);
   }
 
-  Future<LibraryStats> libraryStats() async {
-    final data = await _query(StashQueries.stats);
-    return LibraryStats.fromJson(readObject(data, 'stats') ?? const {});
-  }
+  Future<LibraryStats> libraryStats() async => LibraryStats.fromGraphql((await _query(Options$Query$Stats())).stats);
 
   /// Null when the server doesn't support activity stats (older Stash).
   Future<ActivityStats?> activityStats() async {
     try {
-      final data = await _query(StashQueries.activityStats);
-      return ActivityStats.fromJson(readObject(data, 'stats') ?? const {});
+      return ActivityStats.fromGraphql((await _query(Options$Query$ActivityStats())).stats);
     } on StashApiException catch (e) {
       if (e.isNetworkError) rethrow;
       return null;
@@ -331,10 +327,10 @@ class StashRepository implements PlaybackActivityApi {
   }
 
   Future<SceneDetails> findSceneDetails(String sceneId) async {
-    final data = await _query(StashQueries.findSceneDetails, {'id': sceneId});
-    final json = readObject(data, 'findScene');
-    if (json == null) throw const StashApiException('Scene not found.', kind: StashErrorKind.notFound);
-    return SceneDetails.fromJson(json);
+    final data = await _query(Options$Query$FindSceneDetails(variables: Variables$Query$FindSceneDetails(id: sceneId)));
+    final scene = data.findScene;
+    if (scene == null) throw const StashApiException('Scene not found.', kind: StashErrorKind.notFound);
+    return SceneDetails.fromGraphql(scene);
   }
 
   /// Seek preview thumbnails of a scene; null if Stash hasn't generated
@@ -352,82 +348,124 @@ class StashRepository implements PlaybackActivityApi {
   }
 
   /// [rating100] null removes the rating.
-  Future<void> setSceneRating(String sceneId, int? rating100) =>
-      _mutate(StashQueries.sceneSetRating, {'id': sceneId, 'rating100': rating100});
+  Future<void> setSceneRating(String sceneId, int? rating100) => _mutate(
+    Options$Mutation$SceneSetRating(
+      variables: Variables$Mutation$SceneSetRating(id: sceneId, rating100: rating100),
+    ),
+  );
 
   // Updates: [changes] holds only the fields to change, in the GraphQL input
   // shape (e.g. {'title': 'x', 'studio_id': '3'}); the id is added here.
 
-  Future<Scene> updateScene(String id, Map<String, dynamic> changes) =>
-      _update(StashQueries.sceneUpdate, 'sceneUpdate', id, changes, Scene.fromJson);
+  Future<Scene> updateScene(String id, Map<String, dynamic> changes) async {
+    final data = await _mutate(
+      Options$Mutation$SceneEdit(
+        variables: Variables$Mutation$SceneEdit(
+          input: _updateInput(id, changes, Input$SceneUpdateInput.fromJson, (i) => i.toJson()),
+        ),
+      ),
+    );
+    return Scene.fromFields(data.sceneUpdate ?? _notSaved());
+  }
 
-  Future<Performer> updatePerformer(String id, Map<String, dynamic> changes) =>
-      _update(StashQueries.performerUpdate, 'performerUpdate', id, changes, Performer.fromJson);
+  Future<Performer> updatePerformer(String id, Map<String, dynamic> changes) async {
+    final data = await _mutate(
+      Options$Mutation$PerformerEdit(
+        variables: Variables$Mutation$PerformerEdit(
+          input: _updateInput(id, changes, Input$PerformerUpdateInput.fromJson, (i) => i.toJson()),
+        ),
+      ),
+    );
+    final performer = data.performerUpdate ?? _notSaved();
+    return Performer.fromFields(performer, details: performer.details);
+  }
 
-  Future<Studio> updateStudio(String id, Map<String, dynamic> changes) =>
-      _update(StashQueries.studioUpdate, 'studioUpdate', id, changes, Studio.fromJson);
+  Future<Studio> updateStudio(String id, Map<String, dynamic> changes) async {
+    final data = await _mutate(
+      Options$Mutation$StudioEdit(
+        variables: Variables$Mutation$StudioEdit(
+          input: _updateInput(id, changes, Input$StudioUpdateInput.fromJson, (i) => i.toJson()),
+        ),
+      ),
+    );
+    return Studio.fromFields(data.studioUpdate ?? _notSaved());
+  }
 
-  Future<Tag> updateTag(String id, Map<String, dynamic> changes) =>
-      _update(StashQueries.tagUpdate, 'tagUpdate', id, changes, Tag.fromJson);
+  Future<Tag> updateTag(String id, Map<String, dynamic> changes) async {
+    final data = await _mutate(
+      Options$Mutation$TagEdit(
+        variables: Variables$Mutation$TagEdit(
+          input: _updateInput(id, changes, Input$TagUpdateInput.fromJson, (i) => i.toJson()),
+        ),
+      ),
+    );
+    final tag = data.tagUpdate ?? _notSaved();
+    return Tag.fromFields(tag, description: tag.description);
+  }
 
-  Future<Gallery> updateGallery(String id, Map<String, dynamic> changes) =>
-      _update(StashQueries.galleryUpdate, 'galleryUpdate', id, changes, Gallery.fromJson);
+  Future<Gallery> updateGallery(String id, Map<String, dynamic> changes) async {
+    final data = await _mutate(
+      Options$Mutation$GalleryEdit(
+        variables: Variables$Mutation$GalleryEdit(
+          input: _updateInput(id, changes, Input$GalleryUpdateInput.fromJson, (i) => i.toJson()),
+        ),
+      ),
+    );
+    return Gallery.fromFields(data.galleryUpdate ?? _notSaved());
+  }
 
-  Future<List<String>?> sceneUrls(String id) => _urls(StashQueries.sceneUrls, 'findScene', id);
-  Future<List<String>?> performerUrls(String id) => _urls(StashQueries.performerUrls, 'findPerformer', id);
-  Future<List<String>?> galleryUrls(String id) => _urls(StashQueries.galleryUrls, 'findGallery', id);
+  static Never _notSaved() => throw const StashApiException('Nothing was saved.', kind: StashErrorKind.notSaved);
+
+  Future<List<String>?> sceneUrls(String id) => _urls(
+    () async => (await _query(Options$Query$SceneUrls(variables: Variables$Query$SceneUrls(id: id)))).findScene?.urls,
+  );
+
+  Future<List<String>?> performerUrls(String id) => _urls(
+    () async => (await _query(
+      Options$Query$PerformerUrls(variables: Variables$Query$PerformerUrls(id: id)),
+    )).findPerformer?.urls,
+  );
+
+  Future<List<String>?> galleryUrls(String id) => _urls(
+    () async =>
+        (await _query(Options$Query$GalleryUrls(variables: Variables$Query$GalleryUrls(id: id)))).findGallery?.urls,
+  );
 
   /// Null when the server doesn't support URL lists for this kind.
-  Future<List<String>?> _urls(String document, String field, String id) async {
+  Future<List<String>?> _urls(Future<List<String>?> Function() load) async {
     try {
-      final data = await _query(document, {'id': id});
-      final list = readObject(data, field)?['urls'];
-      return list is List ? [for (final u in list) u.toString()] : const [];
+      return await load() ?? const [];
     } on StashApiException catch (e) {
       if (e.isNetworkError) rethrow;
       return null;
     }
   }
 
-  Future<T> _update<T>(
-    String document,
-    String field,
-    String id,
-    Map<String, dynamic> changes,
-    T Function(Json) parse,
-  ) async {
-    final data = await _mutate(document, {
-      'input': {'id': id, ...changes},
-    });
-    final json = readObject(data, field);
-    if (json == null) throw const StashApiException('Nothing was saved.', kind: StashErrorKind.notSaved);
-    return parse(json);
-  }
-
   Future<Tag> createTag(String name) async {
-    final data = await _mutate(StashQueries.tagCreate, {'name': name});
-    final json = readObject(data, 'tagCreate');
-    if (json == null) throw const StashApiException('Tag was not created.', kind: StashErrorKind.notSaved);
-    return Tag.fromJson(json);
+    final data = await _mutate(Options$Mutation$TagCreate(variables: Variables$Mutation$TagCreate(name: name)));
+    final tag = data.tagCreate;
+    if (tag == null) throw const StashApiException('Tag was not created.', kind: StashErrorKind.notSaved);
+    return Tag.fromFields(tag);
   }
 
   /// Replaces the scene's tags; returns them as saved by the server.
   Future<List<Tag>> setSceneTags(String sceneId, List<String> tagIds) async {
-    final data = await _mutate(StashQueries.sceneSetTags, {'id': sceneId, 'tag_ids': tagIds});
-    return readList(readObject(data, 'sceneUpdate') ?? const {}, 'tags').map(Tag.fromJson).toList();
+    final data = await _mutate(
+      Options$Mutation$SceneSetTags(
+        variables: Variables$Mutation$SceneSetTags(id: sceneId, tag_ids: tagIds),
+      ),
+    );
+    return [for (final t in data.sceneUpdate?.tags ?? const <Fragment$TagRef>[]) Tag.fromRef(t)];
   }
 
   /// Increments the O-counter; returns the new count.
-  Future<int> addSceneO(String sceneId) async {
-    final data = await _mutate(StashQueries.sceneAddO, {'id': sceneId});
-    return readInt(readObject(data, 'sceneAddO') ?? const {}, 'count');
-  }
+  Future<int> addSceneO(String sceneId) async =>
+      (await _mutate(Options$Mutation$SceneAddO(variables: Variables$Mutation$SceneAddO(id: sceneId)))).sceneAddO.count;
 
   /// Removes the latest O; returns the new count.
-  Future<int> removeSceneO(String sceneId) async {
-    final data = await _mutate(StashQueries.sceneDeleteO, {'id': sceneId});
-    return readInt(readObject(data, 'sceneDeleteO') ?? const {}, 'count');
-  }
+  Future<int> removeSceneO(String sceneId) async => (await _mutate(
+    Options$Mutation$SceneDeleteO(variables: Variables$Mutation$SceneDeleteO(id: sceneId)),
+  )).sceneDeleteO.count;
 
   Future<SceneMarker> createMarker({
     required String sceneId,
@@ -435,40 +473,70 @@ class StashRepository implements PlaybackActivityApi {
     required String primaryTagId,
     String title = '',
   }) async {
-    final data = await _mutate(StashQueries.sceneMarkerCreate, {
-      'input': {'scene_id': sceneId, 'seconds': seconds, 'primary_tag_id': primaryTagId, 'title': title},
-    });
-    final json = readObject(data, 'sceneMarkerCreate');
-    if (json == null) throw const StashApiException('Marker was not created.', kind: StashErrorKind.notSaved);
-    return SceneMarker.fromJson(json);
+    final data = await _mutate(
+      Options$Mutation$SceneMarkerCreate(
+        variables: Variables$Mutation$SceneMarkerCreate(
+          input: Input$SceneMarkerCreateInput(
+            scene_id: sceneId,
+            seconds: seconds,
+            primary_tag_id: primaryTagId,
+            title: title,
+          ),
+        ),
+      ),
+    );
+    final marker = data.sceneMarkerCreate;
+    if (marker == null) throw const StashApiException('Marker was not created.', kind: StashErrorKind.notSaved);
+    return SceneMarker.fromFields(marker);
   }
 
-  Future<void> setPerformerFavorite(String performerId, bool favorite) =>
-      _mutate(StashQueries.performerSetFavorite, {'id': performerId, 'favorite': favorite});
+  Future<void> setPerformerFavorite(String performerId, bool favorite) => _mutate(
+    Options$Mutation$PerformerSetFavorite(
+      variables: Variables$Mutation$PerformerSetFavorite(id: performerId, favorite: favorite),
+    ),
+  );
 
-  static Map<String, dynamic> _findFilter({
+  static Input$FindFilterType _findFilter({
     String? search,
     required int page,
     required int perPage,
     required String sort,
     required String direction,
-  }) =>
-      {
-        if (search != null && search.isNotEmpty) 'q': search,
-        'page': page,
-        'per_page': perPage,
-        'sort': sort,
-        'direction': direction,
-      };
+  }) => Input$FindFilterType(
+    q: search == null || search.isEmpty ? null : search,
+    page: page,
+    per_page: perPage,
+    sort: sort,
+    direction: fromJson$Enum$SortDirectionEnum(direction),
+  );
 
-  Future<Json> _query(String document, [Map<String, dynamic> variables = const {}]) =>
-      _run(() => _client.query(QueryOptions(document: gql(document), variables: variables)));
+  static T _updateInput<T>(
+    String id,
+    Map<String, dynamic> changes,
+    T Function(Map<String, dynamic>) fromJson,
+    Map<String, dynamic> Function(T) toJson,
+  ) => _input({'id': id, ...changes}, fromJson, toJson)!;
 
-  Future<Json> _mutate(String document, Map<String, dynamic> variables) =>
-      _run(() => _client.mutate(MutationOptions(document: gql(document), variables: variables)));
+  /// Turns a filter or update built as a map (the app's queries and forms
+  /// build them that way) into its generated input type. The generated
+  /// parser ignores keys the schema doesn't have; in debug builds and tests
+  /// such a key fails here instead of silently going missing.
+  static T? _input<T>(
+    Map<String, dynamic>? map,
+    T Function(Map<String, dynamic>) fromJson,
+    Map<String, dynamic> Function(T) toJson,
+  ) {
+    if (map == null) return null;
+    assert(fitsInput(map, fromJson, toJson), 'Not in the Stash schema: $map');
+    return fromJson(map);
+  }
 
-  Future<Json> _run(Future<QueryResult> Function() request) async {
-    final QueryResult result;
+  Future<T> _query<T>(QueryOptions<T> options) => _run(() => _client.query(options));
+
+  Future<T> _mutate<T>(MutationOptions<T> options) => _run(() => _client.mutate(options));
+
+  Future<T> _run<T>(Future<QueryResult<T>> Function() request) async {
+    final QueryResult<T> result;
     try {
       result = await request();
     } catch (e) {
@@ -502,26 +570,31 @@ class StashRepository implements PlaybackActivityApi {
           detail: '$cause',
         );
       }
-      throw StashApiException(
-        exception.graphqlErrors.map((e) => e.message).join('\n'),
-      );
+      throw StashApiException(exception.graphqlErrors.map((e) => e.message).join('\n'));
     }
-    return result.data ?? const {};
+    try {
+      return result.parsedData ?? (throw const StashApiException('The server sent no data.'));
+    } on StashApiException {
+      rethrow;
+    } catch (e) {
+      // A response that doesn't match the generated types: another schema.
+      throw StashApiException('Unexpected response from the server: $e');
+    }
   }
 }
 
 final graphQLClientProvider = Provider<GraphQLClient>((ref) {
   final config = ref.watch(serverConfigProvider);
   if (config == null) throw StateError('No server configured');
-  return createGraphQLClient(config);
+  return createGraphQLClient(config, httpClient: ref.watch(stashHttpClientProvider));
 });
 
-final stashRepositoryProvider = Provider<StashRepository>((ref) {
-  final httpClient = http.Client();
-  ref.onDispose(httpClient.close);
-  return StashRepository(
+// Not on authHeadersProvider: a renewed session cookie must not rebuild the
+// repository and everything loaded through it; the client adds the cookie.
+final stashRepositoryProvider = Provider<StashRepository>(
+  (ref) => StashRepository(
     ref.watch(graphQLClientProvider),
-    authHeaders: ref.watch(authHeadersProvider),
-    httpClient: httpClient,
-  );
-});
+    authHeaders: ref.watch(serverConfigProvider)?.authHeaders ?? const {},
+    httpClient: ref.watch(stashHttpClientProvider),
+  ),
+);

@@ -6,6 +6,7 @@ import 'gen/app_localizations.dart';
 String errorText(AppLocalizations l, Object error) => switch (error) {
       StashApiException(kind: StashErrorKind.unreachable, :final detail) => l.errorUnreachable(detail ?? ''),
       StashApiException(kind: StashErrorKind.unauthorized) => l.errorUnauthorized,
+      StashApiException(kind: StashErrorKind.invalidCredentials) => l.errorInvalidCredentials,
       StashApiException(kind: StashErrorKind.notReady, :final detail) => l.errorNotReady(detail ?? ''),
       StashApiException(kind: StashErrorKind.notFound) => l.errorNotFound,
       StashApiException(kind: StashErrorKind.notSaved) => l.errorNotSaved,

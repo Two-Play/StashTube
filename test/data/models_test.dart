@@ -1,12 +1,11 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:stash_app_mobile/data/models/list_queries.dart';
-import 'package:stash_app_mobile/data/models/performer.dart';
-import 'package:stash_app_mobile/data/models/scene.dart';
+import '../fixtures.dart';
 
 void main() {
-  group('Scene.fromJson', () {
+  group('Scene from the generated type', () {
     test('parses a full findScenes entry', () {
-      final scene = Scene.fromJson({
+      final scene = sceneFrom({
         'id': '42',
         'title': 'Sunset',
         'details': 'A long description',
@@ -17,12 +16,12 @@ void main() {
         'o_counter': 1,
         'resume_time': 120.5,
         'files': [
-          {'basename': 'sunset.mp4', 'duration': 754.2, 'width': 1920, 'height': 1080},
+          sceneFileJson({'basename': 'sunset.mp4', 'duration': 754.2, 'width': 1920, 'height': 1080}),
         ],
         'paths': {'screenshot': 'http://s/screenshot', 'preview': 'http://s/preview', 'stream': 'http://s/stream'},
-        'studio': {'id': '7', 'name': 'Studio A', 'image_path': 'http://s/studio'},
+        'studio': studioRefJson({'id': '7', 'name': 'Studio A', 'image_path': 'http://s/studio'}),
         'performers': [
-          {'id': '1', 'name': 'Alice', 'image_path': 'http://s/p1', 'country': 'DE', 'favorite': true},
+          scenePerformerJson({'id': '1', 'name': 'Alice', 'image_path': 'http://s/p1', 'country': 'DE', 'favorite': true}),
         ],
         'tags': [
           {'id': '3', 'name': 'Outdoor'},
@@ -42,16 +41,11 @@ void main() {
       expect(scene.resumeTime, 120.5);
     });
 
-    test('tolerates missing and null fields', () {
-      final scene = Scene.fromJson({
+    test('handles the optional fields being unset', () {
+      final scene = sceneFrom({
         'id': '1',
-        'title': null,
-        'files': [
-          {'basename': 'clip.mkv', 'duration': null},
-        ],
-        'paths': null,
-        'studio': null,
-        'performers': null,
+        'title': '',
+        'files': [sceneFileJson({'basename': 'clip.mkv'})],
       });
 
       expect(scene.title, 'clip.mkv', reason: 'falls back to the file name');
@@ -59,17 +53,18 @@ void main() {
       expect(scene.studio, isNull);
       expect(scene.performers, isEmpty);
       expect(scene.streamUrl, isNull);
-      expect(scene.displayDate, isNull);
+      expect(scene.displayDate, DateTime.utc(2024), reason: 'when it was added, without a release date');
     });
 
     test('falls back to a placeholder title without files', () {
-      expect(Scene.fromJson({'id': '1', 'title': ''}).title, 'Untitled scene');
+      expect(sceneFrom({'id': '1', 'title': ''}).title, 'Untitled scene');
     });
   });
 
   group('Performer', () {
     test('parses scene_count and computes age', () {
-      final p = Performer.fromJson({'id': '5', 'name': 'Bob', 'birthdate': '1990-06-15', 'scene_count': 12});
+      final p = performerFrom({'id': '5', 'name': 'Bob', 'birthdate': '1990-06-15', 'scene_count': 12, 'gender': 'MALE'});
+      expect(p.gender, 'MALE');
       expect(p.sceneCount, 12);
       expect(p.ageAt(DateTime(2024, 6, 14)), 33);
       expect(p.ageAt(DateTime(2024, 6, 15)), 34);

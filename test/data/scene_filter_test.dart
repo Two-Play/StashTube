@@ -2,13 +2,14 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:stash_app_mobile/data/models/list_queries.dart';
 import 'package:stash_app_mobile/data/models/scene_filter.dart';
 import 'package:stash_app_mobile/data/models/tag.dart';
+import '../fixtures.dart';
 
 void main() {
   const a = Tag(id: '1', name: 'Outdoor');
   const b = Tag(id: '2', name: 'Beach');
 
-  test('Tag.fromJson reads image, description and scene count', () {
-    final tag = Tag.fromJson({'id': '5', 'name': 'Sunset', 'image_path': 'http://s/t', 'scene_count': 12});
+  test('Tag reads image and scene count', () {
+    final tag = tagFrom({'id': '5', 'name': 'Sunset', 'image_path': 'http://s/t', 'scene_count': 12});
     expect(tag.imageUrl, 'http://s/t');
     expect(tag.sceneCount, 12);
   });

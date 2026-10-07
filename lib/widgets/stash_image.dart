@@ -4,7 +4,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../core/config/server_config.dart';
+import '../data/repositories/stash_session.dart';
 
 /// Network image from the Stash server, sent with the API key header.
 ///

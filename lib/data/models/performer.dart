@@ -1,4 +1,7 @@
 import 'json.dart';
+import '../../core/api/documents/performers.graphql.dart';
+import '../../core/api/documents/refs.graphql.dart';
+import '../../core/api/stash_schema.graphql.dart';
 
 class Performer {
   const Performer({
@@ -29,18 +32,26 @@ class Performer {
   final int? rating100;
   final int sceneCount;
 
-  factory Performer.fromJson(Json json) => Performer(
-        id: readString(json, 'id'),
-        name: readString(json, 'name', 'Unknown'),
-        disambiguation: readNullableString(json, 'disambiguation'),
-        imageUrl: readNullableString(json, 'image_path'),
-        country: readNullableString(json, 'country'),
-        birthdate: readDate(json, 'birthdate'),
-        gender: readNullableString(json, 'gender'),
-        details: readNullableString(json, 'details'),
-        favorite: readBool(json, 'favorite'),
-        rating100: readNullableInt(json, 'rating100'),
-        sceneCount: readInt(json, 'scene_count'),
+  factory Performer.fromRef(Fragment$PerformerRef p, {String? country, bool favorite = false}) => Performer(
+        id: p.id,
+        name: p.name,
+        imageUrl: nonEmpty(p.image_path),
+        country: nonEmpty(country),
+        favorite: favorite,
+      );
+
+  factory Performer.fromFields(Fragment$PerformerFields p, {String? details}) => Performer(
+        id: p.id,
+        name: p.name,
+        disambiguation: nonEmpty(p.disambiguation),
+        imageUrl: nonEmpty(p.image_path),
+        country: nonEmpty(p.country),
+        birthdate: parseDate(p.birthdate),
+        gender: p.gender == null ? null : toJson$Enum$GenderEnum(p.gender!),
+        details: nonEmpty(details),
+        favorite: p.favorite,
+        rating100: p.rating100,
+        sceneCount: p.scene_count,
       );
 
   int? ageAt(DateTime now) {

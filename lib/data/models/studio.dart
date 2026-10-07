@@ -1,4 +1,6 @@
 import 'json.dart';
+import '../../core/api/documents/refs.graphql.dart';
+import '../../core/api/documents/studios.graphql.dart';
 
 class Studio {
   const Studio({
@@ -24,17 +26,21 @@ class Studio {
   final Studio? parent;
   final List<Studio> children;
 
-  factory Studio.fromJson(Json json) {
-    final parent = readObject(json, 'parent_studio');
+  factory Studio.fromRef(Fragment$StudioRef s, {int sceneCount = 0}) =>
+      Studio(id: s.id, name: s.name, imageUrl: nonEmpty(s.image_path), sceneCount: sceneCount);
+
+  factory Studio.fromFields(Fragment$StudioFields s) {
+    final parent = s.parent_studio;
+    final details = s is Fragment$StudioDetails ? s : null;
     return Studio(
-      id: readString(json, 'id'),
-      name: readString(json, 'name', 'Unknown studio'),
-      imageUrl: readNullableString(json, 'image_path'),
-      url: readNullableString(json, 'url'),
-      details: readNullableString(json, 'details'),
-      sceneCount: readInt(json, 'scene_count'),
-      parent: parent == null ? null : Studio.fromJson(parent),
-      children: readList(json, 'child_studios').map(Studio.fromJson).toList(),
+      id: s.id,
+      name: s.name,
+      imageUrl: nonEmpty(s.image_path),
+      url: nonEmpty(s.url),
+      details: nonEmpty(details?.details),
+      sceneCount: s.scene_count,
+      parent: parent == null ? null : Studio.fromRef(parent),
+      children: [for (final c in details?.child_studios ?? const []) Studio.fromRef(c, sceneCount: c.scene_count)],
     );
   }
 }
