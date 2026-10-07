@@ -19,6 +19,7 @@ import '../models/scrub_thumbnails.dart';
 import '../models/stats.dart';
 import '../models/studio.dart';
 import '../models/tag.dart';
+import 'stash_session.dart';
 
 /// What went wrong, so the UI can show the error in the user's language
 /// (`errorText`); [StashApiException.message] stays English for logs.
@@ -27,6 +28,7 @@ enum StashErrorKind {
   server,
   unreachable,
   unauthorized,
+  invalidCredentials,
   notReady,
   notFound,
   notSaved,
@@ -64,8 +66,13 @@ Duration? stashRetry(int retryCount, Object error) {
   return Duration(milliseconds: 500 * (1 << retryCount));
 }
 
-GraphQLClient createGraphQLClient(ServerConfig config) => GraphQLClient(
-      link: HttpLink(config.graphqlEndpoint, defaultHeaders: config.authHeaders),
+GraphQLClient createGraphQLClient(ServerConfig config, {http.Client? httpClient, StashSessionCookie? session}) =>
+    GraphQLClient(
+      link: HttpLink(
+        config.graphqlEndpoint,
+        defaultHeaders: {...config.authHeaders, if (session != null) 'Cookie': session.header},
+        httpClient: httpClient,
+      ),
       // Lists are paginated and refreshed manually, so no normalized caching.
       cache: GraphQLCache(),
       defaultPolicies: DefaultPolicies(
@@ -86,9 +93,19 @@ class StashRepository implements PlaybackActivityApi {
 
   static const defaultPageSize = 24;
 
-  /// Checks that [config] points to a reachable, set-up Stash server.
+  /// Checks that [config] points to a reachable, set-up Stash server and,
+  /// with a login, that it signs in.
   static Future<void> verifyServer(ServerConfig config) async {
-    final repo = StashRepository(createGraphQLClient(config));
+    StashSessionCookie? session;
+    if (config.usesSession) {
+      final client = http.Client();
+      try {
+        session = await stashLogin(client, config);
+      } finally {
+        client.close();
+      }
+    }
+    final repo = StashRepository(createGraphQLClient(config, session: session));
     final data = await repo._query(StashQueries.systemStatus);
     final status = readObject(data, 'systemStatus')?['status'];
     if (status != 'OK') {
@@ -513,15 +530,13 @@ class StashRepository implements PlaybackActivityApi {
 final graphQLClientProvider = Provider<GraphQLClient>((ref) {
   final config = ref.watch(serverConfigProvider);
   if (config == null) throw StateError('No server configured');
-  return createGraphQLClient(config);
+  return createGraphQLClient(config, httpClient: ref.watch(stashHttpClientProvider));
 });
 
-final stashRepositoryProvider = Provider<StashRepository>((ref) {
-  final httpClient = http.Client();
-  ref.onDispose(httpClient.close);
-  return StashRepository(
-    ref.watch(graphQLClientProvider),
-    authHeaders: ref.watch(authHeadersProvider),
-    httpClient: httpClient,
-  );
-});
+// Not on authHeadersProvider: a renewed session cookie must not rebuild the
+// repository and everything loaded through it; the client adds the cookie.
+final stashRepositoryProvider = Provider<StashRepository>((ref) => StashRepository(
+      ref.watch(graphQLClientProvider),
+      authHeaders: ref.watch(serverConfigProvider)?.authHeaders ?? const {},
+      httpClient: ref.watch(stashHttpClientProvider),
+    ));

@@ -7,7 +7,8 @@ import '../../data/repositories/stash_repository.dart';
 import '../../l10n/l10n.dart';
 import '../../widgets/stash_logo.dart';
 
-/// Connects the app to a Stash server (URL + optional API key and name).
+/// Connects the app to a Stash server (URL, optional name, and an API key
+/// or a username and password, 2.7).
 /// Lists saved servers to pick from (2.6). Pushed from the settings with
 /// [addServer] to save another server, or with [edit] to change a saved
 /// one (2.7).
@@ -28,8 +29,11 @@ class _LoginPageState extends ConsumerState<LoginPage> {
   final _urlController = TextEditingController();
   final _apiKeyController = TextEditingController();
   final _nameController = TextEditingController();
+  final _usernameController = TextEditingController();
+  final _passwordController = TextEditingController();
   bool _connecting = false;
   bool _obscureKey = true;
+  bool _obscurePassword = true;
   String? _error;
 
   @override
@@ -40,6 +44,8 @@ class _LoginPageState extends ConsumerState<LoginPage> {
       _nameController.text = edit.name;
       _urlController.text = edit.baseUrl;
       _apiKeyController.text = edit.apiKey ?? '';
+      _usernameController.text = edit.username ?? '';
+      _passwordController.text = edit.password ?? '';
     }
   }
 
@@ -48,15 +54,21 @@ class _LoginPageState extends ConsumerState<LoginPage> {
     _urlController.dispose();
     _apiKeyController.dispose();
     _nameController.dispose();
+    _usernameController.dispose();
+    _passwordController.dispose();
     super.dispose();
   }
 
   Future<void> _connect() async {
     if (!_formKey.currentState!.validate()) return;
     final apiKey = _apiKeyController.text.trim();
+    final username = _usernameController.text.trim();
+    final password = _passwordController.text;
     final config = ServerConfig(
       baseUrl: ServerConfig.normalizeUrl(_urlController.text)!,
       apiKey: apiKey.isEmpty ? null : apiKey,
+      username: username.isEmpty ? null : username,
+      password: password.isEmpty ? null : password,
     );
 
     setState(() {
@@ -161,8 +173,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                       obscureText: _obscureKey,
                       autocorrect: false,
                       enableSuggestions: false,
-                      textInputAction: TextInputAction.done,
-                      onFieldSubmitted: (_) => _connect(),
+                      textInputAction: TextInputAction.next,
                       decoration: InputDecoration(
                         border: const OutlineInputBorder(),
                         labelText: context.l10n.apiKeyOptional,
@@ -172,6 +183,48 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                         suffixIcon: IconButton(
                           icon: Icon(_obscureKey ? Icons.visibility : Icons.visibility_off),
                           onPressed: () => setState(() => _obscureKey = !_obscureKey),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+                    Text(context.l10n.orSignIn, style: theme.textTheme.titleSmall),
+                    const SizedBox(height: 4),
+                    Text(
+                      context.l10n.orSignInHint,
+                      style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+                    ),
+                    const SizedBox(height: 12),
+                    TextFormField(
+                      controller: _usernameController,
+                      autocorrect: false,
+                      enableSuggestions: false,
+                      autofillHints: const [AutofillHints.username],
+                      textInputAction: TextInputAction.next,
+                      decoration: InputDecoration(
+                        border: const OutlineInputBorder(),
+                        labelText: context.l10n.username,
+                        prefixIcon: const Icon(Icons.person_outline),
+                      ),
+                      validator: (v) => (v ?? '').trim().isEmpty != _passwordController.text.isEmpty
+                          ? context.l10n.loginIncomplete
+                          : null,
+                    ),
+                    const SizedBox(height: 16),
+                    TextFormField(
+                      controller: _passwordController,
+                      obscureText: _obscurePassword,
+                      autocorrect: false,
+                      enableSuggestions: false,
+                      autofillHints: const [AutofillHints.password],
+                      textInputAction: TextInputAction.done,
+                      onFieldSubmitted: (_) => _connect(),
+                      decoration: InputDecoration(
+                        border: const OutlineInputBorder(),
+                        labelText: context.l10n.password,
+                        prefixIcon: const Icon(Icons.lock_outline),
+                        suffixIcon: IconButton(
+                          icon: Icon(_obscurePassword ? Icons.visibility : Icons.visibility_off),
+                          onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
                         ),
                       ),
                     ),

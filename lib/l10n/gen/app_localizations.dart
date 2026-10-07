@@ -1055,8 +1055,38 @@ abstract class AppLocalizations {
   /// No description provided for @apiKeyHelper.
   ///
   /// In en, this message translates to:
-  /// **'Required if your server has a password. Stash → Settings → Security.'**
+  /// **'For a server with a password: the API key (Stash → Settings → Security), or sign in below.'**
   String get apiKeyHelper;
+
+  /// No description provided for @orSignIn.
+  ///
+  /// In en, this message translates to:
+  /// **'Or sign in'**
+  String get orSignIn;
+
+  /// No description provided for @orSignInHint.
+  ///
+  /// In en, this message translates to:
+  /// **'With the username and password of your Stash server. Casting to a TV needs the API key.'**
+  String get orSignInHint;
+
+  /// No description provided for @username.
+  ///
+  /// In en, this message translates to:
+  /// **'Username'**
+  String get username;
+
+  /// No description provided for @password.
+  ///
+  /// In en, this message translates to:
+  /// **'Password'**
+  String get password;
+
+  /// No description provided for @loginIncomplete.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter username and password.'**
+  String get loginIncomplete;
 
   /// No description provided for @connect.
   ///
@@ -1267,6 +1297,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Set'**
   String get isSet;
+
+  /// No description provided for @serverAccess.
+  ///
+  /// In en, this message translates to:
+  /// **'API key or login'**
+  String get serverAccess;
+
+  /// No description provided for @signedInAs.
+  ///
+  /// In en, this message translates to:
+  /// **'Signed in as {name}'**
+  String signedInAs(String name);
 
   /// No description provided for @sectionAppearance.
   ///
@@ -2021,8 +2063,14 @@ abstract class AppLocalizations {
   /// No description provided for @errorUnauthorized.
   ///
   /// In en, this message translates to:
-  /// **'Not authorized – check the API key.'**
+  /// **'Not authorized – check the API key or login.'**
   String get errorUnauthorized;
+
+  /// No description provided for @errorInvalidCredentials.
+  ///
+  /// In en, this message translates to:
+  /// **'Wrong username or password.'**
+  String get errorInvalidCredentials;
 
   /// No description provided for @errorNotReady.
   ///

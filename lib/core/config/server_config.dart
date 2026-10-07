@@ -26,6 +26,10 @@ class ServerConfig {
 
   bool get hasCredentials => (username?.isNotEmpty ?? false) && (password?.isNotEmpty ?? false);
 
+  /// Signs in for a session cookie: with a login and no API key, which
+  /// would be enough on its own.
+  bool get usesSession => hasCredentials && (apiKey?.isEmpty ?? true);
+
   String get graphqlEndpoint => '$baseUrl/graphql';
 
   // Value equality: an unchanged config must not rebuild the API client.
@@ -40,7 +44,8 @@ class ServerConfig {
   @override
   int get hashCode => Object.hash(baseUrl, apiKey, username, password);
 
-  /// Headers needed for every request to the server: GraphQL, images, streams.
+  /// The API key header for every request to the server: GraphQL, images,
+  /// streams. A login's session cookie comes from `authHeadersProvider`.
   Map<String, String> get authHeaders {
     final key = apiKey;
     return key == null || key.isEmpty ? const {} : {'ApiKey': key};
@@ -271,7 +276,3 @@ final serverConfigProvider = Provider<ServerConfig?>((ref) => ref.watch(serverPr
 /// Id of the server in use; per-server data (watch later, caches) keys on it.
 final activeServerIdProvider = Provider<String?>((ref) => ref.watch(serverProfilesProvider).activeId);
 
-/// Auth headers for the current server, for image and video requests.
-final authHeadersProvider = Provider<Map<String, String>>(
-  (ref) => ref.watch(serverConfigProvider)?.authHeaders ?? const {},
-);
