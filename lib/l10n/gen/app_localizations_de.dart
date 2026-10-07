@@ -1312,4 +1312,13 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get airPlayHint => 'Apple TV und AirPlay-Fernseher';
+
+  @override
+  String get allViews => 'Alle Ansichten';
+
+  @override
+  String get tabAll => 'Alle';
+
+  @override
+  String get colorStash => 'Stash (Blau/Braun)';
 }

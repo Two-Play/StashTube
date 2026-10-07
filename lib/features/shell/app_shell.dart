@@ -14,6 +14,7 @@ import '../shorts/shorts_page.dart';
 import '../search/search_page.dart';
 import '../studios/studios_page.dart';
 import '../tags/tags_page.dart';
+import 'all_views_page.dart';
 import 'nav_bar_config.dart';
 import 'navigation.dart';
 
@@ -22,9 +23,11 @@ import 'navigation.dart';
 class AppShell extends ConsumerWidget {
   const AppShell({super.key});
 
-  static Widget _rootPage(AppTab tab) => switch (tab) {
+  /// The page a tab starts with; also opened from the "all views" menu.
+  static Widget rootPage(AppTab tab) => switch (tab) {
         AppTab(:final section?) => LibrarySectionPage(section: section),
         AppTab.home => const HomePage(),
+        AppTab.all => const AllViewsPage(),
         AppTab.shorts => const ShortsPage(),
         AppTab.performers => const PerformersPage(),
         AppTab.studios => const StudiosPage(),
@@ -83,7 +86,7 @@ class AppShell extends ConsumerWidget {
                   for (final tab in tabs)
                     Navigator(
                       key: navigatorKeys[tab],
-                      onGenerateRoute: (_) => MaterialPageRoute(builder: (_) => _rootPage(tab)),
+                      onGenerateRoute: (_) => MaterialPageRoute(builder: (_) => rootPage(tab)),
                     ),
                 ],
               ),

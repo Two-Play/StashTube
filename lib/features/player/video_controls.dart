@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -13,6 +14,7 @@ import '../cast/cast_ui.dart';
 import 'player_controls.dart' show fullscreenByRotation;
 import 'player_providers.dart';
 import 'preview_seek_bar.dart';
+import 'video_zoom.dart';
 import '../../l10n/l10n.dart';
 
 /// The player's own controls, used instead of media_kit's so that we decide
@@ -22,6 +24,8 @@ import '../../l10n/l10n.dart';
 /// * tap: show/hide; auto-hide after [hideAfter] while playing
 /// * double tap on the left/right third: seek ∓/± 10 s
 /// * hold: double speed until released
+/// * pinch with two fingers: zoom into the video ([videoZoomProvider]); it
+///   stays until zoomed out or another scene starts
 /// * top: collapse (outside fullscreen), [topActions], speed, quality
 /// * center: play/pause or a buffering spinner
 /// * bottom: time, fullscreen toggle, [PreviewSeekBar]
@@ -60,6 +64,59 @@ class _StashVideoControlsState extends ConsumerState<StashVideoControls> {
 
   /// The speed before holding for 2×; null while not holding.
   double? _rateBeforeHold;
+
+  /// Fingers on the video, for pinch zoom.
+  final _pointers = <int, Offset>{};
+  VideoZoom? _pinchStartZoom;
+  double _pinchStartDistance = 1;
+  Offset _pinchStartFocal = Offset.zero;
+
+  bool get _pinching => _pinchStartZoom != null;
+
+  Offset get _focal {
+    final points = _pointers.values.take(2).toList();
+    return (points[0] + points[1]) / 2;
+  }
+
+  double get _distance {
+    final points = _pointers.values.take(2).toList();
+    return (points[0] - points[1]).distance;
+  }
+
+  void _onPointerDown(PointerDownEvent e) {
+    _pointers[e.pointer] = e.localPosition;
+    if (_pointers.length == 2) {
+      _endHold();
+      setState(() {
+        _pinchStartZoom = ref.read(videoZoomProvider);
+        _pinchStartDistance = math.max(_distance, 1);
+        _pinchStartFocal = _focal;
+      });
+    }
+  }
+
+  void _onPointerMove(PointerMoveEvent e) {
+    if (!_pointers.containsKey(e.pointer)) return;
+    _pointers[e.pointer] = e.localPosition;
+    final start = _pinchStartZoom;
+    final box = context.size;
+    if (start == null || _pointers.length < 2 || box == null) return;
+    ref.read(videoZoomProvider.notifier).set(start.pinch(
+          factor: _distance / _pinchStartDistance,
+          startFocal: _pinchStartFocal,
+          focal: _focal,
+          box: box,
+        ));
+  }
+
+  void _onPointerEnd(PointerEvent e) {
+    _pointers.remove(e.pointer);
+    if (_pinching && _pointers.length < 2) {
+      final notifier = ref.read(videoZoomProvider.notifier);
+      notifier.set(ref.read(videoZoomProvider).settled());
+      setState(() => _pinchStartZoom = null);
+    }
+  }
 
   /// -1 = rewound, 1 = skipped forward; shown briefly as feedback.
   int _seekFeedback = 0;
@@ -124,7 +181,7 @@ class _StashVideoControlsState extends ConsumerState<StashVideoControls> {
 
   void _startHold() {
     final player = ref.read(playerProvider);
-    if (_rateBeforeHold != null || !player.state.playing) return;
+    if (_rateBeforeHold != null || !player.state.playing || _pointers.length > 1) return;
     HapticFeedback.lightImpact();
     setState(() => _rateBeforeHold = player.state.rate);
     player.setRate(2);
@@ -164,159 +221,183 @@ class _StashVideoControlsState extends ConsumerState<StashVideoControls> {
     // Buttons must not sit inside the double-tap detector, or every button
     // tap would wait for the double-tap timeout. Empty areas of the button
     // layer aren't hit-testable, so taps there fall through to the gestures.
-    return Stack(
-      fit: StackFit.expand,
-      children: [
-        HoldDetector(
-          onHoldStart: _startHold,
-          onHoldEnd: _endHold,
-          child: GestureDetector(
-            behavior: HitTestBehavior.opaque,
-            onTap: () => _visible ? _hide() : _show(),
-            onDoubleTapDown: (d) => _doubleTapPosition = d.localPosition,
-            onDoubleTap: _onDoubleTap,
-            // Claim vertical drags so the miniplayer's own pan doesn't fight
-            // with DragToMinimize, which handles the swipe-down from raw
-            // pointer events.
-            onVerticalDragStart: (_) {},
-            onVerticalDragUpdate: (_) {},
-          ),
-        ),
-        if (_seekFeedback != 0)
-          IgnorePointer(
-            child: Align(
-              alignment: _seekFeedback < 0 ? const Alignment(-0.6, 0) : const Alignment(0.6, 0),
-              child: _SeekFeedback(forward: _seekFeedback > 0),
+    // Raw pointers for the pinch, so it doesn't compete with tap, double
+    // tap, hold and the swipe down in the gesture arena.
+    return Listener(
+      onPointerDown: _onPointerDown,
+      onPointerMove: _onPointerMove,
+      onPointerUp: _onPointerEnd,
+      onPointerCancel: _onPointerEnd,
+      child: Stack(
+        fit: StackFit.expand,
+        children: [
+          HoldDetector(
+            onHoldStart: _startHold,
+            onHoldEnd: _endHold,
+            child: GestureDetector(
+              behavior: HitTestBehavior.opaque,
+              onTap: () => _visible ? _hide() : _show(),
+              onDoubleTapDown: (d) => _doubleTapPosition = d.localPosition,
+              onDoubleTap: _onDoubleTap,
+              // Claim vertical drags so the miniplayer's own pan doesn't fight
+              // with DragToMinimize, which handles the swipe-down from raw
+              // pointer events.
+              onVerticalDragStart: (_) {},
+              onVerticalDragUpdate: (_) {},
             ),
           ),
-        if (_rateBeforeHold != null)
+          if (_seekFeedback != 0)
+            IgnorePointer(
+              child: Align(
+                alignment: _seekFeedback < 0 ? const Alignment(-0.6, 0) : const Alignment(0.6, 0),
+                child: _SeekFeedback(forward: _seekFeedback > 0),
+              ),
+            ),
+          if (_rateBeforeHold != null)
+            IgnorePointer(
+              child: Align(
+                alignment: const Alignment(0, -0.75),
+                child: DecoratedBox(
+                  decoration: BoxDecoration(color: Colors.black54, borderRadius: BorderRadius.circular(16)),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(Icons.fast_forward, color: Colors.white, size: 18),
+                        const SizedBox(width: 4),
+                        Text(context.l10n.fastForward2x, style: const TextStyle(color: Colors.white)),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
           IgnorePointer(
-            child: Align(
-              alignment: const Alignment(0, -0.75),
-              child: DecoratedBox(
-                decoration: BoxDecoration(color: Colors.black54, borderRadius: BorderRadius.circular(16)),
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
+            child: AnimatedOpacity(
+              opacity: _visible ? 1 : 0,
+              duration: const Duration(milliseconds: 200),
+              child: const ColoredBox(color: Colors.black38),
+            ),
+          ),
+          IgnorePointer(
+            ignoring: !_visible,
+            child: AnimatedOpacity(
+              opacity: _visible ? 1 : 0,
+              duration: const Duration(milliseconds: 200),
+              child: SafeArea(
+                top: fullscreen,
+                bottom: fullscreen,
+                child: IconTheme(
+                  data: const IconThemeData(color: Colors.white),
+                  child: Column(
                     children: [
-                      const Icon(Icons.fast_forward, color: Colors.white, size: 18),
-                      const SizedBox(width: 4),
-                      Text(context.l10n.fastForward2x, style: const TextStyle(color: Colors.white)),
+                      Row(
+                        children: [
+                          if (!fullscreen)
+                            IconButton(
+                              tooltip: context.l10n.minimize,
+                              icon: const Icon(Icons.keyboard_arrow_down, size: 30),
+                              onPressed: () => ref.read(nowPlayingProvider.notifier).collapse(),
+                            ),
+                          const Spacer(),
+                          const CastButton(color: Colors.white),
+                          ...widget.topActions,
+                          StreamBuilder<double>(
+                            stream: player.stream.rate,
+                            initialData: player.state.rate,
+                            builder: (_, rate) => TextButton(
+                              style: TextButton.styleFrom(foregroundColor: Colors.white),
+                              onPressed: () => _act(() => showSpeedSheet(context, player)),
+                              child: Tooltip(
+                                message: context.l10n.playbackSpeed,
+                                child: Text(context.l10n.speedValue(rate.data ?? 1)),
+                              ),
+                            ),
+                          ),
+                          IconButton(
+                            tooltip: context.l10n.quality,
+                            icon: const Icon(Icons.settings_outlined),
+                            onPressed: () => _act(widget.onQuality),
+                          ),
+                        ],
+                      ),
+                      Expanded(
+                        child: Center(
+                          child: StreamBuilder<bool>(
+                            stream: player.stream.buffering,
+                            initialData: player.state.buffering,
+                            builder: (_, buffering) => buffering.data == true
+                                ? const SizedBox.square(
+                                    dimension: 48,
+                                    child: CircularProgressIndicator(color: Colors.white),
+                                  )
+                                : StreamBuilder<bool>(
+                                    stream: player.stream.playing,
+                                    initialData: player.state.playing,
+                                    builder: (_, playing) => IconButton(
+                                      iconSize: 56,
+                                      tooltip: playing.data == true ? context.l10n.pause : context.l10n.play,
+                                      icon: Icon(playing.data == true ? Icons.pause : Icons.play_arrow),
+                                      onPressed: () => _act(player.playOrPause),
+                                    ),
+                                  ),
+                          ),
+                        ),
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 12),
+                        child: Row(
+                          children: [
+                            IgnorePointer(child: _TimeLabel(player: player)),
+                            const Spacer(),
+                            IconButton(
+                              tooltip: fullscreen ? context.l10n.exitFullscreen : context.l10n.fullscreen,
+                              icon: Icon(fullscreen ? Icons.fullscreen_exit : Icons.fullscreen),
+                              onPressed: () => _act(widget.onToggleFullscreen),
+                            ),
+                          ],
+                        ),
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 12),
+                        child: PreviewSeekBar(
+                          sceneId: widget.scene.id,
+                          visible: _visible,
+                          onInteractionStart: () {
+                            _interacting = true;
+                            _hideTimer?.cancel();
+                          },
+                          onInteractionEnd: () {
+                            _interacting = false;
+                            _scheduleHide();
+                          },
+                        ),
+                      ),
                     ],
                   ),
                 ),
               ),
             ),
           ),
-        IgnorePointer(
-          child: AnimatedOpacity(
-            opacity: _visible ? 1 : 0,
-            duration: const Duration(milliseconds: 200),
-            child: const ColoredBox(color: Colors.black38),
-          ),
-        ),
-        IgnorePointer(
-          ignoring: !_visible,
-          child: AnimatedOpacity(
-            opacity: _visible ? 1 : 0,
-            duration: const Duration(milliseconds: 200),
-            child: SafeArea(
-              top: fullscreen,
-              bottom: fullscreen,
-              child: IconTheme(
-                data: const IconThemeData(color: Colors.white),
-                child: Column(
-                  children: [
-                    Row(
-                      children: [
-                        if (!fullscreen)
-                          IconButton(
-                            tooltip: context.l10n.minimize,
-                            icon: const Icon(Icons.keyboard_arrow_down, size: 30),
-                            onPressed: () => ref.read(nowPlayingProvider.notifier).collapse(),
-                          ),
-                        const Spacer(),
-                        const CastButton(color: Colors.white),
-                        ...widget.topActions,
-                        StreamBuilder<double>(
-                          stream: player.stream.rate,
-                          initialData: player.state.rate,
-                          builder: (_, rate) => TextButton(
-                            style: TextButton.styleFrom(foregroundColor: Colors.white),
-                            onPressed: () => _act(() => showSpeedSheet(context, player)),
-                            child: Tooltip(
-                              message: context.l10n.playbackSpeed,
-                              child: Text(context.l10n.speedValue(rate.data ?? 1)),
-                            ),
-                          ),
-                        ),
-                        IconButton(
-                          tooltip: context.l10n.quality,
-                          icon: const Icon(Icons.settings_outlined),
-                          onPressed: () => _act(widget.onQuality),
-                        ),
-                      ],
+          if (_pinching)
+            IgnorePointer(
+              child: Align(
+                alignment: const Alignment(0, -0.75),
+                child: DecoratedBox(
+                  decoration: BoxDecoration(color: Colors.black54, borderRadius: BorderRadius.circular(16)),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                    child: Text(
+                      context.l10n.speedValue(double.parse(ref.watch(videoZoomProvider).scale.toStringAsFixed(1))),
+                      style: const TextStyle(color: Colors.white),
                     ),
-                    Expanded(
-                      child: Center(
-                        child: StreamBuilder<bool>(
-                          stream: player.stream.buffering,
-                          initialData: player.state.buffering,
-                          builder: (_, buffering) => buffering.data == true
-                              ? const SizedBox.square(
-                                  dimension: 48,
-                                  child: CircularProgressIndicator(color: Colors.white),
-                                )
-                              : StreamBuilder<bool>(
-                                  stream: player.stream.playing,
-                                  initialData: player.state.playing,
-                                  builder: (_, playing) => IconButton(
-                                    iconSize: 56,
-                                    tooltip: playing.data == true ? context.l10n.pause : context.l10n.play,
-                                    icon: Icon(playing.data == true ? Icons.pause : Icons.play_arrow),
-                                    onPressed: () => _act(player.playOrPause),
-                                  ),
-                                ),
-                        ),
-                      ),
-                    ),
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 12),
-                      child: Row(
-                        children: [
-                          IgnorePointer(child: _TimeLabel(player: player)),
-                          const Spacer(),
-                          IconButton(
-                            tooltip: fullscreen ? context.l10n.exitFullscreen : context.l10n.fullscreen,
-                            icon: Icon(fullscreen ? Icons.fullscreen_exit : Icons.fullscreen),
-                            onPressed: () => _act(widget.onToggleFullscreen),
-                          ),
-                        ],
-                      ),
-                    ),
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 12),
-                      child: PreviewSeekBar(
-                        sceneId: widget.scene.id,
-                        visible: _visible,
-                        onInteractionStart: () {
-                          _interacting = true;
-                          _hideTimer?.cancel();
-                        },
-                        onInteractionEnd: () {
-                          _interacting = false;
-                          _scheduleHide();
-                        },
-                      ),
-                    ),
-                  ],
+                  ),
                 ),
               ),
             ),
-          ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 }

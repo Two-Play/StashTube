@@ -138,6 +138,16 @@ void main() {
     expect(repo.oCount, 3);
   });
 
+  testWidgets('the O snack bar goes away by itself', (tester) async {
+    await pumpActions(tester);
+    await tester.tap(find.text('3'));
+    await tester.pumpAndSettle();
+    expect(find.text('Undo'), findsOneWidget);
+    await tester.pump(const Duration(seconds: 5));
+    await tester.pumpAndSettle();
+    expect(find.text('Undo'), findsNothing);
+  });
+
   testWidgets('adding a marker requires a tag and uses the player position', (tester) async {
     await pumpActions(tester);
     await tester.tap(find.text('Marker'));

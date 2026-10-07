@@ -83,4 +83,19 @@ void main() {
     // Collapsed it is the same small tile for every video.
     expect(at(minHeight).videoHeight, 62);
   });
+
+  test('the extra height of a portrait video is what scrolling the details shrinks', () {
+    final t = PlayerTransition(
+      height: maxHeight,
+      minHeight: minHeight,
+      maxHeight: maxHeight,
+      screenWidth: width,
+      topInset: topInset,
+      videoAspect: 9 / 16,
+    );
+    expect(t.baseVideoHeight, closeTo(width * 9 / 16, 0.01));
+    expect(t.extraVideoHeight, closeTo(maxHeight * PlayerTransition.maxVideoShare - width * 9 / 16, 0.01));
+    expect(at(maxHeight).extraVideoHeight, closeTo(0, 0.01), reason: '16:9 has nothing to shrink');
+    expect(at(minHeight).extraVideoHeight, 0);
+  });
 }

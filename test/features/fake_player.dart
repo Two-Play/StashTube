@@ -72,6 +72,9 @@ class FakePlayer implements Player {
   @override
   Future<void> stop() async {}
 
+  @override
+  PlatformPlayer? get platform => null;
+
   final rates = <double>[];
 
   @override

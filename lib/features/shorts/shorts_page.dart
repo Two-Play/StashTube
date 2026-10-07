@@ -23,7 +23,6 @@ import '../player/scene_edits.dart';
 import '../shell/navigation.dart';
 import 'shorts_feed.dart';
 import 'shorts_settings_sheet.dart';
-import '../settings/settings_button.dart';
 
 /// True while the shorts are on screen; the shell then hides the miniplayer.
 class ShortsActiveNotifier extends Notifier<bool> {
@@ -52,6 +51,19 @@ class _FastPageScrollPhysics extends PageScrollPhysics {
   SpringDescription get spring => const SpringDescription(mass: 0.5, stiffness: 500, damping: 32);
 }
 
+/// A short the shorts tab should jump to (index in the feed), e.g. tapped
+/// on the home page; consumed by the tab's [ShortsPage].
+class ShortsJumpNotifier extends Notifier<int?> {
+  @override
+  int? build() => null;
+
+  void jumpTo(int index) => state = index;
+
+  void done() => state = null;
+}
+
+final shortsJumpProvider = NotifierProvider<ShortsJumpNotifier, int?>(ShortsJumpNotifier.new);
+
 /// Whether the app's main player is playing.
 final _mainPlayingProvider = StreamProvider.autoDispose<bool>((ref) => ref.watch(playerProvider).stream.playing);
 
@@ -64,7 +76,10 @@ final _mainPlayingProvider = StreamProvider.autoDispose<bool>((ref) => ref.watch
 /// main player isn't open and the app is visible. Meanwhile the shell hides
 /// the miniplayer and the main player is paused.
 class ShortsPage extends ConsumerStatefulWidget {
-  const ShortsPage({super.key});
+  const ShortsPage({super.key, this.initialIndex = 0});
+
+  /// The short to start with, e.g. the one tapped on the home page.
+  final int initialIndex;
 
   @override
   ConsumerState<ShortsPage> createState() => _ShortsPageState();
@@ -84,7 +99,8 @@ class _ShortsPageState extends ConsumerState<ShortsPage> {
     return null;
   }
   // Not restored from page storage: a new feed starts at its first short.
-  final _pageController = PageController(keepPage: false);
+  // Created on first use, so it starts at a short jumped to before.
+  late final _pageController = PageController(initialPage: _index, keepPage: false);
   late final AppLifecycleListener _lifecycle;
   late final ValueNotifier<double> _miniplayerHeight;
   late final ShortsActiveNotifier _active = ref.read(shortsActiveProvider.notifier);
@@ -98,7 +114,7 @@ class _ShortsPageState extends ConsumerState<ShortsPage> {
   /// pauses only once the file is loaded, so a `play()` sent earlier would
   /// be undone: playback starts after this.
   final _slotReady = List<bool>.filled(_poolSize, false);
-  int _index = 0;
+  late int _index = widget.initialIndex;
 
   /// Only loads and creates players once the page was shown the first time.
   bool _started = false;
@@ -281,6 +297,17 @@ class _ShortsPageState extends ConsumerState<ShortsPage> {
     _visible = visible;
   }
 
+  void _jumpTo(int index) {
+    ref.read(shortsJumpProvider.notifier).done();
+    _paused = false;
+    _index = index;
+    if (_pageController.hasClients) {
+      _pageController.jumpToPage(index);
+    } else {
+      setState(() {}); // the page view, once built, starts at [_index]
+    }
+  }
+
   void _resetFeed() {
     _slotScene.fillRange(0, _poolSize, null);
     _slotReady.fillRange(0, _poolSize, false);
@@ -310,6 +337,15 @@ class _ShortsPageState extends ConsumerState<ShortsPage> {
     final theme = AppTheme.dark(ref.watch(accentColorProvider));
     final feed = _started ? ref.watch(shortsFeedProvider) : const ShortsFeedState(isLoading: true);
     final items = feed.items;
+    // A short tapped on the home page, for the page in the shorts tab.
+    if (tab == AppTab.shorts) {
+      final jump = ref.watch(shortsJumpProvider);
+      if (jump != null) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted) _jumpTo(jump);
+        });
+      }
+    }
     if (_started) {
       ref.listen(shortsFeedProvider, (previous, next) {
         // A new feed (settings changed, refresh): back to the first short.
@@ -425,7 +461,6 @@ class _TopBar extends StatelessWidget {
         child: Row(
           children: [
             if (Navigator.of(context).canPop()) const BackButton(color: Colors.white) else const SizedBox(width: 16),
-            Text(l.tabShorts, style: const TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.w700)),
             const Spacer(),
             IconButton(
               tooltip: l.fullscreen,
@@ -451,7 +486,6 @@ class _TopBar extends StatelessWidget {
               icon: const Icon(Icons.tune),
               onPressed: () => showShortsSettingsSheet(context),
             ),
-            const SettingsButton(color: Colors.white),
           ],
         ),
       ),
@@ -495,7 +529,8 @@ class _ShortViewState extends ConsumerState<_ShortView> {
 
   void _setFast(bool fast) {
     final player = _player;
-    if (player == null || fast == _fast) return;
+    // A paused short stays paused while held.
+    if (player == null || fast == _fast || (fast && widget.paused)) return;
     if (fast) HapticFeedback.lightImpact();
     player.setRate(fast ? 2 : 1);
     setState(() => _fast = fast);
@@ -523,6 +558,8 @@ class _ShortViewState extends ConsumerState<_ShortView> {
       final count = await notifier.addO(widget.scene);
       messenger.showSnackBar(SnackBar(
         content: Text(l.oCountValue(count)),
+        // With an action, snack bars would stay until tapped.
+        persist: false,
         action: SnackBarAction(label: l.undo, onPressed: () => notifier.removeO(widget.scene).catchError(_showError)),
       ));
     } catch (e) {

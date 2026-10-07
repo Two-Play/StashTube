@@ -24,4 +24,15 @@ void main() {
       });
     }
   }
+
+  for (final brightness in Brightness.values) {
+    test('the Stash theme adds its brown, readable in $brightness mode', () {
+      final scheme =
+          (brightness == Brightness.light ? AppTheme.light(stashBlue) : AppTheme.dark(stashBlue)).colorScheme;
+      expect(scheme.secondary.toARGB32(), isNot(scheme.primary.toARGB32()));
+      expect(_contrast(scheme.secondary, scheme.surface), greaterThanOrEqualTo(4.5));
+      expect(HSLColor.fromColor(scheme.secondary).hue, closeTo(HSLColor.fromColor(stashBrown).hue, 3));
+      if (brightness == Brightness.dark) expect(scheme.surface, const Color(0xFF202B33));
+    });
+  }
 }

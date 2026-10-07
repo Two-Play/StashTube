@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/config/server_config.dart';
 import '../../data/repositories/stash_repository.dart';
 import '../../l10n/l10n.dart';
+import '../../widgets/stash_logo.dart';
 
 /// Connects the app to a Stash server (URL + optional API key and name).
 /// Lists saved servers to pick from (2.6). Pushed from the settings with
@@ -101,7 +102,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     if (!widget._pushed) ...[
-                      Icon(Icons.play_circle_fill, size: 72, color: theme.colorScheme.primary),
+                      const Center(child: StashLogo(size: 72, background: StashLogo.tile)),
                       const SizedBox(height: 12),
                       Text(context.l10n.connectToStash, textAlign: TextAlign.center, style: theme.textTheme.headlineSmall),
                     ],

@@ -359,5 +359,8 @@
   "editServer": "Server bearbeiten",
   "statsAndServer": "Statistik & Server",
   "airPlay": "AirPlay",
-  "airPlayHint": "Apple TV und AirPlay-Fernseher"
+  "airPlayHint": "Apple TV und AirPlay-Fernseher",
+  "allViews": "Alle Ansichten",
+  "tabAll": "Alle",
+  "colorStash": "Stash (Blau/Braun)"
 }

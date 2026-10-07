@@ -21,12 +21,6 @@ import 'scene_actions.dart';
 import 'scene_edits.dart';
 import '../../l10n/l10n.dart';
 
-/// Content of the miniplayer panel: one layout that [PlayerTransition]
-/// morphs continuously from the collapsed bar into the full player page.
-///
-/// The widget tree keeps the same structure at every height (the video stays
-/// the first child of the first row), so the video is never rebuilt and the
-/// transition doesn't flicker.
 /// Width / height of [scene]'s video, updated once the player knows the
 /// decoded size.
 final _videoAspectProvider = Provider.autoDispose.family<double?, Scene>((ref, scene) {
@@ -43,7 +37,17 @@ final _videoAspectProvider = Provider.autoDispose.family<double?, Scene>((ref, s
   return videoAspect(player.state, scene, sceneFirst: true);
 });
 
-class PlayerPanel extends ConsumerWidget {
+/// Content of the miniplayer panel: one layout that [PlayerTransition]
+/// morphs continuously from the collapsed bar into the full player page.
+///
+/// The widget tree keeps the same structure at every height (the video stays
+/// the first child of the first row), so the video is never rebuilt and the
+/// transition doesn't flicker.
+///
+/// A portrait video's extra height sits over a spacer at the top of the
+/// details, so scrolling them shrinks the video to the 16:9 size, following
+/// the finger (4.20).
+class PlayerPanel extends ConsumerStatefulWidget {
   const PlayerPanel({super.key, required this.scene, required this.height, required this.maxHeight});
 
   final Scene scene;
@@ -51,13 +55,35 @@ class PlayerPanel extends ConsumerWidget {
   final double maxHeight;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<PlayerPanel> createState() => _PlayerPanelState();
+}
+
+class _PlayerPanelState extends ConsumerState<PlayerPanel> {
+  /// How far the details list is scrolled.
+  final _detailsScroll = ValueNotifier<double>(0);
+
+  @override
+  void didUpdateWidget(PlayerPanel oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.scene.id != widget.scene.id) _detailsScroll.value = 0;
+  }
+
+  @override
+  void dispose() {
+    _detailsScroll.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final scene = widget.scene;
+    final height = widget.height;
     final colors = Theme.of(context).colorScheme;
     final media = MediaQuery.of(context);
     final t = PlayerTransition(
       height: height,
       minHeight: kMiniPlayerHeight,
-      maxHeight: maxHeight,
+      maxHeight: widget.maxHeight,
       screenWidth: media.size.width,
       topInset: media.padding.top,
       // Portrait videos get a taller video area (4.20).
@@ -72,94 +98,134 @@ class PlayerPanel extends ConsumerWidget {
       statusBarIconBrightness: lightIcons ? Brightness.light : Brightness.dark,
       statusBarBrightness: lightIcons ? Brightness.dark : Brightness.light, // iOS
     );
+    final progressLineHeight = 2 * t.miniBarOpacity;
+    final detailsTop = t.topPadding + t.baseVideoHeight + progressLineHeight;
 
     // Every wrapper below is always present (only flags change), so the
     // video keeps its place in the tree during the transition.
     return AnnotatedRegion<SystemUiOverlayStyle>(
       // Light status bar icons on the black area above the open player.
       value: statusBarStyle,
-      child: DragToMinimize(
-        enabled: t.isExpanded,
-        controller: ref.watch(miniplayerControllerProvider),
-        minHeight: kMiniPlayerHeight,
-        maxHeight: maxHeight,
-        videoBottom: t.topPadding + t.videoHeight,
-        child: PanelTapGuard(
-          // Collapsed or mid-drag, a tap should still expand the panel.
-          enabled: t.isExpanded,
-          child: ColoredBox(
-            color: Color.lerp(colors.surfaceContainer, colors.surface, t.progress)!,
-            // Always the panel's height: while the phone turns, the space can
-            // briefly be smaller than the miniplayer's height.
-            child: ClipRect(
-              child: OverflowBox(
-                alignment: Alignment.topCenter,
-                minHeight: height,
-                maxHeight: height,
-                child: Column(
-              children: [
-                // Status bar area: black like the video, so no colored band
-                // grows above it while expanding.
-                SizedBox(height: t.topPadding, width: double.infinity, child: const ColoredBox(color: Colors.black)),
-                SizedBox(
-                  height: t.videoHeight,
-                  // The panel's width even while the phone turns (the video width
-                  // comes from the screen size, which can be ahead of the layout).
-                  child: ClipRect(
-                    child: OverflowBox(
-                      alignment: Alignment.centerLeft,
-                      minWidth: media.size.width,
-                      maxWidth: media.size.width,
-                      child: Row(
-                        children: [
-                          SizedBox(
-                            width: t.videoWidth,
-                            child: ColoredBox(
-                              color: Colors.black,
-                              child: PlayerVideo(scene: scene, showControls: t.isExpanded),
-                            ),
-                          ),
-                          // Mini bar info keeps its natural width and is clipped while
-                          // the video takes over the row.
-                          Expanded(
-                            child: ClipRect(
-                              child: OverflowBox(
-                                alignment: Alignment.centerLeft,
-                                minWidth: 0,
-                                maxWidth: media.size.width - kMiniPlayerHeight * 16 / 9,
-                                child: Opacity(
-                                  opacity: t.miniBarOpacity,
-                                  child: IgnorePointer(
-                                    ignoring: t.miniBarOpacity < 0.5,
-                                    child: _MiniInfo(scene: scene),
+      child: ValueListenableBuilder<double>(
+        valueListenable: _detailsScroll,
+        builder: (context, scrolled, _) {
+          final shownVideoHeight = t.videoHeight - scrolled.clamp(0.0, t.extraVideoHeight);
+          return DragToMinimize(
+            enabled: t.isExpanded,
+            controller: ref.watch(miniplayerControllerProvider),
+            minHeight: kMiniPlayerHeight,
+            maxHeight: widget.maxHeight,
+            videoBottom: t.topPadding + shownVideoHeight,
+            child: PanelTapGuard(
+              // Collapsed or mid-drag, a tap should still expand the panel.
+              enabled: t.isExpanded,
+              child: ColoredBox(
+                color: Color.lerp(colors.surfaceContainer, colors.surface, t.progress)!,
+                // Always the panel's height: while the phone turns, the space can
+                // briefly be smaller than the miniplayer's height.
+                child: ClipRect(
+                  child: OverflowBox(
+                    alignment: Alignment.topCenter,
+                    minHeight: height,
+                    maxHeight: height,
+                    child: Stack(
+                      children: [
+                        // Below the 16:9 area; the taller video covers their spacer.
+                        Positioned(
+                          top: detailsTop,
+                          left: 0,
+                          right: 0,
+                          bottom: 0,
+                          child: t.showDetails
+                              ? NotificationListener<ScrollNotification>(
+                                  onNotification: (n) {
+                                    if (n.depth == 0 && n.metrics.axis == Axis.vertical) {
+                                      _detailsScroll.value = n.metrics.pixels;
+                                    }
+                                    return false;
+                                  },
+                                  child: Opacity(
+                                    opacity: t.detailsOpacity,
+                                    // Ink of the list tiles above the panel's color.
+                                    child: Material(
+                                      type: MaterialType.transparency,
+                                      child: _SceneDetails(scene: scene, topSpacer: t.extraVideoHeight),
+                                    ),
+                                  ),
+                                )
+                              : const SizedBox.shrink(),
+                        ),
+                        Positioned(
+                          top: 0,
+                          left: 0,
+                          right: 0,
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              // Status bar area: black like the video, so no colored band
+                              // grows above it while expanding.
+                              SizedBox(
+                                height: t.topPadding,
+                                width: double.infinity,
+                                child: const ColoredBox(color: Colors.black),
+                              ),
+                      SizedBox(
+                        height: shownVideoHeight,
+                        // The panel's width even while the phone turns (the video width
+                        // comes from the screen size, which can be ahead of the layout).
+                        child: ClipRect(
+                          child: OverflowBox(
+                            alignment: Alignment.centerLeft,
+                            minWidth: media.size.width,
+                            maxWidth: media.size.width,
+                            child: Row(
+                              children: [
+                                SizedBox(
+                                  width: t.videoWidth,
+                                  child: ColoredBox(
+                                    color: Colors.black,
+                                    child: PlayerVideo(scene: scene, showControls: t.isExpanded),
                                   ),
                                 ),
-                              ),
+                                // Mini bar info keeps its natural width and is clipped while
+                                // the video takes over the row.
+                                Expanded(
+                                  child: ClipRect(
+                                    child: OverflowBox(
+                                      alignment: Alignment.centerLeft,
+                                      minWidth: 0,
+                                      maxWidth: media.size.width - kMiniPlayerHeight * 16 / 9,
+                                      child: Opacity(
+                                        opacity: t.miniBarOpacity,
+                                        child: IgnorePointer(
+                                          ignoring: t.miniBarOpacity < 0.5,
+                                          child: _MiniInfo(scene: scene),
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
-                        ],
+                        ),
                       ),
+                              // Mini progress line shrinks away so no gap remains under the video.
+                              SizedBox(
+                                height: progressLineHeight,
+                                child: Opacity(opacity: t.miniBarOpacity, child: const _ProgressBar(height: 2)),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ),
-                // Mini progress line shrinks away so no gap remains under the video.
-                SizedBox(
-                  height: 2 * t.miniBarOpacity,
-                  child: Opacity(opacity: t.miniBarOpacity, child: const _ProgressBar(height: 2)),
-                ),
-                if (t.showDetails)
-                  Expanded(
-                    child: Opacity(
-                      opacity: t.detailsOpacity,
-                      child: _SceneDetails(scene: scene),
-                    ),
-                  ),
-              ],
-            ),
               ),
             ),
-          ),
-        ),
+          );
+        },
       ),
     );
   }
@@ -253,14 +319,17 @@ class _ProgressBar extends ConsumerWidget {
 /// Everything below the video: title, channel, performers, tags, description
 /// and "Up next".
 class _SceneDetails extends ConsumerWidget {
-  const _SceneDetails({required this.scene});
+  const _SceneDetails({required this.scene, this.topSpacer = 0});
 
   final Scene scene;
+
+  /// Room at the top for a portrait video's extra height.
+  final double topSpacer;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final queue = ref.watch(playQueueProvider);
-    if (queue != null) return _QueueDetails(scene: scene, queue: queue);
+    if (queue != null) return _QueueDetails(scene: scene, queue: queue, topSpacer: topSpacer);
 
     // Prefer more scenes from the same studio, then performer, else random.
     final upNext = SceneQuery(
@@ -282,6 +351,7 @@ class _SceneDetails extends ConsumerWidget {
       emptyMessage: context.l10n.upNextEmpty,
       emptyIcon: Icons.playlist_play,
       headerSlivers: [
+        SliverToBoxAdapter(child: SizedBox(height: topSpacer)),
         SliverToBoxAdapter(child: _SceneInfo(scene: scene)),
         SliverToBoxAdapter(
           child: Padding(
@@ -299,10 +369,11 @@ class _SceneDetails extends ConsumerWidget {
 
 /// Details plus the queue being played (watch later, a group).
 class _QueueDetails extends StatelessWidget {
-  const _QueueDetails({required this.scene, required this.queue});
+  const _QueueDetails({required this.scene, required this.queue, this.topSpacer = 0});
 
   final Scene scene;
   final PlayQueue queue;
+  final double topSpacer;
 
   @override
   Widget build(BuildContext context) {
@@ -311,6 +382,7 @@ class _QueueDetails extends StatelessWidget {
       key: ValueKey(scene.id),
       physics: const ClampingScrollPhysics(),
       slivers: [
+        SliverToBoxAdapter(child: SizedBox(height: topSpacer)),
         SliverToBoxAdapter(child: _SceneInfo(scene: scene)),
         SliverToBoxAdapter(
           child: Padding(
