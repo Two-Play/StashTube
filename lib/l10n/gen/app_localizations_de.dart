@@ -1318,4 +1318,7 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get tabAll => 'Alle';
+
+  @override
+  String get colorStash => 'Stash (Blau/Braun)';
 }

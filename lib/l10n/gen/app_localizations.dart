@@ -2269,6 +2269,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'All'**
   String get tabAll;
+
+  /// No description provided for @colorStash.
+  ///
+  /// In en, this message translates to:
+  /// **'Stash (blue/brown)'**
+  String get colorStash;
 }
 
 class _AppLocalizationsDelegate

@@ -5,6 +5,7 @@ import '../../data/models/list_queries.dart';
 import '../../data/providers.dart';
 import '../../widgets/scene_feed.dart';
 import '../../widgets/scene_shelf.dart';
+import '../../widgets/stash_logo.dart';
 import '../cast/cast_ui.dart';
 import '../player/player_providers.dart';
 import '../shell/navigation.dart';
@@ -49,7 +50,6 @@ class _HomePageState extends ConsumerState<HomePage> {
 
   @override
   Widget build(BuildContext context) {
-    final colors = Theme.of(context).colorScheme;
 
     // A scene that isn't in "Continue watching" yet got its first saved
     // position: reload the shelf so it shows up.
@@ -95,52 +95,56 @@ class _HomePageState extends ConsumerState<HomePage> {
                 ],
               ),
             ),
-            AnimatedSlide(
-              offset: _barVisible ? Offset.zero : const Offset(0, -1),
-              duration: const Duration(milliseconds: 200),
-              curve: Curves.easeOut,
-              child: SizedBox(
-                height: kToolbarHeight,
-                child: AppBar(
-                  primary: false,
-                  titleSpacing: 12,
-                  title: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                        decoration: BoxDecoration(
-                          color: colors.primary,
-                          borderRadius: BorderRadius.circular(6),
+            // Clipped and faded: the slide alone only moves the painting, so
+            // the bar showed over the status bar.
+            ClipRect(
+              child: AnimatedSlide(
+                offset: _barVisible ? Offset.zero : const Offset(0, -1),
+                duration: const Duration(milliseconds: 200),
+                curve: Curves.easeOut,
+                child: AnimatedOpacity(
+                  opacity: _barVisible ? 1 : 0,
+                  duration: const Duration(milliseconds: 200),
+                  child: IgnorePointer(
+                    ignoring: !_barVisible,
+                    child: SizedBox(
+                      height: kToolbarHeight,
+                      child: AppBar(
+                        primary: false,
+                        titleSpacing: 12,
+                        title: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const StashLogo(size: 30, background: StashLogo.tile),
+                            const SizedBox(width: 8),
+                            const Flexible(
+                              child: Text(
+                                'Stash',
+                                maxLines: 1,
+                                overflow: TextOverflow.fade,
+                                softWrap: false,
+                                style: TextStyle(fontWeight: FontWeight.w700, letterSpacing: -0.5),
+                              ),
+                            ),
+                          ],
                         ),
-                        child: Icon(Icons.play_arrow, color: colors.onPrimary, size: 20),
+                        actions: [
+                          const CastButton(),
+                          IconButton(
+                            tooltip: context.l10n.tabShorts,
+                            icon: const Icon(Icons.slow_motion_video),
+                            onPressed: () => openPage(ref, const ShortsPage()),
+                          ),
+                          IconButton(
+                            tooltip: context.l10n.search,
+                            icon: const Icon(Icons.search),
+                            onPressed: () => openSearch(ref),
+                          ),
+                          const SettingsButton(),
+                        ],
                       ),
-                      const SizedBox(width: 6),
-                      const Flexible(
-                        child: Text(
-                          'Stash',
-                          maxLines: 1,
-                          overflow: TextOverflow.fade,
-                          softWrap: false,
-                          style: TextStyle(fontWeight: FontWeight.w700, letterSpacing: -0.5),
-                        ),
-                      ),
-                    ],
+                    ),
                   ),
-                  actions: [
-                    const CastButton(),
-                    IconButton(
-                      tooltip: context.l10n.tabShorts,
-                      icon: const Icon(Icons.slow_motion_video),
-                      onPressed: () => openPage(ref, const ShortsPage()),
-                    ),
-                    IconButton(
-                      tooltip: context.l10n.search,
-                      icon: const Icon(Icons.search),
-                      onPressed: () => openSearch(ref),
-                    ),
-                    const SettingsButton(),
-                  ],
                 ),
               ),
             ),

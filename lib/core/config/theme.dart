@@ -46,7 +46,13 @@ Color ensureContrast(Color color, Color background, {double minimum = 4.5}) {
 Color readableOn(Color color) =>
     contrastRatio(Colors.white, color) >= contrastRatio(Colors.black, color) ? Colors.white : Colors.black;
 
+/// Stash's own colors (13.11): the blue of its web UI, with the brown of
+/// its logo as second color.
+const stashBlue = Color(0xFF137CBD);
+const stashBrown = Color(0xFFA08069);
+
 /// Accent colors offered in the settings; the first one is the default.
+/// [stashBlue] stands for the whole Stash theme (blue and brown).
 const accentColors = <String, Color>{
   'Red': Color(0xFFE53935),
   'Pink': Color(0xFFD81B60),
@@ -57,6 +63,7 @@ const accentColors = <String, Color>{
   'Green': Color(0xFF43A047),
   'Orange': Color(0xFFF4511E),
   'Amber': Color(0xFFFFB300),
+  'Stash': stashBlue,
 };
 
 class AccentColorNotifier extends Notifier<Color> {
@@ -76,7 +83,9 @@ class AccentColorNotifier extends Notifier<Color> {
 
 final accentColorProvider = NotifierProvider<AccentColorNotifier, Color>(AccentColorNotifier.new);
 
-/// YouTube-like look: neutral surfaces with a user-selectable accent (red by default).
+/// YouTube-like look: neutral surfaces with a user-selectable accent (red by
+/// default). The Stash accent also brings Stash's brown as second color and,
+/// in dark mode, the blue-gray background of its web UI.
 abstract final class AppTheme {
   static ThemeData light(Color accent) => _build(Brightness.light, accent);
   static ThemeData dark(Color accent) => _build(Brightness.dark, accent);
@@ -85,24 +94,43 @@ abstract final class AppTheme {
         (states) => states.contains(WidgetState.selected) ? scheme.surface : scheme.onSurface,
       );
 
-  static Color surfaceFor(Brightness brightness) =>
-      brightness == Brightness.dark ? const Color(0xFF0F0F0F) : Colors.white;
+  static bool isStash(Color accent) => accent.toARGB32() == stashBlue.toARGB32();
+
+  static Color surfaceFor(Brightness brightness, [Color? accent]) => switch (brightness) {
+        Brightness.dark when accent != null && isStash(accent) => const Color(0xFF202B33),
+        Brightness.dark => const Color(0xFF0F0F0F),
+        Brightness.light => Colors.white,
+      };
 
   /// The accent as shown in [brightness] mode: same hue, lightened on dark
   /// or darkened on light surfaces until it is readable there (WCAG AA).
-  static Color accentFor(Color accent, Brightness brightness) => ensureContrast(accent, surfaceFor(brightness));
+  static Color accentFor(Color accent, Brightness brightness) =>
+      ensureContrast(accent, surfaceFor(brightness, accent));
 
   static ThemeData _build(Brightness brightness, Color accent) {
     final primary = accentFor(accent, brightness);
-    final scheme = ColorScheme.fromSeed(
+    final surface = surfaceFor(brightness, accent);
+    var scheme = ColorScheme.fromSeed(
       seedColor: accent,
       brightness: brightness,
       dynamicSchemeVariant: DynamicSchemeVariant.neutral,
     ).copyWith(
       primary: primary,
       onPrimary: readableOn(primary),
-      surface: surfaceFor(brightness),
+      surface: surface,
     );
+    if (isStash(accent)) {
+      final brown = ensureContrast(stashBrown, surface);
+      final brownContainer = Color.alphaBlend(stashBrown.withValues(alpha: 0.3), surface);
+      scheme = scheme.copyWith(
+        secondary: brown,
+        onSecondary: readableOn(brown),
+        secondaryContainer: brownContainer,
+        onSecondaryContainer: readableOn(brownContainer),
+        tertiary: brown,
+        onTertiary: readableOn(brown),
+      );
+    }
 
     return ThemeData(
       colorScheme: scheme,
@@ -116,7 +144,8 @@ abstract final class AppTheme {
       navigationBarTheme: NavigationBarThemeData(
         backgroundColor: scheme.surface,
         surfaceTintColor: Colors.transparent,
-        indicatorColor: scheme.surfaceContainerHighest,
+        // Stash: the brown of its logo marks the selected tab.
+        indicatorColor: isStash(accent) ? scheme.secondaryContainer : scheme.surfaceContainerHighest,
         height: 64,
       ),
       chipTheme: ChipThemeData(

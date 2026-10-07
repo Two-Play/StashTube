@@ -68,6 +68,8 @@ void main() {
     await tester.drag(find.byType(CustomScrollView), const Offset(0, -600));
     await tester.pumpAndSettle();
     expect(barOffset(tester), -1);
+    expect(tester.widget<AnimatedOpacity>(find.byType(AnimatedOpacity).first).opacity, 0);
+    expect(find.byIcon(Icons.search).hitTestable(), findsNothing, reason: 'hidden, not over the status bar');
 
     await tester.drag(find.byType(CustomScrollView), const Offset(0, 100));
     await tester.pumpAndSettle();
