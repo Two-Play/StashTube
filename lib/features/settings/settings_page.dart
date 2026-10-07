@@ -1,9 +1,12 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/config/locale.dart';
+import '../../core/pagination/paging_mode.dart';
 import '../../core/config/server_config.dart';
 import '../../core/config/theme.dart';
+import '../../data/models/scene_details.dart';
 import '../../data/providers.dart';
 import '../player/player_providers.dart';
 import '../security/app_lock.dart';
@@ -11,13 +14,16 @@ import '../auth/server_switcher.dart';
 import '../security/app_icon.dart';
 import '../security/app_lock_gate.dart';
 import '../shell/nav_bar_config.dart';
-import '../shell/navigation.dart';
 import 'nav_bar_settings_page.dart';
 import 'scene_card_config.dart';
 import '../../l10n/l10n.dart';
 
+/// Shown as a sheet by `openSettings`; [scrollController] lets swiping the
+/// list down past its top close the sheet.
 class SettingsPage extends ConsumerWidget {
-  const SettingsPage({super.key});
+  const SettingsPage({super.key, this.scrollController});
+
+  final ScrollController? scrollController;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -34,8 +40,19 @@ class SettingsPage extends ConsumerWidget {
     final cardConfig = ref.watch(sceneCardConfigProvider);
 
     return Scaffold(
-      appBar: AppBar(title: Text(l.settingsTitle)),
+      appBar: AppBar(
+        automaticallyImplyLeading: false,
+        title: Text(l.settingsTitle),
+        actions: [
+          IconButton(
+            tooltip: l.close,
+            icon: const Icon(Icons.close),
+            onPressed: () => CupertinoSheetRoute.popSheet(context),
+          ),
+        ],
+      ),
       body: ListView(
+        controller: scrollController,
         children: [
           _SectionTitle(l.sectionServer),
           ListTile(
@@ -116,7 +133,8 @@ class SettingsPage extends ConsumerWidget {
             title: Text(l.navBarTitle),
             subtitle: Text(ref.watch(navBarConfigProvider).visible.map((t) => t.label(context.l10n)).join(' · ')),
             trailing: const Icon(Icons.chevron_right),
-            onTap: () => openPage(ref, const NavBarSettingsPage()),
+            // Inside the settings sheet.
+            onTap: () => Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => const NavBarSettingsPage())),
           ),
           ListTile(
             leading: const Icon(Icons.translate),
@@ -132,6 +150,21 @@ class SettingsPage extends ConsumerWidget {
               ],
               onChanged: (code) =>
                   ref.read(appLocaleProvider.notifier).set(code == null || code.isEmpty ? null : Locale(code)),
+            ),
+          ),
+          ListTile(
+            leading: const Icon(Icons.view_agenda_outlined),
+            title: Text(l.listPaging),
+            trailing: DropdownButton<PagingMode>(
+              value: ref.watch(pagingModeProvider),
+              underline: const SizedBox.shrink(),
+              items: [
+                DropdownMenuItem(value: PagingMode.infinite, child: Text(l.pagingInfinite)),
+                DropdownMenuItem(value: PagingMode.pages, child: Text(l.pagingPages)),
+              ],
+              onChanged: (mode) {
+                if (mode != null) ref.read(pagingModeProvider.notifier).set(mode);
+              },
             ),
           ),
           _SectionTitle(l.sectionSceneCards),
@@ -161,17 +194,7 @@ class SettingsPage extends ConsumerWidget {
             onChanged: (v) => ref.read(sceneCardConfigProvider.notifier).set(cardConfig.copyWith(showRating: v)),
           ),
           _SectionTitle(l.sectionPlayback),
-          ListTile(
-            leading: const Icon(Icons.high_quality_outlined),
-            title: Text(l.preferredQuality),
-            subtitle: Text(preferredStream ?? l.preferredQualityDefault),
-            trailing: preferredStream == null
-                ? null
-                : TextButton(
-                    onPressed: () => ref.read(preferredStreamProvider.notifier).set(null),
-                    child: Text(l.reset),
-                  ),
-          ),
+          _QualityTile(preferred: preferredStream),
           _SectionTitle(l.sectionPrivacy),
           const _SecuritySettings(),
           const SizedBox(height: 16),
@@ -180,11 +203,54 @@ class SettingsPage extends ConsumerWidget {
             title: Text(l.removeThisServer, style: TextStyle(color: theme.colorScheme.error)),
             onTap: () async {
               if (server == null || !await confirmRemoveServer(context, server)) return;
+              // The sheet sits on the root navigator, above the login page
+              // that follows removing the last server.
+              if (context.mounted) CupertinoSheetRoute.popSheet(context);
               ref.read(nowPlayingProvider.notifier).close();
               await ref.read(serverProfilesProvider.notifier).remove(server.id);
             },
           ),
         ],
+      ),
+    );
+  }
+}
+
+/// Default resolution of new scenes (4.10). Stored as a stream label like
+/// the player's ⚙ choice; picking a height here keeps that choice's format
+/// (HLS by default), see `pickPreferredStream`.
+class _QualityTile extends ConsumerWidget {
+  const _QualityTile({required this.preferred});
+
+  final String? preferred;
+
+  static const _heights = [1080, 720, 480, 240];
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l = context.l10n;
+    final height = preferred == null ? null : streamHeightOf(preferred!);
+    final heights = [
+      if (height != null && !_heights.contains(height)) height,
+      ..._heights,
+    ];
+    return ListTile(
+      leading: const Icon(Icons.high_quality_outlined),
+      title: Text(l.preferredQuality),
+      subtitle: Text(l.preferredQualityHint),
+      isThreeLine: true,
+      trailing: DropdownButton<int>(
+        // 0 = the original file.
+        value: height ?? 0,
+        underline: const SizedBox.shrink(),
+        items: [
+          DropdownMenuItem(value: 0, child: Text(l.qualityOriginal)),
+          for (final h in heights) DropdownMenuItem(value: h, child: Text(h == 2160 ? '4K' : '${h}p')),
+        ],
+        onChanged: (h) {
+          final format = preferred == null ? 'HLS' : streamFormatOf(preferred!);
+          ref.read(preferredStreamProvider.notifier).set(h == null || h == 0 ? null : '$format ${h}p');
+        },
       ),
     );
   }

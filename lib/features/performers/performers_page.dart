@@ -61,6 +61,7 @@ class _PerformersPageState extends ConsumerState<PerformersPage> {
                 ),
                 onRetry: () => ref.invalidate(provider),
                 onLoadMore: () => ref.read(provider.notifier).loadMore(),
+                onGoToPage: (page) => ref.read(provider.notifier).goToPage(page),
                 itemBuilder: (_, performer) => PerformerTile(performer: performer),
               ),
             ],

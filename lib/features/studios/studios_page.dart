@@ -42,6 +42,7 @@ class StudiosPage extends ConsumerWidget {
                 emptyHint: context.l10n.studiosEmptyHint,
                 onRetry: () => ref.invalidate(provider),
                 onLoadMore: () => ref.read(provider.notifier).loadMore(),
+                onGoToPage: (page) => ref.read(provider.notifier).goToPage(page),
                 itemBuilder: (_, studio) => ListTile(
                   leading: ChannelAvatar(name: studio.name, imageUrl: studio.imageUrl, radius: 24),
                   title: Text(studio.name, maxLines: 1, overflow: TextOverflow.ellipsis),

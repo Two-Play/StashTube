@@ -115,6 +115,35 @@
   "tabSearch": "Search",
   "emptyDefault": "Nothing here yet",
   "loadMoreFailed": "Couldn't load more – tap to retry",
+  "pageOf": "Page {page} of {count}",
+  "@pageOf": {
+    "placeholders": {
+      "page": {
+        "type": "int"
+      },
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "pageLoadFailed": "Couldn't load the page – try again",
+  "firstPage": "First page",
+  "previousPage": "Previous page",
+  "nextPage": "Next page",
+  "lastPage": "Last page",
+  "goToPage": "Go to page",
+  "pageRange": "1–{count}",
+  "@pageRange": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "go": "Go",
+  "listPaging": "Long lists",
+  "pagingInfinite": "Infinite scrolling",
+  "pagingPages": "Pages",
   "channelUnknown": "Unknown",
   "sceneMenuPlay": "Play",
   "watchLaterRemove": "Remove from Watch later",
@@ -142,6 +171,7 @@
   },
   "filter": "Filter",
   "filterScenes": "Filter scenes",
+  "filterImages": "Filter images",
   "filterTagsAllOf": "Tags (all of)",
   "searchTags": "Search tags",
   "minimumRating": "Minimum rating",
@@ -416,7 +446,8 @@
   "languageSystem": "System",
   "sectionPlayback": "Playback",
   "preferredQuality": "Preferred quality",
-  "preferredQualityDefault": "Original file – change it via ⚙ in the player",
+  "qualityOriginal": "Original",
+  "preferredQualityHint": "Used when a scene offers it, otherwise the next lower one. Smaller videos play their original file. Also changes with ⚙ in the player.",
   "sectionPrivacy": "Privacy & security",
   "removeThisServer": "Remove this server",
   "lockImmediately": "Immediately",
@@ -538,6 +569,8 @@
   "clearField": "Clear",
   "searchStudios": "Search studios",
   "searchPerformers": "Search performers",
+  "searchImages": "Search images",
+  "imagesNoMatch": "No images match the search or filters.",
   "done": "Done",
   "editScene": "Edit scene",
   "fieldCover": "Cover",

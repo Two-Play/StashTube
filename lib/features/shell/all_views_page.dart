@@ -3,7 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../l10n/l10n.dart';
-import '../settings/settings_page.dart';
+import '../settings/settings_button.dart';
 import 'app_shell.dart';
 import 'nav_bar_config.dart';
 import 'navigation.dart';
@@ -35,7 +35,7 @@ class AllViewsPage extends ConsumerWidget {
           for (final tab in AppTab.values)
             if (!config.isVisible(tab))
               _ViewTile(icon: tab.icon, label: tab.label(l), onTap: () => open(AppShell.rootPage(tab))),
-          _ViewTile(icon: Icons.settings_outlined, label: l.settingsTitle, onTap: () => open(const SettingsPage())),
+          _ViewTile(icon: Icons.settings_outlined, label: l.settingsTitle, onTap: () => openSettings(context, ref)),
         ],
       ),
     );

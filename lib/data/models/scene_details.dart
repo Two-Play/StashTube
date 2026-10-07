@@ -18,6 +18,53 @@ class SceneStream {
 
   bool get isHls => mimeType?.contains('mpegurl') ?? label.toUpperCase().startsWith('HLS');
   bool get isDirect => label.toLowerCase().startsWith('direct');
+
+  /// The transcode's format as the label names it: "HLS", "MP4", ...
+  String get format => streamFormatOf(label);
+
+  /// The transcode's height, from Stash's `resolution` URL parameter or
+  /// else the label; null for the original file or when unknown.
+  int? get height {
+    if (isDirect) return null;
+    final resolution = Uri.tryParse(url)?.queryParameters['resolution'];
+    return _resolutionHeights[resolution] ?? streamHeightOf(label);
+  }
+
+  static const _resolutionHeights = {
+    'LOW': 240,
+    'STANDARD': 480,
+    'STANDARD_HD': 720,
+    'FULL_HD': 1080,
+    'FOUR_K': 2160,
+  };
+}
+
+String streamFormatOf(String label) => label.trim().split(' ').first.toUpperCase();
+
+/// "HLS Standard HD (720p)" → 720, "MP4 4k" → 2160; null without a height.
+int? streamHeightOf(String label) {
+  if (RegExp(r'\b4k\b', caseSensitive: false).hasMatch(label)) return 2160;
+  final match = RegExp(r'(\d{3,4})p\b').firstMatch(label);
+  return match == null ? null : int.parse(match.group(1)!);
+}
+
+/// The stream to play for the preferred stream label (the player's ⚙ or the
+/// settings): that exact stream, else the same format at the preferred
+/// height, else the next lower one. Null means the original file: also when
+/// every transcode is smaller than preferred, as the original is then no
+/// larger than wanted.
+SceneStream? pickPreferredStream(List<SceneStream> streams, String preferred) {
+  final exact = streams.where((s) => s.label == preferred).firstOrNull;
+  if (exact != null) return exact;
+  final want = streamHeightOf(preferred);
+  if (want == null) return null;
+  final format = streamFormatOf(preferred);
+  final candidates = [
+    for (final s in streams)
+      if (!s.isDirect && s.format == format && s.height != null) s,
+  ]..sort((a, b) => b.height!.compareTo(a.height!));
+  if (candidates.isEmpty || candidates.first.height! < want) return null;
+  return candidates.where((s) => s.height! <= want).firstOrNull;
 }
 
 /// A scene marker, shown as a chapter.

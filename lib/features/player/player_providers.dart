@@ -87,7 +87,8 @@ final playbackTrackerProvider = Provider<PlaybackTracker>((ref) {
   return tracker;
 });
 
-/// Stream label (e.g. "HLS 720p") to use when available; null = direct file.
+/// Stream label (e.g. "HLS 720p") to use when available, see
+/// [pickPreferredStream]; null = direct file.
 class PreferredStreamNotifier extends Notifier<String?> {
   static const _key = 'preferred_stream';
 
@@ -250,7 +251,7 @@ class NowPlayingNotifier extends Notifier<Scene?> {
     if (preferred != null) {
       final details = ref.listen(sceneDetailsProvider(scene.id).future, (_, _) {});
       try {
-        stream = (await details.read()).streams.where((s) => s.label == preferred).firstOrNull;
+        stream = pickPreferredStream((await details.read()).streams, preferred);
       } catch (_) {
         // Fall back to the direct file.
       } finally {

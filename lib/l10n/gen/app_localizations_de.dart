@@ -218,6 +218,47 @@ class AppLocalizationsDe extends AppLocalizations {
       'Weitere konnten nicht geladen werden – zum Wiederholen tippen';
 
   @override
+  String pageOf(int page, int count) {
+    return 'Seite $page von $count';
+  }
+
+  @override
+  String get pageLoadFailed =>
+      'Die Seite konnte nicht geladen werden – nochmal versuchen';
+
+  @override
+  String get firstPage => 'Erste Seite';
+
+  @override
+  String get previousPage => 'Vorherige Seite';
+
+  @override
+  String get nextPage => 'Nächste Seite';
+
+  @override
+  String get lastPage => 'Letzte Seite';
+
+  @override
+  String get goToPage => 'Zu Seite springen';
+
+  @override
+  String pageRange(int count) {
+    return '1–$count';
+  }
+
+  @override
+  String get go => 'Los';
+
+  @override
+  String get listPaging => 'Lange Listen';
+
+  @override
+  String get pagingInfinite => 'Endlos scrollen';
+
+  @override
+  String get pagingPages => 'Seiten';
+
+  @override
   String get channelUnknown => 'Unbekannt';
 
   @override
@@ -250,6 +291,9 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get filterScenes => 'Szenen filtern';
+
+  @override
+  String get filterImages => 'Bilder filtern';
 
   @override
   String get filterTagsAllOf => 'Tags (alle)';
@@ -776,8 +820,11 @@ class AppLocalizationsDe extends AppLocalizations {
   String get preferredQuality => 'Bevorzugte Qualität';
 
   @override
-  String get preferredQualityDefault =>
-      'Originaldatei – im Player über ⚙ änderbar';
+  String get qualityOriginal => 'Original';
+
+  @override
+  String get preferredQualityHint =>
+      'Gilt, wenn eine Szene sie anbietet, sonst die nächstniedrigere. Kleinere Videos laufen als Originaldatei. Ändert sich auch über ⚙ im Player.';
 
   @override
   String get sectionPrivacy => 'Privatsphäre & Sicherheit';
@@ -984,6 +1031,13 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get searchPerformers => 'Performer suchen';
+
+  @override
+  String get searchImages => 'Bilder suchen';
+
+  @override
+  String get imagesNoMatch =>
+      'Keine Bilder passen zur Suche oder zu den Filtern.';
 
   @override
   String get done => 'Fertig';

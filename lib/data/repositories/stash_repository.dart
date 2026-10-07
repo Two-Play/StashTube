@@ -202,7 +202,13 @@ class StashRepository implements PlaybackActivityApi {
     int perPage = defaultPageSize,
   }) async {
     final data = await _query(StashQueries.findImages, {
-      'filter': _findFilter(page: page, perPage: perPage, sort: query.sortField, direction: query.direction),
+      'filter': _findFilter(
+        search: query.search,
+        page: page,
+        perPage: perPage,
+        sort: query.sortField,
+        direction: query.direction,
+      ),
       'image_filter': query.toImageFilter(),
     });
     final result = readObject(data, 'findImages') ?? const {};
@@ -477,9 +483,15 @@ class StashRepository implements PlaybackActivityApi {
         // versions) with HTTP 422 plus GraphQL errors: not a network problem.
         final errors = link.parsedResponse?.errors ?? const [];
         if (errors.isNotEmpty) throw StashApiException(errors.map((e) => e.message).join('\n'));
-        if (link.response.statusCode == 401 || link.response.statusCode == 403) {
-          throw const StashApiException('Not authorized – check the API key.', kind: StashErrorKind.unauthorized);
-        }
+      }
+      // Without a valid API key Stash answers 401 with an empty body, which
+      // the link fails to parse (HttpLinkParserException).
+      final status = switch (link) {
+        HttpLinkServerException(:final response) || HttpLinkParserException(:final response) => response.statusCode,
+        _ => null,
+      };
+      if (status == 401 || status == 403) {
+        throw const StashApiException('Not authorized – check the API key.', kind: StashErrorKind.unauthorized);
       }
       if (link != null) {
         final cause = link.originalException ?? link;
