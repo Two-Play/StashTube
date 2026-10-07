@@ -16,7 +16,11 @@ flutter test                    # all tests
 flutter test test/core/paged_notifier_test.dart --plain-name "loads pages"   # single test
 flutter build ios --simulator --debug
 flutter build apk --debug
+flutter pub run build_runner build --delete-conflicting-outputs   # GraphQL types after changing a .graphql file
+tool/update_stash_schema.sh v0.31.1                               # another Stash schema, then build_runner
 ```
+
+- CI (`.github/workflows/ci.yml`, every push and PR): l10n and GraphQL codegen, `dart analyze`, `flutter test`, then a debug APK and an unsigned iOS build. Use `flutter pub run`, not `dart run`, for build_runner: the system `dart` may not be Flutter's.
 
 - `pubspec.lock` is git-ignored (`*.lock`), so check resolved versions with `flutter pub deps`. Older transitive versions (`archive` 3.4, `win32` 5.4) don't compile on the current Dart SDK.
 - Android uses Gradle 9.3.1 / AGP 9.1.0 / Kotlin 2.4.0 with Kotlin DSL, matching the current Flutter template. `android.builtInKotlin=false` and `android.newDsl=false` in `gradle.properties` keep older plugins such as media_kit working.
@@ -30,10 +34,11 @@ flutter build apk --debug
 ```
 lib/
   main.dart, app.dart     bootstrap; StashApp shows LoginPage or AppShell based on serverConfigProvider
-  core/api/queries.dart   all GraphQL documents (with fragments)
+  core/api/documents/     all GraphQL documents (*.graphql) and their generated types (*.graphql.dart)
+  core/api/stash_schema.graphql   Stash's schema (tool/update_stash_schema.sh), generated into stash_schema.graphql.dart
   core/config/            ServerConfig + persistence (SharedPreferences), theme + ThemeMode provider
   core/pagination/        PagedNotifier / PagedState: generic infinite-list notifier
-  data/models/            typed models with defensive fromJson; list query args (SceneQuery, ...)
+  data/models/            app models built from the generated types; list query args (SceneQuery, ...)
   data/repositories/      StashRepository: the only place that talks GraphQL
   data/providers.dart     list/detail providers built on the repository
   features/<feature>/     screens (auth, shell, home, player, search, performers, studios, settings)
@@ -41,6 +46,8 @@ lib/
 ```
 
 **Server config and data flow.** `main()` overrides `sharedPreferencesProvider`. `serverProfilesProvider` holds the saved servers and the active one (stored as JSON; a single-server login from older versions is migrated once). API keys and passwords are not in that JSON but in the `SecretStore` (`secretStoreProvider`, `core/config/secret_store.dart`): `flutter_secure_storage`, loaded in `main()` before `runApp` and then read synchronously; tests get a `MemorySecretStore` unless they override it (share one instance to simulate a restart). `serverConfigProvider` (the active server's URL and API key, with value equality) and `activeServerIdProvider` derive from it, and `graphQLClientProvider`/`stashRepositoryProvider` derive from the config. `StashApp` keys `AppShell` by server id, so switching servers rebuilds the per-server UI state. Per-server data must key on `activeServerIdProvider`: stored lists use `<key>:<serverId>`, which removing a server deletes, and in-memory caches `ref.watch` it so they reset. Tests that touch such state use `testServer` from `test/helpers.dart` (it also fixes the scene card settings; use `testServerOnly` to set your own). UI code never builds GraphQL queries itself; it watches providers from `data/providers.dart`.
+
+**GraphQL types (codegen).** The documents live in `lib/core/api/documents/*.graphql`; graphql_codegen (`build.yaml`) checks them against `stash_schema.graphql` and generates `Query$…`/`Mutation$…`/`Fragment$…` classes, `Options$…` and `Variables$…`, plus `Input$…`/`Enum$…` for the whole schema. The generated files are committed (like `lib/l10n/gen`), excluded from analysis and marked generated in `.gitattributes`. Models have factories from the generated fragments (`Scene.fromFields`, `Studio.fromRef`, …) instead of `fromJson`; shared selections are fragments in `refs.graphql`. Keep `addTypename: true`: the normalized cache resolves fragments by `__typename`, and without it lists come back as nulls. Filters and edit changes are still built as maps (`SceneQuery.toSceneFilter`, the forms' `_diff`); `StashRepository._input` turns them into the input types and asserts in debug/tests that every key is in the schema (`fitsInput`), and `convertSavedSceneFilter` drops saved criteria that don't fit `Input$SceneFilterType`. Tests build models and fake responses with `test/fixtures.dart` (complete results with `__typename`s); `test/data/repository_graphql_test.dart` runs the repository through a real client and cache. The schema is the newest Stash's, so compatibility with older servers is not checked at build time.
 
 **Paginated lists.** `sceneListProvider`, `performerListProvider` and `studioListProvider` are auto-dispose family `PagedNotifier`s keyed by query objects (`SceneQuery`, `PerformerQuery`, `StudioQuery`). These query objects must keep value equality. UI code reads paged lists through `.current` (`PagedValue` extension), not `.value`. On a server switch the lists rebuild (`isReloading`), and `.value` would keep showing the previous server's items, or would hide a failed load behind them. The random sort uses a `random_<seed>` sort field so pages stay stable, and the seed is 0 for every other sort. To get an infinite, refreshable list with sort chips, use `SceneFeedView`, or compose `RefreshIndicator`, `LoadMoreListener`, `CustomScrollView` and `PagedSliver` yourself. `pagingModeProvider` (settings) switches all paged lists to numbered pages: `loadMore` then does nothing, `PagedSliver` shows a `PageBar` driving `PagedNotifier.goToPage` (pass `onGoToPage`), and changing the mode rebuilds the lists.
 
@@ -64,7 +71,7 @@ lib/
 
 **Login (session).** Instead of an API key a server can have a username and password (`ServerConfig.usesSession`: credentials and no API key). `StashSessionNotifier` (`data/repositories/stash_session.dart`) signs in through `POST /login` for Stash's `session` cookie, renews it shortly before it expires, and `StashSessionClient` (the `stashHttpClientProvider` used by GraphQL and the repository) sends it and signs in again on a 401, repeating the request. `authHeadersProvider` (images, streams) adds the cookie; the repository deliberately doesn't watch it, so a renewed cookie doesn't reload everything. Cast devices can't send cookies, so casting still needs an API key.
 
-**Errors.** `StashRepository._run` maps failures to `StashApiException`. Stash answers invalid queries with HTTP 422 plus GraphQL errors, which gql_http_link raises as `HttpLinkServerException`; these count as query errors (`isNetworkError == false`), and 401/403 become "check the API key". Fields that only newer Stash versions have should go into a separate, optional query (see `activityStats`).
+**Errors.** `StashRepository._run` maps failures to `StashApiException` (a response that doesn't parse into the generated types too). Stash answers invalid queries with HTTP 422 plus GraphQL errors, which gql_http_link raises as `HttpLinkServerException`; these count as query errors (`isNetworkError == false`), and 401/403 become "check the API key". Fields that only newer Stash versions have should go into a separate, optional query (see `activityStats`).
 
 **Scene cards.** `SceneCard`, `SceneListTile`, `SceneGridTile` and the shelf cards get their channel and meta line from `sceneChannel` / `sceneMetaLine` (`widgets/scene_card.dart`), which follow `sceneCardConfigProvider` (`features/settings/scene_card_config.dart`: studio or performers, plays, stars). Stars come from `effectiveStars`, so ratings set in the player show right away.
 

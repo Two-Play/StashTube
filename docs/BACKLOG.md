@@ -21,8 +21,8 @@ Eine wartbare Basis, damit Features unabhängig voneinander wachsen können.
 | 1.4 | Als Entwickler möchte ich den globalen Zustand über Riverpod-Provider abbilden statt über Top-Level-Variablen. | Server-Config, GraphQL-Client, Player und Theme sind Provider. Kein globales `ValueNotifier`. | MVP | ✅ |
 | 1.5 | Als Entwickler möchte ich eine generische Paginierung, damit jede Liste endlos scrollen kann. | `PagedNotifier` lädt Seite für Seite und zeigt beim Nachladen Lade- und Fehlerzustände an. | MVP | ✅ |
 | 1.6 | Als Entwickler möchte ich, dass `flutter analyze` ohne Warnungen und `flutter test` grün läuft. | Lints sauber, der Template-Test ist ersetzt. | MVP | ✅ |
-| 1.7 | Als Entwickler möchte ich eine CI-Pipeline (Analyze, Test, Build für Android und iOS). | GitHub Actions bei jedem Push und PR. | Next | ⬜ |
-| 1.8 | Als Entwickler möchte ich GraphQL-Typen aus dem Stash-Schema generieren (z. B. `graphql_codegen`), damit Schemaänderungen beim Kompilieren auffallen. | Schema-Download-Skript, generierte Typen ersetzen die handgeschriebenen `fromJson`. | Later | ⬜ |
+| 1.7 | Als Entwickler möchte ich eine CI-Pipeline (Analyze, Test, Build für Android und iOS). | GitHub Actions bei jedem Push und PR (`.github/workflows/ci.yml`): generierter Code (l10n, GraphQL), `dart analyze`, `flutter test`, Debug-APK (als Artefakt) und unsignierter iOS-Build. | Next | ✅ |
+| 1.8 | Als Entwickler möchte ich GraphQL-Typen aus dem Stash-Schema generieren (z. B. `graphql_codegen`), damit Schemaänderungen beim Kompilieren auffallen. | Schema-Download-Skript, generierte Typen ersetzen die handgeschriebenen `fromJson`. Umgesetzt: `tool/update_stash_schema.sh` (Stash v0.31.1), Dokumente in `lib/core/api/documents/*.graphql`, `graphql_codegen` + `build_runner`; ungültige Felder brechen den Build ab. Modelle entstehen aus den generierten Typen, Filter und Änderungen werden gegen die Input-Typen des Schemas geprüft; gespeicherte Filter lassen unpassende Kriterien weg. | Later | ✅ |
 
 ## Epic 2 – Server-Verbindung & Authentifizierung
 

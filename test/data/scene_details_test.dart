@@ -1,22 +1,23 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:stash_app_mobile/data/models/scene_details.dart';
+import '../fixtures.dart';
 
 void main() {
-  final details = SceneDetails.fromJson({
+  final details = sceneDetailsFrom({
     'id': '1',
     'sceneStreams': [
       {'url': 'http://s/stream', 'mime_type': 'video/mp4', 'label': 'Direct stream'},
       {'url': 'http://s/stream.m3u8?resolution=STANDARD_HD', 'mime_type': 'application/vnd.apple.mpegurl', 'label': 'HLS Standard HD (720p)'},
       {'url': 'http://s/stream.mp4?resolution=STANDARD', 'mime_type': 'video/mp4', 'label': 'MP4 Standard (480p)'},
-      {'url': '', 'label': 'broken'},
+      {'url': '', 'mime_type': null, 'label': 'broken'},
     ],
     'scene_markers': [
-      {'id': 'b', 'title': '', 'seconds': 300, 'primary_tag': {'name': 'Ending'}},
-      {'id': 'a', 'title': 'Intro', 'seconds': 0},
-      {'id': 'c', 'title': 'Middle', 'seconds': 120.5},
+      markerJson({'id': 'b', 'title': '', 'seconds': 300, 'primary_tag': {'name': 'Ending'}}),
+      markerJson({'id': 'a', 'title': 'Intro', 'seconds': 0}),
+      markerJson({'id': 'c', 'title': 'Middle', 'seconds': 120.5}),
     ],
     'files': [
-      {
+      videoFileJson({
         'path': r'D:\videos\holiday.mp4',
         'size': 1288490189,
         'format': 'mp4',
@@ -28,8 +29,8 @@ void main() {
         'frame_rate': 29.97,
         'bit_rate': 8500000,
         'mod_time': '2024-03-01T10:00:00Z',
-      },
-      {'path': ''},
+      }),
+      videoFileJson({'path': ''}),
     ],
   });
 

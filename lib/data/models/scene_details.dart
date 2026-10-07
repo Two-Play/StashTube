@@ -1,3 +1,4 @@
+import '../../core/api/documents/scenes.graphql.dart';
 import 'json.dart';
 
 /// One playable endpoint from `sceneStreams` (direct file or a transcode).
@@ -10,11 +11,8 @@ class SceneStream {
   final String label;
   final String? mimeType;
 
-  factory SceneStream.fromJson(Json json) => SceneStream(
-        url: readString(json, 'url'),
-        label: readString(json, 'label', 'Stream'),
-        mimeType: readNullableString(json, 'mime_type'),
-      );
+  factory SceneStream.fromGraphql(Query$FindSceneDetails$findScene$sceneStreams s) =>
+      SceneStream(url: s.url, label: nonEmpty(s.label) ?? 'Stream', mimeType: nonEmpty(s.mime_type));
 
   bool get isHls => mimeType?.contains('mpegurl') ?? label.toUpperCase().startsWith('HLS');
   bool get isDirect => label.toLowerCase().startsWith('direct');
@@ -75,12 +73,11 @@ class SceneMarker {
   final String title;
   final double seconds;
 
-  factory SceneMarker.fromJson(Json json) {
-    final title = readNullableString(json, 'title') ??
-        readNullableString(readObject(json, 'primary_tag') ?? const {}, 'name') ??
-        'Marker';
-    return SceneMarker(id: readString(json, 'id'), title: title, seconds: readDouble(json, 'seconds'));
-  }
+  factory SceneMarker.fromFields(Fragment$MarkerFields m) => SceneMarker(
+        id: m.id,
+        title: nonEmpty(m.title) ?? nonEmpty(m.primary_tag.name) ?? 'Marker',
+        seconds: m.seconds,
+      );
 }
 
 /// A video file of a scene, as Stash's scan reports it.
@@ -119,34 +116,21 @@ class SceneFile {
   final int? bitRate;
   final DateTime? modified;
 
-  factory SceneFile.fromJson(Json json) {
-    double? positive(String key) {
-      final v = readDouble(json, key);
-      return v > 0 ? v : null;
-    }
-
-    int? positiveInt(String key) {
-      final v = readNullableInt(json, key);
-      return v != null && v > 0 ? v : null;
-    }
-
-    String? text(String key) {
-      final v = readNullableString(json, key)?.trim();
-      return v == null || v.isEmpty ? null : v;
-    }
-
+  /// Unknown values (Stash reports 0 or "") become null.
+  factory SceneFile.fromGraphql(Query$FindSceneDetails$findScene$files f) {
+    T? positive<T extends num>(T v) => v > 0 ? v : null;
     return SceneFile(
-      path: readString(json, 'path'),
-      size: positive('size'),
-      format: text('format'),
-      width: positiveInt('width'),
-      height: positiveInt('height'),
-      duration: positive('duration'),
-      videoCodec: text('video_codec'),
-      audioCodec: text('audio_codec'),
-      frameRate: positive('frame_rate'),
-      bitRate: positiveInt('bit_rate'),
-      modified: readDate(json, 'mod_time'),
+      path: f.path,
+      size: positive(f.size)?.toDouble(),
+      format: nonEmpty(f.format)?.trim(),
+      width: positive(f.width),
+      height: positive(f.height),
+      duration: positive(f.duration),
+      videoCodec: nonEmpty(f.video_codec)?.trim(),
+      audioCodec: nonEmpty(f.audio_codec)?.trim(),
+      frameRate: positive(f.frame_rate),
+      bitRate: positive(f.bit_rate),
+      modified: parseDate(f.mod_time),
     );
   }
 
@@ -177,13 +161,19 @@ class SceneDetails {
   final String? spriteUrl;
   final String? vttUrl;
 
-  factory SceneDetails.fromJson(Json json) => SceneDetails(
-        spriteUrl: readNullableString(readObject(json, 'paths') ?? const {}, 'sprite'),
-        vttUrl: readNullableString(readObject(json, 'paths') ?? const {}, 'vtt'),
-        streams: readList(json, 'sceneStreams').map(SceneStream.fromJson).where((s) => s.url.isNotEmpty).toList(),
-        markers: readList(json, 'scene_markers').map(SceneMarker.fromJson).toList()
+  factory SceneDetails.fromGraphql(Query$FindSceneDetails$findScene s) => SceneDetails(
+        spriteUrl: nonEmpty(s.paths.sprite),
+        vttUrl: nonEmpty(s.paths.vtt),
+        streams: [
+          for (final stream in s.sceneStreams)
+            if (stream.url.isNotEmpty) SceneStream.fromGraphql(stream),
+        ],
+        markers: [for (final m in s.scene_markers) SceneMarker.fromFields(m)]
           ..sort((a, b) => a.seconds.compareTo(b.seconds)),
-        files: readList(json, 'files').map(SceneFile.fromJson).where((f) => f.path.isNotEmpty).toList(),
+        files: [
+          for (final f in s.files)
+            if (f.path.isNotEmpty) SceneFile.fromGraphql(f),
+        ],
       );
 
   /// The chapter that contains [seconds], if any.

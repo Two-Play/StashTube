@@ -1,19 +1,18 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:stash_app_mobile/core/utils/format.dart';
-import 'package:stash_app_mobile/data/models/image_item.dart';
 import 'package:stash_app_mobile/data/models/list_queries.dart';
-import 'package:stash_app_mobile/data/models/stats.dart';
+import '../fixtures.dart';
 
 void main() {
-  test('ImageItem.fromJson', () {
-    final image = ImageItem.fromJson({
+  test('ImageItem from the generated type', () {
+    final image = imageFrom({
       'id': '7',
       'title': null,
       'date': '2024-02-03',
       'paths': {'thumbnail': 'http://s/thumb', 'image': 'http://s/full'},
-      'studio': {'id': '1', 'name': 'Studio'},
+      'studio': studioRefJson({'id': '1', 'name': 'Studio'}),
       'performers': [
-        {'id': '2', 'name': 'Alice'},
+        performerRefJson({'id': '2', 'name': 'Alice'}),
       ],
     });
     expect(image.title, 'Image');
@@ -31,7 +30,7 @@ void main() {
   });
 
   test('stats parsing', () {
-    final library = LibraryStats.fromJson({
+    final library = statsFrom({
       'scene_count': 12,
       'scenes_size': 1.5e9,
       'scenes_duration': 7200.0,
@@ -41,7 +40,7 @@ void main() {
     expect(library.scenesSize, 1.5e9);
     expect(library.galleryCount, 0);
 
-    final activity = ActivityStats.fromJson({'total_play_count': 4, 'total_play_duration': 90.5});
+    final activity = activityFrom({'total_play_count': 4, 'total_play_duration': 90.5});
     expect(activity.playCount, 4);
     expect(activity.playDuration, 90.5);
   });

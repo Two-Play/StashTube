@@ -1,0 +1,85 @@
+fragment SceneFields on Scene {
+  id
+  title
+  details
+  date
+  created_at
+  rating100
+  play_count
+  o_counter
+  resume_time
+  organized
+  files { basename duration width height }
+  paths { screenshot preview stream }
+  studio { ...StudioRef }
+  performers { ...PerformerRef country favorite }
+  tags { ...TagRef }
+}
+
+fragment MarkerFields on SceneMarker {
+  id
+  title
+  seconds
+  primary_tag { name }
+}
+
+query FindScenes($filter: FindFilterType, $scene_filter: SceneFilterType) {
+  findScenes(filter: $filter, scene_filter: $scene_filter) {
+    count
+    scenes { ...SceneFields }
+  }
+}
+
+query FindScenesByIds($ids: [ID!]) {
+  findScenes(ids: $ids, filter: { per_page: -1 }) {
+    scenes { ...SceneFields }
+  }
+}
+
+query FindSceneDetails($id: ID!) {
+  findScene(id: $id) {
+    id
+    paths { sprite vtt }
+    sceneStreams { url mime_type label }
+    scene_markers { ...MarkerFields }
+    files { path size format width height duration video_codec audio_codec frame_rate bit_rate mod_time }
+  }
+}
+
+# URL lists, queried separately so older Stash versions without `urls` only
+# lose the URL editor.
+query SceneUrls($id: ID!) {
+  findScene(id: $id) { id urls }
+}
+
+mutation SceneSaveActivity($id: ID!, $resume_time: Float, $playDuration: Float) {
+  sceneSaveActivity(id: $id, resume_time: $resume_time, playDuration: $playDuration)
+}
+
+mutation SceneAddPlay($id: ID!) {
+  sceneAddPlay(id: $id) { count }
+}
+
+mutation SceneSetRating($id: ID!, $rating100: Int) {
+  sceneUpdate(input: { id: $id, rating100: $rating100 }) { id rating100 }
+}
+
+mutation SceneSetTags($id: ID!, $tag_ids: [ID!]) {
+  sceneUpdate(input: { id: $id, tag_ids: $tag_ids }) { id tags { ...TagRef } }
+}
+
+mutation SceneAddO($id: ID!) {
+  sceneAddO(id: $id) { count }
+}
+
+mutation SceneDeleteO($id: ID!) {
+  sceneDeleteO(id: $id) { count }
+}
+
+mutation SceneMarkerCreate($input: SceneMarkerCreateInput!) {
+  sceneMarkerCreate(input: $input) { ...MarkerFields }
+}
+
+mutation SceneEdit($input: SceneUpdateInput!) {
+  sceneUpdate(input: $input) { ...SceneFields }
+}

@@ -2,6 +2,7 @@ import 'json.dart';
 import 'performer.dart';
 import 'studio.dart';
 import 'tag.dart';
+import '../../core/api/documents/scenes.graphql.dart';
 
 class Scene {
   const Scene({
@@ -54,36 +55,29 @@ class Scene {
   final List<Performer> performers;
   final List<Tag> tags;
 
-  factory Scene.fromJson(Json json) {
-    final files = readList(json, 'files');
-    final file = files.isNotEmpty ? files.first : const <String, dynamic>{};
-    final paths = readObject(json, 'paths') ?? const <String, dynamic>{};
-    final studioJson = readObject(json, 'studio');
-
-    final title = readNullableString(json, 'title') ??
-        readNullableString(file, 'basename') ??
-        'Untitled scene';
-
+  factory Scene.fromFields(Fragment$SceneFields s) {
+    final file = s.files.firstOrNull;
+    final studio = s.studio;
     return Scene(
-      id: readString(json, 'id'),
-      title: title,
-      details: readNullableString(json, 'details'),
-      date: readDate(json, 'date'),
-      createdAt: readDate(json, 'created_at'),
-      rating100: readNullableInt(json, 'rating100'),
-      playCount: readInt(json, 'play_count'),
-      oCounter: readInt(json, 'o_counter'),
-      resumeTime: readDouble(json, 'resume_time'),
-      organized: readBool(json, 'organized'),
-      duration: readDouble(file, 'duration'),
-      width: readNullableInt(file, 'width'),
-      height: readNullableInt(file, 'height'),
-      screenshotUrl: readNullableString(paths, 'screenshot'),
-      previewUrl: readNullableString(paths, 'preview'),
-      streamUrl: readNullableString(paths, 'stream'),
-      studio: studioJson == null ? null : Studio.fromJson(studioJson),
-      performers: readList(json, 'performers').map(Performer.fromJson).toList(),
-      tags: readList(json, 'tags').map(Tag.fromJson).toList(),
+      id: s.id,
+      title: nonEmpty(s.title) ?? nonEmpty(file?.basename) ?? 'Untitled scene',
+      details: nonEmpty(s.details),
+      date: parseDate(s.date),
+      createdAt: parseDate(s.created_at),
+      rating100: s.rating100,
+      playCount: s.play_count ?? 0,
+      oCounter: s.o_counter ?? 0,
+      resumeTime: s.resume_time ?? 0,
+      organized: s.organized,
+      duration: file?.duration ?? 0,
+      width: file?.width,
+      height: file?.height,
+      screenshotUrl: nonEmpty(s.paths.screenshot),
+      previewUrl: nonEmpty(s.paths.preview),
+      streamUrl: nonEmpty(s.paths.stream),
+      studio: studio == null ? null : Studio.fromRef(studio),
+      performers: [for (final p in s.performers) Performer.fromRef(p, country: p.country, favorite: p.favorite)],
+      tags: [for (final t in s.tags) Tag.fromRef(t)],
     );
   }
 

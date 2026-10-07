@@ -1,0 +1,35 @@
+fragment PerformerFields on Performer {
+  id
+  name
+  disambiguation
+  image_path
+  country
+  birthdate
+  gender
+  favorite
+  rating100
+  scene_count
+}
+
+query FindPerformers($filter: FindFilterType, $performer_filter: PerformerFilterType) {
+  findPerformers(filter: $filter, performer_filter: $performer_filter) {
+    count
+    performers { ...PerformerFields }
+  }
+}
+
+query FindPerformer($id: ID!) {
+  findPerformer(id: $id) { ...PerformerFields details }
+}
+
+query PerformerUrls($id: ID!) {
+  findPerformer(id: $id) { id urls }
+}
+
+mutation PerformerEdit($input: PerformerUpdateInput!) {
+  performerUpdate(input: $input) { ...PerformerFields details }
+}
+
+mutation PerformerSetFavorite($id: ID!, $favorite: Boolean!) {
+  performerUpdate(input: { id: $id, favorite: $favorite }) { id favorite }
+}

@@ -1,6 +1,7 @@
 import 'json.dart';
 import 'performer.dart';
 import 'studio.dart';
+import '../../core/api/documents/galleries.graphql.dart';
 
 class Gallery {
   const Gallery({
@@ -25,23 +26,22 @@ class Gallery {
   final Studio? studio;
   final List<Performer> performers;
 
-  factory Gallery.fromJson(Json json) {
-    final files = readList(json, 'files');
-    final folderPath = readNullableString(readObject(json, 'folder') ?? const {}, 'path');
-    final title = readNullableString(json, 'title') ??
-        (files.isEmpty ? null : readNullableString(files.first, 'basename')) ??
+  factory Gallery.fromFields(Fragment$GalleryFields g) {
+    final folderPath = nonEmpty(g.folder?.path);
+    final title = nonEmpty(g.title) ??
+        nonEmpty(g.files.firstOrNull?.basename) ??
         folderPath?.split(RegExp(r'[/\\]')).lastWhere((p) => p.isNotEmpty, orElse: () => folderPath) ??
         'Gallery';
-    final studio = readObject(json, 'studio');
+    final studio = g.studio;
     return Gallery(
-      id: readString(json, 'id'),
+      id: g.id,
       title: title,
-      date: readDate(json, 'date'),
-      imageCount: readInt(json, 'image_count'),
-      coverUrl: readNullableString(readObject(json, 'paths') ?? const {}, 'cover'),
-      details: readNullableString(json, 'details'),
-      studio: studio == null ? null : Studio.fromJson(studio),
-      performers: readList(json, 'performers').map(Performer.fromJson).toList(),
+      date: parseDate(g.date),
+      imageCount: g.image_count,
+      coverUrl: nonEmpty(g.paths.cover),
+      details: nonEmpty(g.details),
+      studio: studio == null ? null : Studio.fromRef(studio),
+      performers: [for (final p in g.performers) Performer.fromRef(p)],
     );
   }
 }

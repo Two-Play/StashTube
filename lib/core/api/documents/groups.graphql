@@ -1,0 +1,21 @@
+# Groups replaced movies in Stash v0.27.
+fragment GroupFields on Group {
+  id
+  name
+  date
+  duration
+  front_image_path
+  scene_count
+  studio { ...StudioRef }
+}
+
+query FindGroups($filter: FindFilterType) {
+  findGroups(filter: $filter) {
+    count
+    groups { ...GroupFields }
+  }
+}
+
+query FindGroup($id: ID!) {
+  findGroup(id: $id) { ...GroupFields synopsis }
+}

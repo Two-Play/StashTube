@@ -1,0 +1,34 @@
+# graphql_codegen (1.8): typed classes for the documents in lib/**/*.graphql,
+# checked against Stash's schema (lib/core/api/stash_schema.graphql, from
+# tool/update_stash_schema.sh). Regenerate with
+#   dart run build_runner build --delete-conflicting-outputs
+targets:
+  $default:
+    builders:
+      graphql_codegen:
+        options:
+          clients:
+            - graphql
+          # graphql_flutter's normalized cache needs __typename to resolve
+          # fragments; gql() added it to the old hand-written documents too.
+          addTypename: true
+          disableCopyWithGeneration: true
+          # Requests carry their operation name (server logs, test fakes).
+          setOperationName: true
+          scalars:
+            Time:
+              type: String
+            Timestamp:
+              type: String
+            Map:
+              type: Map<String, dynamic>
+            BoolMap:
+              type: Map<String, dynamic>
+            PluginConfigMap:
+              type: Map<String, dynamic>
+            Any:
+              type: Object
+            Int64:
+              type: int
+            Upload:
+              type: Object
