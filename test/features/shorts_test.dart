@@ -183,8 +183,8 @@ void main() {
     final c = ProviderContainer(overrides: [sharedPreferencesProvider.overrideWithValue(prefs)]);
     addTearDown(c.dispose);
     final config = c.read(navBarConfigProvider);
-    // Five stored tabs: the last one that may be hidden goes to the menu.
-    expect(config.visible, [AppTab.home, AppTab.performers, AppTab.studios, AppTab.stats]);
+    // Five stored tabs: the last hideable one makes room for "all views".
+    expect(config.visible, [AppTab.home, AppTab.performers, AppTab.studios, AppTab.library, AppTab.all]);
     expect(config.isVisible(AppTab.shorts), isFalse);
     expect(NavBarConfig.standard.isVisible(AppTab.shorts), isFalse);
   });

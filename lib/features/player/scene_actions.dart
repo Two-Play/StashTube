@@ -72,6 +72,8 @@ class SceneActions extends ConsumerWidget {
                     final count = await ref.read(sceneEditsProvider.notifier).addO(scene);
                     messenger.showSnackBar(SnackBar(
                       content: Text(l.oCountValue(count)),
+                      // With an action, snack bars would stay until tapped.
+                      persist: false,
                       action: SnackBarAction(
                         label: l.undo,
                         onPressed: () => ref.read(sceneEditsProvider.notifier).removeO(scene).catchError(showError),

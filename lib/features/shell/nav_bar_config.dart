@@ -7,23 +7,24 @@ import 'navigation.dart';
 /// Which tabs the bottom navigation bar shows, and in which order (13.7).
 ///
 /// [order] contains every [AppTab] exactly once, so a tab that is shown
-/// again comes back at the place the user gave it. [alwaysShown] (stats
-/// and server info) can't be hidden.
+/// again comes back at the place the user gave it. [alwaysShown] ("all
+/// views") can't be hidden.
 @immutable
 class NavBarConfig {
   NavBarConfig({required List<AppTab> order, Set<AppTab> hidden = const {}})
       : order = List.unmodifiable(_complete(order)),
         hidden = Set.unmodifiable(hidden.difference({alwaysShown}));
 
-  static const alwaysShown = AppTab.stats;
+  static const alwaysShown = AppTab.all;
 
-  /// The bar as it ships: home, performers, library and stats; everything
-  /// else is in the "all views" menu.
+  /// The bar as it ships: home, performers, library, stats and "all views",
+  /// which has everything else.
   static final standard = NavBarConfig(
     order: AppTab.values,
     hidden: {
       for (final tab in AppTab.values)
         if (tab != alwaysShown &&
+            tab != AppTab.stats &&
             (tab.section != null ||
                 tab == AppTab.studios ||
                 tab == AppTab.tags ||
@@ -33,9 +34,8 @@ class NavBarConfig {
     },
   );
 
-  /// Material's navigation bar is meant for 3 to 5 destinations; one of
-  /// them is the "all views" menu in the middle.
-  static const maxVisible = 4;
+  /// Material's navigation bar is meant for 3 to 5 destinations.
+  static const maxVisible = 5;
   static const minVisible = 2;
 
   final List<AppTab> order;
@@ -61,7 +61,7 @@ class NavBarConfig {
   }
 
   /// Hides the last visible tabs (except [alwaysShown]) beyond [maxVisible],
-  /// e.g. for a bar stored when five tabs were allowed.
+  /// e.g. for a bar stored before "all views" was added.
   NavBarConfig fitted() {
     final extra = visible.length - maxVisible;
     if (extra <= 0) return this;

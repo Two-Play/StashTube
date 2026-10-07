@@ -18,16 +18,18 @@ Future<ProviderContainer> _container([Map<String, Object> prefs = const {}]) asy
 }
 
 void main() {
-  test('the standard bar ends with stats and server info', () {
-    expect(NavBarConfig.standard.visible, [AppTab.home, AppTab.performers, AppTab.library, AppTab.stats]);
+  test('the standard bar ends with "all views"', () {
+    expect(NavBarConfig.standard.visible,
+        [AppTab.home, AppTab.performers, AppTab.library, AppTab.stats, AppTab.all]);
   });
 
-  test('a bar stored with five tabs drops the last one it may hide', () async {
+  test('a full stored bar makes room for "all views" by dropping its last hideable tab', () async {
     final c = await _container({
       'nav_bar_order': ['home', 'performers', 'studios', 'library', 'stats'],
       'nav_bar_hidden': <String>[],
     });
-    expect(c.read(navBarConfigProvider).visible, [AppTab.home, AppTab.performers, AppTab.studios, AppTab.stats]);
+    expect(c.read(navBarConfigProvider).visible,
+        [AppTab.home, AppTab.performers, AppTab.studios, AppTab.library, AppTab.all]);
   });
 
   test('a stored bar with the old settings tab gets stats in its place', () async {
@@ -36,8 +38,8 @@ void main() {
       'nav_bar_hidden': ['stats'],
     });
     final config = c.read(navBarConfigProvider);
-    expect(config.visible.take(3), [AppTab.home, AppTab.stats, AppTab.library]);
-    expect(config.visible, hasLength(3), reason: 'tabs missing from the stored order start hidden');
+    expect(config.visible, [AppTab.home, AppTab.stats, AppTab.library, AppTab.all],
+        reason: 'tabs missing from the stored order start hidden, except "all views"');
   });
 
   test('every part of the library can be its own tab', () {
@@ -61,22 +63,22 @@ void main() {
         ),
       ),
     ));
-    expect(find.text('Start,Performer,Bibliothek,Statistik'), findsOneWidget);
+    expect(find.text('Start,Performer,Bibliothek,Statistik,Alle'), findsOneWidget);
   });
 
-  test('stats cannot be hidden, and the bar keeps 2 to 4 tabs', () {
+  test('"all views" cannot be hidden, and the bar keeps 2 to 5 tabs', () {
     var config = NavBarConfig.standard;
-    expect(config.canToggle(AppTab.stats), isFalse);
-    expect(config.toggle(AppTab.stats), config);
+    expect(config.canToggle(AppTab.all), isFalse);
+    expect(config.toggle(AppTab.all), config);
 
-    // Four tabs shown (plus the menu): nothing more can be added.
+    // Five tabs shown: nothing more can be added.
     expect(config.canToggle(AppTab.tags), isFalse);
     config = config.toggle(AppTab.performers).toggle(AppTab.tags);
     expect(config.visible, contains(AppTab.tags));
     expect(config.visible, isNot(contains(AppTab.performers)));
 
-    config = config.toggle(AppTab.home).toggle(AppTab.library);
-    expect(config.visible, [AppTab.tags, AppTab.stats]);
+    config = config.toggle(AppTab.home).toggle(AppTab.library).toggle(AppTab.stats);
+    expect(config.visible, [AppTab.tags, AppTab.all]);
     expect(config.canToggle(AppTab.tags), isFalse);
   });
 
@@ -103,7 +105,7 @@ void main() {
     );
     addTearDown(restarted.dispose);
     expect(restarted.read(navBarConfigProvider).visible,
-        [AppTab.library, AppTab.home, AppTab.search, AppTab.stats]);
+        [AppTab.library, AppTab.home, AppTab.search, AppTab.stats, AppTab.all]);
     // The app starts on the first tab of the bar.
     expect(restarted.read(currentTabProvider), AppTab.library);
 
@@ -141,7 +143,7 @@ void main() {
 
     CheckboxListTile tile(String label) =>
         tester.widget(find.ancestor(of: find.text(label), matching: find.byType(CheckboxListTile)));
-    expect(tile('Stats & server').onChanged, isNull);
+    expect(tile('All views').onChanged, isNull);
     expect(find.text('Always shown'), findsOneWidget);
     // The bar is full, so hidden tabs can't be switched on yet.
     expect(tile('Tags').onChanged, isNull);
@@ -150,7 +152,8 @@ void main() {
     await tester.pump();
     await tester.tap(find.text('Tags'));
     await tester.pump();
-    expect(c.read(navBarConfigProvider).visible, [AppTab.home, AppTab.library, AppTab.tags, AppTab.stats]);
+    expect(c.read(navBarConfigProvider).visible,
+        [AppTab.home, AppTab.library, AppTab.tags, AppTab.stats, AppTab.all]);
 
     await tester.tap(find.text('Reset'));
     await tester.pump();

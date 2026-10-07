@@ -63,7 +63,10 @@ final _mainPlayingProvider = StreamProvider.autoDispose<bool>((ref) => ref.watch
 /// main player isn't open and the app is visible. Meanwhile the shell hides
 /// the miniplayer and the main player is paused.
 class ShortsPage extends ConsumerStatefulWidget {
-  const ShortsPage({super.key});
+  const ShortsPage({super.key, this.initialIndex = 0});
+
+  /// The short to start with, e.g. the one tapped on the home page.
+  final int initialIndex;
 
   @override
   ConsumerState<ShortsPage> createState() => _ShortsPageState();
@@ -83,7 +86,7 @@ class _ShortsPageState extends ConsumerState<ShortsPage> {
     return null;
   }
   // Not restored from page storage: a new feed starts at its first short.
-  final _pageController = PageController(keepPage: false);
+  late final _pageController = PageController(initialPage: widget.initialIndex, keepPage: false);
   late final AppLifecycleListener _lifecycle;
   late final ValueNotifier<double> _miniplayerHeight;
   late final ShortsActiveNotifier _active = ref.read(shortsActiveProvider.notifier);
@@ -97,7 +100,7 @@ class _ShortsPageState extends ConsumerState<ShortsPage> {
   /// pauses only once the file is loaded, so a `play()` sent earlier would
   /// be undone: playback starts after this.
   final _slotReady = List<bool>.filled(_poolSize, false);
-  int _index = 0;
+  late int _index = widget.initialIndex;
 
   /// Only loads and creates players once the page was shown the first time.
   bool _started = false;
@@ -521,6 +524,8 @@ class _ShortViewState extends ConsumerState<_ShortView> {
       final count = await notifier.addO(widget.scene);
       messenger.showSnackBar(SnackBar(
         content: Text(l.oCountValue(count)),
+        // With an action, snack bars would stay until tapped.
+        persist: false,
         action: SnackBarAction(label: l.undo, onPressed: () => notifier.removeO(widget.scene).catchError(_showError)),
       ));
     } catch (e) {

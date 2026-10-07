@@ -2264,12 +2264,6 @@ abstract class AppLocalizations {
   /// **'All views'**
   String get allViews;
 
-  /// No description provided for @allViewsTooltip.
-  ///
-  /// In en, this message translates to:
-  /// **'Show all views'**
-  String get allViewsTooltip;
-
   /// No description provided for @tabAll.
   ///
   /// In en, this message translates to:

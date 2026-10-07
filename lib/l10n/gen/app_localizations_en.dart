@@ -1314,8 +1314,5 @@ class AppLocalizationsEn extends AppLocalizations {
   String get allViews => 'All views';
 
   @override
-  String get allViewsTooltip => 'Show all views';
-
-  @override
   String get tabAll => 'All';
 }
