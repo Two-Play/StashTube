@@ -27,6 +27,22 @@ import '../../l10n/l10n.dart';
 /// The widget tree keeps the same structure at every height (the video stays
 /// the first child of the first row), so the video is never rebuilt and the
 /// transition doesn't flicker.
+/// Width / height of [scene]'s video, updated once the player knows the
+/// decoded size.
+final _videoAspectProvider = Provider.autoDispose.family<double?, Scene>((ref, scene) {
+  final player = ref.watch(playerProvider);
+  final subscriptions = [
+    player.stream.width.listen((_) => ref.invalidateSelf()),
+    player.stream.height.listen((_) => ref.invalidateSelf()),
+  ];
+  ref.onDispose(() {
+    for (final s in subscriptions) {
+      s.cancel();
+    }
+  });
+  return videoAspect(player.state, scene, sceneFirst: true);
+});
+
 class PlayerPanel extends ConsumerWidget {
   const PlayerPanel({super.key, required this.scene, required this.height, required this.maxHeight});
 
@@ -44,6 +60,8 @@ class PlayerPanel extends ConsumerWidget {
       maxHeight: maxHeight,
       screenWidth: media.size.width,
       topInset: media.padding.top,
+      // Portrait videos get a taller video area (4.20).
+      videoAspect: ref.watch(_videoAspectProvider(scene)) ?? 16 / 9,
     );
 
     // Only status bar fields: the collapsed panel sits over Android's
@@ -71,41 +89,57 @@ class PlayerPanel extends ConsumerWidget {
           enabled: t.isExpanded,
           child: ColoredBox(
             color: Color.lerp(colors.surfaceContainer, colors.surface, t.progress)!,
-            child: Column(
+            // Always the panel's height: while the phone turns, the space can
+            // briefly be smaller than the miniplayer's height.
+            child: ClipRect(
+              child: OverflowBox(
+                alignment: Alignment.topCenter,
+                minHeight: height,
+                maxHeight: height,
+                child: Column(
               children: [
                 // Status bar area: black like the video, so no colored band
                 // grows above it while expanding.
                 SizedBox(height: t.topPadding, width: double.infinity, child: const ColoredBox(color: Colors.black)),
                 SizedBox(
                   height: t.videoHeight,
-                  child: Row(
-                    children: [
-                      SizedBox(
-                        width: t.videoWidth,
-                        child: ColoredBox(
-                          color: Colors.black,
-                          child: PlayerVideo(scene: scene, showControls: t.isExpanded),
-                        ),
-                      ),
-                      // Mini bar info keeps its natural width and is clipped while
-                      // the video takes over the row.
-                      Expanded(
-                        child: ClipRect(
-                          child: OverflowBox(
-                            alignment: Alignment.centerLeft,
-                            minWidth: 0,
-                            maxWidth: media.size.width - kMiniPlayerHeight * 16 / 9,
-                            child: Opacity(
-                              opacity: t.miniBarOpacity,
-                              child: IgnorePointer(
-                                ignoring: t.miniBarOpacity < 0.5,
-                                child: _MiniInfo(scene: scene),
+                  // The panel's width even while the phone turns (the video width
+                  // comes from the screen size, which can be ahead of the layout).
+                  child: ClipRect(
+                    child: OverflowBox(
+                      alignment: Alignment.centerLeft,
+                      minWidth: media.size.width,
+                      maxWidth: media.size.width,
+                      child: Row(
+                        children: [
+                          SizedBox(
+                            width: t.videoWidth,
+                            child: ColoredBox(
+                              color: Colors.black,
+                              child: PlayerVideo(scene: scene, showControls: t.isExpanded),
+                            ),
+                          ),
+                          // Mini bar info keeps its natural width and is clipped while
+                          // the video takes over the row.
+                          Expanded(
+                            child: ClipRect(
+                              child: OverflowBox(
+                                alignment: Alignment.centerLeft,
+                                minWidth: 0,
+                                maxWidth: media.size.width - kMiniPlayerHeight * 16 / 9,
+                                child: Opacity(
+                                  opacity: t.miniBarOpacity,
+                                  child: IgnorePointer(
+                                    ignoring: t.miniBarOpacity < 0.5,
+                                    child: _MiniInfo(scene: scene),
+                                  ),
+                                ),
                               ),
                             ),
                           ),
-                        ),
+                        ],
                       ),
-                    ],
+                    ),
                   ),
                 ),
                 // Mini progress line shrinks away so no gap remains under the video.
@@ -121,6 +155,8 @@ class PlayerPanel extends ConsumerWidget {
                     ),
                   ),
               ],
+            ),
+              ),
             ),
           ),
         ),

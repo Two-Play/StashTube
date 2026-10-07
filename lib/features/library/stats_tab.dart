@@ -2,13 +2,16 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/config/server_config.dart';
 import '../../core/utils/format.dart';
 import '../../data/models/stats.dart';
 import '../../data/providers.dart';
 import '../../widgets/status_views.dart';
+import '../auth/server_switcher.dart';
 import '../../l10n/l10n.dart';
 
-/// Library and watch statistics as stat tiles (headline numbers, no charts).
+/// The server in use, then library and watch statistics as stat tiles
+/// (headline numbers, no charts).
 class StatsTab extends ConsumerWidget {
   const StatsTab({super.key});
 
@@ -19,6 +22,7 @@ class StatsTab extends ConsumerWidget {
 
     Future<void> refresh() async {
       ref.invalidate(activityStatsProvider);
+      ref.invalidate(serverVersionProvider);
       try {
         final reloaded = ref.refresh(libraryStatsProvider.future);
         await reloaded;
@@ -34,6 +38,7 @@ class StatsTab extends ConsumerWidget {
         physics: const AlwaysScrollableScrollPhysics(),
         padding: const EdgeInsets.fromLTRB(12, 8, 12, 24),
         children: [
+          const _ServerCard(),
           ...switch (library) {
             AsyncData(:final value) => _libraryTiles(context.l10n, value),
             AsyncError(:final error) => [ErrorView(error: error, onRetry: () => ref.invalidate(libraryStatsProvider))],
@@ -91,6 +96,46 @@ class StatsTab extends ConsumerWidget {
           _StatTile(icon: Icons.favorite_border, label: l.statsOCount, value: formatNumber(a.oCount)),
         ]),
       ];
+}
+
+/// Name, URL, Stash version and API key status of the server in use; tap
+/// to edit it.
+class _ServerCard extends ConsumerWidget {
+  const _ServerCard();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l = context.l10n;
+    final theme = Theme.of(context);
+    final server = ref.watch(serverProfilesProvider).active;
+    if (server == null) return const SizedBox.shrink();
+    final version = ref.watch(serverVersionProvider);
+    final (status, statusColor) = switch (version) {
+      AsyncData(:final value) => (l.stashVersion(value ?? l.unknownVersion), theme.colorScheme.primary),
+      AsyncError() => (l.notReachable, theme.colorScheme.error),
+      _ => (l.checking, theme.colorScheme.onSurfaceVariant),
+    };
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        _SectionHeader(l.sectionServer),
+        Card(
+          margin: const EdgeInsets.symmetric(horizontal: 4),
+          child: ListTile(
+            leading: Icon(Icons.dns_outlined, color: statusColor),
+            title: Text(server.name, maxLines: 1, overflow: TextOverflow.ellipsis),
+            subtitle: Text(
+              '${server.baseUrl}\n$status • ${l.apiKey}: ${server.apiKey == null ? l.notSet : l.isSet}',
+            ),
+            isThreeLine: true,
+            trailing: const Icon(Icons.edit_outlined),
+            onTap: () => openServerEditor(context, server),
+          ),
+        ),
+      ],
+    );
+  }
 }
 
 class _SectionHeader extends StatelessWidget {

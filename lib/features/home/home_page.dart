@@ -10,6 +10,7 @@ import '../player/player_providers.dart';
 import '../shell/navigation.dart';
 import '../shorts/shorts_page.dart';
 import '../../l10n/l10n.dart';
+import '../settings/settings_button.dart';
 
 /// YouTube-style home: logo app bar, filter chips and an endless scene feed.
 class HomePage extends ConsumerStatefulWidget {
@@ -68,7 +69,15 @@ class _HomePageState extends ConsumerState<HomePage> {
                     child: Icon(Icons.play_arrow, color: colors.onPrimary, size: 20),
                   ),
                   const SizedBox(width: 6),
-                  const Text('Stash', style: TextStyle(fontWeight: FontWeight.w700, letterSpacing: -0.5)),
+                  const Flexible(
+                    child: Text(
+                      'Stash',
+                      maxLines: 1,
+                      overflow: TextOverflow.fade,
+                      softWrap: false,
+                      style: TextStyle(fontWeight: FontWeight.w700, letterSpacing: -0.5),
+                    ),
+                  ),
                 ],
               ),
               actions: [
@@ -83,6 +92,7 @@ class _HomePageState extends ConsumerState<HomePage> {
                   icon: const Icon(Icons.search),
                   onPressed: () => openSearch(ref),
                 ),
+                const SettingsButton(),
               ],
             ),
             SliverToBoxAdapter(

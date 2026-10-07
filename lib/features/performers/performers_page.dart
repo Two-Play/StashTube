@@ -9,6 +9,7 @@ import '../../widgets/paged_sliver.dart';
 import '../../widgets/performer_tile.dart';
 import '../shell/navigation.dart';
 import '../../l10n/l10n.dart';
+import '../settings/settings_button.dart';
 
 class PerformersPage extends ConsumerStatefulWidget {
   const PerformersPage({super.key});
@@ -29,6 +30,7 @@ class _PerformersPageState extends ConsumerState<PerformersPage> {
         title: Text(context.l10n.performersTitle),
         actions: [
           IconButton(icon: const Icon(Icons.search), onPressed: () => openSearch(ref)),
+          const SettingsButton(),
         ],
       ),
       body: RefreshIndicator(

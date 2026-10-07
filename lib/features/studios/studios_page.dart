@@ -8,6 +8,7 @@ import '../../widgets/paged_sliver.dart';
 import '../../widgets/stash_image.dart';
 import '../shell/navigation.dart';
 import '../../l10n/l10n.dart';
+import '../settings/settings_button.dart';
 
 /// All studios as a channel list.
 class StudiosPage extends ConsumerWidget {
@@ -24,6 +25,7 @@ class StudiosPage extends ConsumerWidget {
         title: Text(context.l10n.studiosTitle),
         actions: [
           IconButton(icon: const Icon(Icons.search), onPressed: () => openSearch(ref)),
+          const SettingsButton(),
         ],
       ),
       body: RefreshIndicator(

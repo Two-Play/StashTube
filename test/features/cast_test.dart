@@ -9,6 +9,7 @@ import 'package:stash_app_mobile/data/models/scene_details.dart';
 import 'package:stash_app_mobile/data/providers.dart';
 import 'package:stash_app_mobile/features/cast/cast_media.dart';
 import 'package:stash_app_mobile/features/cast/cast_providers.dart';
+import 'package:stash_app_mobile/features/cast/airplay_service.dart';
 import 'package:stash_app_mobile/features/cast/cast_service.dart';
 import 'package:stash_app_mobile/features/player/playback_tracker.dart';
 import 'package:stash_app_mobile/features/player/player_providers.dart';
@@ -16,12 +17,21 @@ import 'package:stash_app_mobile/features/player/player_providers.dart';
 import 'fake_player.dart';
 
 class FakeCastService implements CastService {
+  FakeCastService({this.kind = CastKind.googleCast});
+
+  final CastKind kind;
   final connectionController = StreamController<CastConnection?>.broadcast();
   final playbackController = StreamController<CastPlayback>.broadcast();
   final loaded = <CastMedia>[];
+  final commands = <String>[];
+  var pickerShown = 0;
 
   @override
   bool get isSupported => true;
+  @override
+  bool get supportsAirPlay => kind == CastKind.airPlay;
+  @override
+  Future<void> showAirPlayPicker() async => pickerShown++;
   @override
   Stream<List<CastTarget>> get devices => Stream.value(const [CastTarget(id: 'tv', name: 'Living room')]);
   @override
@@ -29,17 +39,18 @@ class FakeCastService implements CastService {
   @override
   Stream<CastPlayback> get playback => playbackController.stream;
   @override
-  Future<void> connect(CastTarget target) async => connectionController.add(CastConnection(deviceName: target.name));
+  Future<void> connect(CastTarget target) async =>
+      connectionController.add(CastConnection(deviceName: target.name, kind: kind));
   @override
   Future<void> disconnect() async => connectionController.add(null);
   @override
   Future<void> load(CastMedia media) async => loaded.add(media);
   @override
-  Future<void> play() async {}
+  Future<void> play() async => commands.add('play');
   @override
-  Future<void> pause() async {}
+  Future<void> pause() async => commands.add('pause');
   @override
-  Future<void> seek(Duration position) async {}
+  Future<void> seek(Duration position) async => commands.add('seek ${position.inSeconds}');
 }
 
 class _NoopActivity implements PlaybackActivityApi {
@@ -75,6 +86,19 @@ void main() {
       ]);
       expect(pickCastStream(scene, noHls).url, 'http://s/t.mp4');
       expect(pickCastStream(scene, null).url, 'http://s/scene/1/stream');
+    });
+
+    test('AirPlay gets MP4 or QuickTime originals, else HLS (no WebM or MKV)', () {
+      const scene = Scene(id: '1', title: 'A', streamUrl: 'http://s/scene/1/stream');
+      expect(pickAirPlayStream(scene, _details).contentType, 'application/x-mpegURL');
+      const mov = SceneDetails(streams: [SceneStream(url: 'http://s/mov', label: 'Direct stream', mimeType: 'video/quicktime')]);
+      expect(pickAirPlayStream(scene, mov).url, 'http://s/mov');
+      const webm = SceneDetails(streams: [
+        SceneStream(url: 'http://s/webm', label: 'Direct stream', mimeType: 'video/webm'),
+        SceneStream(url: 'http://s/hls.m3u8', label: 'HLS', mimeType: 'application/vnd.apple.mpegurl'),
+      ]);
+      expect(pickCastStream(scene, webm).url, 'http://s/webm', reason: 'Chromecast plays WebM');
+      expect(pickAirPlayStream(scene, webm).url, 'http://s/hls.m3u8');
     });
 
     test('castMediaFor fills metadata and authenticates image and stream', () {
@@ -158,6 +182,60 @@ void main() {
       await cast.disconnect();
       await tester.pumpAndSettle();
       expect(player.seeks.last, const Duration(seconds: 95));
+    });
+  });
+
+  group('Google Cast and AirPlay combined', () {
+    test('commands go to the connected service', () async {
+      final google = FakeCastService();
+      final airPlay = FakeCastService(kind: CastKind.airPlay);
+      final combined = CombinedCastService(google, airPlay);
+      final connections = <CastConnection?>[];
+      final sub = combined.connection.listen(connections.add);
+      addTearDown(sub.cancel);
+
+      expect(combined.supportsAirPlay, isTrue);
+      await combined.showAirPlayPicker();
+      expect(airPlay.pickerShown, 1);
+
+      await airPlay.connect(const CastTarget(id: 'atv', name: 'Apple TV'));
+      await pumpEventQueue();
+      expect(connections.last?.kind, CastKind.airPlay);
+      await combined.pause();
+      expect(airPlay.commands, ['pause']);
+
+      await airPlay.disconnect();
+      await google.connect(const CastTarget(id: 'tv', name: 'Living room'));
+      await pumpEventQueue();
+      expect(connections.last?.deviceName, 'Living room');
+      await combined.seek(const Duration(seconds: 5));
+      expect(google.commands, ['seek 5']);
+    });
+
+    testWidgets('casting over AirPlay sends a stream Apple TV can play', (tester) async {
+      SharedPreferences.setMockInitialValues({'url': 'http://s', 'api_key': 'k'});
+      final prefs = await SharedPreferences.getInstance();
+      final airPlay = FakeCastService(kind: CastKind.airPlay);
+      final container = ProviderContainer(overrides: [
+        sharedPreferencesProvider.overrideWithValue(prefs),
+        playerProvider.overrideWithValue(FakePlayer()),
+        castServiceProvider.overrideWithValue(airPlay),
+        playbackTrackerProvider.overrideWithValue(PlaybackTracker(api: _NoopActivity())),
+        sceneDetailsProvider.overrideWith((ref, id) async => _details),
+      ]);
+      addTearDown(() async {
+        await tester.pump();
+        container.dispose();
+      });
+      container.listen(nowPlayingProvider, (_, _) {});
+      container.listen(isCastingProvider, (_, _) {});
+      await tester.pump();
+
+      await airPlay.connect(const CastTarget(id: 'atv', name: 'Apple TV'));
+      await tester.pumpAndSettle();
+      container.read(nowPlayingProvider.notifier).play(const Scene(id: '1', title: 'A', streamUrl: 'http://s/scene/1/stream'));
+      await tester.pumpAndSettle();
+      expect(airPlay.loaded.single.contentType, 'application/x-mpegURL', reason: 'the original is MKV');
     });
   });
 }

@@ -27,11 +27,13 @@ enum AppTab {
   groups(Icons.playlist_play, Icons.playlist_play, LibrarySection.groups),
   images(Icons.image_outlined, Icons.image, LibrarySection.images),
   galleries(Icons.photo_library_outlined, Icons.photo_library, LibrarySection.galleries),
-  stats(Icons.insights_outlined, Icons.insights, LibrarySection.stats),
   shorts(Icons.slow_motion_video_outlined, Icons.slow_motion_video),
   tags(Icons.sell_outlined, Icons.sell),
   search(Icons.search, Icons.saved_search),
-  settings(Icons.settings_outlined, Icons.settings);
+
+  /// Library stats and server info; always in the bar, by default last.
+  /// The settings open from the app bars (`SettingsButton`).
+  stats(Icons.insights_outlined, Icons.insights, LibrarySection.stats);
 
   const AppTab(this.icon, this.selectedIcon, [this.section]);
 
@@ -49,12 +51,11 @@ enum AppTab {
         watchLater => l.tabWatchLater,
         tags => l.tabTags,
         search => l.tabSearch,
-        settings => l.tabSettings,
         _ => section!.label(l),
       };
 
   /// Full name in the settings list.
-  String title(AppLocalizations l) => this == settings ? l.settingsTitle : section?.label(l) ?? label(l);
+  String title(AppLocalizations l) => this == stats ? l.statsAndServer : section?.label(l) ?? label(l);
 }
 
 /// The selected tab. Starts on the first tab of the bar, and moves there

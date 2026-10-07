@@ -53,6 +53,20 @@ void main() {
     expect(c.read(serverConfigProvider), isNull, reason: 'removing the active server leaves server choice');
   });
 
+  test('editing a server changes URL and API key but keeps its id and data', () async {
+    final c = await containerWith({});
+    final servers = c.read(serverProfilesProvider.notifier);
+    final home = await servers.add(const ServerConfig(baseUrl: 'http://old:9999', apiKey: 'k'), name: 'Home');
+    await c.read(watchLaterProvider.notifier).toggle('7');
+
+    await servers.update(home.id, const ServerConfig(baseUrl: 'http://new:9999'), name: 'NAS');
+    final edited = c.read(serverProfilesProvider).active!;
+    expect(edited.id, home.id);
+    expect(edited.name, 'NAS');
+    expect(c.read(serverConfigProvider), const ServerConfig(baseUrl: 'http://new:9999'));
+    expect(c.read(watchLaterProvider), ['7']);
+  });
+
   test('saved servers survive a restart', () async {
     final c = await containerWith({});
     await c.read(serverProfilesProvider.notifier).add(const ServerConfig(baseUrl: 'http://a:1', apiKey: 'k'), name: 'A');

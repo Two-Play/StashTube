@@ -14,11 +14,14 @@ class CastTarget {
   final String? model;
 }
 
+enum CastKind { googleCast, airPlay }
+
 /// The cast device currently connected, if any.
 class CastConnection {
-  const CastConnection({required this.deviceName});
+  const CastConnection({required this.deviceName, this.kind = CastKind.googleCast});
 
   final String deviceName;
+  final CastKind kind;
 }
 
 class CastPlayback {
@@ -33,6 +36,13 @@ class CastPlayback {
 /// without the native SDK.
 abstract interface class CastService {
   bool get isSupported;
+
+  /// Whether AirPlay can be offered (iOS); its devices are picked in the
+  /// system's route picker, see [showAirPlayPicker].
+  bool get supportsAirPlay;
+
+  /// Opens the system's AirPlay picker.
+  Future<void> showAirPlayPicker();
 
   /// Devices on the network; discovery runs while this is listened to.
   Stream<List<CastTarget>> get devices;
@@ -53,6 +63,10 @@ class UnsupportedCastService implements CastService {
 
   @override
   bool get isSupported => false;
+  @override
+  bool get supportsAirPlay => false;
+  @override
+  Future<void> showAirPlayPicker() async {}
   @override
   Stream<List<CastTarget>> get devices => Stream.value(const []);
   @override
@@ -96,6 +110,12 @@ class GoogleCastService implements CastService {
 
   @override
   bool get isSupported => true;
+
+  @override
+  bool get supportsAirPlay => false;
+
+  @override
+  Future<void> showAirPlayPicker() async {}
 
   @override
   Stream<List<CastTarget>> get devices {

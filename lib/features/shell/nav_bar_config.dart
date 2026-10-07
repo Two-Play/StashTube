@@ -7,20 +7,24 @@ import 'navigation.dart';
 /// Which tabs the bottom navigation bar shows, and in which order (13.7).
 ///
 /// [order] contains every [AppTab] exactly once, so a tab that is shown
-/// again comes back at the place the user gave it. Settings can't be
-/// hidden, otherwise the configuration couldn't be undone.
+/// again comes back at the place the user gave it. [alwaysShown] (stats
+/// and server info) can't be hidden.
 @immutable
 class NavBarConfig {
   NavBarConfig({required List<AppTab> order, Set<AppTab> hidden = const {}})
       : order = List.unmodifiable(_complete(order)),
-        hidden = Set.unmodifiable(hidden.difference({AppTab.settings}));
+        hidden = Set.unmodifiable(hidden.difference({alwaysShown}));
+
+  static const alwaysShown = AppTab.stats;
 
   /// The bar as it ships: the tabs the app had before 13.7.
   static final standard = NavBarConfig(
     order: AppTab.values,
     hidden: {
       for (final tab in AppTab.values)
-        if (tab.section != null || tab == AppTab.tags || tab == AppTab.search || tab == AppTab.shorts) tab,
+        if (tab != alwaysShown &&
+            (tab.section != null || tab == AppTab.tags || tab == AppTab.search || tab == AppTab.shorts))
+          tab,
     },
   );
 
@@ -37,7 +41,7 @@ class NavBarConfig {
 
   /// Whether the user may switch [tab] on or off right now.
   bool canToggle(AppTab tab) {
-    if (tab == AppTab.settings) return false;
+    if (tab == alwaysShown) return false;
     final count = visible.length;
     return isVisible(tab) ? count > minVisible : count < maxVisible;
   }
@@ -78,9 +82,17 @@ class NavBarConfigNotifier extends Notifier<NavBarConfig> {
   @override
   NavBarConfig build() {
     final prefs = ref.watch(sharedPreferencesProvider);
-    final order = prefs.getStringList(_orderKey);
-    final hidden = prefs.getStringList(_hiddenKey);
+    var order = prefs.getStringList(_orderKey);
+    var hidden = prefs.getStringList(_hiddenKey);
     if (order == null || hidden == null) return NavBarConfig.standard;
+    // The settings tab moved to the app bars: stats takes its place.
+    if (order.contains('settings')) {
+      order = [
+        for (final name in order)
+          if (name == 'settings') AppTab.stats.name else if (name != AppTab.stats.name) name,
+      ];
+      hidden = hidden.where((name) => name != 'settings' && name != AppTab.stats.name).toList();
+    }
     final known = _parse(order);
     // Tabs added in an update start hidden, so the user's bar stays as it was.
     final added = AppTab.values.where((tab) => !known.contains(tab));

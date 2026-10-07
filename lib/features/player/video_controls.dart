@@ -10,6 +10,7 @@ import '../../data/models/scene.dart';
 import '../../widgets/hold_detector.dart';
 import '../cast/cast_providers.dart';
 import '../cast/cast_ui.dart';
+import 'player_controls.dart' show fullscreenByRotation;
 import 'player_providers.dart';
 import 'preview_seek_bar.dart';
 import '../../l10n/l10n.dart';
@@ -134,6 +135,20 @@ class _StashVideoControlsState extends ConsumerState<StashVideoControls> {
     if (rate == null) return;
     setState(() => _rateBeforeHold = null);
     ref.read(playerProvider).setRate(rate);
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // Fullscreen entered by turning the phone ends when it is turned back.
+    if (widget.fullscreen &&
+        fullscreenByRotation.value &&
+        MediaQuery.orientationOf(context) == Orientation.portrait) {
+      fullscreenByRotation.value = false;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) widget.onToggleFullscreen();
+      });
+    }
   }
 
   @override
