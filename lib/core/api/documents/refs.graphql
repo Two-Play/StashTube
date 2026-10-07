@@ -1,0 +1,26 @@
+# Small selections shared by the other documents; the models build their
+# nested objects from these (Studio.fromRef, ...).
+
+fragment StudioRef on Studio {
+  id
+  name
+  image_path
+}
+
+fragment PerformerRef on Performer {
+  id
+  name
+  image_path
+}
+
+fragment TagRef on Tag {
+  id
+  name
+}
+
+fragment TagFields on Tag {
+  id
+  name
+  image_path
+  scene_count
+}

@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:stash_app_mobile/data/models/saved_filter.dart';
+import '../fixtures.dart';
 
 void main() {
   test('converts the web UI criterion format to SceneFilterType', () {
@@ -54,7 +55,7 @@ void main() {
       'organized': true,
       'resolution': {'value': 'FULL_HD', 'modifier': 'GREATER_THAN'},
       'title': {'value': 'sunset', 'modifier': 'INCLUDES'},
-      'studios': {'value': '', 'modifier': 'IS_NULL'},
+      'studios': {'value': <String>[], 'modifier': 'IS_NULL'},
     });
   });
 
@@ -67,8 +68,22 @@ void main() {
     expect(result.unsupported, ['phash_distance', 'broken']);
   });
 
-  test('SavedFilter.fromJson reads name, search and sort', () {
-    final filter = SavedFilter.fromJson({
+  test('IS_NULL gets a value of the criterion\'s type; criteria the schema rejects are reported', () {
+    final result = convertSavedSceneFilter({
+      'rating100': {'modifier': 'IS_NULL', 'value': null},
+      'title': {'modifier': 'NOT_NULL', 'value': null},
+      'organized': {'modifier': 'EQUALS', 'value': 'maybe'},
+      'not_in_schema': {'modifier': 'EQUALS', 'value': 'x'},
+    });
+    expect(result.filter, {
+      'rating100': {'value': 0, 'modifier': 'IS_NULL'},
+      'title': {'value': '', 'modifier': 'NOT_NULL'},
+    });
+    expect(result.unsupported, ['organized', 'not_in_schema']);
+  });
+
+  test('SavedFilter reads name, search and sort', () {
+    final filter = savedFilterFrom({
       'id': '4',
       'name': 'Best of',
       'find_filter': {'q': 'beach', 'sort': 'rating', 'direction': 'DESC'},
@@ -82,6 +97,7 @@ void main() {
     expect(filter.name, 'Best of');
     expect(filter.search, 'beach');
     expect(filter.sort, 'rating');
+    expect(filter.direction, 'DESC');
     expect(filter.sceneFilter.keys, ['rating100']);
   });
 }

@@ -18,6 +18,8 @@ analyzer:
     - build/**
     - android/**
     - ios/**
+    # Generated from lib/**/*.graphql (graphql_codegen, see build.yaml).
+    - lib/**.graphql.dart
 
 linter:
   # The lint rules applied to this project can be customized in the

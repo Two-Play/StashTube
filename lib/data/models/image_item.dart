@@ -1,6 +1,7 @@
 import 'json.dart';
 import 'performer.dart';
 import 'studio.dart';
+import '../../core/api/documents/images.graphql.dart';
 
 /// A Stash image (named `ImageItem` to avoid clashing with Flutter's `Image`).
 class ImageItem {
@@ -26,18 +27,17 @@ class ImageItem {
   final Studio? studio;
   final List<Performer> performers;
 
-  factory ImageItem.fromJson(Json json) {
-    final paths = readObject(json, 'paths') ?? const <String, dynamic>{};
-    final studio = readObject(json, 'studio');
+  factory ImageItem.fromGraphql(Query$FindImages$findImages$images i) {
+    final studio = i.studio;
     return ImageItem(
-      id: readString(json, 'id'),
-      title: readNullableString(json, 'title') ?? 'Image',
-      date: readDate(json, 'date'),
-      rating100: readNullableInt(json, 'rating100'),
-      thumbnailUrl: readNullableString(paths, 'thumbnail'),
-      imageUrl: readNullableString(paths, 'image'),
-      studio: studio == null ? null : Studio.fromJson(studio),
-      performers: readList(json, 'performers').map(Performer.fromJson).toList(),
+      id: i.id,
+      title: nonEmpty(i.title) ?? 'Image',
+      date: parseDate(i.date),
+      rating100: i.rating100,
+      thumbnailUrl: nonEmpty(i.paths.thumbnail),
+      imageUrl: nonEmpty(i.paths.image),
+      studio: studio == null ? null : Studio.fromRef(studio),
+      performers: [for (final p in i.performers) Performer.fromRef(p)],
     );
   }
 }

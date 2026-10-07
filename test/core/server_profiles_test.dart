@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:stash_app_mobile/core/config/secret_store.dart';
 import 'package:stash_app_mobile/core/config/server_config.dart';
 import 'package:stash_app_mobile/features/auth/login_page.dart';
 import 'package:stash_app_mobile/features/library/watch_later.dart';
@@ -9,13 +10,22 @@ import 'package:stash_app_mobile/features/player/scene_edits.dart';
 
 void main() {
   late SharedPreferences prefs;
+  late MemorySecretStore secrets;
+
+  ProviderContainer restart() {
+    final c = ProviderContainer(overrides: [
+      sharedPreferencesProvider.overrideWithValue(prefs),
+      secretStoreProvider.overrideWithValue(secrets),
+    ]);
+    addTearDown(c.dispose);
+    return c;
+  }
 
   Future<ProviderContainer> containerWith(Map<String, Object> initial) async {
     SharedPreferences.setMockInitialValues(initial);
     prefs = await SharedPreferences.getInstance();
-    final c = ProviderContainer(overrides: [sharedPreferencesProvider.overrideWithValue(prefs)]);
-    addTearDown(c.dispose);
-    return c;
+    secrets = MemorySecretStore();
+    return restart();
   }
 
   test('migrates a single-server login into the first profile', () async {
@@ -71,10 +81,35 @@ void main() {
     final c = await containerWith({});
     await c.read(serverProfilesProvider.notifier).add(const ServerConfig(baseUrl: 'http://a:1', apiKey: 'k'), name: 'A');
 
-    final restarted = ProviderContainer(overrides: [sharedPreferencesProvider.overrideWithValue(prefs)]);
-    addTearDown(restarted.dispose);
+    final restarted = restart();
     expect(restarted.read(serverProfilesProvider).active?.name, 'A');
     expect(restarted.read(serverConfigProvider)?.apiKey, 'k');
+  });
+
+  test('API keys and passwords are kept in the secret store, not the preferences', () async {
+    final c = await containerWith({});
+    final a = await c.read(serverProfilesProvider.notifier).add(
+          const ServerConfig(baseUrl: 'http://a:1', apiKey: 'k', username: 'me', password: 'pw'),
+        );
+    expect(prefs.getString('server_profiles'), isNot(contains('"k"')));
+    expect(prefs.getString('server_profiles'), isNot(contains('pw')));
+    expect(secrets.values, {'api_key:${a.id}': 'k', 'password:${a.id}': 'pw'});
+    expect(restart().read(serverConfigProvider),
+        const ServerConfig(baseUrl: 'http://a:1', apiKey: 'k', username: 'me', password: 'pw'));
+
+    await c.read(serverProfilesProvider.notifier).remove(a.id);
+    expect(secrets.values, isEmpty, reason: 'removing a server deletes its secrets');
+  });
+
+  test('moves API keys stored by older versions into the secret store', () async {
+    final c = await containerWith({
+      'server_profiles': '[{"id":"1","name":"A","url":"http://a:1","apiKey":"old"}]',
+      'active_server': '1',
+    });
+    expect(c.read(serverConfigProvider)?.apiKey, 'old');
+    await pumpEventQueue();
+    expect(secrets.values, {'api_key:1': 'old'});
+    expect(prefs.getString('server_profiles'), isNot(contains('old')));
   });
 
   test('watch later is kept per server and removed with the server', () async {

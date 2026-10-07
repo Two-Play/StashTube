@@ -1,0 +1,18 @@
+query FindTags($filter: FindFilterType, $tag_filter: TagFilterType) {
+  findTags(filter: $filter, tag_filter: $tag_filter) {
+    count
+    tags { ...TagFields }
+  }
+}
+
+query FindTag($id: ID!) {
+  findTag(id: $id) { ...TagFields description }
+}
+
+mutation TagCreate($name: String!) {
+  tagCreate(input: { name: $name }) { ...TagFields }
+}
+
+mutation TagEdit($input: TagUpdateInput!) {
+  tagUpdate(input: $input) { ...TagFields description }
+}

@@ -13,6 +13,7 @@ import 'package:stash_app_mobile/features/library/galleries_tab.dart';
 import 'package:stash_app_mobile/features/library/gallery_page.dart';
 
 import '../helpers.dart';
+import '../fixtures.dart';
 
 class _NoImages implements StashRepository {
   @override
@@ -24,17 +25,17 @@ class _NoImages implements StashRepository {
 }
 
 void main() {
-  group('Gallery.fromJson', () {
+  group('Gallery from the generated type', () {
     test('parses fields', () {
-      final g = Gallery.fromJson({
+      final g = galleryFrom({
         'id': '3',
         'title': 'Holiday',
         'date': '2023-07-01',
         'image_count': 42,
         'paths': {'cover': 'http://s/cover'},
-        'studio': {'id': '1', 'name': 'Studio'},
+        'studio': studioRefJson({'id': '1', 'name': 'Studio'}),
         'performers': [
-          {'id': '2', 'name': 'Alice'},
+          performerRefJson({'id': '2', 'name': 'Alice'}),
         ],
       });
       expect(g.title, 'Holiday');
@@ -46,12 +47,12 @@ void main() {
 
     test('falls back to the zip name, then the folder name', () {
       expect(
-        Gallery.fromJson({'id': '1', 'title': null, 'files': [{'basename': 'set.zip'}]}).title,
+        galleryFrom({'id': '1', 'title': null, 'files': [{'basename': 'set.zip'}]}).title,
         'set.zip',
       );
-      expect(Gallery.fromJson({'id': '1', 'folder': {'path': '/media/photos/Trip 2024/'}}).title, 'Trip 2024');
-      expect(Gallery.fromJson({'id': '1', 'folder': {'path': r'C:\pics\Beach'}}).title, 'Beach');
-      expect(Gallery.fromJson({'id': '1'}).title, 'Gallery');
+      expect(galleryFrom({'id': '1', 'folder': {'path': '/media/photos/Trip 2024/'}}).title, 'Trip 2024');
+      expect(galleryFrom({'id': '1', 'folder': {'path': r'C:\pics\Beach'}}).title, 'Beach');
+      expect(galleryFrom({'id': '1'}).title, 'Gallery');
     });
   });
 

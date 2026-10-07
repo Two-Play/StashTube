@@ -1,5 +1,6 @@
 import 'json.dart';
 import 'studio.dart';
+import '../../core/api/documents/groups.graphql.dart';
 
 /// A Stash group (called "movie" before Stash v0.27): an ordered set of
 /// scenes, used as a playlist.
@@ -26,17 +27,17 @@ class Group {
   final int sceneCount;
   final Studio? studio;
 
-  factory Group.fromJson(Json json) {
-    final studio = readObject(json, 'studio');
+  factory Group.fromFields(Fragment$GroupFields g, {String? synopsis}) {
+    final studio = g.studio;
     return Group(
-      id: readString(json, 'id'),
-      name: readString(json, 'name', 'Group'),
-      date: readDate(json, 'date'),
-      duration: readDouble(json, 'duration'),
-      frontImageUrl: readNullableString(json, 'front_image_path'),
-      synopsis: readNullableString(json, 'synopsis'),
-      sceneCount: readInt(json, 'scene_count'),
-      studio: studio == null ? null : Studio.fromJson(studio),
+      id: g.id,
+      name: g.name,
+      date: parseDate(g.date),
+      duration: (g.duration ?? 0).toDouble(),
+      frontImageUrl: nonEmpty(g.front_image_path),
+      synopsis: nonEmpty(synopsis),
+      sceneCount: g.scene_count,
+      studio: studio == null ? null : Studio.fromRef(studio),
     );
   }
 }

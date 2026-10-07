@@ -1,4 +1,4 @@
-import 'json.dart';
+import '../../core/api/documents/system.graphql.dart';
 
 class LibraryStats {
   const LibraryStats({
@@ -27,16 +27,16 @@ class LibraryStats {
   final int studioCount;
   final int tagCount;
 
-  factory LibraryStats.fromJson(Json json) => LibraryStats(
-        sceneCount: readInt(json, 'scene_count'),
-        scenesSize: readDouble(json, 'scenes_size'),
-        scenesDuration: readDouble(json, 'scenes_duration'),
-        imageCount: readInt(json, 'image_count'),
-        imagesSize: readDouble(json, 'images_size'),
-        galleryCount: readInt(json, 'gallery_count'),
-        performerCount: readInt(json, 'performer_count'),
-        studioCount: readInt(json, 'studio_count'),
-        tagCount: readInt(json, 'tag_count'),
+  factory LibraryStats.fromGraphql(Query$Stats$stats s) => LibraryStats(
+        sceneCount: s.scene_count,
+        scenesSize: s.scenes_size,
+        scenesDuration: s.scenes_duration,
+        imageCount: s.image_count,
+        imagesSize: s.images_size,
+        galleryCount: s.gallery_count,
+        performerCount: s.performer_count,
+        studioCount: s.studio_count,
+        tagCount: s.tag_count,
       );
 }
 
@@ -50,10 +50,10 @@ class ActivityStats {
   final int scenesPlayed;
   final int oCount;
 
-  factory ActivityStats.fromJson(Json json) => ActivityStats(
-        playCount: readInt(json, 'total_play_count'),
-        playDuration: readDouble(json, 'total_play_duration'),
-        scenesPlayed: readInt(json, 'scenes_played'),
-        oCount: readInt(json, 'total_o_count'),
+  factory ActivityStats.fromGraphql(Query$ActivityStats$stats s) => ActivityStats(
+        playCount: s.total_play_count,
+        playDuration: s.total_play_duration,
+        scenesPlayed: s.scenes_played,
+        oCount: s.total_o_count,
       );
 }

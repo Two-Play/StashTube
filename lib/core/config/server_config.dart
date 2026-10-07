@@ -5,28 +5,47 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'secret_store.dart';
+
 /// Overridden in `main()` with the instance loaded before `runApp`.
 final sharedPreferencesProvider = Provider<SharedPreferences>(
   (ref) => throw UnimplementedError('sharedPreferencesProvider must be overridden'),
 );
 
 class ServerConfig {
-  const ServerConfig({required this.baseUrl, this.apiKey});
+  const ServerConfig({required this.baseUrl, this.apiKey, this.username, this.password});
 
   /// Server root without trailing slash, e.g. `http://192.168.1.5:9999`.
   final String baseUrl;
   final String? apiKey;
 
+  /// Stash login (2.7), as an alternative to the API key: the app signs in
+  /// for a session cookie (`StashSession`).
+  final String? username;
+  final String? password;
+
+  bool get hasCredentials => (username?.isNotEmpty ?? false) && (password?.isNotEmpty ?? false);
+
+  /// Signs in for a session cookie: with a login and no API key, which
+  /// would be enough on its own.
+  bool get usesSession => hasCredentials && (apiKey?.isEmpty ?? true);
+
   String get graphqlEndpoint => '$baseUrl/graphql';
 
   // Value equality: an unchanged config must not rebuild the API client.
   @override
-  bool operator ==(Object other) => other is ServerConfig && other.baseUrl == baseUrl && other.apiKey == apiKey;
+  bool operator ==(Object other) =>
+      other is ServerConfig &&
+      other.baseUrl == baseUrl &&
+      other.apiKey == apiKey &&
+      other.username == username &&
+      other.password == password;
 
   @override
-  int get hashCode => Object.hash(baseUrl, apiKey);
+  int get hashCode => Object.hash(baseUrl, apiKey, username, password);
 
-  /// Headers needed for every request to the server: GraphQL, images, streams.
+  /// The API key header for every request to the server: GraphQL, images,
+  /// streams. A login's session cookie comes from `authHeadersProvider`.
   Map<String, String> get authHeaders {
     final key = apiKey;
     return key == null || key.isEmpty ? const {} : {'ApiKey': key};
@@ -49,17 +68,27 @@ class ServerConfig {
   }
 }
 
-/// A saved Stash server (2.6).
+/// A saved Stash server (2.6). Its API key and password live in the
+/// [SecretStore] (2.5), not in the stored JSON.
 @immutable
 class ServerProfile {
-  const ServerProfile({required this.id, required this.name, required this.baseUrl, this.apiKey});
+  const ServerProfile({
+    required this.id,
+    required this.name,
+    required this.baseUrl,
+    this.apiKey,
+    this.username,
+    this.password,
+  });
 
   final String id;
   final String name;
   final String baseUrl;
   final String? apiKey;
+  final String? username;
+  final String? password;
 
-  ServerConfig get config => ServerConfig(baseUrl: baseUrl, apiKey: apiKey);
+  ServerConfig get config => ServerConfig(baseUrl: baseUrl, apiKey: apiKey, username: username, password: password);
 
   /// A readable default name: host and port of the URL.
   static String defaultName(String baseUrl) {
@@ -68,21 +97,44 @@ class ServerProfile {
     return uri.hasPort ? '${uri.host}:${uri.port}' : uri.host;
   }
 
-  ServerProfile copyWith({String? name, String? baseUrl, String? apiKey, bool clearApiKey = false}) => ServerProfile(
+  ServerProfile copyWith({String? name, String? baseUrl}) => ServerProfile(
         id: id,
         name: name ?? this.name,
         baseUrl: baseUrl ?? this.baseUrl,
-        apiKey: clearApiKey ? null : (apiKey ?? this.apiKey),
+        apiKey: apiKey,
+        username: username,
+        password: password,
       );
 
-  Map<String, dynamic> toJson() => {'id': id, 'name': name, 'url': baseUrl, if (apiKey != null) 'apiKey': apiKey};
-
-  factory ServerProfile.fromJson(Map<String, dynamic> json) => ServerProfile(
-        id: json['id'] as String,
-        name: json['name'] as String,
-        baseUrl: json['url'] as String,
-        apiKey: json['apiKey'] as String?,
+  /// This profile with the credentials of [config].
+  ServerProfile withAuth(ServerConfig config) => ServerProfile(
+        id: id,
+        name: name,
+        baseUrl: config.baseUrl,
+        apiKey: config.apiKey,
+        username: config.username,
+        password: config.password,
       );
+
+  static String apiKeySecret(String id) => 'api_key:$id';
+  static String passwordSecret(String id) => 'password:$id';
+
+  /// Without the secrets.
+  Map<String, dynamic> toJson() => {'id': id, 'name': name, 'url': baseUrl, if (username != null) 'username': username};
+
+  /// Versions before 2.5 stored the API key in the JSON; it is moved to the
+  /// secret store on load.
+  factory ServerProfile.fromJson(Map<String, dynamic> json, SecretStore secrets) {
+    final id = json['id'] as String;
+    return ServerProfile(
+      id: id,
+      name: json['name'] as String,
+      baseUrl: json['url'] as String,
+      apiKey: secrets.read(apiKeySecret(id)) ?? json['apiKey'] as String?,
+      username: json['username'] as String?,
+      password: secrets.read(passwordSecret(id)),
+    );
+  }
 }
 
 @immutable
@@ -104,15 +156,21 @@ class ServerProfilesNotifier extends Notifier<ServerProfiles> {
   static const _legacyUrlKey = 'url';
   static const _legacyApiKey = 'api_key';
 
+  SecretStore get _secrets => ref.read(secretStoreProvider);
+
   @override
   ServerProfiles build() {
     final prefs = ref.watch(sharedPreferencesProvider);
     final raw = prefs.getString(_profilesKey);
     if (raw != null) {
-      final list = [
-        for (final p in (jsonDecode(raw) as List).whereType<Map<String, dynamic>>()) ServerProfile.fromJson(p),
-      ];
-      return ServerProfiles(profiles: list, activeId: prefs.getString(_activeKey));
+      final json = (jsonDecode(raw) as List).whereType<Map<String, dynamic>>().toList();
+      final profiles = ServerProfiles(
+        profiles: [for (final p in json) ServerProfile.fromJson(p, _secrets)],
+        activeId: prefs.getString(_activeKey),
+      );
+      // Move API keys of older versions out of the preferences.
+      if (json.any((p) => p.containsKey('apiKey'))) _persist(profiles);
+      return profiles;
     }
 
     // Migrate an existing single-server login into the first profile.
@@ -136,6 +194,11 @@ class ServerProfilesNotifier extends Notifier<ServerProfiles> {
 
   Future<void> _persist(ServerProfiles value) async {
     final prefs = ref.read(sharedPreferencesProvider);
+    // Secrets first: the JSON without them must not be stored before them.
+    for (final p in value.profiles) {
+      await _secrets.write(ServerProfile.apiKeySecret(p.id), p.apiKey);
+      await _secrets.write(ServerProfile.passwordSecret(p.id), p.password);
+    }
     await prefs.setString(_profilesKey, jsonEncode([for (final p in value.profiles) p.toJson()]));
     if (value.activeId == null) {
       await prefs.remove(_activeKey);
@@ -158,12 +221,10 @@ class ServerProfilesNotifier extends Notifier<ServerProfiles> {
             name: (name == null || name.trim().isEmpty) ? ServerProfile.defaultName(config.baseUrl) : name.trim(),
             baseUrl: config.baseUrl,
             apiKey: config.apiKey,
+            username: config.username,
+            password: config.password,
           )
-        : existing.copyWith(
-            name: (name == null || name.trim().isEmpty) ? null : name.trim(),
-            apiKey: config.apiKey,
-            clearApiKey: config.apiKey == null,
-          );
+        : existing.withAuth(config).copyWith(name: (name == null || name.trim().isEmpty) ? null : name.trim());
     await _set(ServerProfiles(
       profiles: [for (final p in state.profiles) if (p.id != profile.id) p, profile],
       activeId: profile.id,
@@ -171,19 +232,12 @@ class ServerProfilesNotifier extends Notifier<ServerProfiles> {
     return profile;
   }
 
-  /// Changes a saved server's URL, API key and name. Keeps its id, so the
-  /// data stored for it (watch later, settings) stays.
+  /// Changes a saved server's URL, credentials and name. Keeps its id, so
+  /// the data stored for it (watch later, settings) stays.
   Future<void> update(String id, ServerConfig config, {String? name}) => _set(ServerProfiles(
         profiles: [
           for (final p in state.profiles)
-            p.id == id
-                ? p.copyWith(
-                    name: (name == null || name.trim().isEmpty) ? null : name.trim(),
-                    baseUrl: config.baseUrl,
-                    apiKey: config.apiKey,
-                    clearApiKey: config.apiKey == null,
-                  )
-                : p,
+            p.id == id ? p.withAuth(config).copyWith(name: (name == null || name.trim().isEmpty) ? null : name.trim()) : p,
         ],
         activeId: state.activeId,
       ));
@@ -207,6 +261,7 @@ class ServerProfilesNotifier extends Notifier<ServerProfiles> {
     for (final key in prefs.getKeys().where((k) => k.endsWith(':$id')).toList()) {
       await prefs.remove(key);
     }
+    await _secrets.deleteWhere((k) => k.endsWith(':$id'));
   }
 
   /// Leaves the current server without deleting it (back to server choice).
@@ -221,7 +276,3 @@ final serverConfigProvider = Provider<ServerConfig?>((ref) => ref.watch(serverPr
 /// Id of the server in use; per-server data (watch later, caches) keys on it.
 final activeServerIdProvider = Provider<String?>((ref) => ref.watch(serverProfilesProvider).activeId);
 
-/// Auth headers for the current server, for image and video requests.
-final authHeadersProvider = Provider<Map<String, String>>(
-  (ref) => ref.watch(serverConfigProvider)?.authHeaders ?? const {},
-);

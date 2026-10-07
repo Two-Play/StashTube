@@ -1,0 +1,31 @@
+fragment GalleryFields on Gallery {
+  id
+  title
+  date
+  details
+  image_count
+  paths { cover }
+  files { basename }
+  folder { path }
+  studio { ...StudioRef }
+  performers { ...PerformerRef }
+}
+
+query FindGalleries($filter: FindFilterType) {
+  findGalleries(filter: $filter) {
+    count
+    galleries { ...GalleryFields }
+  }
+}
+
+query FindGallery($id: ID!) {
+  findGallery(id: $id) { ...GalleryFields }
+}
+
+query GalleryUrls($id: ID!) {
+  findGallery(id: $id) { id urls }
+}
+
+mutation GalleryEdit($input: GalleryUpdateInput!) {
+  galleryUpdate(input: $input) { ...GalleryFields }
+}

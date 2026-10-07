@@ -1,0 +1,78 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  # The version the project is developed with; pubspec.lock is not checked
+  # in, so dependencies resolve fresh against it.
+  FLUTTER_VERSION: 3.47.6
+
+jobs:
+  analyze-test:
+    name: Analyze and test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: stable
+          cache: true
+      - run: flutter pub get
+      - name: Generated code is up to date
+        run: |
+          flutter gen-l10n
+          git diff --exit-code -- lib/l10n/gen
+      # Fails on documents that don't match Stash's schema (1.8). The output
+      # can differ in formatting with newer generator versions (pubspec.lock
+      # isn't checked in), so a difference only warns; the tests below run
+      # on the regenerated code.
+      - name: GraphQL types match the schema
+        run: |
+          flutter pub run build_runner build --delete-conflicting-outputs
+          git diff --quiet -- 'lib/**/*.graphql.dart' \
+            || echo "::warning::Generated GraphQL code differs; run build_runner and commit it."
+      # dart analyze, not flutter analyze: only it runs riverpod_lint.
+      - run: dart analyze
+      - run: flutter test
+
+  build-android:
+    name: Build Android
+    needs: analyze-test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: '21'
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: stable
+          cache: true
+      - run: flutter build apk --debug
+      - uses: actions/upload-artifact@v7
+        with:
+          name: app-debug-apk
+          path: build/app/outputs/flutter-apk/app-debug.apk
+          retention-days: 7
+
+  build-ios:
+    name: Build iOS
+    needs: analyze-test
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: stable
+          cache: true
+      - run: flutter build ios --debug --no-codesign

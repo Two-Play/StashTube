@@ -78,8 +78,12 @@ class SettingsPage extends ConsumerWidget {
           ),
           ListTile(
             leading: const Icon(Icons.key_outlined),
-            title: Text(l.apiKey),
-            subtitle: Text(config?.apiKey == null ? l.notSet : l.isSet),
+            title: Text(l.serverAccess),
+            subtitle: Text(switch (config) {
+              ServerConfig(apiKey: final key?) when key.isNotEmpty => '${l.apiKey}: ${l.isSet}',
+              ServerConfig(hasCredentials: true, :final username?) => l.signedInAs(username),
+              _ => l.notSet,
+            }),
             trailing: const Icon(Icons.edit_outlined),
             onTap: server == null ? null : () => openServerEditor(context, server),
           ),

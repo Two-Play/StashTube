@@ -636,7 +636,23 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get apiKeyHelper =>
-      'Required if your server has a password. Stash → Settings → Security.';
+      'For a server with a password: the API key (Stash → Settings → Security), or sign in below.';
+
+  @override
+  String get orSignIn => 'Or sign in';
+
+  @override
+  String get orSignInHint =>
+      'With the username and password of your Stash server. Casting to a TV needs the API key.';
+
+  @override
+  String get username => 'Username';
+
+  @override
+  String get password => 'Password';
+
+  @override
+  String get loginIncomplete => 'Enter username and password.';
 
   @override
   String get connect => 'Connect';
@@ -756,6 +772,14 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get isSet => 'Set';
+
+  @override
+  String get serverAccess => 'API key or login';
+
+  @override
+  String signedInAs(String name) {
+    return 'Signed in as $name';
+  }
 
   @override
   String get sectionAppearance => 'Appearance';
@@ -1170,7 +1194,11 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get errorUnauthorized => 'Not authorized – check the API key.';
+  String get errorUnauthorized =>
+      'Not authorized – check the API key or login.';
+
+  @override
+  String get errorInvalidCredentials => 'Wrong username or password.';
 
   @override
   String errorNotReady(String status) {

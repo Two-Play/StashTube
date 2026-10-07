@@ -3,7 +3,6 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:graphql_flutter/graphql_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:stash_app_mobile/core/config/server_config.dart';
-import 'package:stash_app_mobile/data/models/group.dart';
 import 'package:stash_app_mobile/data/models/list_queries.dart';
 import 'package:stash_app_mobile/data/models/scene.dart';
 import 'package:stash_app_mobile/data/repositories/stash_repository.dart';
@@ -12,6 +11,7 @@ import 'package:stash_app_mobile/features/player/playback_tracker.dart';
 import 'package:stash_app_mobile/features/player/player_providers.dart';
 
 import 'fake_player.dart';
+import '../fixtures.dart';
 
 class _NoopActivity implements PlaybackActivityApi {
   @override
@@ -40,14 +40,14 @@ void main() {
     expect(SceneSort.feed, isNot(contains(SceneSort.groupOrder)));
   });
 
-  test('Group.fromJson', () {
-    final g = Group.fromJson({
+  test('Group from the generated type', () {
+    final g = groupFrom({
       'id': '5',
       'name': 'Trilogy',
       'duration': 5400,
       'front_image_path': 'http://s/g',
       'scene_count': 3,
-      'studio': {'id': '1', 'name': 'Studio'},
+      'studio': studioRefJson({'id': '1', 'name': 'Studio'}),
     });
     expect(g.name, 'Trilogy');
     expect(g.duration, 5400);
@@ -59,15 +59,15 @@ void main() {
     final repo = StashRepository(GraphQLClient(
       // The fake response only has the fields this test needs.
       cache: GraphQLCache(partialDataPolicy: PartialDataCachePolicy.accept),
-      link: Link.function((request, [forward]) => Stream.value(const Response(
+      link: Link.function((request, [forward]) => Stream.value(Response(
             response: {},
             data: {
               '__typename': 'Query',
               'findScenes': {
                 '__typename': 'FindScenesResultType',
                 'scenes': [
-                  {'__typename': 'Scene', 'id': '1', 'title': 'One'},
-                  {'__typename': 'Scene', 'id': '3', 'title': 'Three'},
+                  {'__typename': 'Scene', ...sceneJson({'id': '1', 'title': 'One'})},
+                  {'__typename': 'Scene', ...sceneJson({'id': '3', 'title': 'Three'})},
                 ],
               },
             },

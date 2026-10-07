@@ -11,6 +11,7 @@ import '../../data/models/scene.dart';
 import '../../data/models/scene_details.dart';
 import '../../data/providers.dart';
 import '../../data/repositories/stash_repository.dart';
+import '../../data/repositories/stash_session.dart';
 import '../cast/cast_media.dart';
 import '../cast/cast_providers.dart';
 import '../cast/cast_service.dart' show CastKind;

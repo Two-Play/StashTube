@@ -1,3 +1,5 @@
+import '../../core/api/documents/system.graphql.dart';
+import '../../core/api/stash_schema.graphql.dart';
 import 'json.dart';
 
 /// A filter saved in Stash's web UI (5.5).
@@ -24,16 +26,17 @@ class SavedFilter {
   /// Criteria that couldn't be converted and are ignored.
   final List<String> unsupportedCriteria;
 
-  factory SavedFilter.fromJson(Json json) {
-    final find = readObject(json, 'find_filter') ?? const <String, dynamic>{};
-    final converted = convertSavedSceneFilter(readObject(json, 'object_filter') ?? const {});
+  factory SavedFilter.fromGraphql(Query$SavedSceneFilters$findSavedFilters f) {
+    final find = f.find_filter;
+    final direction = find?.direction;
+    final converted = convertSavedSceneFilter(f.object_filter ?? const {});
     return SavedFilter(
-      id: readString(json, 'id'),
-      name: readString(json, 'name', 'Saved filter'),
+      id: f.id,
+      name: nonEmpty(f.name) ?? 'Saved filter',
       sceneFilter: converted.filter,
-      search: readNullableString(find, 'q'),
-      sort: readNullableString(find, 'sort'),
-      direction: readNullableString(find, 'direction'),
+      search: nonEmpty(find?.q),
+      sort: nonEmpty(find?.sort),
+      direction: direction == null ? null : toJson$Enum$SortDirectionEnum(direction),
       unsupportedCriteria: converted.unsupported,
     );
   }
@@ -69,8 +72,11 @@ const _resolutions = {
 /// * `{"modifier": m, "value": [{id,label}]}` → `{"value": [ids], "modifier": m}`
 /// * `{"modifier": m, "value": "true"}` for boolean criteria → `true`
 /// * other scalars → `{"value": v, "modifier": m}` (resolution labels mapped)
+/// * `IS_NULL` / `NOT_NULL` without a value → a value of the criterion's
+///   type, which Stash ignores but the schema requires
 ///
-/// Anything else is reported in `unsupported` and left out.
+/// Every criterion is checked against the generated `SceneFilterType`;
+/// anything that doesn't fit is reported in `unsupported` and left out.
 ({Map<String, dynamic> filter, List<String> unsupported}) convertSavedSceneFilter(Map<String, dynamic> objectFilter) {
   final filter = <String, dynamic>{};
   final unsupported = <String>[];
@@ -107,10 +113,18 @@ const _resolutions = {
       final mapped = key == 'resolution' ? _resolutions[value.toString().toLowerCase()] ?? value : value;
       filter[key] = {'value': mapped, 'modifier': ?modifier};
     } else if (value == null && (modifier == 'IS_NULL' || modifier == 'NOT_NULL')) {
-      filter[key] = {'value': '', 'modifier': modifier};
-    } else {
+      filter[key] = [
+        for (final empty in const [<String>[], 0, ''])
+          if (_fits(key, {'value': empty, 'modifier': modifier})) {'value': empty, 'modifier': modifier},
+      ].firstOrNull;
+    }
+    if (!filter.containsKey(key) || filter[key] == null || !_fits(key, filter[key])) {
+      filter.remove(key);
       unsupported.add(key);
     }
   }
   return (filter: filter, unsupported: unsupported);
 }
+
+bool _fits(String key, Object? criterion) =>
+    fitsInput<Input$SceneFilterType>({key: criterion}, Input$SceneFilterType.fromJson, (i) => i.toJson());

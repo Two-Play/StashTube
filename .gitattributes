@@ -1,0 +1,4 @@
+# Generated code: collapsed in GitHub diffs.
+lib/l10n/gen/** linguist-generated=true
+lib/**/*.graphql.dart linguist-generated=true
+lib/core/api/stash_schema.graphql linguist-generated=true

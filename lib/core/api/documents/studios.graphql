@@ -1,0 +1,27 @@
+fragment StudioFields on Studio {
+  ...StudioRef
+  url
+  scene_count
+  parent_studio { ...StudioRef }
+}
+
+fragment StudioDetails on Studio {
+  ...StudioFields
+  details
+  child_studios { ...StudioRef scene_count }
+}
+
+query FindStudios($filter: FindFilterType) {
+  findStudios(filter: $filter) {
+    count
+    studios { ...StudioFields }
+  }
+}
+
+query FindStudio($id: ID!) {
+  findStudio(id: $id) { ...StudioDetails }
+}
+
+mutation StudioEdit($input: StudioUpdateInput!) {
+  studioUpdate(input: $input) { ...StudioDetails }
+}
