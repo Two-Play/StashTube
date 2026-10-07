@@ -104,8 +104,8 @@ final class AirPlayController: NSObject, FlutterStreamHandler {
     case "pause":
       player?.pause()
     case "seek":
-      let ms = (call.arguments as? NSNumber)?.int64Value ?? 0
-      player?.seek(to: CMTime(value: ms, timescale: 1000), toleranceBefore: .zero, toleranceAfter: .zero)
+      let millis = (call.arguments as? NSNumber)?.int64Value ?? 0
+      player?.seek(to: CMTime(value: millis, timescale: 1000), toleranceBefore: .zero, toleranceAfter: .zero)
     case "stop":
       stopPlayer()
       engaged = false
@@ -191,7 +191,7 @@ final class AirPlayController: NSObject, FlutterStreamHandler {
       "engaged": engaged,
       "playing": status == .playing,
       "loading": status == .waitingToPlayAtSpecifiedRate,
-      "positionMs": position.isFinite ? Int(position * 1000) : 0,
+      "positionMs": position.isFinite ? Int(position * 1000) : 0
     ])
   }
 
