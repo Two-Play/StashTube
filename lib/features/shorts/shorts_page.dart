@@ -390,15 +390,22 @@ class _ShortsPageState extends ConsumerState<ShortsPage> {
                     );
                   },
                 )
-              else if (feed.error != null)
-                ErrorView(error: feed.error!, onRetry: () => ref.read(shortsFeedProvider.notifier).refresh())
-              else if (feed.isLoading)
-                const LoadingView()
               else
-                EmptyView(
-                  message: context.l10n.shortsEmpty,
-                  hint: context.l10n.shortsEmptyHint,
-                  icon: Icons.slow_motion_video,
+                // Centered on the screen; a plain Stack child sits top left.
+                Positioned.fill(
+                  child: Center(
+                    child: SingleChildScrollView(
+                      child: feed.error != null
+                          ? ErrorView(error: feed.error!, onRetry: () => ref.read(shortsFeedProvider.notifier).refresh())
+                          : feed.isLoading
+                              ? const LoadingView()
+                              : EmptyView(
+                                  message: context.l10n.shortsEmpty,
+                                  hint: context.l10n.shortsEmptyHint,
+                                  icon: Icons.slow_motion_video,
+                                ),
+                    ),
+                  ),
                 ),
               _TopBar(
                 fullscreen: _fullscreen,
