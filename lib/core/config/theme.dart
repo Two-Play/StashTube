@@ -54,6 +54,7 @@ const stashBrown = Color(0xFFA08069);
 /// Accent colors offered in the settings; the first one is the default.
 /// [stashBlue] stands for the whole Stash theme (blue and brown).
 const accentColors = <String, Color>{
+  'Stash': stashBlue,
   'Red': Color(0xFFE53935),
   'Pink': Color(0xFFD81B60),
   'Purple': Color(0xFF8E24AA),
@@ -63,7 +64,6 @@ const accentColors = <String, Color>{
   'Green': Color(0xFF43A047),
   'Orange': Color(0xFFF4511E),
   'Amber': Color(0xFFFFB300),
-  'Stash': stashBlue,
 };
 
 class AccentColorNotifier extends Notifier<Color> {
@@ -83,8 +83,8 @@ class AccentColorNotifier extends Notifier<Color> {
 
 final accentColorProvider = NotifierProvider<AccentColorNotifier, Color>(AccentColorNotifier.new);
 
-/// YouTube-like look: neutral surfaces with a user-selectable accent (red by
-/// default). The Stash accent also brings Stash's brown as second color and,
+/// YouTube-like look: neutral surfaces with a user-selectable accent (Stash's
+/// by default). The Stash accent also brings Stash's brown as second color and,
 /// in dark mode, the blue-gray background of its web UI.
 abstract final class AppTheme {
   static ThemeData light(Color accent) => _build(Brightness.light, accent);

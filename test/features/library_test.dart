@@ -60,7 +60,7 @@ void main() {
     final container = ProviderContainer(overrides: [sharedPreferencesProvider.overrideWithValue(prefs)]);
     addTearDown(container.dispose);
 
-    expect(container.read(accentColorProvider), accentColors['Red']);
+    expect(container.read(accentColorProvider), stashBlue, reason: 'the Stash theme is the default');
     await container.read(accentColorProvider.notifier).set(accentColors['Amber']!);
     expect(prefs.getInt('accent_color'), accentColors['Amber']!.toARGB32());
 
