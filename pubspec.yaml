@@ -53,6 +53,7 @@ dependencies:
   flutter_chrome_cast: ^1.5.0
   image_picker: ^1.2.3
   crypto: ^3.0.7
+  flutter_secure_storage: ^11.2.0
 
 dev_dependencies:
   flutter_test:
