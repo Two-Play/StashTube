@@ -367,54 +367,58 @@ class _ShortsPageState extends ConsumerState<ShortsPage> {
         value: SystemUiOverlayStyle.light,
         child: Scaffold(
           backgroundColor: Colors.black,
-          body: Stack(
-            children: [
-              if (items.isNotEmpty)
-                PageView.builder(
-                  controller: _pageController,
-                  scrollDirection: Axis.vertical,
-                  physics: const _FastPageScrollPhysics(),
-                  itemCount: items.length,
-                  onPageChanged: (i) => _onPageChanged(i, items),
-                  itemBuilder: (_, i) {
-                    final slot = _slot(i);
-                    final controller = _slotScene[slot] == items[i].id ? (_controllers?[slot]) : null;
-                    return _ShortView(
-                      key: ValueKey(items[i].id),
-                      scene: items[i],
-                      controller: controller,
-                      paused: i == _index && _paused,
-                      fullscreen: _fullscreen,
-                      onTap: _togglePause,
-                      onFullVideo: () => _openFullVideo(items[i]),
-                    );
-                  },
-                )
-              else
-                // Centered on the screen; a plain Stack child sits top left.
-                Positioned.fill(
-                  child: Center(
-                    child: SingleChildScrollView(
-                      child: feed.error != null
-                          ? ErrorView(error: feed.error!, onRetry: () => ref.read(shortsFeedProvider.notifier).refresh())
-                          : feed.isLoading
-                              ? const LoadingView()
-                              : EmptyView(
-                                  message: context.l10n.shortsEmpty,
-                                  hint: context.l10n.shortsEmptyHint,
-                                  icon: Icons.slow_motion_video,
-                                ),
+          // Full size even without a page view: the top bar alone would
+          // make the stack only as tall as itself.
+          body: SizedBox.expand(
+            child: Stack(
+              children: [
+                if (items.isNotEmpty)
+                  PageView.builder(
+                    controller: _pageController,
+                    scrollDirection: Axis.vertical,
+                    physics: const _FastPageScrollPhysics(),
+                    itemCount: items.length,
+                    onPageChanged: (i) => _onPageChanged(i, items),
+                    itemBuilder: (_, i) {
+                      final slot = _slot(i);
+                      final controller = _slotScene[slot] == items[i].id ? (_controllers?[slot]) : null;
+                      return _ShortView(
+                        key: ValueKey(items[i].id),
+                        scene: items[i],
+                        controller: controller,
+                        paused: i == _index && _paused,
+                        fullscreen: _fullscreen,
+                        onTap: _togglePause,
+                        onFullVideo: () => _openFullVideo(items[i]),
+                      );
+                    },
+                  )
+                else
+                  // Centered on the screen; a plain Stack child sits top left.
+                  Positioned.fill(
+                    child: Center(
+                      child: SingleChildScrollView(
+                        child: feed.error != null
+                            ? ErrorView(error: feed.error!, onRetry: () => ref.read(shortsFeedProvider.notifier).refresh())
+                            : feed.isLoading
+                                ? const LoadingView()
+                                : EmptyView(
+                                    message: context.l10n.shortsEmpty,
+                                    hint: context.l10n.shortsEmptyHint,
+                                    icon: Icons.slow_motion_video,
+                                  ),
+                      ),
                     ),
                   ),
+                _TopBar(
+                  fullscreen: _fullscreen,
+                  onToggleFullscreen: _toggleFullscreen,
+                  muted: _muted,
+                  onToggleMute: _toggleMute,
+                  onRefresh: () => ref.read(shortsFeedProvider.notifier).refresh(),
                 ),
-              _TopBar(
-                fullscreen: _fullscreen,
-                onToggleFullscreen: _toggleFullscreen,
-                muted: _muted,
-                onToggleMute: _toggleMute,
-                onRefresh: () => ref.read(shortsFeedProvider.notifier).refresh(),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),
