@@ -148,7 +148,7 @@
   "remove": "Entfernen",
   "popularTags": "Beliebte Tags",
   "seeAll": "Alle anzeigen",
-  "searchIntro": "Szenen und Performer durchsuchen",
+  "searchIntro": "Szenen, Bilder, Galerien, Performer und Studios durchsuchen",
   "addServer": "Server hinzufügen",
   "connectToStash": "Mit Stash verbinden",
   "loginIntro": "Gib die Adresse deines Stash-Servers ein, z. B. http://192.168.1.10:9999",
@@ -386,5 +386,8 @@
   "airPlayHint": "Apple TV und AirPlay-Fernseher",
   "allViews": "Alle Ansichten",
   "tabAll": "Alle",
-  "colorStash": "Stash (Blau/Braun)"
+  "colorStash": "Stash (Blau/Braun)",
+  "searchScenes": "Szenen suchen",
+  "searchGalleries": "Galerien suchen",
+  "searchNoResults": "Nichts gefunden zu „{term}“"
 }

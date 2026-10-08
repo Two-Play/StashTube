@@ -32,25 +32,30 @@ class _ImagesTabState extends State<ImagesTab> with AutomaticKeepAliveClientMixi
     super.build(context);
     return ImageGridView(
       initialQuery: _query,
-      sorts: const [ImageSort.recentlyAdded, ImageSort.newest, ImageSort.random, ImageSort.topRated, ImageSort.title],
+      sorts: ImageSort.browse,
+      // Searched from the search page (library app bar), not a field of its own.
+      searchable: false,
     );
   }
 }
 
-/// Endless, refreshable thumbnail grid of images with a search field, a
-/// filter button (tags, rating, quality; 15.4) and optional sort chips;
-/// tapping an image opens [ImageViewerPage] on the same list.
+/// Endless, refreshable thumbnail grid of images with an optional search
+/// field, a filter button (tags, rating, quality; 15.4) and optional sort
+/// chips; tapping an image opens [ImageViewerPage] on the same list. Without
+/// the field, a changed [initialQuery] search keeps the sort and filters.
 class ImageGridView extends ConsumerStatefulWidget {
   const ImageGridView({
     super.key,
     required this.initialQuery,
     this.sorts = const [],
     this.headerSlivers = const [],
+    this.searchable = true,
   });
 
   final ImageQuery initialQuery;
   final List<ImageSort> sorts;
   final List<Widget> headerSlivers;
+  final bool searchable;
 
   @override
   ConsumerState<ImageGridView> createState() => _ImageGridViewState();
@@ -60,6 +65,15 @@ class _ImageGridViewState extends ConsumerState<ImageGridView> {
   late ImageQuery _query = widget.initialQuery;
   late final _search = TextEditingController(text: widget.initialQuery.search);
   Timer? _debounce;
+
+  @override
+  void didUpdateWidget(ImageGridView oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    final search = widget.initialQuery.search;
+    if (oldWidget.initialQuery.search != search) {
+      _query = _query.copyWith(search: search, clearSearch: search == null);
+    }
+  }
 
   @override
   void dispose() {
@@ -100,33 +114,34 @@ class _ImageGridViewState extends ConsumerState<ImageGridView> {
           physics: const AlwaysScrollableScrollPhysics(),
           slivers: [
             ...widget.headerSlivers,
-            SliverToBoxAdapter(
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(12, 8, 12, 0),
-                child: TextField(
-                  controller: _search,
-                  textInputAction: TextInputAction.search,
-                  onChanged: _onSearchChanged,
-                  onSubmitted: _setSearch,
-                  decoration: InputDecoration(
-                    hintText: context.l10n.searchImages,
-                    prefixIcon: const Icon(Icons.search),
-                    suffixIcon: _search.text.isEmpty
-                        ? null
-                        : IconButton(
-                            tooltip: context.l10n.clearField,
-                            icon: const Icon(Icons.close),
-                            onPressed: () {
-                              _search.clear();
-                              _setSearch('');
-                            },
-                          ),
-                    border: const OutlineInputBorder(),
-                    isDense: true,
+            if (widget.searchable)
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(12, 8, 12, 0),
+                  child: TextField(
+                    controller: _search,
+                    textInputAction: TextInputAction.search,
+                    onChanged: _onSearchChanged,
+                    onSubmitted: _setSearch,
+                    decoration: InputDecoration(
+                      hintText: context.l10n.searchImages,
+                      prefixIcon: const Icon(Icons.search),
+                      suffixIcon: _search.text.isEmpty
+                          ? null
+                          : IconButton(
+                              tooltip: context.l10n.clearField,
+                              icon: const Icon(Icons.close),
+                              onPressed: () {
+                                _search.clear();
+                                _setSearch('');
+                              },
+                            ),
+                      border: const OutlineInputBorder(),
+                      isDense: true,
+                    ),
                   ),
                 ),
               ),
-            ),
             SliverToBoxAdapter(
               child: Row(
                 children: [

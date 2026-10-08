@@ -7,6 +7,7 @@ import '../../data/providers.dart';
 import '../../widgets/chip_bar.dart';
 import '../../widgets/paged_sliver.dart';
 import '../../widgets/performer_tile.dart';
+import '../search/search_page.dart';
 import '../shell/navigation.dart';
 import '../../l10n/l10n.dart';
 import '../settings/settings_button.dart';
@@ -29,7 +30,7 @@ class _PerformersPageState extends ConsumerState<PerformersPage> {
       appBar: AppBar(
         title: Text(context.l10n.performersTitle),
         actions: [
-          IconButton(icon: const Icon(Icons.search), onPressed: () => openSearch(ref)),
+          IconButton(icon: const Icon(Icons.search), onPressed: () => openSearch(ref, scope: SearchScope.performers)),
           const SettingsButton(),
         ],
       ),

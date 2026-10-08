@@ -47,6 +47,9 @@ enum ImageSort {
   const ImageSort(this.field);
 
   final String field;
+
+  /// Sorts offered for all images (not within a gallery).
+  static const browse = [recentlyAdded, newest, random, topRated, title];
 }
 
 enum GallerySort {
@@ -320,18 +323,22 @@ class ImageQuery {
 }
 
 class GalleryQuery {
-  GalleryQuery({this.sort = GallerySort.recentlyAdded, int? seed})
+  GalleryQuery({this.sort = GallerySort.recentlyAdded, this.search, int? seed})
       : seed = seed ?? (sort == GallerySort.random ? newRandomSeed() : 0);
 
   final GallerySort sort;
+
+  /// Free text (Stash's `q`: title, path, ...).
+  final String? search;
   final int seed;
 
   String get sortField => sort == GallerySort.random ? 'random_$seed' : sort.field;
   String get direction => sort == GallerySort.title ? 'ASC' : 'DESC';
 
   @override
-  bool operator ==(Object other) => other is GalleryQuery && other.sort == sort && other.seed == seed;
+  bool operator ==(Object other) =>
+      other is GalleryQuery && other.sort == sort && other.search == search && other.seed == seed;
 
   @override
-  int get hashCode => Object.hash(sort, seed);
+  int get hashCode => Object.hash(sort, search, seed);
 }

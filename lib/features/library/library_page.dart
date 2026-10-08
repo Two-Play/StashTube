@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../data/models/list_queries.dart';
 import '../../l10n/l10n.dart';
 import '../../widgets/scene_feed.dart';
+import '../search/search_page.dart';
 import '../shell/navigation.dart';
 import 'galleries_tab.dart';
 import 'groups.dart';
@@ -35,6 +36,13 @@ enum LibrarySection {
         images => l.libraryImages,
         galleries => l.libraryGalleries,
         stats => l.libraryStats,
+      };
+
+  /// What the app bar's search button searches in this section.
+  SearchScope get searchScope => switch (this) {
+        images => SearchScope.images,
+        galleries => SearchScope.galleries,
+        _ => SearchScope.scenes,
       };
 
   Widget body(AppLocalizations l) => switch (this) {
@@ -72,7 +80,20 @@ class LibraryPage extends ConsumerWidget {
       child: Scaffold(
         appBar: AppBar(
           title: Text(l.libraryTitle),
-          actions: [IconButton(icon: const Icon(Icons.search), onPressed: () => openSearch(ref)), const SettingsButton()],
+          actions: [
+            // Below the tab controller, to search the selected section.
+            Builder(
+              builder: (context) => IconButton(
+                tooltip: l.search,
+                icon: const Icon(Icons.search),
+                onPressed: () => openSearch(
+                  ref,
+                  scope: LibrarySection.values[DefaultTabController.of(context).index].searchScope,
+                ),
+              ),
+            ),
+            const SettingsButton(),
+          ],
           bottom: TabBar(
             isScrollable: true,
             tabAlignment: TabAlignment.start,
@@ -101,7 +122,14 @@ class LibrarySectionPage extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) => Scaffold(
         appBar: AppBar(
           title: Text(section.label(context.l10n)),
-          actions: [IconButton(icon: const Icon(Icons.search), onPressed: () => openSearch(ref)), const SettingsButton()],
+          actions: [
+            IconButton(
+              tooltip: context.l10n.search,
+              icon: const Icon(Icons.search),
+              onPressed: () => openSearch(ref, scope: section.searchScope),
+            ),
+            const SettingsButton(),
+          ],
         ),
         body: section.body(context.l10n),
       );

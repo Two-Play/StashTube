@@ -989,7 +989,7 @@ abstract class AppLocalizations {
   /// No description provided for @searchIntro.
   ///
   /// In en, this message translates to:
-  /// **'Search scenes and performers'**
+  /// **'Search scenes, images, galleries, performers and studios'**
   String get searchIntro;
 
   /// No description provided for @addServer.
@@ -2419,6 +2419,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Stash (blue/brown)'**
   String get colorStash;
+
+  /// No description provided for @searchScenes.
+  ///
+  /// In en, this message translates to:
+  /// **'Search scenes'**
+  String get searchScenes;
+
+  /// No description provided for @searchGalleries.
+  ///
+  /// In en, this message translates to:
+  /// **'Search galleries'**
+  String get searchGalleries;
+
+  /// No description provided for @searchNoResults.
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing matches \"{term}\"'**
+  String searchNoResults(String term);
 }
 
 class _AppLocalizationsDelegate

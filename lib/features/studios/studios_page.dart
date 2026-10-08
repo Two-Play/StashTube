@@ -6,6 +6,7 @@ import '../../data/models/studio.dart';
 import '../../data/providers.dart';
 import '../../widgets/paged_sliver.dart';
 import '../../widgets/stash_image.dart';
+import '../search/search_page.dart';
 import '../shell/navigation.dart';
 import '../../l10n/l10n.dart';
 import '../settings/settings_button.dart';
@@ -24,7 +25,7 @@ class StudiosPage extends ConsumerWidget {
       appBar: AppBar(
         title: Text(context.l10n.studiosTitle),
         actions: [
-          IconButton(icon: const Icon(Icons.search), onPressed: () => openSearch(ref)),
+          IconButton(icon: const Icon(Icons.search), onPressed: () => openSearch(ref, scope: SearchScope.studios)),
           const SettingsButton(),
         ],
       ),
@@ -43,15 +44,7 @@ class StudiosPage extends ConsumerWidget {
                 onRetry: () => ref.invalidate(provider),
                 onLoadMore: () => ref.read(provider.notifier).loadMore(),
                 onGoToPage: (page) => ref.read(provider.notifier).goToPage(page),
-                itemBuilder: (_, studio) => ListTile(
-                  leading: ChannelAvatar(name: studio.name, imageUrl: studio.imageUrl, radius: 24),
-                  title: Text(studio.name, maxLines: 1, overflow: TextOverflow.ellipsis),
-                  subtitle: Text([
-                    context.l10n.scenesCount(studio.sceneCount),
-                    if (studio.parent != null) context.l10n.partOf(studio.parent!.name),
-                  ].join(' • ')),
-                  onTap: () => openStudio(ref, studio.id),
-                ),
+                itemBuilder: (_, studio) => StudioListTile(studio: studio),
               ),
             ],
           ),
@@ -59,4 +52,22 @@ class StudiosPage extends ConsumerWidget {
       ),
     );
   }
+}
+
+/// A studio as a channel row; opens its page.
+class StudioListTile extends ConsumerWidget {
+  const StudioListTile({super.key, required this.studio});
+
+  final Studio studio;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) => ListTile(
+        leading: ChannelAvatar(name: studio.name, imageUrl: studio.imageUrl, radius: 24),
+        title: Text(studio.name, maxLines: 1, overflow: TextOverflow.ellipsis),
+        subtitle: Text([
+          context.l10n.scenesCount(studio.sceneCount),
+          if (studio.parent != null) context.l10n.partOf(studio.parent!.name),
+        ].join(' • ')),
+        onTap: () => openStudio(ref, studio.id),
+      );
 }
