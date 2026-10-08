@@ -4,21 +4,57 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../data/models/list_queries.dart';
+import '../../data/models/performer.dart';
+import '../../data/models/studio.dart';
 import '../../data/providers.dart';
+import '../../widgets/chip_bar.dart';
+import '../../widgets/paged_sliver.dart';
 import '../../widgets/performer_tile.dart';
 import '../../widgets/scene_feed.dart';
+import '../library/galleries_tab.dart';
+import '../library/images_tab.dart';
 import '../shell/navigation.dart';
+import '../studios/studios_page.dart';
 import '../tags/tags_page.dart';
 import 'search_history.dart';
 import '../../l10n/l10n.dart';
 
-/// Live search across scenes, with matching performers shown on top.
+/// What the search page searches; picked with the chips below the field.
+enum SearchScope {
+  scenes,
+  images,
+  galleries,
+  performers,
+  studios;
+
+  String label(AppLocalizations l) => switch (this) {
+        scenes => l.libraryScenes,
+        images => l.libraryImages,
+        galleries => l.libraryGalleries,
+        performers => l.performersTitle,
+        studios => l.studiosTitle,
+      };
+
+  String hint(AppLocalizations l) => switch (this) {
+        scenes => l.searchScenes,
+        images => l.searchImages,
+        galleries => l.searchGalleries,
+        performers => l.searchPerformers,
+        studios => l.searchStudios,
+      };
+}
+
+/// Live search with one field for everything: chips switch between scenes
+/// (with filters, sort chips and matching performers on top), images,
+/// galleries, performers and studios, keeping the term.
 class SearchPage extends ConsumerStatefulWidget {
-  const SearchPage({super.key, this.autofocus = true});
+  const SearchPage({super.key, this.autofocus = true, this.initialScope = SearchScope.scenes});
 
   /// Off when the page is a tab of the navigation bar, which is built in the
   /// background and shouldn't open the keyboard.
   final bool autofocus;
+
+  final SearchScope initialScope;
 
   @override
   ConsumerState<SearchPage> createState() => _SearchPageState();
@@ -29,6 +65,7 @@ class _SearchPageState extends ConsumerState<SearchPage> {
   Timer? _debounce;
   Timer? _record;
   String _term = '';
+  late var _scope = widget.initialScope;
 
   @override
   void dispose() {
@@ -84,7 +121,7 @@ class _SearchPageState extends ConsumerState<SearchPage> {
             _search(v, submitted: true);
           },
           decoration: InputDecoration(
-            hintText: context.l10n.searchHint,
+            hintText: _scope.hint(context.l10n),
             border: InputBorder.none,
             suffixIcon: _controller.text.isEmpty
                 ? null
@@ -97,27 +134,55 @@ class _SearchPageState extends ConsumerState<SearchPage> {
                   ),
           ),
         ),
+        bottom: PreferredSize(
+          preferredSize: const Size.fromHeight(48),
+          child: ChipBar<SearchScope>(
+            values: SearchScope.values,
+            selected: _scope,
+            labelOf: (s) => s.label(context.l10n),
+            onSelected: (s) => setState(() => _scope = s),
+          ),
+        ),
       ),
-      body: _term.isEmpty
-          ? _Discover(onPick: _pick)
-          : SceneFeedView(
-              key: ValueKey(_term),
-              layout: SceneFeedLayout.list,
-              initialQuery: SceneQuery(sort: SceneSort.recentlyAdded, search: _term),
-              sorts: const [],
-              emptyMessage: context.l10n.searchNoScenes(_term),
-              emptyIcon: Icons.search_off,
-              emptyHint: context.l10n.searchNoScenesHint,
-              headerSlivers: [_PerformerResults(term: _term)],
-            ),
+      body: _term.isEmpty ? _Discover(onPick: _pick) : _results(context),
     );
+  }
+
+  /// The results for [_term] in [_scope]. Each view keeps its sort and
+  /// filters while the term changes.
+  Widget _results(BuildContext context) {
+    final l = context.l10n;
+    return switch (_scope) {
+      SearchScope.scenes => SceneFeedView(
+          layout: SceneFeedLayout.list,
+          initialQuery: SceneQuery(search: _term),
+          filterable: true,
+          showCount: true,
+          emptyMessage: l.searchNoScenes(_term),
+          emptyIcon: Icons.search_off,
+          emptyHint: l.searchNoScenesHint,
+          headerSlivers: [
+            _PerformerResults(term: _term, onSeeAll: () => setState(() => _scope = SearchScope.performers)),
+          ],
+        ),
+      SearchScope.images => ImageGridView(
+          initialQuery: ImageQuery(search: _term),
+          sorts: ImageSort.browse,
+          searchable: false,
+        ),
+      SearchScope.galleries => GalleryGridView(search: _term),
+      SearchScope.performers => _PerformerGrid(term: _term),
+      SearchScope.studios => _StudioList(term: _term),
+    };
   }
 }
 
+/// Matching performers as a row above the scene results.
 class _PerformerResults extends ConsumerWidget {
-  const _PerformerResults({required this.term});
+  const _PerformerResults({required this.term, required this.onSeeAll});
 
   final String term;
+  final VoidCallback onSeeAll;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -129,8 +194,13 @@ class _PerformerResults extends ConsumerWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Padding(
-            padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
-            child: Text(context.l10n.performersTitle, style: Theme.of(context).textTheme.titleMedium),
+            padding: const EdgeInsets.fromLTRB(16, 0, 4, 0),
+            child: Row(
+              children: [
+                Expanded(child: Text(context.l10n.performersTitle, style: Theme.of(context).textTheme.titleMedium)),
+                TextButton(onPressed: onSeeAll, child: Text(context.l10n.seeAll)),
+              ],
+            ),
           ),
           SizedBox(
             height: 100,
@@ -147,6 +217,83 @@ class _PerformerResults extends ConsumerWidget {
       ),
     );
   }
+}
+
+/// All performers matching [term], as a grid.
+class _PerformerGrid extends ConsumerWidget {
+  const _PerformerGrid({required this.term});
+
+  final String term;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final provider = performerListProvider(PerformerQuery(search: term));
+    return _ResultScrollView(
+      onRefresh: () => refreshFuture(ref, provider.future),
+      onLoadMore: () => ref.read(provider.notifier).loadMore(),
+      sliver: PagedSliver<Performer>(
+        value: ref.watch(provider),
+        emptyMessage: context.l10n.searchNoResults(term),
+        emptyIcon: Icons.search_off,
+        emptyHint: context.l10n.searchNoScenesHint,
+        padding: const EdgeInsets.all(12),
+        gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
+          maxCrossAxisExtent: 220,
+          childAspectRatio: 0.62,
+          mainAxisSpacing: 16,
+          crossAxisSpacing: 12,
+        ),
+        onRetry: () => ref.invalidate(provider),
+        onLoadMore: () => ref.read(provider.notifier).loadMore(),
+        onGoToPage: (page) => ref.read(provider.notifier).goToPage(page),
+        itemBuilder: (_, performer) => PerformerTile(performer: performer),
+      ),
+    );
+  }
+}
+
+/// All studios matching [term], as channel rows.
+class _StudioList extends ConsumerWidget {
+  const _StudioList({required this.term});
+
+  final String term;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final provider = studioListProvider(StudioQuery(search: term));
+    return _ResultScrollView(
+      onRefresh: () => refreshFuture(ref, provider.future),
+      onLoadMore: () => ref.read(provider.notifier).loadMore(),
+      sliver: PagedSliver<Studio>(
+        value: ref.watch(provider),
+        emptyMessage: context.l10n.searchNoResults(term),
+        emptyIcon: Icons.search_off,
+        emptyHint: context.l10n.searchNoScenesHint,
+        onRetry: () => ref.invalidate(provider),
+        onLoadMore: () => ref.read(provider.notifier).loadMore(),
+        onGoToPage: (page) => ref.read(provider.notifier).goToPage(page),
+        itemBuilder: (_, studio) => StudioListTile(studio: studio),
+      ),
+    );
+  }
+}
+
+/// Pull-to-refresh and endless scrolling around one result sliver.
+class _ResultScrollView extends StatelessWidget {
+  const _ResultScrollView({required this.onRefresh, required this.onLoadMore, required this.sliver});
+
+  final Future<void> Function() onRefresh;
+  final VoidCallback onLoadMore;
+  final Widget sliver;
+
+  @override
+  Widget build(BuildContext context) => RefreshIndicator(
+        onRefresh: onRefresh,
+        child: LoadMoreListener(
+          onLoadMore: onLoadMore,
+          child: CustomScrollView(physics: const AlwaysScrollableScrollPhysics(), slivers: [sliver]),
+        ),
+      );
 }
 
 /// Shown before typing: recent searches (5.3) and popular tags (8.2).

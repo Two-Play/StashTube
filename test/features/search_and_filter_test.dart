@@ -3,12 +3,15 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:stash_app_mobile/core/config/server_config.dart';
+import 'package:stash_app_mobile/data/models/gallery.dart';
+import 'package:stash_app_mobile/data/models/image_item.dart';
 import 'package:stash_app_mobile/data/models/list_queries.dart';
 import 'package:stash_app_mobile/data/models/page_result.dart';
 import 'package:stash_app_mobile/data/models/performer.dart';
 import 'package:stash_app_mobile/data/models/saved_filter.dart';
 import 'package:stash_app_mobile/data/models/scene.dart';
 import 'package:stash_app_mobile/data/models/scene_filter.dart';
+import 'package:stash_app_mobile/data/models/studio.dart';
 import 'package:stash_app_mobile/data/models/tag.dart';
 import 'package:stash_app_mobile/data/repositories/stash_repository.dart';
 import 'package:stash_app_mobile/features/search/search_history.dart';
@@ -20,6 +23,9 @@ import '../helpers.dart';
 
 class FakeRepository implements StashRepository {
   final sceneQueries = <SceneQuery>[];
+  final imageQueries = <ImageQuery>[];
+  final galleryQueries = <GalleryQuery>[];
+  final studioQueries = <StudioQuery>[];
   List<SavedFilter> saved = const [];
 
   @override
@@ -40,6 +46,24 @@ class FakeRepository implements StashRepository {
 
   @override
   Future<List<SavedFilter>> savedSceneFilters() async => saved;
+
+  @override
+  Future<PageResult<ImageItem>> findImages(ImageQuery query, {int page = 1, int perPage = 24}) async {
+    imageQueries.add(query);
+    return const PageResult(items: [], totalCount: 0);
+  }
+
+  @override
+  Future<PageResult<Gallery>> findGalleries(GalleryQuery query, {int page = 1, int perPage = 24}) async {
+    galleryQueries.add(query);
+    return const PageResult(items: [], totalCount: 0);
+  }
+
+  @override
+  Future<PageResult<Studio>> findStudios(StudioQuery query, {int page = 1, int perPage = 24}) async {
+    studioQueries.add(query);
+    return const PageResult(items: [], totalCount: 0);
+  }
 
   @override
   dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
@@ -105,6 +129,67 @@ void main() {
       await tester.tap(find.widgetWithText(ListTile, 'sunset'));
       await tester.pumpAndSettle();
       expect(repo.sceneQueries.last.search, 'sunset');
+    });
+  });
+
+  group('search scopes', () {
+    Future<void> type(WidgetTester tester, String term) async {
+      await tester.enterText(find.byType(TextField), term);
+      await tester.testTextInput.receiveAction(TextInputAction.search);
+      await tester.pumpAndSettle();
+    }
+
+    testWidgets('one field searches scenes, images, galleries and studios', (tester) async {
+      final c = container();
+      await tester.pumpWidget(UncontrolledProviderScope(container: c, child: const MaterialApp(home: SearchPage())));
+      await tester.pumpAndSettle();
+
+      await type(tester, 'beach');
+      expect(repo.sceneQueries.last.search, 'beach');
+      // Scene results have the filter button.
+      expect(find.byIcon(Icons.tune), findsOneWidget);
+
+      await tester.tap(find.widgetWithText(ChoiceChip, 'Images'));
+      await tester.pumpAndSettle();
+      expect(repo.imageQueries.last.search, 'beach');
+      // No second search field above the images.
+      expect(find.byType(TextField), findsOneWidget);
+      expect(find.text('Search images'), findsOneWidget);
+
+      await tester.tap(find.widgetWithText(ChoiceChip, 'Galleries'));
+      await tester.pumpAndSettle();
+      expect(repo.galleryQueries.last.search, 'beach');
+
+      await tester.tap(find.widgetWithText(ChoiceChip, 'Studios'));
+      await tester.pumpAndSettle();
+      expect(repo.studioQueries.last.search, 'beach');
+    });
+
+    testWidgets('scene results keep their sort when the term changes', (tester) async {
+      final c = container();
+      await tester.pumpWidget(UncontrolledProviderScope(container: c, child: const MaterialApp(home: SearchPage())));
+      await tester.pumpAndSettle();
+
+      await type(tester, 'beach');
+      await tester.tap(find.widgetWithText(ChoiceChip, 'Top rated'));
+      await tester.pumpAndSettle();
+      expect(repo.sceneQueries.last.sort, SceneSort.topRated);
+
+      await type(tester, 'sunset');
+      expect(repo.sceneQueries.last.search, 'sunset');
+      expect(repo.sceneQueries.last.sort, SceneSort.topRated);
+    });
+
+    testWidgets('opens on the given scope', (tester) async {
+      final c = container();
+      await tester.pumpWidget(UncontrolledProviderScope(
+        container: c,
+        child: const MaterialApp(home: SearchPage(initialScope: SearchScope.images)),
+      ));
+      await tester.pumpAndSettle();
+      await type(tester, 'cat');
+      expect(repo.imageQueries.last.search, 'cat');
+      expect(repo.sceneQueries, isEmpty);
     });
   });
 

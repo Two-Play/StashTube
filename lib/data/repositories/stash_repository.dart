@@ -229,7 +229,13 @@ class StashRepository implements PlaybackActivityApi {
     final data = await _query(
       Options$Query$FindGalleries(
         variables: Variables$Query$FindGalleries(
-          filter: _findFilter(page: page, perPage: perPage, sort: query.sortField, direction: query.direction),
+          filter: _findFilter(
+            search: query.search,
+            page: page,
+            perPage: perPage,
+            sort: query.sortField,
+            direction: query.direction,
+          ),
         ),
       ),
     );

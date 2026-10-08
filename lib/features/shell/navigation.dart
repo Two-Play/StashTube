@@ -105,7 +105,9 @@ void openPerformer(WidgetRef ref, String id) => openPage(ref, PerformerPage(perf
 
 void openStudio(WidgetRef ref, String id) => openPage(ref, StudioPage(studioId: id));
 
-void openSearch(WidgetRef ref) => openPage(ref, const SearchPage());
+/// Opens the search, starting on [scope] (e.g. images from the library).
+void openSearch(WidgetRef ref, {SearchScope scope = SearchScope.scenes}) =>
+    openPage(ref, SearchPage(initialScope: scope));
 
 void openTag(WidgetRef ref, String id) => openPage(ref, TagPage(tagId: id));
 

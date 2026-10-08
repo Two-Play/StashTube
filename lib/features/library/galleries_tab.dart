@@ -13,22 +13,46 @@ import 'gallery_page.dart';
 import '../../l10n/l10n.dart';
 
 /// All galleries as a grid of covers.
-class GalleriesTab extends ConsumerStatefulWidget {
+class GalleriesTab extends StatefulWidget {
   const GalleriesTab({super.key});
 
   @override
-  ConsumerState<GalleriesTab> createState() => _GalleriesTabState();
+  State<GalleriesTab> createState() => _GalleriesTabState();
 }
 
-class _GalleriesTabState extends ConsumerState<GalleriesTab> with AutomaticKeepAliveClientMixin {
-  var _query = GalleryQuery();
-
+class _GalleriesTabState extends State<GalleriesTab> with AutomaticKeepAliveClientMixin {
   @override
   bool get wantKeepAlive => true;
 
   @override
   Widget build(BuildContext context) {
     super.build(context);
+    return const GalleryGridView();
+  }
+}
+
+/// Endless, refreshable grid of gallery covers with sort chips, optionally
+/// limited to a [search] term (the search page).
+class GalleryGridView extends ConsumerStatefulWidget {
+  const GalleryGridView({super.key, this.search});
+
+  final String? search;
+
+  @override
+  ConsumerState<GalleryGridView> createState() => _GalleryGridViewState();
+}
+
+class _GalleryGridViewState extends ConsumerState<GalleryGridView> {
+  late var _query = GalleryQuery(search: widget.search);
+
+  @override
+  void didUpdateWidget(GalleryGridView oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.search != widget.search) _query = GalleryQuery(sort: _query.sort, search: widget.search);
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final provider = galleryListProvider(_query);
     final value = ref.watch(provider);
     final theme = Theme.of(context);
@@ -45,7 +69,7 @@ class _GalleriesTabState extends ConsumerState<GalleriesTab> with AutomaticKeepA
                 values: GallerySort.values,
                 selected: _query.sort,
                 labelOf: (s) => s.label(context.l10n),
-                onSelected: (s) => setState(() => _query = GalleryQuery(sort: s)),
+                onSelected: (s) => setState(() => _query = GalleryQuery(sort: s, search: widget.search)),
               ),
             ),
             if (value.current case final state?)
@@ -60,9 +84,11 @@ class _GalleriesTabState extends ConsumerState<GalleriesTab> with AutomaticKeepA
               ),
             PagedSliver<Gallery>(
               value: value,
-              emptyMessage: context.l10n.galleriesEmpty,
+              emptyMessage: widget.search == null
+                  ? context.l10n.galleriesEmpty
+                  : context.l10n.searchNoResults(widget.search!),
               emptyIcon: Icons.photo_library_outlined,
-              emptyHint: context.l10n.galleriesEmptyHint,
+              emptyHint: widget.search == null ? context.l10n.galleriesEmptyHint : context.l10n.searchNoScenesHint,
               padding: const EdgeInsets.symmetric(horizontal: 12),
               gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
                 maxCrossAxisExtent: 220,

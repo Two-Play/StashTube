@@ -604,7 +604,8 @@ class AppLocalizationsDe extends AppLocalizations {
   String get seeAll => 'Alle anzeigen';
 
   @override
-  String get searchIntro => 'Szenen und Performer durchsuchen';
+  String get searchIntro =>
+      'Szenen, Bilder, Galerien, Performer und Studios durchsuchen';
 
   @override
   String get addServer => 'Server hinzufügen';
@@ -1404,4 +1405,15 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get colorStash => 'Stash (Blau/Braun)';
+
+  @override
+  String get searchScenes => 'Szenen suchen';
+
+  @override
+  String get searchGalleries => 'Galerien suchen';
+
+  @override
+  String searchNoResults(String term) {
+    return 'Nichts gefunden zu „$term“';
+  }
 }
