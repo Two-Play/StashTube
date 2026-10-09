@@ -11,12 +11,14 @@ import android.view.WindowManager;
 import androidx.annotation.NonNull;
 import androidx.annotation.RequiresApi;
 
-import io.flutter.embedding.android.FlutterFragmentActivity;
+import com.ryanheise.audioservice.AudioServiceFragmentActivity;
+
 import io.flutter.embedding.engine.FlutterEngine;
 import io.flutter.plugin.common.MethodChannel;
 
-// FlutterFragmentActivity: required by local_auth for biometric prompts.
-public class MainActivity extends FlutterFragmentActivity {
+// A FlutterFragmentActivity (required by local_auth for biometric prompts)
+// that shares its engine with audio_service's media notification (4.12).
+public class MainActivity extends AudioServiceFragmentActivity {
     private static final String PRIVACY_CHANNEL = "stash/privacy";
     private static final String APP_ICON_CHANNEL = "stash/appicon";
     private static final String PIP_CHANNEL = "stash/pip";

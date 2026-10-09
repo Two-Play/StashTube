@@ -57,6 +57,7 @@ dependencies:
   # Used directly by the generated GraphQL types (lib/**/*.graphql.dart, see build.yaml).
   graphql: ^5.2.4
   gql: ^1.0.1
+  audio_service: ^0.18.19
 
 dev_dependencies:
   flutter_test:

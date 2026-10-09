@@ -1455,4 +1455,11 @@ class AppLocalizationsDe extends AppLocalizations {
   @override
   String get themeWelcomeText =>
       'Hell oder dunkel und eine Akzentfarbe. Das kannst du jederzeit in den Einstellungen ändern.';
+
+  @override
+  String get lockScreenControls => 'Auf dem Sperrbildschirm anzeigen';
+
+  @override
+  String get lockScreenControlsSubtitle =>
+      'Titel, Vorschaubild und Steuerung auf dem Sperrbildschirm und in der Benachrichtigung. Für mehr Diskretion aus lassen.';
 }

@@ -11,6 +11,7 @@ import '../../data/providers.dart';
 import '../../data/repositories/stash_session.dart';
 import '../cast/cast_media.dart';
 import '../cast/cast_providers.dart';
+import '../player/lock_screen.dart';
 import '../player/player_providers.dart';
 import '../security/app_lock.dart';
 import 'pip_service.dart';
@@ -21,7 +22,7 @@ final pipServiceProvider = Provider<PipService>((ref) => PipService.create());
 /// Picture-in-picture and background playback (4.12), chosen in the
 /// settings and stored for all servers.
 class PlaybackModes {
-  const PlaybackModes({this.autoPip = true, this.background = false});
+  const PlaybackModes({this.autoPip = true, this.background = false, this.lockScreen = false});
 
   /// Android: a playing video continues in picture-in-picture when the user
   /// leaves the app.
@@ -31,13 +32,21 @@ class PlaybackModes {
   /// the player pauses.
   final bool background;
 
-  PlaybackModes copyWith({bool? autoPip, bool? background}) =>
-      PlaybackModes(autoPip: autoPip ?? this.autoPip, background: background ?? this.background);
+  /// Title, picture and controls on the lock screen and in the media
+  /// notification (lock_screen.dart). Off by default, for discretion.
+  final bool lockScreen;
+
+  PlaybackModes copyWith({bool? autoPip, bool? background, bool? lockScreen}) => PlaybackModes(
+        autoPip: autoPip ?? this.autoPip,
+        background: background ?? this.background,
+        lockScreen: lockScreen ?? this.lockScreen,
+      );
 }
 
 class PlaybackModesNotifier extends Notifier<PlaybackModes> {
   static const _autoPipKey = 'auto_pip';
   static const _backgroundKey = 'background_playback';
+  static const _lockScreenKey = 'lock_screen_controls';
 
   @override
   PlaybackModes build() {
@@ -45,12 +54,18 @@ class PlaybackModesNotifier extends Notifier<PlaybackModes> {
     return PlaybackModes(
       autoPip: prefs.getBool(_autoPipKey) ?? true,
       background: prefs.getBool(_backgroundKey) ?? false,
+      lockScreen: prefs.getBool(_lockScreenKey) ?? false,
     );
   }
 
   Future<void> setAutoPip(bool value) async {
     state = state.copyWith(autoPip: value);
     await ref.read(sharedPreferencesProvider).setBool(_autoPipKey, value);
+  }
+
+  Future<void> setLockScreen(bool value) async {
+    state = state.copyWith(lockScreen: value);
+    await ref.read(sharedPreferencesProvider).setBool(_lockScreenKey, value);
   }
 
   Future<void> setBackground(bool value) async {
@@ -231,6 +246,7 @@ class PipScope extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     ref.watch(backgroundPlaybackProvider);
+    ref.watch(lockScreenControlsProvider);
     final pip = ref.watch(pipProvider);
     final appWindow = pip && ref.watch(pipServiceProvider).canAutoEnter;
     return Stack(
