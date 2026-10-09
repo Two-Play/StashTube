@@ -523,6 +523,41 @@ class _ShortViewState extends ConsumerState<_ShortView> {
   bool _rating = false;
   bool _fast = false;
 
+  /// In fullscreen the seek bar shows for a few seconds (on entering it, on
+  /// a new short, on a tap) and then hides, unless it is being scrubbed.
+  static const _barTimeout = Duration(seconds: 3);
+  bool _barShown = true;
+  bool _scrubbing = false;
+  Timer? _barTimer;
+
+  @override
+  void initState() {
+    super.initState();
+    _showBar();
+  }
+
+  @override
+  void didUpdateWidget(_ShortView oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.fullscreen != widget.fullscreen) _showBar();
+  }
+
+  @override
+  void dispose() {
+    _barTimer?.cancel();
+    super.dispose();
+  }
+
+  void _showBar() {
+    _barTimer?.cancel();
+    if (!_barShown && mounted) setState(() => _barShown = true);
+    _barShown = true;
+    if (!widget.fullscreen || _scrubbing) return;
+    _barTimer = Timer(_barTimeout, () {
+      if (mounted && !_scrubbing) setState(() => _barShown = false);
+    });
+  }
+
   Player? get _player => widget.controller?.player;
 
   void _setFast(bool fast) {
@@ -582,6 +617,7 @@ class _ShortViewState extends ConsumerState<_ShortView> {
     final controller = widget.controller;
     // Above the home indicator when the navigation bar is hidden.
     final bottom = MediaQuery.paddingOf(context).bottom;
+    final showBar = !widget.fullscreen || _barShown;
 
     return Stack(
       fit: StackFit.expand,
@@ -600,6 +636,7 @@ class _ShortViewState extends ConsumerState<_ShortView> {
                 setState(() => _rating = false);
               } else {
                 widget.onTap();
+                _showBar();
               }
             },
             child: Center(child: _CenterIndicator(player: _player, paused: widget.paused)),
@@ -749,12 +786,35 @@ class _ShortViewState extends ConsumerState<_ShortView> {
             right: 8,
             bottom: bottom,
             // The player's seek bar: sprite thumbnails and marker dots, loaded
-            // once touched. In fullscreen only a thin line until touched.
-            child: PreviewSeekBar(
-              sceneId: scene.id,
-              player: controller.player,
-              visible: false,
-              slim: widget.fullscreen,
+            // once touched. In fullscreen it hides after a few seconds; a tap
+            // where it was brings it back without seeking.
+            child: Stack(
+              children: [
+                IgnorePointer(
+                  ignoring: !showBar,
+                  child: AnimatedOpacity(
+                    opacity: showBar ? 1 : 0,
+                    duration: const Duration(milliseconds: 250),
+                    child: PreviewSeekBar(
+                      sceneId: scene.id,
+                      player: controller.player,
+                      visible: false,
+                      onInteractionStart: () {
+                        _scrubbing = true;
+                        _barTimer?.cancel();
+                      },
+                      onInteractionEnd: () {
+                        _scrubbing = false;
+                        _showBar();
+                      },
+                    ),
+                  ),
+                ),
+                if (!showBar)
+                  Positioned.fill(
+                    child: GestureDetector(behavior: HitTestBehavior.opaque, onTap: _showBar),
+                  ),
+              ],
             ),
           ),
       ],
