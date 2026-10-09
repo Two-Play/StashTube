@@ -264,4 +264,10 @@ void main() {
     await digits('2580');
     expect(created, '2580');
   });
+
+  test('the app is always hidden in the switcher while the lock is on', () {
+    expect(const AppLockSettings().hidesApp, isFalse);
+    expect(const AppLockSettings(hideInSwitcher: true).hidesApp, isTrue);
+    expect(const AppLockSettings(enabled: true).hidesApp, isTrue);
+  });
 }

@@ -1,5 +1,5 @@
+import '../../core/config/haptics.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/config/server_config.dart';
@@ -29,7 +29,7 @@ class StatsTab extends ConsumerWidget {
       } catch (_) {
         // Rendered as error state below.
       }
-      HapticFeedback.mediumImpact();
+      Haptics.medium();
     }
 
     return RefreshIndicator(

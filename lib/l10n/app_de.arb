@@ -404,5 +404,12 @@
   "libraryMarkers": "Marker",
   "markersEmpty": "Noch keine Marker",
   "markersEmptyHint": "Markiere eine Stelle im Player mit „Marker“.",
-  "markersCount": "{count, plural, =1{1 Marker} other{{count} Marker}}"
+  "markersCount": "{count, plural, =1{1 Marker} other{{count} Marker}}",
+  "hideInSwitcherLocked": "Immer an, solange die App-Sperre aktiv ist.",
+  "haptics": "Haptisches Feedback",
+  "hapticsOff": "Aus",
+  "hapticsLight": "Wenig",
+  "hapticsNormal": "Normal",
+  "markerPreviews": "Marker-Vorschauen abspielen",
+  "markerPreviewsSubtitle": "Marker zeigen eine kurze Vorschau in Dauerschleife statt eines Standbilds."
 }

@@ -40,6 +40,7 @@ query FindSceneMarkers($filter: FindFilterType, $scene_marker_filter: SceneMarke
       seconds
       end_seconds
       screenshot
+      preview
       primary_tag { ...TagRef }
       scene { ...SceneFields }
     }

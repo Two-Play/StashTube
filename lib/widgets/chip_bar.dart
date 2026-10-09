@@ -1,3 +1,4 @@
+import '../core/config/haptics.dart';
 import 'package:flutter/material.dart';
 
 /// Horizontally scrolling choice chips, like YouTube's feed filters.
@@ -29,7 +30,10 @@ class ChipBar<T> extends StatelessWidget {
           return ChoiceChip(
             label: Text(labelOf(value)),
             selected: value == selected,
-            onSelected: (_) => onSelected(value),
+            onSelected: (_) {
+              if (value != selected) Haptics.selection();
+              onSelected(value);
+            },
           );
         },
       ),

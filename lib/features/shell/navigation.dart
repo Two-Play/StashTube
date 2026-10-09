@@ -94,6 +94,30 @@ final tabNavigatorKeysProvider = Provider<Map<AppTab, GlobalKey<NavigatorState>>
   return {for (final tab in AppTab.values) tab: GlobalKey<NavigatorState>(debugLabel: '${tab.name}@$server')};
 });
 
+/// The scroll controller of each tab's root page, given to its lists as
+/// their [PrimaryScrollController], so re-selecting the tab can scroll them
+/// to the top. New ones per server, like the navigators.
+final tabScrollControllersProvider = Provider<Map<AppTab, ScrollController>>((ref) {
+  ref.watch(activeServerIdProvider);
+  final controllers = {for (final tab in AppTab.values) tab: ScrollController(debugLabel: tab.name)};
+  ref.onDispose(() {
+    for (final controller in controllers.values) {
+      controller.dispose();
+    }
+  });
+  return controllers;
+});
+
+/// Re-selecting the current tab, like YouTube: back to its root page, or
+/// when already there, scrolls its lists to the top.
+void reselectTab(NavigatorState? navigator, ScrollController controller) {
+  if (navigator != null && navigator.canPop()) {
+    navigator.popUntil((route) => route.isFirst);
+  } else if (controller.hasClients) {
+    controller.animateTo(0, duration: const Duration(milliseconds: 450), curve: Curves.easeOutCubic);
+  }
+}
+
 /// Pushes [page] onto the current tab. Works from anywhere, including the
 /// expanded player (which lives above the tab navigators).
 void openPage(WidgetRef ref, Widget page) {

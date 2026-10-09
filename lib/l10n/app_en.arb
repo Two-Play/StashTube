@@ -780,5 +780,12 @@
         "type": "int"
       }
     }
-  }
+  },
+  "hideInSwitcherLocked": "Always on while the app lock is on.",
+  "haptics": "Haptic feedback",
+  "hapticsOff": "Off",
+  "hapticsLight": "Light",
+  "hapticsNormal": "Normal",
+  "markerPreviews": "Play marker previews",
+  "markerPreviewsSubtitle": "Markers show a short looping clip instead of a still frame."
 }

@@ -2527,6 +2527,48 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'{count, plural, =1{1 marker} other{{count} markers}}'**
   String markersCount(int count);
+
+  /// No description provided for @hideInSwitcherLocked.
+  ///
+  /// In en, this message translates to:
+  /// **'Always on while the app lock is on.'**
+  String get hideInSwitcherLocked;
+
+  /// No description provided for @haptics.
+  ///
+  /// In en, this message translates to:
+  /// **'Haptic feedback'**
+  String get haptics;
+
+  /// No description provided for @hapticsOff.
+  ///
+  /// In en, this message translates to:
+  /// **'Off'**
+  String get hapticsOff;
+
+  /// No description provided for @hapticsLight.
+  ///
+  /// In en, this message translates to:
+  /// **'Light'**
+  String get hapticsLight;
+
+  /// No description provided for @hapticsNormal.
+  ///
+  /// In en, this message translates to:
+  /// **'Normal'**
+  String get hapticsNormal;
+
+  /// No description provided for @markerPreviews.
+  ///
+  /// In en, this message translates to:
+  /// **'Play marker previews'**
+  String get markerPreviews;
+
+  /// No description provided for @markerPreviewsSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Markers show a short looping clip instead of a still frame.'**
+  String get markerPreviewsSubtitle;
 }
 
 class _AppLocalizationsDelegate

@@ -28,6 +28,10 @@ class AppLockSettings {
   final bool hideInSwitcher;
   final int pinLength;
 
+  /// Whether the app is hidden in the app switcher and covered while
+  /// inactive: always with the lock on, else by [hideInSwitcher].
+  bool get hidesApp => enabled || hideInSwitcher;
+
   AppLockSettings copyWith({bool? enabled, bool? biometrics, Duration? lockAfter, bool? hideInSwitcher, int? pinLength}) =>
       AppLockSettings(
         enabled: enabled ?? this.enabled,
@@ -183,15 +187,31 @@ class LocalBiometricAuth implements BiometricAuth {
 
 final biometricAuthProvider = Provider<BiometricAuth>((ref) => LocalBiometricAuth());
 
+/// The native side of hiding the app (`stash/privacy`).
+///
 /// Android: FLAG_SECURE hides the app in the recents screen (and blocks
-/// screenshots). iOS has no equivalent; the privacy cover handles it there.
+/// screenshots). iOS: a native cover goes over the app as soon as it
+/// resigns active (locking the phone, the app switcher). Flutter can't draw
+/// its own cover in time there: the app is in the background before the
+/// next frame, so its last frame, with the content, would show on return
+/// until the lock screen is drawn. The cover stays until [uncover], once
+/// Flutter has drawn again.
 class SecureWindow {
   static const _channel = MethodChannel('stash/privacy');
 
-  static Future<void> set(bool secure) async {
-    if (defaultTargetPlatform != TargetPlatform.android) return;
+  static Future<void> set(bool secure) => _invoke(switch (defaultTargetPlatform) {
+        TargetPlatform.android => 'setSecure',
+        TargetPlatform.iOS => 'setCoverOnResign',
+        _ => null,
+      }, secure);
+
+  /// iOS: removes the native cover once Flutter has drawn a frame again.
+  static Future<void> uncover() => _invoke(defaultTargetPlatform == TargetPlatform.iOS ? 'uncover' : null);
+
+  static Future<void> _invoke(String? method, [Object? arguments]) async {
+    if (method == null) return;
     try {
-      await _channel.invokeMethod<void>('setSecure', secure);
+      await _channel.invokeMethod<void>(method, arguments);
     } on MissingPluginException {
       // Not available (tests, other platforms).
     }

@@ -1,5 +1,5 @@
+import '../../core/config/haptics.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../data/models/performer.dart';
@@ -31,9 +31,9 @@ mixin _FavoriteAnimation<T extends ConsumerStatefulWidget> on ConsumerState<T>, 
 
   Future<void> onPressed(Performer performer, {required bool favorite}) async {
     if (favorite) {
-      HapticFeedback.lightImpact();
+      Haptics.light();
     } else {
-      HapticFeedback.mediumImpact();
+      Haptics.medium();
       if (!MediaQuery.disableAnimationsOf(context)) {
         setState(() => bursts++);
         heart.forward(from: 0);

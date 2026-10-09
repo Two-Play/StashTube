@@ -1,5 +1,5 @@
+import '../../core/config/haptics.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../l10n/l10n.dart';
@@ -21,7 +21,7 @@ class AllViewsPage extends ConsumerWidget {
     final config = ref.watch(navBarConfigProvider);
 
     void open(Widget page) {
-      HapticFeedback.selectionClick();
+      Haptics.selection();
       openPage(ref, page);
     }
 
