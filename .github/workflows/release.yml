@@ -1,0 +1,93 @@
+name: Release
+
+# Pushing a tag like v1.2.0 (matching `version:` in pubspec.yaml) builds
+# signed Android packages and publishes them as a GitHub release (14.3):
+# APKs per ABI, a universal APK, an AAB and SHA256SUMS. Obtainium and
+# IzzyOnDroid pick the APKs up from there. Tags with a "-" (v1.2.0-beta.1)
+# become pre-releases.
+#
+# Signing secrets: ANDROID_KEYSTORE_BASE64 (the upload keystore, base64),
+# ANDROID_KEYSTORE_PASSWORD, ANDROID_KEY_ALIAS, ANDROID_KEY_PASSWORD.
+
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: write
+
+env:
+  FLUTTER_VERSION: 3.47.6
+
+jobs:
+  android:
+    name: Signed Android release
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: '21'
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: stable
+          cache: true
+
+      - name: Version matches the tag
+        run: |
+          version=$(sed -n 's/^version: *\([^+]*\).*/\1/p' pubspec.yaml)
+          if [ "v$version" != "$GITHUB_REF_NAME" ]; then
+            echo "::error::pubspec.yaml has version $version, but the tag is $GITHUB_REF_NAME."
+            exit 1
+          fi
+
+      - name: Signing key
+        env:
+          KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: |
+          if [ -z "$KEYSTORE_BASE64" ]; then
+            echo "::error::The signing secrets are missing; a release must not be signed with the debug key."
+            exit 1
+          fi
+          echo "$KEYSTORE_BASE64" | base64 --decode > "$RUNNER_TEMP/upload-keystore.jks"
+          cat > android/key.properties <<EOF
+          storeFile=$RUNNER_TEMP/upload-keystore.jks
+          storePassword=$KEYSTORE_PASSWORD
+          keyAlias=$KEY_ALIAS
+          keyPassword=$KEY_PASSWORD
+          EOF
+
+      - run: flutter pub get
+
+      # The run number only grows, so every release gets a higher versionCode
+      # (per-ABI APKs add 1000 × the ABI's number on top).
+      - name: Build
+        run: |
+          flutter build apk --release --split-per-abi --build-number ${{ github.run_number }}
+          flutter build apk --release --build-number ${{ github.run_number }}
+          flutter build appbundle --release --build-number ${{ github.run_number }}
+
+      - name: Collect packages
+        run: |
+          mkdir dist
+          out=build/app/outputs
+          for abi in arm64-v8a armeabi-v7a x86_64; do
+            cp "$out/flutter-apk/app-$abi-release.apk" "dist/stash-$GITHUB_REF_NAME-$abi.apk"
+          done
+          cp "$out/flutter-apk/app-release.apk" "dist/stash-$GITHUB_REF_NAME-universal.apk"
+          cp "$out/bundle/release/app-release.aab" "dist/stash-$GITHUB_REF_NAME.aab"
+          (cd dist && sha256sum * > SHA256SUMS)
+
+      - name: Publish release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          flags=()
+          if [[ "$GITHUB_REF_NAME" == *-* ]]; then flags+=(--prerelease); fi
+          gh release create "$GITHUB_REF_NAME" dist/* \
+            --title "Stash $GITHUB_REF_NAME" --generate-notes --verify-tag "${flags[@]}"

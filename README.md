@@ -55,6 +55,10 @@ The backlog with every user story and its status is in [`docs/BACKLOG.md`](docs/
 - Flutter 3.47 or newer (Dart 3.12).
 - For iOS: Xcode and CocoaPods. For Android: a current JDK and the Android SDK (compile SDK 37).
 
+## Installing
+
+Signed Android builds are on the [releases page](https://github.com/Two-Play/StashAppMobile/releases): pick `arm64-v8a` for current phones, or the `universal` APK. To get updates automatically, add `https://github.com/Two-Play/StashAppMobile` to [Obtainium](https://github.com/ImranR98/Obtainium). There is no iOS build yet.
+
 ## Getting started
 
 ```bash
@@ -77,6 +81,7 @@ flutter build ios --simulator --debug
 - **State:** Riverpod 3 with hand-written providers; there is no code generation.
 - **Data:** `StashRepository` (`lib/data/repositories/`) is the only place that talks GraphQL. All queries are in `lib/core/api/queries.dart`, and the Stash schema they're written against is in `lib/core/graphql/schema/`.
 - **Video:** playback uses [media_kit](https://github.com/media-kit/media-kit) (mpv).
+- **Releases:** pushing a tag `vX.Y.Z` that matches `version:` in `pubspec.yaml` builds signed APKs and an AAB and publishes a GitHub release (`.github/workflows/release.yml`). Locally, release builds use `android/key.properties` (git-ignored) and fall back to the debug key without it.
 - **Texts:** live in `lib/l10n/app_en.arb` and `app_de.arb`, never as string literals in the code.
 
 [`CLAUDE.md`](CLAUDE.md) describes the architecture in detail: the server config and data flow, paginated lists, the shell and navigation, the player, Shorts, casting, theming and localization.
