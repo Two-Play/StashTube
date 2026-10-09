@@ -52,6 +52,16 @@ enum ImageSort {
   static const browse = [recentlyAdded, newest, random, topRated, title];
 }
 
+enum MarkerSort {
+  recentlyAdded('created_at'),
+  random('random'),
+  title('title');
+
+  const MarkerSort(this.field);
+
+  final String field;
+}
+
 enum GallerySort {
   recentlyAdded('created_at'),
   newest('date'),
@@ -338,6 +348,28 @@ class GalleryQuery {
   @override
   bool operator ==(Object other) =>
       other is GalleryQuery && other.sort == sort && other.search == search && other.seed == seed;
+
+  @override
+  int get hashCode => Object.hash(sort, search, seed);
+}
+
+/// Arguments for the markers page (scene markers of all scenes).
+class MarkerQuery {
+  MarkerQuery({this.sort = MarkerSort.recentlyAdded, this.search, int? seed})
+      : seed = seed ?? (sort == MarkerSort.random ? newRandomSeed() : 0);
+
+  final MarkerSort sort;
+
+  /// Free text (Stash's `q`: the marker's title, its scene's title, ...).
+  final String? search;
+  final int seed;
+
+  String get sortField => sort == MarkerSort.random ? 'random_$seed' : sort.field;
+  String get direction => sort == MarkerSort.title ? 'ASC' : 'DESC';
+
+  @override
+  bool operator ==(Object other) =>
+      other is MarkerQuery && other.sort == sort && other.search == search && other.seed == seed;
 
   @override
   int get hashCode => Object.hash(sort, search, seed);

@@ -216,7 +216,9 @@ class NowPlayingNotifier extends Notifier<Scene?> {
 
   /// Plays [scene]. Inside the active queue this moves the queue position;
   /// any other scene ends the queue.
-  void play(Scene scene) {
+  /// Plays [scene], from [at] seconds if given (e.g. a marker), else from
+  /// its resume position.
+  void play(Scene scene, {double? at}) {
     final url = scene.streamUrl;
     if (url == null) return;
 
@@ -232,12 +234,14 @@ class NowPlayingNotifier extends Notifier<Scene?> {
       // A zoom belongs to its video; mpv would keep it for the next file.
       ref.read(videoZoomProvider.notifier).reset();
       // Prefer the position saved in this session over the (possibly stale) list data.
-      final resume = ref.read(resumeTimesProvider)[scene.id] ?? scene.resumeTime;
+      final resume = at ?? ref.read(resumeTimesProvider)[scene.id] ?? scene.resumeTime;
       unawaited(ref.read(playbackTrackerProvider).start(scene.copyWith(resumeTime: resume)));
       ref.read(currentStreamProvider.notifier).set(null);
       final start = Duration(milliseconds: (resume * 1000).round());
       unawaited(_openPreferredStream(scene, url, start));
       if (ref.read(isCastingProvider)) unawaited(_castScene(scene, start));
+    } else if (at != null) {
+      seekTo(at);
     }
     state = scene;
     // On first play the miniplayer is only mounted in the next frame.

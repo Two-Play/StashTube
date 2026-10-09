@@ -769,5 +769,16 @@
   "themeWelcomeTitle": "Choose your look",
   "themeWelcomeText": "Light or dark, and an accent color. You can change this anytime in the settings.",
   "lockScreenControls": "Show on the lock screen",
-  "lockScreenControlsSubtitle": "Title, picture and controls on the lock screen and in the notification. Leave off for discretion."
+  "lockScreenControlsSubtitle": "Title, picture and controls on the lock screen and in the notification. Leave off for discretion.",
+  "libraryMarkers": "Markers",
+  "markersEmpty": "No markers yet",
+  "markersEmptyHint": "Mark a moment in the player with \"Marker\".",
+  "markersCount": "{count, plural, =1{1 marker} other{{count} markers}}",
+  "@markersCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  }
 }

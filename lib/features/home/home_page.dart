@@ -42,7 +42,7 @@ class _HomePageState extends ConsumerState<HomePage> {
   }
 
   void _refreshShelves() {
-    ref.invalidate(shortsFeedProvider);
+    ref.invalidate(shortsFeedFamily); // the shelf's queues
     ref.invalidate(sceneListProvider(_continueWatching));
     ref.invalidate(sceneListProvider(_fromFavorites));
     ref.invalidate(savedSceneFiltersProvider);

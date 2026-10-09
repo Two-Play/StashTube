@@ -30,6 +30,22 @@ query FindScenes($filter: FindFilterType, $scene_filter: SceneFilterType) {
   }
 }
 
+# The markers page (scene markers of all scenes).
+query FindSceneMarkers($filter: FindFilterType, $scene_marker_filter: SceneMarkerFilterType) {
+  findSceneMarkers(filter: $filter, scene_marker_filter: $scene_marker_filter) {
+    count
+    scene_markers {
+      id
+      title
+      seconds
+      end_seconds
+      screenshot
+      primary_tag { ...TagRef }
+      scene { ...SceneFields }
+    }
+  }
+}
+
 query FindScenesByIds($ids: [ID!]) {
   findScenes(ids: $ids, filter: { per_page: -1 }) {
     scenes { ...SceneFields }

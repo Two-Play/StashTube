@@ -28,6 +28,7 @@ class PreviewSeekBar extends ConsumerStatefulWidget {
     required this.sceneId,
     this.player,
     this.visible = true,
+    this.slim = false,
     this.onInteractionStart,
     this.onInteractionEnd,
     this.remote,
@@ -46,6 +47,10 @@ class PreviewSeekBar extends ConsumerStatefulWidget {
   /// Whether the bar is shown. The controls stay mounted while hidden, so
   /// this keeps a hidden bar from loading the thumbnails.
   final bool visible;
+
+  /// Only a thin progress line until touched (fullscreen shorts); scrubbing
+  /// shows the full bar with its preview. The touch area stays the same.
+  final bool slim;
 
   /// While the user touches the bar, e.g. to keep the controls visible.
   final VoidCallback? onInteractionStart;
@@ -219,6 +224,7 @@ class _PreviewSeekBarState extends ConsumerState<PreviewSeekBar> {
                     played: played,
                     buffered: remote == null ? _fractionOf(_buffer) : 0,
                     dragging: _drag != null,
+                    slim: widget.slim,
                     playedColor: colors.primary,
                     chapters: _markerFractions,
                   ),
@@ -362,12 +368,16 @@ class _SeekBarPainter extends CustomPainter {
     required this.buffered,
     required this.dragging,
     required this.playedColor,
+    this.slim = false,
     this.chapters = const [],
   });
 
   final double played;
   final double buffered;
   final bool dragging;
+
+  /// A thin line without knob and marker dots, unless dragging.
+  final bool slim;
   final Color playedColor;
 
   /// Chapter starts (scene markers) as fractions of the duration: gaps in
@@ -380,7 +390,8 @@ class _SeekBarPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    final trackHeight = dragging ? 5.0 : 3.0;
+    final thin = slim && !dragging;
+    final trackHeight = dragging ? 5.0 : (thin ? 2.0 : 3.0);
     final y = size.height / 2;
     final track = Rect.fromLTWH(0, y - trackHeight / 2, size.width, trackHeight);
     final radius = Radius.circular(trackHeight / 2);
@@ -402,6 +413,7 @@ class _SeekBarPainter extends CustomPainter {
       canvas.drawRect(Rect.fromLTWH(size.width * c - _chapterGap / 2, track.top, _chapterGap, trackHeight), gap);
     }
     canvas.restore();
+    if (thin) return;
     // Markers as dots on the track, so they can be found without scrubbing.
     final markerRadius = dragging ? 4.0 : 3.0;
     final outline = Paint()..color = Colors.black54;
@@ -418,6 +430,7 @@ class _SeekBarPainter extends CustomPainter {
       old.played != played ||
       old.buffered != buffered ||
       old.dragging != dragging ||
+      old.slim != slim ||
       old.playedColor != playedColor ||
       !listEquals(old.chapters, chapters);
 }

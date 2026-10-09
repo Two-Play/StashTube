@@ -11,6 +11,7 @@ import 'models/gallery.dart';
 import 'models/group.dart';
 import 'models/image_item.dart';
 import 'models/list_queries.dart';
+import 'models/marker.dart';
 import 'models/page_result.dart';
 import 'models/performer.dart';
 import 'models/saved_filter.dart';
@@ -159,6 +160,19 @@ final tagProvider = FutureProvider.autoDispose.family<Tag, String>(
 
 final savedSceneFiltersProvider = FutureProvider.autoDispose<List<SavedFilter>>(
   (ref) => ref.watch(stashRepositoryProvider).savedSceneFilters(),
+);
+
+class MarkerListNotifier extends PagedNotifier<Marker, MarkerQuery> {
+  MarkerListNotifier(super.arg);
+
+  @override
+  Future<PageResult<Marker>> fetchPage(MarkerQuery arg, int page, int perPage) =>
+      ref.read(stashRepositoryProvider).findMarkers(arg, page: page, perPage: perPage);
+}
+
+final markerListProvider =
+    AsyncNotifierProvider.autoDispose.family<MarkerListNotifier, PagedState<Marker>, MarkerQuery>(
+  MarkerListNotifier.new,
 );
 
 class GroupListNotifier extends PagedNotifier<Group, GroupQuery> {

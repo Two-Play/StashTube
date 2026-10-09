@@ -89,22 +89,32 @@ class ShortsFeedState {
 class ShortsSource {
   const ShortsSource.feed()
       : performerId = null,
+        title = null,
+        lane = null;
+
+  const ShortsSource.performer(String this.performerId, {this.title}) : lane = null;
+
+  /// One of the home shelf's queues: mixed like the feed, but shuffled on
+  /// its own, so every tile continues differently.
+  const ShortsSource.lane(int this.lane)
+      : performerId = null,
         title = null;
 
-  const ShortsSource.performer(String this.performerId, {this.title});
-
   final String? performerId;
+
+  /// Which of the home shelf's queues (0–3).
+  final int? lane;
 
   /// Shown in the top bar, e.g. the performer's name.
   final String? title;
 
-  bool get isFeed => performerId == null;
+  bool get isFeed => performerId == null && lane == null;
 
   @override
-  bool operator ==(Object other) => other is ShortsSource && other.performerId == performerId;
+  bool operator ==(Object other) => other is ShortsSource && other.performerId == performerId && other.lane == lane;
 
   @override
-  int get hashCode => performerId.hashCode;
+  int get hashCode => Object.hash(performerId, lane);
 }
 
 /// Endless, shuffled feed of shorts built from [shortsSettingsProvider]:
@@ -200,7 +210,7 @@ class ShortsFeedNotifier extends Notifier<ShortsFeedState> {
 final shortsFeedFamily =
     NotifierProvider.autoDispose.family<ShortsFeedNotifier, ShortsFeedState, ShortsSource>(ShortsFeedNotifier.new);
 
-/// The mixed feed of the shorts tab and the home page's shelf.
+/// The mixed feed of the shorts tab.
 final shortsFeedProvider = shortsFeedFamily(const ShortsSource.feed());
 
 /// How many of a performer's videos fit the shorts settings; the channel

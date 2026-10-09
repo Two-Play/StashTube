@@ -1455,4 +1455,24 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get lockScreenControlsSubtitle =>
       'Title, picture and controls on the lock screen and in the notification. Leave off for discretion.';
+
+  @override
+  String get libraryMarkers => 'Markers';
+
+  @override
+  String get markersEmpty => 'No markers yet';
+
+  @override
+  String get markersEmptyHint => 'Mark a moment in the player with \"Marker\".';
+
+  @override
+  String markersCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count markers',
+      one: '1 marker',
+    );
+    return '$_temp0';
+  }
 }

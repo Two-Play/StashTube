@@ -52,19 +52,6 @@ class _FastPageScrollPhysics extends PageScrollPhysics {
   SpringDescription get spring => const SpringDescription(mass: 0.5, stiffness: 500, damping: 32);
 }
 
-/// A short the shorts tab should jump to (index in the feed), e.g. tapped
-/// on the home page; consumed by the tab's [ShortsPage].
-class ShortsJumpNotifier extends Notifier<int?> {
-  @override
-  int? build() => null;
-
-  void jumpTo(int index) => state = index;
-
-  void done() => state = null;
-}
-
-final shortsJumpProvider = NotifierProvider<ShortsJumpNotifier, int?>(ShortsJumpNotifier.new);
-
 /// Whether the app's main player is playing.
 final _mainPlayingProvider = StreamProvider.autoDispose<bool>((ref) => ref.watch(playerProvider).stream.playing);
 
@@ -303,17 +290,6 @@ class _ShortsPageState extends ConsumerState<ShortsPage> {
     _visible = visible;
   }
 
-  void _jumpTo(int index) {
-    ref.read(shortsJumpProvider.notifier).done();
-    _paused = false;
-    _index = index;
-    if (_pageController.hasClients) {
-      _pageController.jumpToPage(index);
-    } else {
-      setState(() {}); // the page view, once built, starts at [_index]
-    }
-  }
-
   void _resetFeed() {
     _slotScene.fillRange(0, _poolSize, null);
     _slotReady.fillRange(0, _poolSize, false);
@@ -344,15 +320,6 @@ class _ShortsPageState extends ConsumerState<ShortsPage> {
     final theme = AppTheme.dark(ref.watch(accentColorProvider));
     final feed = _started ? ref.watch(_feed) : const ShortsFeedState(isLoading: true);
     final items = feed.items;
-    // A short tapped on the home page, for the page in the shorts tab.
-    if (tab == AppTab.shorts && widget.source.isFeed) {
-      final jump = ref.watch(shortsJumpProvider);
-      if (jump != null) {
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          if (mounted) _jumpTo(jump);
-        });
-      }
-    }
     if (_started) {
       ref.listen(_feed, (previous, next) {
         // A new feed (settings changed, refresh): back to the first short.
@@ -782,14 +749,12 @@ class _ShortViewState extends ConsumerState<_ShortView> {
             right: 8,
             bottom: bottom,
             // The player's seek bar: sprite thumbnails and marker dots, loaded
-            // once touched. Hidden in fullscreen, like the rest of the UI.
-            child: IgnorePointer(
-              ignoring: widget.fullscreen,
-              child: AnimatedOpacity(
-                opacity: widget.fullscreen ? 0 : 1,
-                duration: const Duration(milliseconds: 200),
-                child: PreviewSeekBar(sceneId: scene.id, player: controller.player, visible: false),
-              ),
+            // once touched. In fullscreen only a thin line until touched.
+            child: PreviewSeekBar(
+              sceneId: scene.id,
+              player: controller.player,
+              visible: false,
+              slim: widget.fullscreen,
             ),
           ),
       ],
