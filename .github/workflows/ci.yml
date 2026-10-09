@@ -9,8 +9,8 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  # The version the project is developed with; pubspec.lock is not checked
-  # in, so dependencies resolve fresh against it.
+  # The version the project is developed with; pubspec.lock pins the
+  # dependencies resolved with it.
   FLUTTER_VERSION: 3.47.6
 
 jobs:
@@ -24,20 +24,20 @@ jobs:
           flutter-version: ${{ env.FLUTTER_VERSION }}
           channel: stable
           cache: true
-      - run: flutter pub get
+      # Fails if pubspec.lock doesn't match pubspec.yaml (run flutter pub get).
+      - run: flutter pub get --enforce-lockfile
       - name: Generated code is up to date
         run: |
           flutter gen-l10n
           git diff --exit-code -- lib/l10n/gen
-      # Fails on documents that don't match Stash's schema (1.8). The output
-      # can differ in formatting with newer generator versions (pubspec.lock
-      # isn't checked in), so a difference only warns; the tests below run
-      # on the regenerated code.
+      # Fails on documents that don't match Stash's schema (1.8), and on
+      # committed types that are out of date (the generator is pinned by
+      # pubspec.lock).
       - name: GraphQL types match the schema
         run: |
           flutter pub run build_runner build --delete-conflicting-outputs
-          git diff --quiet -- 'lib/**/*.graphql.dart' \
-            || echo "::warning::Generated GraphQL code differs; run build_runner and commit it."
+          git diff --exit-code -- 'lib/**/*.graphql.dart' \
+            || { echo "::error::Generated GraphQL code is out of date; run build_runner and commit it."; exit 1; }
       # dart analyze, not flutter analyze: only it runs riverpod_lint.
       - run: dart analyze
       - run: flutter test

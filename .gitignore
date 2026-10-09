@@ -45,3 +45,5 @@ app.*.map.json
 /android/app/release
 
 *.lock
+# The app pins its dependencies (Dart recommends it for apps).
+!pubspec.lock
