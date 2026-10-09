@@ -1433,7 +1433,7 @@ abstract class AppLocalizations {
   /// No description provided for @preferredQualityHint.
   ///
   /// In en, this message translates to:
-  /// **'Used when a scene offers it, otherwise the next lower one. Smaller videos play their original file. Also changes with ⚙ in the player.'**
+  /// **'Used when a scene offers it, otherwise the next lower one. Smaller videos play their original file. Also changes with HD in the player.'**
   String get preferredQualityHint;
 
   /// No description provided for @sectionPrivacy.
@@ -2558,17 +2558,41 @@ abstract class AppLocalizations {
   /// **'Normal'**
   String get hapticsNormal;
 
-  /// No description provided for @animatedPreviews.
+  /// No description provided for @feedPreviews.
   ///
   /// In en, this message translates to:
-  /// **'Play previews'**
-  String get animatedPreviews;
+  /// **'Play previews in lists'**
+  String get feedPreviews;
 
-  /// No description provided for @animatedPreviewsSubtitle.
+  /// No description provided for @feedPreviewsSubtitle.
   ///
   /// In en, this message translates to:
-  /// **'Markers loop a short clip, and in lists the first fully shown video plays its preview after a few seconds.'**
-  String get animatedPreviewsSubtitle;
+  /// **'The first fully shown video plays a short preview.'**
+  String get feedPreviewsSubtitle;
+
+  /// No description provided for @feedPreviewDelay.
+  ///
+  /// In en, this message translates to:
+  /// **'Preview starts after'**
+  String get feedPreviewDelay;
+
+  /// No description provided for @secondsValue.
+  ///
+  /// In en, this message translates to:
+  /// **'{seconds} s'**
+  String secondsValue(double seconds);
+
+  /// No description provided for @markerPreviews.
+  ///
+  /// In en, this message translates to:
+  /// **'Play marker previews'**
+  String get markerPreviews;
+
+  /// No description provided for @markerPreviewsSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Markers loop a short clip instead of a still frame.'**
+  String get markerPreviewsSubtitle;
 }
 
 class _AppLocalizationsDelegate

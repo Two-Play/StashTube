@@ -335,7 +335,7 @@ class _StashVideoControlsState extends ConsumerState<StashVideoControls> {
                           ),
                           IconButton(
                             tooltip: context.l10n.quality,
-                            icon: const Icon(Icons.settings_outlined),
+                            icon: const Icon(Icons.hd_outlined),
                             onPressed: () => _act(widget.onQuality),
                           ),
                         ],

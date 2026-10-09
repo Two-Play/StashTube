@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:stash_app_mobile/core/config/server_config.dart';
 import 'package:stash_app_mobile/widgets/animated_previews.dart';
 import 'package:stash_app_mobile/widgets/auto_preview.dart';
 import 'package:stash_app_mobile/widgets/stash_image.dart';
@@ -8,12 +10,18 @@ import 'package:stash_app_mobile/widgets/stash_image.dart';
 import '../helpers.dart';
 
 void main() {
-  Future<void> pumpList(WidgetTester tester, {bool previews = true, bool firstHasPreview = true}) =>
+  Future<void> pumpList(
+    WidgetTester tester, {
+    bool previews = true,
+    bool firstHasPreview = true,
+    Duration delay = FeedPreviewDelayNotifier.standard,
+  }) =>
       tester.pumpWidget(ProviderScope(
-        overrides: [...testServer, animatedPreviewsProvider.overrideWithBuild((ref, notifier) => previews)],
+        overrides: [...testServer, feedPreviewsProvider.overrideWithBuild((ref, notifier) => previews)],
         child: MaterialApp(
           home: Scaffold(
             body: AutoPreviewScope(
+              delay: delay,
               child: ListView(
                 children: [
                   for (var i = 0; i < 20; i++)
@@ -34,12 +42,36 @@ void main() {
   List<String?> playing(WidgetTester tester) =>
       [for (final image in tester.widgetList<StashImage>(find.byType(StashImage))) image.url];
 
-  testWidgets('the first fully shown video plays after a few seconds', (tester) async {
+  testWidgets('the first fully shown video plays after 1.5 s by default', (tester) async {
     await pumpList(tester);
-    await tester.pump(const Duration(seconds: 1));
+    await tester.pump(const Duration(milliseconds: 1400));
     expect(playing(tester), isEmpty, reason: 'not right away');
-    await tester.pump(const Duration(seconds: 2));
+    await tester.pump(const Duration(milliseconds: 200));
     expect(playing(tester), ['http://s/0.webp']);
+  });
+
+  testWidgets('the delay follows the setting', (tester) async {
+    await pumpList(tester, delay: const Duration(seconds: 3));
+    await tester.pump(const Duration(milliseconds: 2900));
+    expect(playing(tester), isEmpty);
+    await tester.pump(const Duration(milliseconds: 200));
+    expect(playing(tester), ['http://s/0.webp']);
+  });
+
+  test('lists and markers are switched separately; the delay is stored', () async {
+    SharedPreferences.setMockInitialValues({'animated_previews': false});
+    final prefs = await SharedPreferences.getInstance();
+    final c = ProviderContainer(overrides: [sharedPreferencesProvider.overrideWithValue(prefs)]);
+    addTearDown(c.dispose);
+    expect([c.read(feedPreviewsProvider), c.read(markerPreviewsProvider)], [false, false],
+        reason: 'both take over the earlier shared setting');
+
+    await c.read(markerPreviewsProvider.notifier).set(true);
+    expect([c.read(feedPreviewsProvider), c.read(markerPreviewsProvider)], [false, true]);
+
+    expect(c.read(feedPreviewDelayProvider), const Duration(milliseconds: 1500));
+    await c.read(feedPreviewDelayProvider.notifier).set(const Duration(seconds: 3));
+    expect(prefs.getInt('feed_preview_delay_ms'), 3000);
   });
 
   testWidgets('scrolling stops it; the new first one plays once it rests', (tester) async {

@@ -95,7 +95,7 @@ class MarkerTile extends ConsumerWidget {
     final theme = Theme.of(context);
     final muted = theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurfaceVariant);
     final still = StashImage(marker.screenshotUrl ?? marker.scene.screenshotUrl, fallbackIcon: Icons.bookmark_outline);
-    final preview = previewsPlay(context, ref) ? marker.previewUrl : null;
+    final preview = previewsPlay(context, ref, markerPreviewsProvider) ? marker.previewUrl : null;
     return InkWell(
       borderRadius: BorderRadius.circular(8),
       onTap: () => ref.read(nowPlayingProvider.notifier).play(marker.scene, at: marker.seconds),

@@ -160,11 +160,35 @@ class SettingsPage extends ConsumerWidget {
           _SectionTitle(l.sectionSceneCards),
           SwitchListTile(
             secondary: const Icon(Icons.motion_photos_on_outlined),
-            title: Text(l.animatedPreviews),
-            subtitle: Text(l.animatedPreviewsSubtitle),
-            isThreeLine: true,
-            value: ref.watch(animatedPreviewsProvider),
-            onChanged: withHaptic((v) => ref.read(animatedPreviewsProvider.notifier).set(v)),
+            title: Text(l.feedPreviews),
+            subtitle: Text(l.feedPreviewsSubtitle),
+            value: ref.watch(feedPreviewsProvider),
+            onChanged: withHaptic((v) => ref.read(feedPreviewsProvider.notifier).set(v)),
+          ),
+          ListTile(
+            leading: const Icon(Icons.timer_outlined),
+            title: Text(l.feedPreviewDelay),
+            enabled: ref.watch(feedPreviewsProvider),
+            trailing: DropdownButton<Duration>(
+              value: ref.watch(feedPreviewDelayProvider),
+              underline: const SizedBox.shrink(),
+              items: [
+                for (final delay in {...FeedPreviewDelayNotifier.choices, ref.watch(feedPreviewDelayProvider)})
+                  DropdownMenuItem(value: delay, child: Text(l.secondsValue(delay.inMilliseconds / 1000))),
+              ],
+              onChanged: ref.watch(feedPreviewsProvider)
+                  ? (delay) {
+                      if (delay != null) ref.read(feedPreviewDelayProvider.notifier).set(delay);
+                    }
+                  : null,
+            ),
+          ),
+          SwitchListTile(
+            secondary: const Icon(Icons.bookmarks_outlined),
+            title: Text(l.markerPreviews),
+            subtitle: Text(l.markerPreviewsSubtitle),
+            value: ref.watch(markerPreviewsProvider),
+            onChanged: withHaptic((v) => ref.read(markerPreviewsProvider.notifier).set(v)),
           ),
           ListTile(
             leading: const Icon(Icons.account_circle_outlined),
@@ -260,7 +284,7 @@ class _PlaybackModeTiles extends ConsumerWidget {
 }
 
 /// Default resolution of new scenes (4.10). Stored as a stream label like
-/// the player's ⚙ choice; picking a height here keeps that choice's format
+/// the player's HD choice; picking a height here keeps that choice's format
 /// (HLS by default), see `pickPreferredStream`.
 class _QualityTile extends ConsumerWidget {
   const _QualityTile({required this.preferred});

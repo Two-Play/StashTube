@@ -10,7 +10,7 @@ import 'stash_image.dart';
 /// few seconds after scrolling stopped, like YouTube. Wraps a scroll view;
 /// the [AutoPreview]s of its thumbnails take part. Scrolling stops it.
 class AutoPreviewScope extends StatefulWidget {
-  const AutoPreviewScope({super.key, required this.child, this.delay = const Duration(milliseconds: 2500)});
+  const AutoPreviewScope({super.key, required this.child, this.delay = FeedPreviewDelayNotifier.standard});
 
   final Widget child;
   final Duration delay;
@@ -145,7 +145,7 @@ class _AutoPreviewState extends ConsumerState<AutoPreview> {
   Widget build(BuildContext context) {
     final scope = _scope;
     final url = widget.url;
-    if (scope == null || url == null || !previewsPlay(context, ref)) return widget.child;
+    if (scope == null || url == null || !previewsPlay(context, ref, feedPreviewsProvider)) return widget.child;
     return ValueListenableBuilder<_AutoPreviewState?>(
       valueListenable: scope._active,
       child: widget.child,

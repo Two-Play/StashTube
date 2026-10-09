@@ -46,7 +46,7 @@ int? streamHeightOf(String label) {
   return match == null ? null : int.parse(match.group(1)!);
 }
 
-/// The stream to play for the preferred stream label (the player's ⚙ or the
+/// The stream to play for the preferred stream label (the player's HD button or the
 /// settings): that exact stream, else the same format at the preferred
 /// height, else the next lower one. Null means the original file: also when
 /// every transcode is smaller than preferred, as the original is then no

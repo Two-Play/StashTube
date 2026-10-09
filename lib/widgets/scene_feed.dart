@@ -6,6 +6,7 @@ import '../data/models/list_queries.dart';
 import '../data/models/scene.dart';
 import '../data/models/saved_filter.dart';
 import '../data/providers.dart';
+import 'animated_previews.dart';
 import 'auto_preview.dart';
 import 'chip_bar.dart';
 import 'paged_sliver.dart';
@@ -139,6 +140,7 @@ class _SceneFeedViewState extends ConsumerState<SceneFeedView> {
 
     // The first fully shown video plays its preview once scrolling stops.
     final list = AutoPreviewScope(
+      delay: ref.watch(feedPreviewDelayProvider),
       child: LoadMoreListener(
       onLoadMore: () => ref.read(provider.notifier).loadMore(),
       child: CustomScrollView(

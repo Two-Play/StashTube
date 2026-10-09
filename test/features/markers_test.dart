@@ -109,7 +109,7 @@ void main() {
         overrides: [
           ...testServer,
           stashRepositoryProvider.overrideWithValue(_Repo()),
-          animatedPreviewsProvider.overrideWithBuild((ref, notifier) => previews),
+          markerPreviewsProvider.overrideWithBuild((ref, notifier) => previews),
         ],
         child: const MaterialApp(home: Scaffold(body: MarkersTab())),
       ));
