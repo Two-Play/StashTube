@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/misc.dart' show Refreshable;
 
 import '../core/pagination/paged_notifier.dart';
 import '../core/pagination/paging_mode.dart';
+import 'sliver_columns.dart';
 import 'status_views.dart';
 import '../l10n/l10n.dart';
 
@@ -50,6 +51,7 @@ class PagedSliver<T> extends ConsumerWidget {
     this.emptyIcon = Icons.inbox_outlined,
     this.emptyHint,
     this.gridDelegate,
+    this.columnWidth,
     this.padding = EdgeInsets.zero,
   });
 
@@ -67,6 +69,10 @@ class PagedSliver<T> extends ConsumerWidget {
 
   /// Renders a grid instead of a list when set.
   final SliverGridDelegate? gridDelegate;
+
+  /// Without [gridDelegate]: on wide screens the list gets columns of about
+  /// this width ([SliverColumns]).
+  final double? columnWidth;
   final EdgeInsets padding;
 
   @override
@@ -87,12 +93,19 @@ class PagedSliver<T> extends ConsumerWidget {
       childCount: state.items.length,
     );
     final grid = gridDelegate;
+    final columnWidth = this.columnWidth;
     return SliverMainAxisGroup(slivers: [
       SliverPadding(
         padding: padding,
-        sliver: grid == null
-            ? SliverList(delegate: delegate)
-            : SliverGrid(delegate: delegate, gridDelegate: grid),
+        sliver: grid != null
+            ? SliverGrid(delegate: delegate, gridDelegate: grid)
+            : columnWidth != null
+                ? SliverColumns(
+                    itemCount: state.items.length,
+                    itemBuilder: (context, i) => itemBuilder(context, state.items[i]),
+                    columnWidth: columnWidth,
+                  )
+                : SliverList(delegate: delegate),
       ),
       SliverToBoxAdapter(
         child: onGoToPage != null && ref.watch(pagingModeProvider) == PagingMode.pages

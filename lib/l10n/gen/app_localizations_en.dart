@@ -1410,4 +1410,24 @@ class AppLocalizationsEn extends AppLocalizations {
   String searchNoResults(String term) {
     return 'Nothing matches \"$term\"';
   }
+
+  @override
+  String get pictureInPicture => 'Picture-in-picture';
+
+  @override
+  String get pipUnavailable =>
+      'Picture-in-picture isn\'t available for this video.';
+
+  @override
+  String get autoPip => 'Picture-in-picture when leaving the app';
+
+  @override
+  String get autoPipSubtitle => 'A playing video continues in a small window.';
+
+  @override
+  String get backgroundPlayback => 'Background playback';
+
+  @override
+  String get backgroundPlaybackSubtitle =>
+      'The sound keeps playing while the app is in the background.';
 }

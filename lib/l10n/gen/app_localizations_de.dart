@@ -1416,4 +1416,25 @@ class AppLocalizationsDe extends AppLocalizations {
   String searchNoResults(String term) {
     return 'Nichts gefunden zu „$term“';
   }
+
+  @override
+  String get pictureInPicture => 'Bild-in-Bild';
+
+  @override
+  String get pipUnavailable =>
+      'Bild-in-Bild ist für dieses Video nicht verfügbar.';
+
+  @override
+  String get autoPip => 'Bild-in-Bild beim Verlassen der App';
+
+  @override
+  String get autoPipSubtitle =>
+      'Ein laufendes Video spielt in einem kleinen Fenster weiter.';
+
+  @override
+  String get backgroundPlayback => 'Hintergrundwiedergabe';
+
+  @override
+  String get backgroundPlaybackSubtitle =>
+      'Der Ton läuft weiter, während die App im Hintergrund ist.';
 }

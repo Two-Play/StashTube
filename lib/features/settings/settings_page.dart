@@ -8,6 +8,7 @@ import '../../core/config/server_config.dart';
 import '../../core/config/theme.dart';
 import '../../data/models/scene_details.dart';
 import '../../data/providers.dart';
+import '../pip/pip.dart';
 import '../player/player_providers.dart';
 import '../security/app_lock.dart';
 import '../auth/server_switcher.dart';
@@ -199,6 +200,7 @@ class SettingsPage extends ConsumerWidget {
           ),
           _SectionTitle(l.sectionPlayback),
           _QualityTile(preferred: preferredStream),
+          const _PlaybackModeTiles(),
           _SectionTitle(l.sectionPrivacy),
           const _SecuritySettings(),
           const SizedBox(height: 16),
@@ -216,6 +218,37 @@ class SettingsPage extends ConsumerWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+/// Picture-in-picture when leaving the app (Android) and background
+/// playback (4.12).
+class _PlaybackModeTiles extends ConsumerWidget {
+  const _PlaybackModeTiles();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l = context.l10n;
+    final modes = ref.watch(playbackModesProvider);
+    return Column(
+      children: [
+        if (ref.watch(pipServiceProvider).canAutoEnter)
+          SwitchListTile(
+            secondary: const Icon(Icons.picture_in_picture_alt_outlined),
+            title: Text(l.autoPip),
+            subtitle: Text(l.autoPipSubtitle),
+            value: modes.autoPip,
+            onChanged: (v) => ref.read(playbackModesProvider.notifier).setAutoPip(v),
+          ),
+        SwitchListTile(
+          secondary: const Icon(Icons.headphones_outlined),
+          title: Text(l.backgroundPlayback),
+          subtitle: Text(l.backgroundPlaybackSubtitle),
+          value: modes.background,
+          onChanged: (v) => ref.read(playbackModesProvider.notifier).setBackground(v),
+        ),
+      ],
     );
   }
 }

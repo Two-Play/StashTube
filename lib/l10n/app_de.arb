@@ -389,5 +389,11 @@
   "colorStash": "Stash (Blau/Braun)",
   "searchScenes": "Szenen suchen",
   "searchGalleries": "Galerien suchen",
-  "searchNoResults": "Nichts gefunden zu „{term}“"
+  "searchNoResults": "Nichts gefunden zu „{term}“",
+  "pictureInPicture": "Bild-in-Bild",
+  "pipUnavailable": "Bild-in-Bild ist für dieses Video nicht verfügbar.",
+  "autoPip": "Bild-in-Bild beim Verlassen der App",
+  "autoPipSubtitle": "Ein laufendes Video spielt in einem kleinen Fenster weiter.",
+  "backgroundPlayback": "Hintergrundwiedergabe",
+  "backgroundPlaybackSubtitle": "Der Ton läuft weiter, während die App im Hintergrund ist."
 }

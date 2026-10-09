@@ -63,6 +63,14 @@ class FakePlayer implements Player {
     _state = _state.copyWith(playing: play);
   }
 
+  int playCalls = 0;
+
+  @override
+  Future<void> play() async {
+    playCalls++;
+    _state = _state.copyWith(playing: true);
+  }
+
   @override
   Future<void> pause() async {
     pauseCalls++;

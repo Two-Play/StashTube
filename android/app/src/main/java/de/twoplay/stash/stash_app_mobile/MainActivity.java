@@ -1,10 +1,15 @@
 package de.twoplay.stash.stash_app_mobile;
 
+import android.app.PictureInPictureParams;
 import android.content.ComponentName;
 import android.content.pm.PackageManager;
+import android.content.res.Configuration;
+import android.os.Build;
+import android.util.Rational;
 import android.view.WindowManager;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.RequiresApi;
 
 import io.flutter.embedding.android.FlutterFragmentActivity;
 import io.flutter.embedding.engine.FlutterEngine;
@@ -14,8 +19,14 @@ import io.flutter.plugin.common.MethodChannel;
 public class MainActivity extends FlutterFragmentActivity {
     private static final String PRIVACY_CHANNEL = "stash/privacy";
     private static final String APP_ICON_CHANNEL = "stash/appicon";
+    private static final String PIP_CHANNEL = "stash/pip";
     // activity-alias names in AndroidManifest.xml.
     private static final String[] ICON_ALIASES = {"DefaultIcon", "NotesIcon", "CalculatorIcon"};
+
+    private MethodChannel pipChannel;
+    // Enter picture-in-picture when the user leaves the app (a video plays).
+    private boolean autoPip = false;
+    private Rational pipAspect = new Rational(16, 9);
 
     @Override
     public void configureFlutterEngine(@NonNull FlutterEngine flutterEngine) {
@@ -65,5 +76,71 @@ public class MainActivity extends FlutterFragmentActivity {
                     }
                     result.success(null);
                 });
+
+        // Picture-in-picture (4.12): "setAutoEnter" {enabled, aspect} while a
+        // video plays, "enter" {aspect} from the player's button. Reports
+        // "pipChanged" (bool) back to Dart, which then shows only the video.
+        pipChannel = new MethodChannel(flutterEngine.getDartExecutor().getBinaryMessenger(), PIP_CHANNEL);
+        pipChannel.setMethodCallHandler((call, result) -> {
+            Double aspect = call.argument("aspect");
+            if (aspect != null) pipAspect = toRational(aspect);
+            switch (call.method) {
+                case "setAutoEnter":
+                    autoPip = Boolean.TRUE.equals(call.argument("enabled")) && pipSupported();
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && pipSupported()) {
+                        setPictureInPictureParams(pipParams());
+                    }
+                    result.success(null);
+                    break;
+                case "enter":
+                    result.success(enterPip());
+                    break;
+                default:
+                    result.notImplemented();
+            }
+        });
+    }
+
+    private boolean pipSupported() {
+        return Build.VERSION.SDK_INT >= Build.VERSION_CODES.O
+                && getPackageManager().hasSystemFeature(PackageManager.FEATURE_PICTURE_IN_PICTURE);
+    }
+
+    @RequiresApi(Build.VERSION_CODES.O)
+    private PictureInPictureParams pipParams() {
+        PictureInPictureParams.Builder builder = new PictureInPictureParams.Builder().setAspectRatio(pipAspect);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            // Android 12+ enters by itself, with a smooth animation.
+            builder.setAutoEnterEnabled(autoPip).setSeamlessResizeEnabled(false);
+        }
+        return builder.build();
+    }
+
+    private boolean enterPip() {
+        if (!pipSupported()) return false;
+        try {
+            return enterPictureInPictureMode(pipParams());
+        } catch (IllegalStateException e) {
+            return false;
+        }
+    }
+
+    // Android allows aspect ratios between 1:2.39 and 2.39:1; Dart clamps too.
+    private static Rational toRational(double aspect) {
+        double clamped = Math.max(0.42, Math.min(2.38, aspect));
+        return new Rational((int) Math.round(clamped * 10000), 10000);
+    }
+
+    @Override
+    public void onUserLeaveHint() {
+        super.onUserLeaveHint();
+        // Before Android 12 the app enters picture-in-picture itself.
+        if (autoPip && Build.VERSION.SDK_INT < Build.VERSION_CODES.S) enterPip();
+    }
+
+    @Override
+    public void onPictureInPictureModeChanged(boolean isInPictureInPictureMode, @NonNull Configuration newConfig) {
+        super.onPictureInPictureModeChanged(isInPictureInPictureMode, newConfig);
+        if (pipChannel != null) pipChannel.invokeMethod("pipChanged", isInPictureInPictureMode);
     }
 }
