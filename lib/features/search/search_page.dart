@@ -272,6 +272,7 @@ class _StudioList extends ConsumerWidget {
         onRetry: () => ref.invalidate(provider),
         onLoadMore: () => ref.read(provider.notifier).loadMore(),
         onGoToPage: (page) => ref.read(provider.notifier).goToPage(page),
+        columnWidth: 400,
         itemBuilder: (_, studio) => StudioListTile(studio: studio),
       ),
     );

@@ -98,6 +98,8 @@ class _PlayerVideoState extends ConsumerState<PlayerVideo> {
     return Video(
       key: playerVideoKey,
       controller: ref.watch(videoControllerProvider),
+      // backgroundPlaybackProvider decides (4.12): keep the sound, or pause.
+      pauseUponEnteringBackgroundMode: false,
       onEnterFullscreen: () => _enterFullscreen(ref.read(playerProvider).state, scene),
       onExitFullscreen: () {
         fullscreenByRotation.value = false;

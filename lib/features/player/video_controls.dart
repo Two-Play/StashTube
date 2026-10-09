@@ -11,7 +11,8 @@ import '../../data/models/scene.dart';
 import '../../widgets/hold_detector.dart';
 import '../cast/cast_providers.dart';
 import '../cast/cast_ui.dart';
-import 'player_controls.dart' show fullscreenByRotation;
+import '../pip/pip.dart';
+import 'player_controls.dart' show fullscreenByRotation, playerVideoKey;
 import 'player_providers.dart';
 import 'preview_seek_bar.dart';
 import 'video_zoom.dart';
@@ -147,6 +148,16 @@ class _StashVideoControlsState extends ConsumerState<StashVideoControls> {
     _hideTimer = Timer(widget.hideAfter, () {
       if (mounted && !_interacting) setState(() => _visible = false);
     });
+  }
+
+  /// Picture-in-picture (4.12); on iOS its window grows out of the video.
+  Future<void> _enterPip() async {
+    final l = context.l10n;
+    final messenger = ScaffoldMessenger.maybeOf(context);
+    final box = playerVideoKey.currentContext?.findRenderObject() as RenderBox?;
+    final from = box == null || !box.hasSize ? null : box.localToGlobal(Offset.zero) & box.size;
+    final started = await ref.read(pipProvider.notifier).enter(from: from);
+    if (!started) messenger?.showSnackBar(SnackBar(content: Text(l.pipUnavailable)));
   }
 
   /// Runs a control action and keeps the controls visible a bit longer.
@@ -302,6 +313,12 @@ class _StashVideoControlsState extends ConsumerState<StashVideoControls> {
                             ),
                           const Spacer(),
                           const CastButton(color: Colors.white),
+                          if (ref.watch(pipServiceProvider).isSupported)
+                            IconButton(
+                              tooltip: context.l10n.pictureInPicture,
+                              icon: const Icon(Icons.picture_in_picture_alt_outlined),
+                              onPressed: () => _act(() => unawaited(_enterPip())),
+                            ),
                           ...widget.topActions,
                           StreamBuilder<double>(
                             stream: player.stream.rate,

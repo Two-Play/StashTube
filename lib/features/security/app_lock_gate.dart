@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screen_lock/flutter_screen_lock.dart';
 
+import '../pip/pip.dart';
 import 'app_lock.dart';
 import '../../l10n/l10n.dart';
 
@@ -50,7 +51,8 @@ class _AppLockGateState extends ConsumerState<AppLockGate> {
         // Keeps the app's state while covered, but no taps reach it.
         IgnorePointer(ignoring: locked, child: widget.child),
         if (locked) const Positioned.fill(child: LockScreen()),
-        if (!locked && hide && _inactive) const Positioned.fill(child: PrivacyCover()),
+        // Android's picture-in-picture window is inactive too, but shows the video.
+        if (!locked && hide && _inactive && !ref.watch(pipProvider)) const Positioned.fill(child: PrivacyCover()),
       ],
     );
   }

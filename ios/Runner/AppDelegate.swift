@@ -6,6 +6,7 @@ import UIKit
 @main
 @objc class AppDelegate: FlutterAppDelegate, FlutterImplicitEngineDelegate {
   private var airPlay: AirPlayController?
+  private var pictureInPicture: PictureInPictureController?
 
   override func application(
     _ application: UIApplication,
@@ -19,6 +20,9 @@ import UIKit
     registerAppIconChannel(engineBridge.pluginRegistry)
     if let registrar = engineBridge.pluginRegistry.registrar(forPlugin: "StashAirPlay") {
       airPlay = AirPlayController(messenger: registrar.messenger())
+    }
+    if let registrar = engineBridge.pluginRegistry.registrar(forPlugin: "StashPictureInPicture") {
+      pictureInPicture = PictureInPictureController(messenger: registrar.messenger())
     }
   }
 
@@ -205,6 +209,182 @@ final class AirPlayController: NSObject, FlutterStreamHandler {
     events = nil
     return nil
   }
+}
+
+/// Picture-in-picture (4.12) for `PipService` in Dart.
+///
+/// mpv's video can't go into picture-in-picture, so an AVPlayer takes over
+/// the stream, like for AirPlay: its layer sits where the app's video is,
+/// the system window grows out of it, and the app pauses its own player.
+/// Methods on `stash/pip`: start {url, headers, startMs, rect: [x, y, w, h]}
+/// (returns whether it started), stop. Calls back pipChanged (bool) and,
+/// when it ends, pipStopped {positionMs, playing}, so Dart continues there.
+final class PictureInPictureController: NSObject, AVPictureInPictureControllerDelegate {
+  private let channel: FlutterMethodChannel
+  private var player: AVPlayer?
+  private var playerView: PlayerLayerView?
+  private var pip: AVPictureInPictureController?
+  private var possibleObservation: NSKeyValueObservation?
+  private var statusObservation: NSKeyValueObservation?
+  private var pendingStart: FlutterResult?
+  private var playingWhenStopping = true
+
+  init(messenger: FlutterBinaryMessenger) {
+    channel = FlutterMethodChannel(name: "stash/pip", binaryMessenger: messenger)
+    super.init()
+    channel.setMethodCallHandler { [weak self] call, result in
+      self?.handle(call, result: result)
+    }
+  }
+
+  private func handle(_ call: FlutterMethodCall, result: @escaping FlutterResult) {
+    switch call.method {
+    case "start":
+      guard let args = call.arguments as? [String: Any],
+            let string = args["url"] as? String, let url = URL(string: string) else {
+        result(FlutterError(code: "bad_args", message: "start needs a url", details: nil))
+        return
+      }
+      let rect = (args["rect"] as? [NSNumber])?.map { CGFloat($0.doubleValue) } ?? []
+      start(
+        url: url,
+        headers: args["headers"] as? [String: String] ?? [:],
+        startMs: (args["startMs"] as? NSNumber)?.int64Value ?? 0,
+        frame: rect.count == 4 ? CGRect(x: rect[0], y: rect[1], width: rect[2], height: rect[3]) : .zero,
+        result: result)
+    case "stop":
+      if pip?.isPictureInPictureActive == true {
+        pip?.stopPictureInPicture()
+      } else {
+        cleanUp()
+      }
+      result(nil)
+    default:
+      result(FlutterMethodNotImplemented)
+    }
+  }
+
+  private func start(url: URL, headers: [String: String], startMs: Int64, frame: CGRect, result: @escaping FlutterResult) {
+    finishStart(false)
+    cleanUp()
+    guard AVPictureInPictureController.isPictureInPictureSupported(), let window = mainWindow else {
+      result(false)
+      return
+    }
+    try? AVAudioSession.sharedInstance().setCategory(.playback, mode: .moviePlayback)
+    try? AVAudioSession.sharedInstance().setActive(true)
+
+    // The headers carry the API key or the session cookie.
+    let asset = AVURLAsset(url: url, options: ["AVURLAssetHTTPHeaderFieldsKey": headers])
+    let item = AVPlayerItem(asset: asset)
+    let player = AVPlayer(playerItem: item)
+    player.allowsExternalPlayback = false
+    // The layer has to be on screen for picture-in-picture to start.
+    let view = PlayerLayerView(frame: frame.width > 1 && frame.height > 1 ? frame : CGRect(x: 0, y: 0, width: 160, height: 90))
+    view.isUserInteractionEnabled = false
+    view.playerLayer.videoGravity = .resizeAspect
+    view.playerLayer.player = player
+    window.addSubview(view)
+
+    guard let pip = AVPictureInPictureController(playerLayer: view.playerLayer) else {
+      view.removeFromSuperview()
+      result(false)
+      return
+    }
+    pip.delegate = self
+    self.player = player
+    self.playerView = view
+    self.pip = pip
+    pendingStart = result
+
+    statusObservation = item.observe(\.status) { [weak self] item, _ in
+      guard item.status == .failed else { return }
+      DispatchQueue.main.async {
+        self?.finishStart(false)
+        self?.cleanUp()
+      }
+    }
+    possibleObservation = pip.observe(\.isPictureInPicturePossible, options: [.initial, .new]) { [weak self] pip, _ in
+      DispatchQueue.main.async {
+        guard self?.pendingStart != nil, pip.isPictureInPicturePossible, !pip.isPictureInPictureActive else { return }
+        pip.startPictureInPicture()
+      }
+    }
+    if startMs > 0 {
+      player.seek(to: CMTime(value: startMs, timescale: 1000), toleranceBefore: .zero, toleranceAfter: .zero)
+    }
+    player.play()
+    // Streams the AVPlayer can't open never get "possible".
+    DispatchQueue.main.asyncAfter(deadline: .now() + 15) { [weak self] in
+      guard let self = self, self.pendingStart != nil else { return }
+      self.finishStart(false)
+      self.cleanUp()
+    }
+  }
+
+  private var mainWindow: UIWindow? {
+    let windows = UIApplication.shared.connectedScenes
+      .compactMap { $0 as? UIWindowScene }
+      .flatMap { $0.windows }
+    return windows.first { $0.isKeyWindow } ?? windows.first
+  }
+
+  private func finishStart(_ started: Bool) {
+    pendingStart?(started)
+    pendingStart = nil
+  }
+
+  private func cleanUp() {
+    possibleObservation = nil
+    statusObservation = nil
+    player?.pause()
+    player = nil
+    pip = nil
+    playerView?.removeFromSuperview()
+    playerView = nil
+  }
+
+  func pictureInPictureControllerDidStartPictureInPicture(_ controller: AVPictureInPictureController) {
+    // The app shows its own (paused) video again behind the window.
+    playerView?.isHidden = true
+    finishStart(true)
+    channel.invokeMethod("pipChanged", arguments: true)
+  }
+
+  func pictureInPictureController(
+    _ controller: AVPictureInPictureController,
+    failedToStartPictureInPictureWithError error: Error
+  ) {
+    finishStart(false)
+    cleanUp()
+  }
+
+  func pictureInPictureControllerWillStopPictureInPicture(_ controller: AVPictureInPictureController) {
+    playingWhenStopping = player?.timeControlStatus != .paused
+  }
+
+  func pictureInPictureControllerDidStopPictureInPicture(_ controller: AVPictureInPictureController) {
+    let seconds = player.map { CMTimeGetSeconds($0.currentTime()) } ?? 0
+    channel.invokeMethod("pipStopped", arguments: [
+      "positionMs": seconds.isFinite ? Int(seconds * 1000) : 0,
+      "playing": playingWhenStopping
+    ])
+    cleanUp()
+  }
+
+  func pictureInPictureController(
+    _ controller: AVPictureInPictureController,
+    restoreUserInterfaceForPictureInPictureStopWithCompletionHandler completionHandler: @escaping (Bool) -> Void
+  ) {
+    completionHandler(true)
+  }
+}
+
+/// A view whose layer is an AVPlayerLayer.
+final class PlayerLayerView: UIView {
+  override class var layerClass: AnyClass { AVPlayerLayer.self }
+
+  var playerLayer: AVPlayerLayer { layer as! AVPlayerLayer }
 }
 
 /// The app's view controller (Main.storyboard). Turns the phone without

@@ -202,6 +202,8 @@ class _SceneFeedViewState extends ConsumerState<SceneFeedView> {
                       crossAxisSpacing: 12,
                     )
                   : null,
+              // Cards and rows get columns on tablets and in landscape (13.5).
+              columnWidth: widget.layout == SceneFeedLayout.list ? 480 : 420,
               itemBuilder: (_, scene) => switch (widget.layout) {
                 SceneFeedLayout.cards => SceneCard(scene: scene),
                 SceneFeedLayout.list => SceneListTile(scene: scene),

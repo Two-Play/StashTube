@@ -2437,6 +2437,42 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Nothing matches \"{term}\"'**
   String searchNoResults(String term);
+
+  /// No description provided for @pictureInPicture.
+  ///
+  /// In en, this message translates to:
+  /// **'Picture-in-picture'**
+  String get pictureInPicture;
+
+  /// No description provided for @pipUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Picture-in-picture isn\'t available for this video.'**
+  String get pipUnavailable;
+
+  /// No description provided for @autoPip.
+  ///
+  /// In en, this message translates to:
+  /// **'Picture-in-picture when leaving the app'**
+  String get autoPip;
+
+  /// No description provided for @autoPipSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'A playing video continues in a small window.'**
+  String get autoPipSubtitle;
+
+  /// No description provided for @backgroundPlayback.
+  ///
+  /// In en, this message translates to:
+  /// **'Background playback'**
+  String get backgroundPlayback;
+
+  /// No description provided for @backgroundPlaybackSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'The sound keeps playing while the app is in the background.'**
+  String get backgroundPlaybackSubtitle;
 }
 
 class _AppLocalizationsDelegate
