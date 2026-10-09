@@ -8,8 +8,8 @@ import '../../data/providers.dart';
 import '../../widgets/channel_header.dart';
 import '../../widgets/scene_feed.dart';
 import '../../widgets/status_views.dart';
+import '../edit/edit_common.dart';
 import '../edit/edit_pages.dart';
-import '../shell/navigation.dart';
 import '../../l10n/l10n.dart';
 
 /// All scenes with one tag (8.1).
@@ -32,7 +32,7 @@ class TagPage extends ConsumerWidget {
             IconButton(
               tooltip: context.l10n.edit,
               icon: const Icon(Icons.edit_outlined),
-              onPressed: () => openPage(ref, TagEditPage(tag: value)),
+              onPressed: () => openEditor(context, ref, TagEditPage(tag: value)),
             ),
         ],
       ),

@@ -5,6 +5,7 @@ import '../../core/utils/format.dart';
 import '../../data/models/list_queries.dart';
 import '../../data/providers.dart';
 import '../../widgets/status_views.dart';
+import '../edit/edit_common.dart';
 import '../edit/edit_pages.dart';
 import '../shell/navigation.dart';
 import 'images_tab.dart';
@@ -30,7 +31,7 @@ class GalleryPage extends ConsumerWidget {
             IconButton(
               tooltip: context.l10n.edit,
               icon: const Icon(Icons.edit_outlined),
-              onPressed: () => openPage(ref, GalleryEditPage(gallery: value)),
+              onPressed: () => openEditor(context, ref, GalleryEditPage(gallery: value)),
             ),
         ],
       ),

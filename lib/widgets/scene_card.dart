@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../core/utils/format.dart';
 import '../data/models/scene.dart';
+import '../features/edit/edit_common.dart';
 import '../features/edit/edit_pages.dart';
 import '../features/library/watch_later.dart';
 import '../features/player/player_providers.dart';
@@ -295,7 +296,7 @@ void showSceneMenu(BuildContext context, WidgetRef ref, Scene scene) => showModa
               ListTile(
                 leading: const Icon(Icons.edit_outlined),
                 title: Text(context.l10n.editDetails),
-                onTap: () => go(() => openPage(ref, SceneEditPage(scene: scene))),
+                onTap: () => go(() => openEditor(context, ref, SceneEditPage(scene: scene))),
               ),
               if (studio != null)
                 ListTile(

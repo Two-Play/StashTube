@@ -6,6 +6,7 @@ import 'package:stash_app_mobile/data/models/scene.dart';
 import 'package:stash_app_mobile/data/models/studio.dart';
 import 'package:stash_app_mobile/data/models/tag.dart';
 import 'package:stash_app_mobile/data/repositories/stash_repository.dart';
+import 'package:stash_app_mobile/features/edit/edit_common.dart';
 import 'package:stash_app_mobile/features/edit/edit_pages.dart';
 import 'package:stash_app_mobile/features/player/player_providers.dart';
 
@@ -94,6 +95,46 @@ void main() {
     expect(container.read(nowPlayingProvider)?.title, 'New title');
     expect(find.text('open'), findsOneWidget, reason: 'back on the previous page');
     expect(find.text('Saved'), findsOneWidget);
+  });
+
+  group('as a sheet', () {
+    Future<void> openSheet(WidgetTester tester, Widget page) async {
+      await tester.pumpWidget(UncontrolledProviderScope(
+        container: container,
+        child: MaterialApp(
+          home: Scaffold(
+            body: Consumer(
+              builder: (context, ref, _) => TextButton(
+                onPressed: () => openEditor(context, ref, page),
+                child: const Text('open'),
+              ),
+            ),
+          ),
+        ),
+      ));
+      await tester.tap(find.text('open'));
+      await tester.pumpAndSettle();
+    }
+
+    testWidgets('saving closes the sheet', (tester) async {
+      await openSheet(tester, const SceneEditPage(scene: scene));
+      expect(find.byTooltip('Close'), findsOneWidget);
+      await tester.enterText(find.widgetWithText(TextField, 'Old title'), 'New title');
+      await tester.tap(find.text('Save'));
+      await tester.pumpAndSettle();
+      expect(repo.calls['scene'], {'title': 'New title'});
+      expect(find.text('Save'), findsNothing, reason: 'the sheet is closed');
+      expect(find.text('Saved'), findsOneWidget);
+    });
+
+    testWidgets('the X closes it without saving', (tester) async {
+      await openSheet(tester, const SceneEditPage(scene: scene));
+      await tester.enterText(find.widgetWithText(TextField, 'Old title'), 'New title');
+      await tester.tap(find.byTooltip('Close'));
+      await tester.pumpAndSettle();
+      expect(repo.calls, isEmpty);
+      expect(find.text('Save'), findsNothing);
+    });
   });
 
   testWidgets('saving without changes sends nothing', (tester) async {

@@ -10,8 +10,11 @@ class ClosingSlide extends StatelessWidget {
     required this.distance,
     required this.onClosed,
     required this.child,
-    this.duration = const Duration(milliseconds: 250),
+    this.duration = defaultDuration,
   });
+
+  static const defaultDuration = Duration(milliseconds: 250);
+  static const curve = Curves.easeIn;
 
   final bool closing;
 
@@ -25,7 +28,7 @@ class ClosingSlide extends StatelessWidget {
   Widget build(BuildContext context) => TweenAnimationBuilder<double>(
         tween: Tween(end: closing ? 1 : 0),
         duration: duration,
-        curve: Curves.easeIn,
+        curve: curve,
         onEnd: () {
           if (closing) onClosed();
         },

@@ -47,6 +47,7 @@ class AppShell extends ConsumerWidget {
     // No miniplayer in the shorts (they pause the main player meanwhile).
     final hidePlayer = ref.watch(shortsActiveProvider);
     final hideNavBar = ref.watch(shortsFullscreenProvider);
+    final closing = ref.watch(playerClosingProvider);
     final playerHeight = ref.watch(miniplayerHeightProvider);
     final maxPlayerHeight = MediaQuery.sizeOf(context).height;
     // After the first login: pick a theme (once).
@@ -82,9 +83,13 @@ class AppShell extends ConsumerWidget {
       child: Scaffold(
         body: Stack(
           children: [
-            Padding(
+            AnimatedPadding(
               // Keep the end of every list visible above the collapsed player.
-              padding: EdgeInsets.only(bottom: scene == null || hidePlayer ? 0 : kMiniPlayerHeight),
+              // Shrinks along with the closing slide, so no empty strip shows
+              // where the bar was.
+              padding: EdgeInsets.only(bottom: scene == null || hidePlayer || closing ? 0 : kMiniPlayerHeight),
+              duration: ClosingSlide.defaultDuration,
+              curve: ClosingSlide.curve,
               // Only the tabs in the bar; the GlobalKeys keep each navigator's
               // pages when the tabs are reordered.
               child: IndexedStack(
@@ -102,7 +107,7 @@ class AppShell extends ConsumerWidget {
               Offstage(
                 offstage: hidePlayer,
                 child: ClosingSlide(
-                  closing: ref.watch(playerClosingProvider),
+                  closing: closing,
                   distance: kMiniPlayerHeight,
                   onClosed: () => ref.read(nowPlayingProvider.notifier).close(),
                   child: Miniplayer(

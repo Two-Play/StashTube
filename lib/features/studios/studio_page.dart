@@ -8,6 +8,7 @@ import '../../widgets/channel_header.dart';
 import '../../widgets/scene_feed.dart';
 import '../../widgets/stash_image.dart';
 import '../../widgets/status_views.dart';
+import '../edit/edit_common.dart';
 import '../edit/edit_pages.dart';
 import '../shell/navigation.dart';
 import '../../l10n/l10n.dart';
@@ -44,7 +45,7 @@ class _StudioPageState extends ConsumerState<StudioPage> {
             IconButton(
               tooltip: context.l10n.edit,
               icon: const Icon(Icons.edit_outlined),
-              onPressed: () => openPage(ref, StudioEditPage(studio: value)),
+              onPressed: () => openEditor(context, ref, StudioEditPage(studio: value)),
             ),
         ],
       ),
