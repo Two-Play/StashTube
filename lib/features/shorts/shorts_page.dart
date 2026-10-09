@@ -77,10 +77,13 @@ final _mainPlayingProvider = StreamProvider.autoDispose<bool>((ref) => ref.watch
 /// main player isn't open and the app is visible. Meanwhile the shell hides
 /// the miniplayer and the main player is paused.
 class ShortsPage extends ConsumerStatefulWidget {
-  const ShortsPage({super.key, this.initialIndex = 0});
+  const ShortsPage({super.key, this.initialIndex = 0, this.source = const ShortsSource.feed()});
 
   /// The short to start with, e.g. the one tapped on the home page.
   final int initialIndex;
+
+  /// The mixed feed, or e.g. one performer's short videos.
+  final ShortsSource source;
 
   @override
   ConsumerState<ShortsPage> createState() => _ShortsPageState();
@@ -88,6 +91,8 @@ class ShortsPage extends ConsumerStatefulWidget {
 
 class _ShortsPageState extends ConsumerState<ShortsPage> {
   static const _poolSize = 3;
+
+  late final _feed = shortsFeedFamily(widget.source);
 
   /// The tab this page lives in; it stays mounted (IndexedStack) while
   /// another tab is shown. Found through the tab's navigator, because a tab
@@ -244,8 +249,8 @@ class _ShortsPageState extends ConsumerState<ShortsPage> {
     final slot = _slot(index);
     if (_slotReady[slot]) _players?[slot].seek(Duration.zero);
     _sync(items);
-    final feed = ref.read(shortsFeedProvider);
-    if (index >= feed.items.length - 5) ref.read(shortsFeedProvider.notifier).loadMore();
+    final feed = ref.read(_feed);
+    if (index >= feed.items.length - 5) ref.read(_feed.notifier).loadMore();
   }
 
   /// Counts a play once the short was watched halfway (at most 15 s).
@@ -337,10 +342,10 @@ class _ShortsPageState extends ConsumerState<ShortsPage> {
     }
 
     final theme = AppTheme.dark(ref.watch(accentColorProvider));
-    final feed = _started ? ref.watch(shortsFeedProvider) : const ShortsFeedState(isLoading: true);
+    final feed = _started ? ref.watch(_feed) : const ShortsFeedState(isLoading: true);
     final items = feed.items;
     // A short tapped on the home page, for the page in the shorts tab.
-    if (tab == AppTab.shorts) {
+    if (tab == AppTab.shorts && widget.source.isFeed) {
       final jump = ref.watch(shortsJumpProvider);
       if (jump != null) {
         WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -349,7 +354,7 @@ class _ShortsPageState extends ConsumerState<ShortsPage> {
       }
     }
     if (_started) {
-      ref.listen(shortsFeedProvider, (previous, next) {
+      ref.listen(_feed, (previous, next) {
         // A new feed (settings changed, refresh): back to the first short.
         if (previous != null && previous.items.isNotEmpty && next.items.isEmpty) _resetFeed();
       });
@@ -399,7 +404,7 @@ class _ShortsPageState extends ConsumerState<ShortsPage> {
                     child: Center(
                       child: SingleChildScrollView(
                         child: feed.error != null
-                            ? ErrorView(error: feed.error!, onRetry: () => ref.read(shortsFeedProvider.notifier).refresh())
+                            ? ErrorView(error: feed.error!, onRetry: () => ref.read(_feed.notifier).refresh())
                             : feed.isLoading
                                 ? const LoadingView()
                                 : EmptyView(
@@ -411,11 +416,12 @@ class _ShortsPageState extends ConsumerState<ShortsPage> {
                     ),
                   ),
                 _TopBar(
+                  title: widget.source.title,
                   fullscreen: _fullscreen,
                   onToggleFullscreen: _toggleFullscreen,
                   muted: _muted,
                   onToggleMute: _toggleMute,
-                  onRefresh: () => ref.read(shortsFeedProvider.notifier).refresh(),
+                  onRefresh: () => ref.read(_feed.notifier).refresh(),
                 ),
               ],
             ),
@@ -428,6 +434,7 @@ class _ShortsPageState extends ConsumerState<ShortsPage> {
 
 class _TopBar extends StatelessWidget {
   const _TopBar({
+    this.title,
     required this.fullscreen,
     required this.onToggleFullscreen,
     required this.muted,
@@ -435,6 +442,8 @@ class _TopBar extends StatelessWidget {
     required this.onRefresh,
   });
 
+  /// E.g. the performer whose shorts these are.
+  final String? title;
   final bool fullscreen;
   final VoidCallback onToggleFullscreen;
   final bool muted;
@@ -474,7 +483,16 @@ class _TopBar extends StatelessWidget {
         child: Row(
           children: [
             if (Navigator.of(context).canPop()) const BackButton(color: Colors.white) else const SizedBox(width: 16),
-            const Spacer(),
+            Expanded(
+              child: title == null
+                  ? const SizedBox.shrink()
+                  : Text(
+                      title!,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(color: Colors.white, shadows: _shadow),
+                    ),
+            ),
             IconButton(
               tooltip: l.fullscreen,
               color: Colors.white,

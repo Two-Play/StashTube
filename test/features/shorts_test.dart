@@ -174,6 +174,37 @@ void main() {
     });
   });
 
+  group('performer shorts', () {
+    test('only the performer\'s short videos, without the tag preference', () async {
+      final repo = _ShortsRepository(tagged: 0, others: 5);
+      final c = await _container(repo, const ShortsSettings(tags: [beach], onlyTags: true));
+      final provider = shortsFeedFamily(const ShortsSource.performer('7', title: 'Alice'));
+      c.listen(provider, (_, _) {});
+      for (var i = 0; i < 20 && c.read(provider).isLoading; i++) {
+        await Future<void>.delayed(Duration.zero);
+      }
+      expect(c.read(provider).items, hasLength(5));
+      final query = repo.queries.single;
+      expect(query.performerId, '7');
+      expect(query.sort, SceneSort.random);
+      expect(query.filter.tags, isEmpty);
+      expect(query.filter.maxSeconds, ShortsLength.threeMinutes.maxSeconds);
+      expect(query.filter.portraitOnly, isTrue);
+    });
+
+    test('counts the performer\'s shorts for the channel button', () async {
+      final repo = _ShortsRepository(others: 4);
+      final c = await _container(repo);
+      expect(await c.read(performerShortsCountProvider('7').future), 4);
+      expect(repo.queries.single.performerId, '7');
+    });
+
+    test('feeds are kept apart by source', () {
+      expect(const ShortsSource.performer('7', title: 'A'), const ShortsSource.performer('7'));
+      expect(const ShortsSource.feed(), isNot(const ShortsSource.performer('7')));
+    });
+  });
+
   test('a tab added in an update starts hidden and keeps the stored bar', () async {
     SharedPreferences.setMockInitialValues({
       'nav_bar_order': ['home', 'performers', 'studios', 'library', 'settings'],

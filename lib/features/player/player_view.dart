@@ -6,6 +6,7 @@ import '../../core/utils/format.dart';
 import '../../data/models/list_queries.dart';
 import '../../data/models/scene.dart';
 import '../../data/providers.dart';
+import '../../widgets/play_pause_icon.dart';
 import '../../widgets/scene_card.dart';
 import '../../widgets/scene_feed.dart';
 import '../../widgets/stash_image.dart';
@@ -268,7 +269,7 @@ class _MiniInfo extends ConsumerWidget {
             final playing = ref.watch(castPlaybackProvider).value?.playing ?? false;
             final cast = ref.watch(castServiceProvider);
             return IconButton(
-              icon: Icon(playing ? Icons.pause : Icons.play_arrow),
+              icon: PlayPauseIcon(playing: playing),
               onPressed: playing ? cast.pause : cast.play,
             );
           })
@@ -277,7 +278,7 @@ class _MiniInfo extends ConsumerWidget {
             stream: player.stream.playing,
             initialData: player.state.playing,
             builder: (_, snapshot) => IconButton(
-              icon: Icon(snapshot.data == true ? Icons.pause : Icons.play_arrow),
+              icon: PlayPauseIcon(playing: snapshot.data == true),
               onPressed: player.playOrPause,
             ),
           ),

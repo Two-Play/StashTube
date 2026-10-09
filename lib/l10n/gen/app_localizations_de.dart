@@ -1437,4 +1437,15 @@ class AppLocalizationsDe extends AppLocalizations {
   @override
   String get backgroundPlaybackSubtitle =>
       'Der Ton läuft weiter, während die App im Hintergrund ist.';
+
+  @override
+  String performerShorts(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count Shorts',
+      one: '1 Short',
+    );
+    return '$_temp0';
+  }
 }

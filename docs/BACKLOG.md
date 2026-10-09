@@ -96,6 +96,7 @@ Eine wartbare Basis, damit Features unabhängig voneinander wachsen können.
 | 6.3 | Als Nutzer möchte ich eine Kanalseite für einen Performer sehen: Header mit Bild und Infos, darunter alle Szenen. | Header (Bild, Name, Land, Alter, Szenen) und paginierte Szenenliste. | MVP | ✅ |
 | 6.4 | Als Nutzer möchte ich einen Performer als Favoriten markieren („Abonnieren“). | `performerUpdate(favorite)` mit optimistischem UI-Update. Button „Favorite/Favorited“ auf der Kanalseite, Herz auf den Performer-Kacheln. Bei Fehler Rücksetzen und Snackbar. Favoriten-Listen und die Reihe „New from favorites“ laden danach neu. | Next | ✅ |
 | 6.5 | Als Nutzer möchte ich einen „Abos“-Feed mit neuen Szenen meiner Favoriten. | Szenenfeed mit Filter `performer_favorite: true`. | Next | 🟡 (Reihe „New from favorites“ auf der Startseite ✅, eigener Tab offen) |
+| 6.6 | Als Nutzer möchte ich die Kurzvideos eines Performers im Shorts-Format sehen. | Button „N Shorts“ auf der Kanalseite (nur wenn es welche gibt, nach den Shorts-Einstellungen Länge/Hochformat), öffnet den Shorts-Player mit den gemischten Videos des Performers und seinem Namen in der Kopfzeile. Bevorzugte Tags gelten dort nicht. | Next | ✅ |
 
 ## Epic 7 – Studios („Kanäle“)
 
@@ -162,6 +163,7 @@ Eine wartbare Basis, damit Features unabhängig voneinander wachsen können.
 | 13.3 | Als Nutzer möchte ich die App auf Deutsch und Englisch nutzen. | `flutter_localizations` und ARB-Dateien (`lib/l10n`). Folgt der Gerätesprache, in den Einstellungen umstellbar. Fehlermeldungen der App ebenfalls übersetzt. | Next | ✅ |
 | 13.4 | Als Nutzer möchte ich ein App-Icon und einen Splashscreen. | `flutter_launcher_icons`, `flutter_native_splash`. | Next | ⬜ |
 | 13.5 | Als Nutzer möchte ich Tablet- und Querformat-Layouts. | Mehrspaltiges Raster ab 600 dp. Umgesetzt: Szenen-Feeds (Karten und Zeilen), Suche, Verlauf, Gruppen, Später ansehen und Studios werden ab 600 dp mehrspaltig (`SliverColumns`); Raster passten sich schon an. Offen: Navigation Rail und zweispaltiger Player auf Tablets. | Later | ✅ |
+| 13.12 | Als Nutzer möchte ich lebendige Animationen. | Favorit hinzufügen: Konfetti aus dem Button, Herz springt auf, Button wechselt animiert Farbe, Text und Breite (auch das Herz auf Performer-Kacheln). Play/Pause morpht ineinander und federt (Player, Miniplayer, Cast). Bei „Bewegung reduzieren“ ohne Animation. | Next | ✅ |
 
 ## Epic 14 – Plattform & Release
 

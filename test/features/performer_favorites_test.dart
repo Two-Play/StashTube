@@ -7,6 +7,7 @@ import 'package:stash_app_mobile/data/models/performer.dart';
 import 'package:stash_app_mobile/data/repositories/stash_repository.dart';
 import 'package:stash_app_mobile/features/performers/favorite_button.dart';
 import 'package:stash_app_mobile/features/performers/performer_favorites.dart';
+import 'package:stash_app_mobile/widgets/confetti.dart';
 
 import '../helpers.dart';
 
@@ -90,5 +91,40 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('Favorited'), findsOneWidget, reason: 'reverted');
     expect(find.textContaining('Couldn\'t update favorite'), findsOneWidget);
+  });
+
+  testWidgets('confetti only when a performer becomes a favorite', (tester) async {
+    await tester.pumpWidget(UncontrolledProviderScope(
+      container: container,
+      child: const MaterialApp(home: Scaffold(body: Center(child: FavoriteButton(performer: alice)))),
+    ));
+    int bursts() => tester.widget<ConfettiBurst>(find.byType(ConfettiBurst)).trigger;
+
+    await tester.tap(find.text('Favorite'));
+    await tester.pump(const Duration(milliseconds: 200));
+    expect(bursts(), 1);
+    await tester.pumpAndSettle();
+    expect(find.text('Favorited'), findsOneWidget);
+
+    await tester.tap(find.text('Favorited'));
+    await tester.pumpAndSettle();
+    expect(bursts(), 1, reason: 'no confetti when removing');
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('no confetti with reduced motion', (tester) async {
+    await tester.pumpWidget(UncontrolledProviderScope(
+      container: container,
+      child: const MaterialApp(
+        home: MediaQuery(
+          data: MediaQueryData(disableAnimations: true),
+          child: Scaffold(body: FavoriteButton(performer: alice)),
+        ),
+      ),
+    ));
+    await tester.tap(find.text('Favorite'));
+    await tester.pumpAndSettle();
+    expect(tester.widget<ConfettiBurst>(find.byType(ConfettiBurst)).trigger, 0);
+    expect(find.text('Favorited'), findsOneWidget);
   });
 }
