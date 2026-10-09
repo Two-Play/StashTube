@@ -1441,4 +1441,11 @@ class AppLocalizationsEn extends AppLocalizations {
     );
     return '$_temp0';
   }
+
+  @override
+  String get themeWelcomeTitle => 'Choose your look';
+
+  @override
+  String get themeWelcomeText =>
+      'Light or dark, and an accent color. You can change this anytime in the settings.';
 }

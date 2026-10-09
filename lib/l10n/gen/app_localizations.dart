@@ -2479,6 +2479,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'{count, plural, =1{1 short} other{{count} shorts}}'**
   String performerShorts(int count);
+
+  /// No description provided for @themeWelcomeTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose your look'**
+  String get themeWelcomeTitle;
+
+  /// No description provided for @themeWelcomeText.
+  ///
+  /// In en, this message translates to:
+  /// **'Light or dark, and an accent color. You can change this anytime in the settings.'**
+  String get themeWelcomeText;
 }
 
 class _AppLocalizationsDelegate

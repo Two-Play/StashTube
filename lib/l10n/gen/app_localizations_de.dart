@@ -1448,4 +1448,11 @@ class AppLocalizationsDe extends AppLocalizations {
     );
     return '$_temp0';
   }
+
+  @override
+  String get themeWelcomeTitle => 'Wähle dein Design';
+
+  @override
+  String get themeWelcomeText =>
+      'Hell oder dunkel und eine Akzentfarbe. Das kannst du jederzeit in den Einstellungen ändern.';
 }

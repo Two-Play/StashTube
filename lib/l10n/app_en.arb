@@ -765,5 +765,7 @@
         "type": "int"
       }
     }
-  }
+  },
+  "themeWelcomeTitle": "Choose your look",
+  "themeWelcomeText": "Light or dark, and an accent color. You can change this anytime in the settings."
 }
