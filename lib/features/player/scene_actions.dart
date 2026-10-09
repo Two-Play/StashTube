@@ -10,9 +10,9 @@ import '../../data/models/scene.dart';
 import '../../data/models/tag.dart';
 import '../../data/providers.dart';
 import '../../data/repositories/stash_repository.dart';
+import '../edit/edit_common.dart';
 import '../edit/edit_pages.dart';
 import '../library/watch_later.dart';
-import '../shell/navigation.dart';
 import 'player_providers.dart';
 import 'scene_edits.dart';
 import '../../l10n/l10n.dart';
@@ -91,7 +91,7 @@ class SceneActions extends ConsumerWidget {
                 avatar: const Icon(Icons.edit_outlined, size: 18),
                 label: Text(l.edit),
                 tooltip: l.editSceneDetails,
-                onPressed: () => openPage(ref, SceneEditPage(scene: scene)),
+                onPressed: () => openEditor(context, ref, SceneEditPage(scene: scene)),
               ),
               const SizedBox(width: 8),
               ActionChip(

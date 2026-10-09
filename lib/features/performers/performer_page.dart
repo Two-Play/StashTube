@@ -7,6 +7,7 @@ import '../../widgets/channel_header.dart';
 import '../../widgets/performer_tile.dart';
 import '../../widgets/scene_feed.dart';
 import '../../widgets/status_views.dart';
+import '../edit/edit_common.dart';
 import '../edit/edit_pages.dart';
 import '../shell/navigation.dart';
 import '../shorts/shorts_feed.dart';
@@ -34,7 +35,7 @@ class PerformerPage extends ConsumerWidget {
             IconButton(
               tooltip: context.l10n.edit,
               icon: const Icon(Icons.edit_outlined),
-              onPressed: () => openPage(ref, PerformerEditPage(performer: value)),
+              onPressed: () => openEditor(context, ref, PerformerEditPage(performer: value)),
             ),
         ],
       ),

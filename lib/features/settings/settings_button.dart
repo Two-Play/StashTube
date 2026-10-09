@@ -36,7 +36,8 @@ Future<void> openSettings(BuildContext context, WidgetRef ref) async {
   }
 }
 
-/// Whether the settings sheet covers the app, e.g. so the shorts pause.
+/// Whether a sheet (the settings, an edit form) covers the app, e.g. so the
+/// shorts pause.
 class SettingsOpenNotifier extends Notifier<bool> {
   @override
   bool build() => false;

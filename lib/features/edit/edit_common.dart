@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -10,9 +11,30 @@ import '../../data/models/studio.dart';
 import '../../data/providers.dart';
 import '../../widgets/stash_image.dart';
 import '../../l10n/l10n.dart';
+import '../settings/settings_button.dart' show settingsOpenProvider;
 
 /// Page frame for edit forms: "Save" in the app bar, busy state, errors.
 /// [onSave] returns false when there was nothing to save.
+/// Opens an edit form ([EditScaffold]) as a sheet over the whole app, like
+/// the settings: closed with its X, by swiping it down or by saving. Works
+/// from the player too, which it covers.
+Future<void> openEditor(BuildContext context, WidgetRef ref, Widget form) async {
+  // The shorts pause while a sheet covers them.
+  final covered = ref.read(settingsOpenProvider.notifier);
+  covered.set(true);
+  try {
+    await showCupertinoSheet<void>(
+      context: context,
+      useNestedNavigation: true,
+      // The form's list scrolls with the sheet, so swiping down at its top
+      // closes the sheet.
+      scrollableBuilder: (_, controller) => PrimaryScrollController(controller: controller, child: form),
+    );
+  } finally {
+    covered.set(false);
+  }
+}
+
 class EditScaffold extends StatefulWidget {
   const EditScaffold({super.key, required this.title, required this.onSave, required this.children});
 
@@ -32,9 +54,11 @@ class _EditScaffoldState extends State<EditScaffold> {
     final messenger = ScaffoldMessenger.of(context);
     final navigator = Navigator.of(context);
     final l = context.l10n;
+    final inSheet = CupertinoSheetRoute.hasParentSheet(context);
     try {
       final saved = await widget.onSave();
-      navigator.pop();
+      if (!mounted) return;
+      inSheet ? CupertinoSheetRoute.popSheet(context) : navigator.pop();
       if (saved) messenger.showSnackBar(SnackBar(content: Text(l.saved)));
     } catch (e) {
       if (mounted) setState(() => _saving = false);
@@ -45,6 +69,14 @@ class _EditScaffoldState extends State<EditScaffold> {
   @override
   Widget build(BuildContext context) => Scaffold(
         appBar: AppBar(
+          // In a sheet (openEditor) an X closes it without saving.
+          leading: CupertinoSheetRoute.hasParentSheet(context)
+              ? IconButton(
+                  tooltip: context.l10n.close,
+                  icon: const Icon(Icons.close),
+                  onPressed: () => CupertinoSheetRoute.popSheet(context),
+                )
+              : null,
           title: Text(widget.title, maxLines: 1, overflow: TextOverflow.ellipsis),
           actions: [
             Padding(

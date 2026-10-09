@@ -782,8 +782,15 @@ class _ShortViewState extends ConsumerState<_ShortView> {
             right: 8,
             bottom: bottom,
             // The player's seek bar: sprite thumbnails and marker dots, loaded
-            // once touched.
-            child: PreviewSeekBar(sceneId: scene.id, player: controller.player, visible: false),
+            // once touched. Hidden in fullscreen, like the rest of the UI.
+            child: IgnorePointer(
+              ignoring: widget.fullscreen,
+              child: AnimatedOpacity(
+                opacity: widget.fullscreen ? 0 : 1,
+                duration: const Duration(milliseconds: 200),
+                child: PreviewSeekBar(sceneId: scene.id, player: controller.player, visible: false),
+              ),
+            ),
           ),
       ],
     );
