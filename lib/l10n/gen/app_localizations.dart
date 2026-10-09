@@ -2558,17 +2558,17 @@ abstract class AppLocalizations {
   /// **'Normal'**
   String get hapticsNormal;
 
-  /// No description provided for @markerPreviews.
+  /// No description provided for @animatedPreviews.
   ///
   /// In en, this message translates to:
-  /// **'Play marker previews'**
-  String get markerPreviews;
+  /// **'Play previews'**
+  String get animatedPreviews;
 
-  /// No description provided for @markerPreviewsSubtitle.
+  /// No description provided for @animatedPreviewsSubtitle.
   ///
   /// In en, this message translates to:
-  /// **'Markers show a short looping clip instead of a still frame.'**
-  String get markerPreviewsSubtitle;
+  /// **'Markers loop a short clip, and in lists the first fully shown video plays its preview after a few seconds.'**
+  String get animatedPreviewsSubtitle;
 }
 
 class _AppLocalizationsDelegate

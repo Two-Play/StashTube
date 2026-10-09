@@ -28,7 +28,7 @@ void main() {
     Haptics.heavy();
   }
 
-  test('normal plays as named, light one step softer, off nothing', () {
+  test('normal plays everything, light only what matters, off nothing', () {
     Haptics.level = HapticLevel.normal;
     everything();
     expect(played, [
@@ -41,12 +41,8 @@ void main() {
     played.clear();
     Haptics.level = HapticLevel.light;
     everything();
-    expect(played, [
-      'HapticFeedbackType.selectionClick',
-      'HapticFeedbackType.selectionClick',
-      'HapticFeedbackType.lightImpact',
-      'HapticFeedbackType.mediumImpact',
-    ]);
+    // Fewer, not weaker: the small taps are left out.
+    expect(played, ['HapticFeedbackType.mediumImpact', 'HapticFeedbackType.heavyImpact']);
 
     played.clear();
     Haptics.level = HapticLevel.off;
@@ -66,5 +62,13 @@ void main() {
     await c.read(hapticLevelProvider.notifier).set(HapticLevel.off);
     expect(Haptics.level, HapticLevel.off);
     expect(prefs.getString('haptics'), 'off');
+  });
+
+  test('switches tap lightly before they change', () {
+    final values = <bool>[];
+    withHaptic<bool>(values.add)!(true);
+    expect(values, [true]);
+    expect(played, ['HapticFeedbackType.lightImpact']);
+    expect(withHaptic<bool>(null), isNull, reason: 'a disabled switch stays disabled');
   });
 }

@@ -1,7 +1,7 @@
-import '../core/config/haptics.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../core/config/haptics.dart';
 import '../core/utils/format.dart';
 import '../data/models/scene.dart';
 import '../features/edit/edit_common.dart';
@@ -11,6 +11,7 @@ import '../features/player/player_providers.dart';
 import '../features/player/scene_edits.dart';
 import '../features/settings/scene_card_config.dart';
 import '../features/shell/navigation.dart';
+import 'auto_preview.dart';
 import 'stash_image.dart';
 import '../l10n/l10n.dart';
 
@@ -221,7 +222,11 @@ class SceneThumbnail extends ConsumerWidget {
       child: Stack(
         fit: StackFit.expand,
         children: [
-          StashImage(scene.screenshotUrl, fallbackIcon: Icons.movie_outlined),
+          // In lists, the first fully shown video plays its preview.
+          AutoPreview(
+            url: scene.webpUrl,
+            child: StashImage(scene.screenshotUrl, fallbackIcon: Icons.movie_outlined),
+          ),
           if (resolution != null && !compact)
             Positioned(left: 8, bottom: 8, child: _Badge(text: resolution)),
           if (scene.duration > 0)

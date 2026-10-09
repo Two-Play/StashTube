@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/config/haptics.dart';
 import '../shell/nav_bar_config.dart';
 import '../shell/navigation.dart';
 import '../../l10n/l10n.dart';
@@ -59,7 +60,7 @@ class NavBarSettingsPage extends ConsumerWidget {
             CheckboxListTile(
               key: ValueKey(tab),
               value: config.isVisible(tab),
-              onChanged: config.canToggle(tab) ? (_) => notifier.toggle(tab) : null,
+              onChanged: withHaptic(config.canToggle(tab) ? (_) => notifier.toggle(tab) : null),
               controlAffinity: ListTileControlAffinity.leading,
               secondary: ReorderableDragStartListener(
                 index: i,

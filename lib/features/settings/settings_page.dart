@@ -8,7 +8,6 @@ import '../../core/pagination/paging_mode.dart';
 import '../../core/config/server_config.dart';
 import '../../data/models/scene_details.dart';
 import '../../data/providers.dart';
-import '../library/markers_tab.dart';
 import '../pip/pip.dart';
 import '../player/lock_screen.dart';
 import '../player/player_providers.dart';
@@ -21,6 +20,7 @@ import 'appearance_picker.dart';
 import 'nav_bar_settings_page.dart';
 import 'scene_card_config.dart';
 import '../../l10n/l10n.dart';
+import '../../widgets/animated_previews.dart';
 
 /// Shown as a sheet by `openSettings`; [scrollController] lets swiping the
 /// list down past its top close the sheet.
@@ -159,11 +159,12 @@ class SettingsPage extends ConsumerWidget {
           ),
           _SectionTitle(l.sectionSceneCards),
           SwitchListTile(
-            secondary: const Icon(Icons.bookmarks_outlined),
-            title: Text(l.markerPreviews),
-            subtitle: Text(l.markerPreviewsSubtitle),
-            value: ref.watch(markerPreviewsProvider),
-            onChanged: (v) => ref.read(markerPreviewsProvider.notifier).set(v),
+            secondary: const Icon(Icons.motion_photos_on_outlined),
+            title: Text(l.animatedPreviews),
+            subtitle: Text(l.animatedPreviewsSubtitle),
+            isThreeLine: true,
+            value: ref.watch(animatedPreviewsProvider),
+            onChanged: withHaptic((v) => ref.read(animatedPreviewsProvider.notifier).set(v)),
           ),
           ListTile(
             leading: const Icon(Icons.account_circle_outlined),
@@ -182,13 +183,17 @@ class SettingsPage extends ConsumerWidget {
             secondary: const Icon(Icons.visibility_outlined),
             title: Text(l.cardShowPlays),
             value: cardConfig.showPlays,
-            onChanged: (v) => ref.read(sceneCardConfigProvider.notifier).set(cardConfig.copyWith(showPlays: v)),
+            onChanged: withHaptic(
+              (v) => ref.read(sceneCardConfigProvider.notifier).set(cardConfig.copyWith(showPlays: v)),
+            ),
           ),
           SwitchListTile(
             secondary: const Icon(Icons.star_outline),
             title: Text(l.cardShowRating),
             value: cardConfig.showRating,
-            onChanged: (v) => ref.read(sceneCardConfigProvider.notifier).set(cardConfig.copyWith(showRating: v)),
+            onChanged: withHaptic(
+              (v) => ref.read(sceneCardConfigProvider.notifier).set(cardConfig.copyWith(showRating: v)),
+            ),
           ),
           _SectionTitle(l.sectionPlayback),
           _QualityTile(preferred: preferredStream),
@@ -231,14 +236,14 @@ class _PlaybackModeTiles extends ConsumerWidget {
             title: Text(l.autoPip),
             subtitle: Text(l.autoPipSubtitle),
             value: modes.autoPip,
-            onChanged: (v) => ref.read(playbackModesProvider.notifier).setAutoPip(v),
+            onChanged: withHaptic((v) => ref.read(playbackModesProvider.notifier).setAutoPip(v)),
           ),
         SwitchListTile(
           secondary: const Icon(Icons.headphones_outlined),
           title: Text(l.backgroundPlayback),
           subtitle: Text(l.backgroundPlaybackSubtitle),
           value: modes.background,
-          onChanged: (v) => ref.read(playbackModesProvider.notifier).setBackground(v),
+          onChanged: withHaptic((v) => ref.read(playbackModesProvider.notifier).setBackground(v)),
         ),
         if (ref.watch(lockScreenSupportedProvider))
           SwitchListTile(
@@ -247,7 +252,7 @@ class _PlaybackModeTiles extends ConsumerWidget {
             subtitle: Text(l.lockScreenControlsSubtitle),
             isThreeLine: true,
             value: modes.lockScreen,
-            onChanged: (v) => ref.read(playbackModesProvider.notifier).setLockScreen(v),
+            onChanged: withHaptic((v) => ref.read(playbackModesProvider.notifier).setLockScreen(v)),
           ),
       ],
     );
@@ -318,14 +323,14 @@ class _SecuritySettings extends ConsumerWidget {
           title: Text(l.appLock),
           subtitle: Text(l.appLockSubtitle),
           value: settings.enabled,
-          onChanged: (on) async {
+          onChanged: withHaptic((on) async {
             if (on) {
               final pin = await showCreatePin(context);
               if (pin != null) await notifier.enable(pin);
             } else if (await confirmPin(context, ref)) {
               await notifier.disable();
             }
-          },
+          }),
         ),
         if (settings.enabled) ...[
           if (biometricsAvailable)
@@ -334,11 +339,11 @@ class _SecuritySettings extends ConsumerWidget {
               title: Text(l.unlockBiometric),
               value: settings.biometrics,
               // Turning it on asks once, so it surely works.
-              onChanged: (on) async {
+              onChanged: withHaptic((on) async {
                 final reason = l.unlockReason;
                 if (on && !await ref.read(biometricAuthProvider).authenticate(reason)) return;
                 await notifier.setBiometrics(on);
-              },
+              }),
             ),
           ListTile(
             leading: const Icon(Icons.timer_outlined),
@@ -372,7 +377,7 @@ class _SecuritySettings extends ConsumerWidget {
           subtitle: Text(settings.enabled ? l.hideInSwitcherLocked : l.hideInSwitcherSubtitle),
           // Always on while the app lock is on.
           value: settings.hidesApp,
-          onChanged: settings.enabled ? null : notifier.setHideInSwitcher,
+          onChanged: withHaptic(settings.enabled ? null : notifier.setHideInSwitcher),
         ),
       ],
     );

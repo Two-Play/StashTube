@@ -9,40 +9,44 @@ import 'server_config.dart';
 /// How strong the app's haptic feedback is (settings).
 enum HapticLevel { off, light, normal }
 
-/// The app's haptic feedback, following [HapticLevel]: off, one step
-/// lighter, or as named. Use these instead of [HapticFeedback].
+/// The app's haptic feedback, following [HapticLevel]: "light" plays only
+/// the noticeable feedback ([medium], [heavy], [error]), "normal" also the
+/// small taps ([selection], [light]). Use these instead of [HapticFeedback].
 abstract final class Haptics {
   /// Set by [hapticLevelProvider].
   static HapticLevel level = HapticLevel.normal;
 
-  /// A choice changed: tabs, chips, steps while scrubbing.
+  /// A choice changed: tabs, chips, steps while scrubbing. Normal only.
   static void selection() {
-    if (level != HapticLevel.off) unawaited(HapticFeedback.selectionClick());
+    if (level == HapticLevel.normal) unawaited(HapticFeedback.selectionClick());
   }
 
-  /// A small action: play/pause, a toggle.
-  static void light() => _play(HapticFeedback.selectionClick, HapticFeedback.lightImpact);
+  /// A small action: play/pause, a switch. Normal only.
+  static void light() {
+    if (level == HapticLevel.normal) unawaited(HapticFeedback.lightImpact());
+  }
 
   /// A noticeable action: a favorite, the O-counter, a refresh.
-  static void medium() => _play(HapticFeedback.lightImpact, HapticFeedback.mediumImpact);
+  static void medium() => _important(HapticFeedback.mediumImpact);
 
   /// A strong action: a long press opening a menu, unlocking.
-  static void heavy() => _play(HapticFeedback.mediumImpact, HapticFeedback.heavyImpact);
+  static void heavy() => _important(HapticFeedback.heavyImpact);
 
   /// Something failed: a wrong PIN, a failed login.
-  static void error() => _play(HapticFeedback.mediumImpact, HapticFeedback.vibrate);
+  static void error() => _important(HapticFeedback.vibrate);
 
-  static void _play(Future<void> Function() light, Future<void> Function() normal) {
-    switch (level) {
-      case HapticLevel.off:
-        return;
-      case HapticLevel.light:
-        unawaited(light());
-      case HapticLevel.normal:
-        unawaited(normal());
-    }
+  static void _important(Future<void> Function() play) {
+    if (level != HapticLevel.off) unawaited(play());
   }
 }
+
+/// [onChanged] of a switch, checkbox or chip, with a light tap first.
+ValueChanged<T>? withHaptic<T>(ValueChanged<T>? onChanged) => onChanged == null
+    ? null
+    : (value) {
+        Haptics.light();
+        onChanged(value);
+      };
 
 /// Chosen in the settings, stored for all servers; applied to [Haptics].
 class HapticLevelNotifier extends Notifier<HapticLevel> {

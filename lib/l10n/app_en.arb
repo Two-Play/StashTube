@@ -786,6 +786,6 @@
   "hapticsOff": "Off",
   "hapticsLight": "Light",
   "hapticsNormal": "Normal",
-  "markerPreviews": "Play marker previews",
-  "markerPreviewsSubtitle": "Markers show a short looping clip instead of a still frame."
+  "animatedPreviews": "Play previews",
+  "animatedPreviewsSubtitle": "Markers loop a short clip, and in lists the first fully shown video plays its preview after a few seconds."
 }

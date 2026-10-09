@@ -410,6 +410,6 @@
   "hapticsOff": "Aus",
   "hapticsLight": "Wenig",
   "hapticsNormal": "Normal",
-  "markerPreviews": "Marker-Vorschauen abspielen",
-  "markerPreviewsSubtitle": "Marker zeigen eine kurze Vorschau in Dauerschleife statt eines Standbilds."
+  "animatedPreviews": "Vorschauen abspielen",
+  "animatedPreviewsSubtitle": "Marker zeigen einen kurzen Clip in Dauerschleife, und in Listen spielt das erste vollständig sichtbare Video nach ein paar Sekunden seine Vorschau."
 }

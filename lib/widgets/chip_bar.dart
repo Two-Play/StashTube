@@ -1,5 +1,6 @@
-import '../core/config/haptics.dart';
 import 'package:flutter/material.dart';
+
+import '../core/config/haptics.dart';
 
 /// Horizontally scrolling choice chips, like YouTube's feed filters.
 class ChipBar<T> extends StatelessWidget {

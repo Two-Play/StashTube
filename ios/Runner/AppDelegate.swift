@@ -219,11 +219,24 @@ final class AirPlayController: NSObject, FlutterStreamHandler {
 /// `SecureWindow` in Dart: locking the phone or opening the app switcher
 /// moves the app to the background before Flutter draws another frame, so
 /// its last frame, with the content, would show on return until the lock
-/// screen is drawn, and in the app switcher. Methods on `stash/privacy`:
-/// setCoverOnResign (bool), uncover (once Flutter has drawn again).
+/// screen is drawn, and in the app switcher. Method on `stash/privacy`:
+/// uncover (once Flutter has drawn again).
+///
+/// Whether to cover is read from the app's settings (shared_preferences
+/// keeps them in UserDefaults as "flutter.<key>"), not sent over the
+/// channel: a message sent while the app starts can arrive before this
+/// handler exists, and is then lost.
 final class PrivacyCoverController: NSObject {
-  private var enabled = false
   private var cover: UIView?
+
+  /// As `AppLockSettings.hidesApp` in Dart: the lock is on (with a PIN), or
+  /// "hide in app switcher".
+  private var enabled: Bool {
+    let defaults = UserDefaults.standard
+    let locked = defaults.bool(forKey: "flutter.lock_enabled")
+      && defaults.string(forKey: "flutter.lock_pin_hash") != nil
+    return locked || defaults.bool(forKey: "flutter.lock_hide_in_switcher")
+  }
   /// Bumped on every deactivation, so a fallback timer from an earlier
   /// activation can't remove a newer cover.
   private var generation = 0
@@ -233,9 +246,6 @@ final class PrivacyCoverController: NSObject {
     let channel = FlutterMethodChannel(name: "stash/privacy", binaryMessenger: messenger)
     channel.setMethodCallHandler { [weak self] call, result in
       switch call.method {
-      case "setCoverOnResign":
-        self?.enabled = call.arguments as? Bool ?? false
-        if self?.enabled == false { self?.removeCover() }
       case "uncover":
         self?.removeCover()
       default:
@@ -245,8 +255,13 @@ final class PrivacyCoverController: NSObject {
       result(nil)
     }
     let center = NotificationCenter.default
-    center.addObserver(self, selector: #selector(willDeactivate), name: UIScene.willDeactivateNotification, object: nil)
-    center.addObserver(self, selector: #selector(didActivate), name: UIScene.didActivateNotification, object: nil)
+    center.addObserver(
+      self, selector: #selector(willDeactivate), name: UIScene.willDeactivateNotification, object: nil)
+    // In case deactivating was skipped (e.g. locking the phone quickly).
+    center.addObserver(
+      self, selector: #selector(willDeactivate), name: UIScene.didEnterBackgroundNotification, object: nil)
+    center.addObserver(
+      self, selector: #selector(didActivate), name: UIScene.didActivateNotification, object: nil)
   }
 
   @objc private func willDeactivate(_ notification: Notification) {

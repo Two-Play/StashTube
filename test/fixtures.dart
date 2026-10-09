@@ -58,7 +58,7 @@ Json sceneJson([Json fields = const {}]) => typed('Scene', {
       'resume_time': null,
       'organized': false,
       'files': const [],
-      'paths': const {'screenshot': null, 'preview': null, 'stream': null},
+      'paths': const {'screenshot': null, 'preview': null, 'webp': null, 'stream': null},
       'studio': null,
       'performers': const [],
       'tags': const [],

@@ -1,9 +1,9 @@
-import '../core/config/haptics.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/misc.dart' show Refreshable;
 
+import '../core/config/haptics.dart';
 import '../core/pagination/paged_notifier.dart';
 import '../core/pagination/paging_mode.dart';
 import 'sliver_columns.dart';

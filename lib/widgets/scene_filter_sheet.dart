@@ -1,9 +1,9 @@
-import '../core/config/haptics.dart';
 import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../core/config/haptics.dart';
 import '../data/models/list_queries.dart';
 import '../data/models/scene_filter.dart';
 import '../data/models/tag.dart';

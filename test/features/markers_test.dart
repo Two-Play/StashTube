@@ -11,6 +11,7 @@ import 'package:stash_app_mobile/features/library/markers_tab.dart';
 import 'package:stash_app_mobile/features/player/player_providers.dart';
 import 'package:stash_app_mobile/features/shell/nav_bar_config.dart';
 import 'package:stash_app_mobile/features/shell/navigation.dart';
+import 'package:stash_app_mobile/widgets/animated_previews.dart';
 import 'package:stash_app_mobile/widgets/stash_image.dart';
 
 import '../helpers.dart';
@@ -108,7 +109,7 @@ void main() {
         overrides: [
           ...testServer,
           stashRepositoryProvider.overrideWithValue(_Repo()),
-          markerPreviewsProvider.overrideWithBuild((ref, notifier) => previews),
+          animatedPreviewsProvider.overrideWithBuild((ref, notifier) => previews),
         ],
         child: const MaterialApp(home: Scaffold(body: MarkersTab())),
       ));

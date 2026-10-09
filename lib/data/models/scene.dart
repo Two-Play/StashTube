@@ -21,6 +21,7 @@ class Scene {
     this.height,
     this.screenshotUrl,
     this.previewUrl,
+    this.webpUrl,
     this.streamUrl,
     this.studio,
     this.performers = const [],
@@ -50,6 +51,10 @@ class Scene {
   final int? height;
   final String? screenshotUrl;
   final String? previewUrl;
+
+  /// A short animated preview (WebP, loops), if Stash generated one; lists
+  /// play it on the first fully shown video.
+  final String? webpUrl;
   final String? streamUrl;
   final Studio? studio;
   final List<Performer> performers;
@@ -74,6 +79,7 @@ class Scene {
       height: file?.height,
       screenshotUrl: nonEmpty(s.paths.screenshot),
       previewUrl: nonEmpty(s.paths.preview),
+      webpUrl: nonEmpty(s.paths.webp),
       streamUrl: nonEmpty(s.paths.stream),
       studio: studio == null ? null : Studio.fromRef(studio),
       performers: [for (final p in s.performers) Performer.fromRef(p, country: p.country, favorite: p.favorite)],
@@ -97,6 +103,7 @@ class Scene {
         height: height,
         screenshotUrl: screenshotUrl,
         previewUrl: previewUrl,
+        webpUrl: webpUrl,
         streamUrl: streamUrl,
         studio: studio,
         performers: performers,

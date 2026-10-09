@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/config/haptics.dart';
 import '../../l10n/l10n.dart';
 import '../../data/models/gallery.dart';
 import '../../data/models/performer.dart';
@@ -144,7 +145,7 @@ class _SceneEditPageState extends ConsumerState<SceneEditPage> with _UrlsLoader 
             title: Text(context.l10n.organized),
             subtitle: Text(context.l10n.organizedSubtitle),
             value: _organized,
-            onChanged: (v) => setState(() => _organized = v),
+            onChanged: withHaptic((v) => setState(() => _organized = v)),
           ),
           ?urlsField(),
         ],

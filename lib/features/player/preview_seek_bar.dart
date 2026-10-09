@@ -1,4 +1,3 @@
-import '../../core/config/haptics.dart';
 import 'dart:async';
 
 import 'package:cached_network_image/cached_network_image.dart';
@@ -7,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:media_kit/media_kit.dart';
 
+import '../../core/config/haptics.dart';
 import '../../core/utils/format.dart';
 import '../../data/models/scene_details.dart';
 import '../../data/models/scrub_thumbnails.dart';

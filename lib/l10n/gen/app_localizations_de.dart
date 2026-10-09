@@ -1500,9 +1500,9 @@ class AppLocalizationsDe extends AppLocalizations {
   String get hapticsNormal => 'Normal';
 
   @override
-  String get markerPreviews => 'Marker-Vorschauen abspielen';
+  String get animatedPreviews => 'Vorschauen abspielen';
 
   @override
-  String get markerPreviewsSubtitle =>
-      'Marker zeigen eine kurze Vorschau in Dauerschleife statt eines Standbilds.';
+  String get animatedPreviewsSubtitle =>
+      'Marker zeigen einen kurzen Clip in Dauerschleife, und in Listen spielt das erste vollständig sichtbare Video nach ein paar Sekunden seine Vorschau.';
 }

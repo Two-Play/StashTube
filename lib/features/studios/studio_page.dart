@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/config/haptics.dart';
 import '../../data/models/list_queries.dart';
 import '../../data/models/studio.dart';
 import '../../data/providers.dart';
@@ -89,7 +90,7 @@ class _StudioPageState extends ConsumerState<StudioPage> {
                       child: FilterChip(
                         label: Text(context.l10n.includeSubStudios),
                         selected: includeSubStudios,
-                        onSelected: (v) => setState(() => _includeSubStudios = v),
+                        onSelected: withHaptic((v) => setState(() => _includeSubStudios = v)),
                       ),
                     ),
                   ],

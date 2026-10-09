@@ -1,4 +1,3 @@
-import '../../core/config/haptics.dart';
 import 'dart:async';
 
 import 'package:flutter/material.dart';
@@ -7,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:media_kit/media_kit.dart';
 import 'package:media_kit_video/media_kit_video.dart';
 
+import '../../core/config/haptics.dart';
 import '../../core/config/theme.dart';
 import '../../core/utils/format.dart';
 import '../../data/models/scene.dart';

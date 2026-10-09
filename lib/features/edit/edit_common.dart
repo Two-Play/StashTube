@@ -4,6 +4,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/config/haptics.dart';
 import '../../core/utils/format.dart';
 import '../../data/models/list_queries.dart';
 import '../../data/models/performer.dart';
@@ -224,9 +225,9 @@ class _PerformerPickerState extends State<_PerformerPicker> {
             value: isSelected,
             secondary: ChannelAvatar(name: performer.name, imageUrl: performer.imageUrl),
             title: Text(performer.name, maxLines: 1, overflow: TextOverflow.ellipsis),
-            onChanged: (_) => setState(() => _selected = isSelected
+            onChanged: withHaptic((_) => setState(() => _selected = isSelected
                 ? _selected.where((p) => p.id != performer.id).toList()
-                : [..._selected, performer]),
+                : [..._selected, performer])),
           );
         },
         footer: FilledButton(onPressed: () => Navigator.pop(context, _selected), child: Text(context.l10n.done)),

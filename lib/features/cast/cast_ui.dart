@@ -1,7 +1,7 @@
-import '../../core/config/haptics.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/config/haptics.dart';
 import '../../core/utils/format.dart';
 import '../../widgets/play_pause_icon.dart';
 import '../player/player_providers.dart';

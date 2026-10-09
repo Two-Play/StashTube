@@ -447,6 +447,13 @@ const fragmentDefinitionSceneFields = FragmentDefinitionNode(
               selectionSet: null,
             ),
             FieldNode(
+              name: NameNode(value: 'webp'),
+              alias: null,
+              arguments: [],
+              directives: [],
+              selectionSet: null,
+            ),
+            FieldNode(
               name: NameNode(value: 'stream'),
               alias: null,
               arguments: [],
@@ -701,6 +708,7 @@ class Fragment$SceneFields$paths {
   Fragment$SceneFields$paths({
     this.screenshot,
     this.preview,
+    this.webp,
     this.stream,
     this.$__typename = 'ScenePathsType',
   });
@@ -708,11 +716,13 @@ class Fragment$SceneFields$paths {
   factory Fragment$SceneFields$paths.fromJson(Map<String, dynamic> json) {
     final l$screenshot = json['screenshot'];
     final l$preview = json['preview'];
+    final l$webp = json['webp'];
     final l$stream = json['stream'];
     final l$$__typename = json['__typename'];
     return Fragment$SceneFields$paths(
       screenshot: (l$screenshot as String?),
       preview: (l$preview as String?),
+      webp: (l$webp as String?),
       stream: (l$stream as String?),
       $__typename: (l$$__typename as String),
     );
@@ -721,6 +731,8 @@ class Fragment$SceneFields$paths {
   final String? screenshot;
 
   final String? preview;
+
+  final String? webp;
 
   final String? stream;
 
@@ -732,6 +744,8 @@ class Fragment$SceneFields$paths {
     _resultData['screenshot'] = l$screenshot;
     final l$preview = preview;
     _resultData['preview'] = l$preview;
+    final l$webp = webp;
+    _resultData['webp'] = l$webp;
     final l$stream = stream;
     _resultData['stream'] = l$stream;
     final l$$__typename = $__typename;
@@ -743,9 +757,16 @@ class Fragment$SceneFields$paths {
   int get hashCode {
     final l$screenshot = screenshot;
     final l$preview = preview;
+    final l$webp = webp;
     final l$stream = stream;
     final l$$__typename = $__typename;
-    return Object.hashAll([l$screenshot, l$preview, l$stream, l$$__typename]);
+    return Object.hashAll([
+      l$screenshot,
+      l$preview,
+      l$webp,
+      l$stream,
+      l$$__typename,
+    ]);
   }
 
   @override
@@ -765,6 +786,11 @@ class Fragment$SceneFields$paths {
     final l$preview = preview;
     final lOther$preview = other.preview;
     if (l$preview != lOther$preview) {
+      return false;
+    }
+    final l$webp = webp;
+    final lOther$webp = other.webp;
+    if (l$webp != lOther$webp) {
       return false;
     }
     final l$stream = stream;

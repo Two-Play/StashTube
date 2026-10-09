@@ -1,9 +1,9 @@
-import '../../core/config/haptics.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:miniplayer/miniplayer.dart';
 
+import '../../core/config/haptics.dart';
 import '../../l10n/l10n.dart';
 import '../home/home_page.dart';
 import '../library/library_page.dart';
