@@ -1,19 +1,17 @@
 #!/usr/bin/env python3
-"""
-Generate the app icon and the splash screen for iOS and Android.
+# The mark is a stack of cards with a play button. Needs rsvg-convert
+# (`brew install librsvg`) and Pillow. Run from the project root:
+#
+#     python3 tool/generate_app_icon.py
+#
+# Writes the iOS AppIcon set, the Android legacy and adaptive launcher icons
+# (background, foreground, monochrome for Android 13 themed icons), the in-app preview
+# `assets/icons/stash.png` and the full icon as `tool/app_icon.svg`. For the splash
+# screen it writes the mark on its own (`launch_logo` on Android up to 11 and the iOS
+# LaunchImage) and the Android 12+ splash icon; the background color (BACKGROUND) is
+# set in `res/values/colors.xml` and `LaunchScreen.storyboard`.
 
-The mark is a stack of cards with a play button. Needs rsvg-convert
-(`brew install librsvg`) and Pillow. Run from the project root:
-
-    python3 tool/generate_app_icon.py
-
-Writes the iOS AppIcon set, the Android legacy and adaptive launcher icons
-(background, foreground, monochrome for Android 13 themed icons), the in-app preview
-`assets/icons/stash.png` and the full icon as `tool/app_icon.svg`. For the splash
-screen it writes the mark on its own (`launch_logo` on Android up to 11 and the iOS
-LaunchImage) and the Android 12+ splash icon; the background color (BACKGROUND) is
-set in `res/values/colors.xml` and `LaunchScreen.storyboard`.
-"""
+"""Generate the app icon and the splash screen for iOS and Android."""
 
 import io
 import subprocess  # nosec B404: only runs rsvg-convert with fixed arguments
