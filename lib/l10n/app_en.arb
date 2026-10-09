@@ -757,5 +757,13 @@
   "autoPip": "Picture-in-picture when leaving the app",
   "autoPipSubtitle": "A playing video continues in a small window.",
   "backgroundPlayback": "Background playback",
-  "backgroundPlaybackSubtitle": "The sound keeps playing while the app is in the background."
+  "backgroundPlaybackSubtitle": "The sound keeps playing while the app is in the background.",
+  "performerShorts": "{count, plural, =1{1 short} other{{count} shorts}}",
+  "@performerShorts": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  }
 }

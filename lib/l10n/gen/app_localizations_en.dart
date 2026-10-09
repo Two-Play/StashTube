@@ -1430,4 +1430,15 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get backgroundPlaybackSubtitle =>
       'The sound keeps playing while the app is in the background.';
+
+  @override
+  String performerShorts(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count shorts',
+      one: '1 short',
+    );
+    return '$_temp0';
+  }
 }

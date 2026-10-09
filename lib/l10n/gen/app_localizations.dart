@@ -2473,6 +2473,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'The sound keeps playing while the app is in the background.'**
   String get backgroundPlaybackSubtitle;
+
+  /// No description provided for @performerShorts.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 short} other{{count} shorts}}'**
+  String performerShorts(int count);
 }
 
 class _AppLocalizationsDelegate

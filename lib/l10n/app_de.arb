@@ -395,5 +395,6 @@
   "autoPip": "Bild-in-Bild beim Verlassen der App",
   "autoPipSubtitle": "Ein laufendes Video spielt in einem kleinen Fenster weiter.",
   "backgroundPlayback": "Hintergrundwiedergabe",
-  "backgroundPlaybackSubtitle": "Der Ton läuft weiter, während die App im Hintergrund ist."
+  "backgroundPlaybackSubtitle": "Der Ton läuft weiter, während die App im Hintergrund ist.",
+  "performerShorts": "{count, plural, =1{1 Short} other{{count} Shorts}}"
 }

@@ -83,9 +83,39 @@ class ShortsFeedState {
       );
 }
 
-/// Endless, shuffled feed of shorts built from [shortsSettingsProvider].
-/// Rebuilding (settings change, server switch, [refresh]) reshuffles.
+/// Where a shorts feed comes from: the mixed feed of the shorts tab, or one
+/// performer's short videos (their channel's "Shorts" button).
+@immutable
+class ShortsSource {
+  const ShortsSource.feed()
+      : performerId = null,
+        title = null;
+
+  const ShortsSource.performer(String this.performerId, {this.title});
+
+  final String? performerId;
+
+  /// Shown in the top bar, e.g. the performer's name.
+  final String? title;
+
+  bool get isFeed => performerId == null;
+
+  @override
+  bool operator ==(Object other) => other is ShortsSource && other.performerId == performerId;
+
+  @override
+  int get hashCode => performerId.hashCode;
+}
+
+/// Endless, shuffled feed of shorts built from [shortsSettingsProvider]:
+/// the length and orientation always apply, the preferred tags only to the
+/// mixed feed. Rebuilding (settings change, server switch, [refresh])
+/// reshuffles.
 class ShortsFeedNotifier extends Notifier<ShortsFeedState> {
+  ShortsFeedNotifier(this.source);
+
+  final ShortsSource source;
+
   static const _pageSize = 24;
 
   late ShortsMixer _mixer;
@@ -102,9 +132,15 @@ class ShortsFeedNotifier extends Notifier<ShortsFeedState> {
   ShortsFeedState build() {
     final settings = ref.watch(shortsSettingsProvider);
     ref.watch(stashRepositoryProvider);
-    final tagFilter = settings.tagFilter;
-    _preferredQuery = tagFilter == null ? null : SceneQuery(sort: SceneSort.random, filter: tagFilter);
-    _othersQuery = settings.mixesOthers ? SceneQuery(sort: SceneSort.random, filter: settings.baseFilter) : null;
+    final performerId = source.performerId;
+    if (performerId != null) {
+      _preferredQuery = null;
+      _othersQuery = SceneQuery(sort: SceneSort.random, performerId: performerId, filter: settings.baseFilter);
+    } else {
+      final tagFilter = settings.tagFilter;
+      _preferredQuery = tagFilter == null ? null : SceneQuery(sort: SceneSort.random, filter: tagFilter);
+      _othersQuery = settings.mixesOthers ? SceneQuery(sort: SceneSort.random, filter: settings.baseFilter) : null;
+    }
     _mixer = ShortsMixer(hasPreferred: _preferredQuery != null, hasOthers: _othersQuery != null);
     _preferredPage = 0;
     _othersPage = 0;
@@ -161,5 +197,19 @@ class ShortsFeedNotifier extends Notifier<ShortsFeedState> {
   }
 }
 
-final shortsFeedProvider = NotifierProvider.autoDispose<ShortsFeedNotifier, ShortsFeedState>(ShortsFeedNotifier.new);
+final shortsFeedFamily =
+    NotifierProvider.autoDispose.family<ShortsFeedNotifier, ShortsFeedState, ShortsSource>(ShortsFeedNotifier.new);
+
+/// The mixed feed of the shorts tab and the home page's shelf.
+final shortsFeedProvider = shortsFeedFamily(const ShortsSource.feed());
+
+/// How many of a performer's videos fit the shorts settings; the channel
+/// shows its "Shorts" button only when there are any.
+final performerShortsCountProvider = FutureProvider.autoDispose.family<int, String>((ref, performerId) async {
+  final filter = ref.watch(shortsSettingsProvider).baseFilter;
+  final result = await ref
+      .watch(stashRepositoryProvider)
+      .findScenes(SceneQuery(performerId: performerId, filter: filter), perPage: 1);
+  return result.totalCount;
+});
 

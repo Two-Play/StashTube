@@ -12,6 +12,8 @@ import '../helpers.dart';
 import 'fake_player.dart';
 
 class _EmptyFeed extends ShortsFeedNotifier {
+  _EmptyFeed(super.source);
+
   @override
   ShortsFeedState build() => const ShortsFeedState(hasMore: false);
 }
@@ -24,7 +26,7 @@ void main() {
       ...testServer,
       sharedPreferencesProvider.overrideWithValue(prefs),
       playerProvider.overrideWithValue(FakePlayer()),
-      shortsFeedProvider.overrideWith(_EmptyFeed.new),
+      shortsFeedFamily.overrideWith2(_EmptyFeed.new),
     ]);
     addTearDown(container.dispose);
     await tester.pumpWidget(UncontrolledProviderScope(

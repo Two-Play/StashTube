@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/utils/format.dart';
+import '../../widgets/play_pause_icon.dart';
 import '../player/player_providers.dart';
 import '../player/preview_seek_bar.dart';
 import 'cast_providers.dart';
@@ -196,7 +197,7 @@ class CastingControls extends ConsumerWidget {
                           : IconButton(
                               iconSize: 48,
                               tooltip: playback.playing ? context.l10n.pause : context.l10n.play,
-                              icon: Icon(playback.playing ? Icons.pause : Icons.play_arrow),
+                              icon: PlayPauseIcon(playing: playback.playing),
                               onPressed: playback.playing ? service.pause : service.play,
                             ),
                       const SizedBox(width: 16),

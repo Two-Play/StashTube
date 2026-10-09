@@ -9,6 +9,7 @@ import 'package:media_kit/media_kit.dart';
 import '../../core/utils/format.dart';
 import '../../data/models/scene.dart';
 import '../../widgets/hold_detector.dart';
+import '../../widgets/play_pause_icon.dart';
 import '../cast/cast_providers.dart';
 import '../cast/cast_ui.dart';
 import '../pip/pip.dart';
@@ -355,7 +356,7 @@ class _StashVideoControlsState extends ConsumerState<StashVideoControls> {
                                     builder: (_, playing) => IconButton(
                                       iconSize: 56,
                                       tooltip: playing.data == true ? context.l10n.pause : context.l10n.play,
-                                      icon: Icon(playing.data == true ? Icons.pause : Icons.play_arrow),
+                                      icon: PlayPauseIcon(playing: playing.data == true),
                                       onPressed: () => _act(player.playOrPause),
                                     ),
                                   ),
