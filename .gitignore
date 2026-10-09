@@ -45,3 +45,6 @@ app.*.map.json
 /android/app/release
 
 *.lock
+# The app pins its dependencies, as Dart and CocoaPods recommend for apps.
+!pubspec.lock
+!ios/Podfile.lock

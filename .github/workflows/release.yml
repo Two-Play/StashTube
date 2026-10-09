@@ -62,7 +62,7 @@ jobs:
           keyPassword=$KEY_PASSWORD
           EOF
 
-      - run: flutter pub get
+      - run: flutter pub get --enforce-lockfile
 
       # The run number only grows, so every release gets a higher versionCode
       # (per-ABI APKs add 1000 × the ABI's number on top).
