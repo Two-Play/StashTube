@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
-"""Generates the app icon (stacked cards with a play button) and the splash screen
-for iOS and Android.
+"""
+Generate the app icon and the splash screen for iOS and Android.
 
-Needs rsvg-convert (`brew install librsvg`) and Pillow. Run from the project root:
+The mark is a stack of cards with a play button. Needs rsvg-convert
+(`brew install librsvg`) and Pillow. Run from the project root:
 
     python3 tool/generate_app_icon.py
 
@@ -15,7 +16,7 @@ set in `res/values/colors.xml` and `LaunchScreen.storyboard`.
 """
 
 import io
-import subprocess
+import subprocess  # nosec B404: only runs rsvg-convert with fixed arguments
 from pathlib import Path
 
 from PIL import Image
@@ -88,7 +89,8 @@ SPLASH_ICON = svg(288, 'translate(144 144) scale(1.6) translate(-50 -52)')
 
 
 def render(source, px, opaque=False):
-    png = subprocess.run(
+    # A fixed command; the input is this script's own SVG.
+    png = subprocess.run(  # nosec B603
         ['rsvg-convert', '-w', str(px), '-h', str(px)],
         input=source.encode(),
         capture_output=True,
