@@ -5,7 +5,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/config/locale.dart';
 import '../../core/pagination/paging_mode.dart';
 import '../../core/config/server_config.dart';
-import '../../core/config/theme.dart';
 import '../../data/models/scene_details.dart';
 import '../../data/providers.dart';
 import '../pip/pip.dart';
@@ -15,6 +14,7 @@ import '../auth/server_switcher.dart';
 import '../security/app_icon.dart';
 import '../security/app_lock_gate.dart';
 import '../shell/nav_bar_config.dart';
+import 'appearance_picker.dart';
 import 'nav_bar_settings_page.dart';
 import 'scene_card_config.dart';
 import '../../l10n/l10n.dart';
@@ -32,9 +32,7 @@ class SettingsPage extends ConsumerWidget {
     final profiles = ref.watch(serverProfilesProvider).profiles;
     final server = ref.watch(serverProfilesProvider).active;
     final version = ref.watch(serverVersionProvider);
-    final themeMode = ref.watch(themeModeProvider);
     final preferredStream = ref.watch(preferredStreamProvider);
-    final accent = ref.watch(accentColorProvider);
     final theme = Theme.of(context);
     final l = context.l10n;
     final locale = ref.watch(appLocaleProvider);
@@ -89,49 +87,17 @@ class SettingsPage extends ConsumerWidget {
             onTap: server == null ? null : () => openServerEditor(context, server),
           ),
           _SectionTitle(l.sectionAppearance),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            child: SegmentedButton<ThemeMode>(
-              segments: [
-                ButtonSegment(
-                  value: ThemeMode.light,
-                  label: Text(l.themeLight),
-                  icon: const Icon(Icons.light_mode_outlined),
-                ),
-                ButtonSegment(
-                  value: ThemeMode.system,
-                  label: Text(l.themeSystem),
-                  icon: const Icon(Icons.brightness_auto_outlined),
-                ),
-                ButtonSegment(
-                  value: ThemeMode.dark,
-                  label: Text(l.themeDark),
-                  icon: const Icon(Icons.dark_mode_outlined),
-                ),
-              ],
-              selected: {themeMode},
-              onSelectionChanged: (s) => ref.read(themeModeProvider.notifier).set(s.first),
-            ),
+          const Padding(
+            padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            child: ThemeModeSelector(),
           ),
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
             child: Text(l.accentColor, style: theme.textTheme.bodyLarge),
           ),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-            child: Wrap(
-              spacing: 4,
-              runSpacing: 4,
-              children: [
-                for (final MapEntry(key: name, value: color) in accentColors.entries)
-                  _AccentSwatch(
-                    name: accentColorName(l, name),
-                    color: color,
-                    selected: color.toARGB32() == accent.toARGB32(),
-                    onTap: () => ref.read(accentColorProvider.notifier).set(color),
-                  ),
-              ],
-            ),
+          const Padding(
+            padding: EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+            child: AccentColorPicker(),
           ),
           ListTile(
             leading: const Icon(Icons.space_dashboard_outlined),
@@ -458,52 +424,6 @@ final _biometricsAvailableProvider = FutureProvider.autoDispose<bool>(
   (ref) => ref.watch(biometricAuthProvider).isAvailable(),
 );
 
-class _AccentSwatch extends StatelessWidget {
-  const _AccentSwatch({required this.name, required this.color, required this.selected, required this.onTap});
-
-  final String name;
-  final Color color;
-  final bool selected;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    // Shown as it will look in the current light/dark mode.
-    final shown = AppTheme.accentFor(color, Theme.of(context).brightness);
-    return Tooltip(
-      message: name,
-      child: Semantics(
-        label: context.l10n.accentColorLabel(name),
-        selected: selected,
-        button: true,
-        child: InkResponse(
-          onTap: onTap,
-          radius: 26,
-          child: Container(
-            width: 44,
-            height: 44,
-            margin: const EdgeInsets.all(2),
-            decoration: BoxDecoration(
-              color: shown,
-              // The Stash theme shows both of its colors.
-              gradient: AppTheme.isStash(color)
-                  ? LinearGradient(
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                      stops: const [0.5, 0.5],
-                      colors: [shown, AppTheme.accentFor(stashBrown, Theme.of(context).brightness)],
-                    )
-                  : null,
-              shape: BoxShape.circle,
-              border: selected ? Border.all(color: Theme.of(context).colorScheme.onSurface, width: 3) : null,
-            ),
-            child: selected ? Icon(Icons.check, color: readableOn(shown)) : null,
-          ),
-        ),
-      ),
-    );
-  }
-}
 
 class _SectionTitle extends StatelessWidget {
   const _SectionTitle(this.text);
@@ -520,17 +440,3 @@ class _SectionTitle extends StatelessWidget {
   );
 }
 
-/// Display name of an entry of [accentColors].
-String accentColorName(AppLocalizations l, String name) => switch (name) {
-  'Red' => l.colorRed,
-  'Pink' => l.colorPink,
-  'Purple' => l.colorPurple,
-  'Indigo' => l.colorIndigo,
-  'Blue' => l.colorBlue,
-  'Teal' => l.colorTeal,
-  'Green' => l.colorGreen,
-  'Orange' => l.colorOrange,
-  'Amber' => l.colorAmber,
-  'Stash' => l.colorStash,
-  _ => name,
-};

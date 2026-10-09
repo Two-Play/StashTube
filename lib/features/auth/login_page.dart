@@ -6,6 +6,7 @@ import '../../core/config/server_config.dart';
 import '../../data/repositories/stash_repository.dart';
 import '../../l10n/l10n.dart';
 import '../../widgets/stash_logo.dart';
+import '../settings/theme_welcome.dart';
 
 /// Connects the app to a Stash server (URL, optional name, and an API key
 /// or a username and password, 2.7).
@@ -82,6 +83,8 @@ class _LoginPageState extends ConsumerState<LoginPage> {
       if (edit != null) {
         await servers.update(edit.id, config, name: _nameController.text);
       } else {
+        // The first login asks for a theme once the shell is there.
+        if (ref.read(serverProfilesProvider).profiles.isEmpty) await ref.read(themeWelcomeProvider.notifier).request();
         // Activating the server swaps the app to its shell (see StashApp).
         await servers.add(config, name: _nameController.text);
       }

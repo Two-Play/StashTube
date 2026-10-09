@@ -12,6 +12,7 @@ import '../player/player_providers.dart';
 import '../player/player_view.dart';
 import '../shorts/shorts_page.dart';
 import '../search/search_page.dart';
+import '../settings/theme_welcome.dart';
 import '../studios/studios_page.dart';
 import '../tags/tags_page.dart';
 import 'all_views_page.dart';
@@ -48,6 +49,12 @@ class AppShell extends ConsumerWidget {
     final hideNavBar = ref.watch(shortsFullscreenProvider);
     final playerHeight = ref.watch(miniplayerHeightProvider);
     final maxPlayerHeight = MediaQuery.sizeOf(context).height;
+    // After the first login: pick a theme (once).
+    if (ref.watch(themeWelcomeProvider)) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (context.mounted) showThemeWelcomeIfPending(context, ref);
+      });
+    }
 
     void selectTab(AppTab tab) {
       if (tab == currentTab) {
