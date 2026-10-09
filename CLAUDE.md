@@ -22,6 +22,8 @@ tool/update_stash_schema.sh v0.31.1                               # another Stas
 
 - CI (`.github/workflows/ci.yml`, every push and PR): l10n and GraphQL codegen, `dart analyze`, `flutter test`, then a debug APK and an unsigned iOS build. Use `flutter pub run`, not `dart run`, for build_runner: the system `dart` may not be Flutter's.
 
+- Releases (14.3): a tag `vX.Y.Z` matching `version:` in `pubspec.yaml` runs `.github/workflows/release.yml`, which writes `android/key.properties` from the `ANDROID_*` secrets and publishes signed APKs (per ABI and universal), an AAB and `SHA256SUMS` as a GitHub release; versionCode is the workflow's run number. Locally `android/key.properties` (git-ignored) names the upload keystore; without it release builds fall back to the debug key. The app ID `io.github.two_play.stashappmobile` (iOS `io.github.two-play.stashappmobile`) must not change after the first release.
+
 - `pubspec.lock` is git-ignored (`*.lock`), so check resolved versions with `flutter pub deps`. Older transitive versions (`archive` 3.4, `win32` 5.4) don't compile on the current Dart SDK.
 - Android uses Gradle 9.3.1 / AGP 9.1.0 / Kotlin 2.4.0 with Kotlin DSL, matching the current Flutter template. `android.builtInKotlin=false` and `android.newDsl=false` in `gradle.properties` keep older plugins such as media_kit working.
 - Riverpod 3. All providers are written by hand: there is no codegen and no `@riverpod`. riverpod_lint 3 is enabled under `plugins:` in `analysis_options.yaml` (analysis_server_plugin, no custom_lint).

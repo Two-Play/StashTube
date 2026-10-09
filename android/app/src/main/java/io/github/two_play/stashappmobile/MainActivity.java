@@ -1,4 +1,4 @@
-package de.twoplay.stash.stash_app_mobile;
+package io.github.two_play.stashappmobile;
 
 import android.app.PictureInPictureParams;
 import android.content.ComponentName;

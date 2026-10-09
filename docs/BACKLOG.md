@@ -172,7 +172,7 @@ Eine wartbare Basis, damit Features unabhängig voneinander wachsen können.
 | 14.1 | Als Nutzer im Heimnetz möchte ich Server über `http://` erreichen. | Android `usesCleartextTraffic`, iOS-ATS-Ausnahme und Local-Network-Hinweis. | MVP | ✅ |
 | 14.2 | Als Entwickler möchte ich Abhängigkeiten aktualisieren (Riverpod 3, graphql 5.2, media_kit 1.2). | Riverpod 3.4 (Family-Notifier mit Konstruktor-Argument, Retry-Policy nur für Netzwerkfehler), riverpod_lint 3 über `dart analyze`, ungenutzte Codegen-Pakete entfernt; Tests grün. | Next | ✅ |
 | 14.4 | Als Entwickler möchte ich mit aktuellem JDK für Android bauen. | Gradle 9.3.1, AGP 9.1.0, Kotlin 2.4.0, Kotlin-DSL nach aktuellem Flutter-Template. | MVP | ✅ |
-| 14.3 | Als Entwickler möchte ich signierte Release-Builds (APK/AAB, TestFlight). | Signing-Konfiguration, Fastlane o. Ä. | Later | ⬜ |
+| 14.3 | Als Entwickler möchte ich signierte Release-Builds (APK/AAB, TestFlight). | Signing-Konfiguration, Fastlane o. Ä. Umgesetzt (Android): App-ID `io.github.two_play.stashappmobile` (iOS `io.github.two-play.stashappmobile`), Upload-Keystore über `android/key.properties`, Tag `vX.Y.Z` (passend zu `pubspec.yaml`) baut per GitHub Actions signierte APKs pro ABI, Universal-APK und AAB als GitHub-Release mit SHA256SUMS. Offen: iOS (TestFlight braucht einen Apple-Developer-Account). | Later | 🟡 (Android ✅) |
 
 ## Epic 17 – Metadaten bearbeiten
 
