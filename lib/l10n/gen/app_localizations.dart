@@ -101,7 +101,7 @@ abstract class AppLocalizations {
   /// No description provided for @appTitle.
   ///
   /// In en, this message translates to:
-  /// **'Stash'**
+  /// **'Stashy'**
   String get appTitle;
 
   /// No description provided for @scenesCount.
@@ -1523,7 +1523,7 @@ abstract class AppLocalizations {
   /// No description provided for @appIconStash.
   ///
   /// In en, this message translates to:
-  /// **'Stash'**
+  /// **'Stashy'**
   String get appIconStash;
 
   /// No description provided for @appIconNotes.

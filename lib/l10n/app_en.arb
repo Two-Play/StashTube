@@ -1,6 +1,6 @@
 {
   "@@locale": "en",
-  "appTitle": "Stash",
+  "appTitle": "Stashy",
   "scenesCount": "{count, plural, =1{1 scene} other{{count} scenes}}",
   "@scenesCount": {
     "placeholders": {
@@ -490,7 +490,7 @@
       }
     }
   },
-  "appIconStash": "Stash",
+  "appIconStash": "Stashy",
   "appIconNotes": "Notes",
   "appIconCalculator": "Calculator",
   "unlockReason": "Unlock Stash",

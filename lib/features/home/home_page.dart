@@ -117,13 +117,13 @@ class _HomePageState extends ConsumerState<HomePage> {
                           children: [
                             const StashLogo(size: 30, background: StashLogo.tile),
                             const SizedBox(width: 8),
-                            const Flexible(
+                            Flexible(
                               child: Text(
-                                'Stash',
+                                context.l10n.appTitle,
                                 maxLines: 1,
                                 overflow: TextOverflow.fade,
                                 softWrap: false,
-                                style: TextStyle(fontWeight: FontWeight.w700, letterSpacing: -0.5),
+                                style: const TextStyle(fontWeight: FontWeight.w700, letterSpacing: -0.5),
                               ),
                             ),
                           ],

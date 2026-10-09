@@ -1,4 +1,4 @@
-# Backlog – Stash Mobile
+# Backlog – Stashy
 
 Ziel: Eine native Android-/iOS-App für einen selbst gehosteten [Stash](https://github.com/stashapp/stash)-Server, die sich wie YouTube anfühlt: Feed mit großen Vorschaubildern, Miniplayer, der beim Navigieren weiterläuft, „Kanäle“ (Performer und Studios), Suche, Verlauf und Bibliothek.
 
@@ -161,7 +161,7 @@ Eine wartbare Basis, damit Features unabhängig voneinander wachsen können.
 | 13.10 | Als Nutzer möchte ich alle Ansichten über die Navigationsleiste erreichen. | Fester letzter Tab „Alle“ (nicht ausblendbar): Raster der Ansichten, die nicht in der Leiste sind, plus Einstellungen; die gewählte Ansicht öffnet sich im Tab „Alle“. Standard: Start, Performer, Bibliothek, Statistik, Alle; gespeicherte volle Leisten blenden ihren letzten ausblendbaren Tab aus. | Next | ✅ |
 | 13.11 | Als Nutzer möchte ich zwischen Endlos-Scrollen und Seiten wählen. | Einstellungen → „Lange Listen“: Endlos scrollen (Standard) oder Seiten. Im Seiten-Modus zeigen Szenen, Bilder, Galerien, Gruppen, Performer, Studios und Tags je eine Seite mit Leiste (erste, vorherige, „Seite 3 von 12“, nächste, letzte; Antippen der Seitenzahl springt zu einer eingegebenen Seite); der Bild-Viewer blättert innerhalb der Seite. Gilt für alle Server, ein Wechsel lädt die Listen neu. Shorts und Regale bleiben endlos. | Next | ✅ |
 | 13.3 | Als Nutzer möchte ich die App auf Deutsch und Englisch nutzen. | `flutter_localizations` und ARB-Dateien (`lib/l10n`). Folgt der Gerätesprache, in den Einstellungen umstellbar. Fehlermeldungen der App ebenfalls übersetzt. | Next | ✅ |
-| 13.4 | Als Nutzer möchte ich ein App-Icon und einen Splashscreen. | `flutter_launcher_icons`, `flutter_native_splash`. | Next | ⬜ |
+| 13.4 | Als Nutzer möchte ich ein App-Icon und einen Splashscreen. | App-Icon (Kartenstapel mit Play-Button) aus `tool/generate_app_icon.py`: iOS-Set, Android adaptiv mit monochromer Ebene. Splashscreen aus demselben Skript: das Motiv auf dem dunklen Icon-Hintergrund (#111111), Android bis 11 über `launch_background.xml`, ab 12 über den System-Splash (`values-v31`), iOS über `LaunchScreen.storyboard`; in hellem und dunklem Modus gleich. | Next | ✅ |
 | 13.5 | Als Nutzer möchte ich Tablet- und Querformat-Layouts. | Mehrspaltiges Raster ab 600 dp. Umgesetzt: Szenen-Feeds (Karten und Zeilen), Suche, Verlauf, Gruppen, Später ansehen und Studios werden ab 600 dp mehrspaltig (`SliverColumns`); Raster passten sich schon an. Offen: Navigation Rail und zweispaltiger Player auf Tablets. | Later | ✅ |
 | 13.12 | Als Nutzer möchte ich lebendige Animationen. | Favorit hinzufügen: Konfetti aus dem Button, Herz springt auf, Button wechselt animiert Farbe, Text und Breite (auch das Herz auf Performer-Kacheln). Play/Pause morpht ineinander und federt (Player, Miniplayer, Cast). Bei „Bewegung reduzieren“ ohne Animation. | Next | ✅ |
 

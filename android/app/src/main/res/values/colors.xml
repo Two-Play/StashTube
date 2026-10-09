@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Splash screen behind the logo; the app icon's background
+         (BACKGROUND in tool/generate_app_icon.py). -->
+    <color name="splash_background">#111111</color>
+</resources>

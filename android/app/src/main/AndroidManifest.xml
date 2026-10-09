@@ -1,6 +1,6 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
     <application
-        android:label="Stash"
+        android:label="Stashy"
         android:name="${applicationName}"
         android:usesCleartextTraffic="true"
         android:allowBackup="false"
@@ -38,7 +38,7 @@
             android:targetActivity=".MainActivity"
             android:enabled="true"
             android:exported="true"
-            android:label="Stash"
+            android:label="Stashy"
             android:icon="@mipmap/ic_launcher">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>

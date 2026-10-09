@@ -1,6 +1,6 @@
-# Stash Mobile
+# Stashy
 
-A mobile client for [Stash](https://github.com/stashapp/stash) on iOS and Android, built with Flutter. It feels like the YouTube app: a feed with large thumbnails, a miniplayer that keeps playing while you browse, performers and studios as "channels", and short portrait videos in a vertical Shorts feed.
+Stashy is a mobile client for [Stash](https://github.com/stashapp/stash) on iOS and Android, built with Flutter. It feels like the YouTube app: a feed with large thumbnails, a miniplayer that keeps playing while you browse, performers and studios as "channels", and short portrait videos in a vertical Shorts feed.
 
 The app talks to your own Stash server through its GraphQL API and plays the streams directly. It doesn't use any other services.
 

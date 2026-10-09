@@ -9,7 +9,7 @@ class AppLocalizationsDe extends AppLocalizations {
   AppLocalizationsDe([String locale = 'de']) : super(locale);
 
   @override
-  String get appTitle => 'Stash';
+  String get appTitle => 'Stashy';
 
   @override
   String scenesCount(int count) {
@@ -906,7 +906,7 @@ class AppLocalizationsDe extends AppLocalizations {
   }
 
   @override
-  String get appIconStash => 'Stash';
+  String get appIconStash => 'Stashy';
 
   @override
   String get appIconNotes => 'Notizen';

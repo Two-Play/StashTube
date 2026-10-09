@@ -1,6 +1,6 @@
 {
   "@@locale": "de",
-  "appTitle": "Stash",
+  "appTitle": "Stashy",
   "scenesCount": "{count, plural, =1{1 Szene} other{{count} Szenen}}",
   "imagesCount": "{count, plural, =1{1 Bild} other{{count} Bilder}}",
   "playsCount": "{count, plural, =0{Keine Wiedergaben} =1{1 Wiedergabe} other{{count} Wiedergaben}}",
@@ -237,7 +237,7 @@
   "appIcon": "App-Symbol",
   "appIconHint": "Auf Android ändert sich auch der Name auf dem Startbildschirm, und der Launcher braucht evtl. einen Moment. Auf iOS ändert sich nur das Symbol, und das System zeigt eine Bestätigung.",
   "appIconFailed": "Das Symbol konnte nicht geändert werden: {error}",
-  "appIconStash": "Stash",
+  "appIconStash": "Stashy",
   "appIconNotes": "Notizen",
   "appIconCalculator": "Rechner",
   "unlockReason": "Stash entsperren",
