@@ -308,7 +308,12 @@ class _SecuritySettings extends ConsumerWidget {
               secondary: const Icon(Icons.fingerprint),
               title: Text(l.unlockBiometric),
               value: settings.biometrics,
-              onChanged: notifier.setBiometrics,
+              // Turning it on asks once, so it surely works.
+              onChanged: (on) async {
+                final reason = l.unlockReason;
+                if (on && !await ref.read(biometricAuthProvider).authenticate(reason)) return;
+                await notifier.setBiometrics(on);
+              },
             ),
           ListTile(
             leading: const Icon(Icons.timer_outlined),

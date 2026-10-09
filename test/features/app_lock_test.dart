@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_screen_lock/flutter_screen_lock.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:stash_app_mobile/core/config/server_config.dart';
@@ -150,5 +151,117 @@ void main() {
     tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
     await tester.pump();
     expect(find.byType(PrivacyCover), findsNothing);
+  });
+
+  test('without a delay it locks as the app is hidden', () async {
+    await container().read(appLockSettingsProvider.notifier).enable('1234');
+    final c = container();
+    final lock = c.read(appLockedProvider.notifier)..unlock();
+    lock.appHidden();
+    expect(c.read(appLockedProvider), isTrue, reason: 'locked before the app switcher or the way back shows it');
+  });
+
+  testWidgets('with the lock on, the cover shows while inactive', (tester) async {
+    await tester.runAsync(() => container().read(appLockSettingsProvider.notifier).enable('1234'));
+    final c = await pumpGate(tester);
+    c.read(appLockedProvider.notifier).unlock();
+    await tester.pump();
+
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.inactive);
+    await tester.pump();
+    expect(find.byType(PrivacyCover), findsOneWidget);
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+    await tester.pump();
+    expect(find.byType(PrivacyCover), findsNothing);
+  });
+
+  testWidgets('biometrics wait for the foreground and are not asked twice in a row', (tester) async {
+    biometrics = FakeBiometrics(succeed: false);
+    await tester.runAsync(() async {
+      final c = container();
+      await c.read(appLockSettingsProvider.notifier).enable('1234');
+      await c.read(appLockSettingsProvider.notifier).setBiometrics(true);
+    });
+    final c = await pumpGate(tester);
+    expect(biometrics.calls, 1, reason: 'asked at start');
+
+    // Its own prompt makes the app inactive; cancelling it keeps the PIN pad.
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.inactive);
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+    await tester.pump();
+    expect(biometrics.calls, 1);
+
+    // Back from the background: asked again, but only once in the foreground.
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.inactive);
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.hidden);
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.inactive);
+    await tester.pump();
+    expect(biometrics.calls, 1, reason: 'not while still inactive');
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+    await tester.pump();
+    expect(biometrics.calls, 2);
+    expect(c.read(appLockedProvider), isTrue);
+  });
+
+  testWidgets('PIN prompts cover the whole app, also above a nested navigator', (tester) async {
+    await tester.runAsync(() => container().read(appLockSettingsProvider.notifier).enable('1234'));
+    final c = container();
+    c.read(appLockedProvider.notifier).unlock();
+    bool? confirmed;
+    String? created;
+    await tester.pumpWidget(UncontrolledProviderScope(
+      container: c,
+      child: MaterialApp(
+        home: Scaffold(
+          body: Column(
+            children: [
+              const Text('secret content'),
+              Expanded(
+                // Like the settings sheet's own navigator.
+                child: Navigator(
+                  onGenerateRoute: (_) => MaterialPageRoute<void>(
+                    builder: (context) => Consumer(
+                      builder: (context, ref, _) => Column(
+                        children: [
+                          TextButton(
+                            onPressed: () async => confirmed = await confirmPin(context, ref),
+                            child: const Text('confirm'),
+                          ),
+                          TextButton(
+                            onPressed: () async => created = await showCreatePin(context),
+                            child: const Text('create'),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    ));
+
+    Future<void> digits(String pin) async {
+      for (final digit in pin.split('')) {
+        await tester.tap(find.descendant(of: find.byType(ScreenLock), matching: find.text(digit)).first);
+        await tester.pump();
+      }
+      await tester.pumpAndSettle();
+    }
+
+    await tester.tap(find.text('confirm'));
+    await tester.pumpAndSettle();
+    expect(find.text('secret content'), findsNothing, reason: 'the app is covered, not only the inner navigator');
+    await digits('1234');
+    expect(confirmed, isTrue);
+    expect(find.text('secret content'), findsOneWidget);
+
+    await tester.tap(find.text('create'));
+    await tester.pumpAndSettle();
+    await digits('2580');
+    await digits('2580');
+    expect(created, '2580');
   });
 }
