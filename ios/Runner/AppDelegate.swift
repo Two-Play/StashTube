@@ -264,7 +264,9 @@ final class PictureInPictureController: NSObject, AVPictureInPictureControllerDe
     }
   }
 
-  private func start(url: URL, headers: [String: String], startMs: Int64, frame: CGRect, result: @escaping FlutterResult) {
+  private func start(
+    url: URL, headers: [String: String], startMs: Int64, frame: CGRect, result: @escaping FlutterResult
+  ) {
     finishStart(false)
     cleanUp()
     guard AVPictureInPictureController.isPictureInPictureSupported(), let window = mainWindow else {
@@ -280,7 +282,8 @@ final class PictureInPictureController: NSObject, AVPictureInPictureControllerDe
     let player = AVPlayer(playerItem: item)
     player.allowsExternalPlayback = false
     // The layer has to be on screen for picture-in-picture to start.
-    let view = PlayerLayerView(frame: frame.width > 1 && frame.height > 1 ? frame : CGRect(x: 0, y: 0, width: 160, height: 90))
+    let onScreen = frame.width > 1 && frame.height > 1
+    let view = PlayerLayerView(frame: onScreen ? frame : CGRect(x: 0, y: 0, width: 160, height: 90))
     view.isUserInteractionEnabled = false
     view.playerLayer.videoGravity = .resizeAspect
     view.playerLayer.player = player
@@ -384,7 +387,10 @@ final class PictureInPictureController: NSObject, AVPictureInPictureControllerDe
 final class PlayerLayerView: UIView {
   override class var layerClass: AnyClass { AVPlayerLayer.self }
 
-  var playerLayer: AVPlayerLayer { layer as! AVPlayerLayer }
+  var playerLayer: AVPlayerLayer {
+    guard let playerLayer = layer as? AVPlayerLayer else { fatalError("layerClass is AVPlayerLayer") }
+    return playerLayer
+  }
 }
 
 /// The app's view controller (Main.storyboard). Turns the phone without
