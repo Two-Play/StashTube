@@ -4,8 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:stash_app_mobile/features/settings/about.dart';
 
 void main() {
-  testWidgets('the licenses include the Stash logo next to the packages', (tester) async {
-    registerAppLicenses();
+  testWidgets('the licenses page lists the packages\' licenses for Stashy', (tester) async {
     await tester.pumpWidget(const ProviderScope(child: MaterialApp(home: Scaffold(body: AboutSettings()))));
     await tester.pumpAndSettle();
     expect(find.text('Version'), findsOneWidget);
@@ -13,6 +12,6 @@ void main() {
     await tester.tap(find.text('Open source licenses'));
     await tester.pumpAndSettle();
     expect(find.byType(LicensePage), findsOneWidget);
-    expect(find.text('Stash (logo and colors)'), findsOneWidget);
+    expect(find.text('Stashy'), findsWidgets);
   });
 }

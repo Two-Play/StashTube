@@ -1,5 +1,5 @@
 <h1 align="center">
-  <img src="assets/icons/stash.png" width="96" height="96" alt="Stashy app icon"><br>
+  <img src="assets/icons/stashy.png" width="96" height="96" alt="Stashy app icon"><br>
   Stashy
 </h1>
 
@@ -13,7 +13,7 @@
   <a href="https://github.com/Two-Play/StashAppMobile/releases"><img src="https://img.shields.io/github/downloads/Two-Play/StashAppMobile/total?label=downloads" alt="Downloads"></a>
   <img src="https://img.shields.io/badge/platform-Android%20%7C%20iOS-lightgrey" alt="Platforms: Android and iOS">
   <a href="https://flutter.dev"><img src="https://img.shields.io/badge/Flutter-3.47-02569B?logo=flutter" alt="Flutter 3.47"></a>
-  <a href="https://github.com/stashapp/stash"><img src="https://img.shields.io/badge/Stash-client-137CBD" alt="Stash client"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/github/license/Two-Play/StashAppMobile" alt="License: AGPL-3.0"></a>
 </p>
 
 <p align="center">
@@ -40,7 +40,7 @@ Stashy feels like the YouTube app: a feed with large thumbnails, a miniplayer th
 - [Building from source](#building-from-source)
 - [Development](#development)
 - [Contributing](#contributing)
-- [Credits](#credits)
+- [License](#license)
 
 ## Features
 
@@ -84,7 +84,7 @@ Stashy feels like the YouTube app: a feed with large thumbnails, a miniplayer th
 
 - Several Stash servers to switch between, signed in with an API key or username and password
 - Configurable bottom bar, plus an "All" tab for everything else
-- Light and dark mode, accent colors, and the Stash blue/brown theme
+- Light and dark mode and accent colors
 - Layouts with several columns on tablets and in landscape
 - Haptic feedback (off, light, normal)
 - English and German
@@ -214,7 +214,7 @@ lib/
   data/       models, StashRepository, list and detail providers
   features/   screens: home, player, shorts, library, performers, studios, tags,
               search, edit, settings, cast, pip, security
-  widgets/    shared UI: scene cards, feeds, previews, images, logo
+  widgets/    shared UI: scene cards, feeds, previews, images, app logo
   l10n/       ARB files and generated localizations
 ```
 
@@ -222,8 +222,9 @@ lib/
 
 Bug reports, ideas and pull requests are welcome. [`CONTRIBUTING.md`](CONTRIBUTING.md) explains how to set up, the code conventions and what a pull request needs.
 
-## Credits
+## License
 
-- [Stash](https://github.com/stashapp/stash) is the server this app is a client for. The Stash logo (the open box) and its colors come from the Stash project, which is licensed under AGPL-3.0.
-- This app is not affiliated with the Stash project.
-- The licenses of all packages Stashy uses are in the app under *Settings → About → Open source licenses*.
+Stashy is free software under the [GNU Affero General Public License v3.0](LICENSE). The licenses of all packages it uses are in the app under *Settings → About → Open source licenses*.
+
+> [!NOTE]
+> Stashy is an independent project. It is not affiliated with, endorsed by or connected to the [Stash](https://github.com/stashapp/stash) project or its developers; "Stash" only names the server software Stashy connects to.

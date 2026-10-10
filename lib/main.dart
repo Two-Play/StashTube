@@ -7,7 +7,6 @@ import 'app.dart';
 import 'core/config/secret_store.dart';
 import 'core/config/server_config.dart';
 import 'data/repositories/stash_repository.dart';
-import 'features/settings/about.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -15,7 +14,6 @@ Future<void> main() async {
   final prefs = await SharedPreferences.getInstance();
   final secrets = await SecureSecretStore.load();
 
-  registerAppLicenses();
   runApp(ProviderScope(
     retry: stashRetry,
     overrides: [

@@ -1398,7 +1398,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get tabAll => 'All';
 
   @override
-  String get colorStash => 'Stash (blue/brown)';
+  String get colorStashy => 'Stashy';
 
   @override
   String get searchScenes => 'Search scenes';

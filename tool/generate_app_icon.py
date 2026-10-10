@@ -6,7 +6,7 @@
 #
 # Writes the iOS AppIcon set, the Android legacy and adaptive launcher icons
 # (background, foreground, monochrome for Android 13 themed icons), the in-app preview
-# `assets/icons/stash.png` and the full icon as `tool/app_icon.svg`. For the splash
+# `assets/icons/stashy.png` and the full icon as `tool/app_icon.svg`. For the splash
 # screen it writes the mark on its own (`launch_logo` on Android up to 11 and the iOS
 # LaunchImage) and the Android 12+ splash icon; the background color (BACKGROUND) is
 # set in `res/values/colors.xml` and `LaunchScreen.storyboard`.
@@ -123,7 +123,7 @@ def main():
         save(FOREGROUND, round(108 * factor), folder / 'ic_launcher_foreground.png')
         save(MONOCHROME, round(108 * factor), folder / 'ic_launcher_monochrome.png')
 
-    save(FULL, 192, ROOT / 'assets/icons/stash.png', opaque=True)
+    save(FULL, 192, ROOT / 'assets/icons/stashy.png', opaque=True)
 
     # Splash screen.
     for density, factor in densities.items():

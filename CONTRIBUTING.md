@@ -92,4 +92,4 @@ Native code (media_kit's players, picture-in-picture, the lock screen) can't run
 - Releases are tagged by the maintainers.
 
 > [!NOTE]
-> Stashy doesn't have a license yet. Until one is added, please only contribute if you're fine with your contribution being published under the license the project chooses.
+> Stashy is licensed under the [AGPL-3.0](LICENSE). By contributing, you agree that your contribution is published under the same license.

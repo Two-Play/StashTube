@@ -1,4 +1,3 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:package_info_plus/package_info_plus.dart';
@@ -14,20 +13,6 @@ final appInfoProvider = FutureProvider<PackageInfo?>((ref) async {
     return null;
   }
 });
-
-/// Adds what the license page can't find in the packages: the Stash logo
-/// and colors, which come from the Stash project. Called once in `main`.
-void registerAppLicenses() {
-  LicenseRegistry.addLicense(() async* {
-    yield const LicenseEntryWithLineBreaks(
-      ['Stash (logo and colors)'],
-      'The Stash logo (the open box) and its colors come from the Stash project, '
-      'https://github.com/stashapp/stash, which is licensed under the GNU Affero '
-      'General Public License v3.0 (AGPL-3.0).\n\n'
-      'Stashy is not affiliated with the Stash project.',
-    );
-  });
-}
 
 /// "About" in the settings: the version and the open source licenses of
 /// every package the app uses.
@@ -59,7 +44,7 @@ class AboutSettings extends ConsumerWidget {
               padding: const EdgeInsets.all(12),
               child: ClipRRect(
                 borderRadius: BorderRadius.circular(14),
-                child: Image.asset('assets/icons/stash.png', width: 64, height: 64),
+                child: Image.asset('assets/icons/stashy.png', width: 64, height: 64),
               ),
             ),
             applicationLegalese: l.aboutLegalese,

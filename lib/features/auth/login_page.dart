@@ -5,7 +5,7 @@ import '../../core/config/haptics.dart';
 import '../../core/config/server_config.dart';
 import '../../data/repositories/stash_repository.dart';
 import '../../l10n/l10n.dart';
-import '../../widgets/stash_logo.dart';
+import '../../widgets/app_logo.dart';
 import '../settings/theme_welcome.dart';
 
 /// Connects the app to a Stash server (URL, optional name, and an API key
@@ -117,7 +117,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     if (!widget._pushed) ...[
-                      const Center(child: StashLogo(size: 72, background: StashLogo.tile)),
+                      const Center(child: AppLogo(size: 72, background: AppLogo.tile)),
                       const SizedBox(height: 12),
                       Text(context.l10n.connectToStash, textAlign: TextAlign.center, style: theme.textTheme.headlineSmall),
                     ],

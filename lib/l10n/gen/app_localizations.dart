@@ -2414,11 +2414,11 @@ abstract class AppLocalizations {
   /// **'All'**
   String get tabAll;
 
-  /// No description provided for @colorStash.
+  /// No description provided for @colorStashy.
   ///
   /// In en, this message translates to:
-  /// **'Stash (blue/brown)'**
-  String get colorStash;
+  /// **'Stashy'**
+  String get colorStashy;
 
   /// No description provided for @searchScenes.
   ///

@@ -3,9 +3,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../data/models/list_queries.dart';
 import '../../data/providers.dart';
+import '../../widgets/app_logo.dart';
 import '../../widgets/scene_feed.dart';
 import '../../widgets/scene_shelf.dart';
-import '../../widgets/stash_logo.dart';
 import '../cast/cast_ui.dart';
 import '../player/player_providers.dart';
 import '../shell/navigation.dart';
@@ -115,7 +115,7 @@ class _HomePageState extends ConsumerState<HomePage> {
                         title: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            const StashLogo(size: 30, background: StashLogo.tile),
+                            const AppLogo(size: 30, background: AppLogo.tile),
                             const SizedBox(width: 8),
                             Flexible(
                               child: Text(

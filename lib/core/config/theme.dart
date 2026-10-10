@@ -46,15 +46,12 @@ Color ensureContrast(Color color, Color background, {double minimum = 4.5}) {
 Color readableOn(Color color) =>
     contrastRatio(Colors.white, color) >= contrastRatio(Colors.black, color) ? Colors.white : Colors.black;
 
-/// Stash's own colors (13.11): the blue of its web UI, with the brown of
-/// its logo as second color.
-const stashBlue = Color(0xFF137CBD);
-const stashBrown = Color(0xFFA08069);
+/// Stashy's own blue, the color of the cards in its icon and logo.
+const stashyBlue = Color(0xFF3A8DFF);
 
 /// Accent colors offered in the settings; the first one is the default.
-/// [stashBlue] stands for the whole Stash theme (blue and brown).
 const accentColors = <String, Color>{
-  'Stash': stashBlue,
+  'Stashy': stashyBlue,
   'Red': Color(0xFFE53935),
   'Pink': Color(0xFFD81B60),
   'Purple': Color(0xFF8E24AA),
@@ -69,10 +66,14 @@ const accentColors = <String, Color>{
 class AccentColorNotifier extends Notifier<Color> {
   static const _key = 'accent_color';
 
+  /// The former default, a theme in Stash's colors; it became [stashyBlue].
+  static const _formerDefault = 0xFF137CBD;
+
   @override
   Color build() {
     final value = ref.watch(sharedPreferencesProvider).getInt(_key);
-    return value == null ? accentColors.values.first : Color(value);
+    if (value == null || value == _formerDefault) return accentColors.values.first;
+    return Color(value);
   }
 
   Future<void> set(Color color) async {
@@ -83,9 +84,8 @@ class AccentColorNotifier extends Notifier<Color> {
 
 final accentColorProvider = NotifierProvider<AccentColorNotifier, Color>(AccentColorNotifier.new);
 
-/// YouTube-like look: neutral surfaces with a user-selectable accent (Stash's
-/// by default). The Stash accent also brings Stash's brown as second color and,
-/// in dark mode, the blue-gray background of its web UI.
+/// YouTube-like look: neutral surfaces with a user-selectable accent
+/// (Stashy's blue by default).
 abstract final class AppTheme {
   static ThemeData light(Color accent) => _build(Brightness.light, accent);
   static ThemeData dark(Color accent) => _build(Brightness.dark, accent);
@@ -94,10 +94,7 @@ abstract final class AppTheme {
         (states) => states.contains(WidgetState.selected) ? scheme.surface : scheme.onSurface,
       );
 
-  static bool isStash(Color accent) => accent.toARGB32() == stashBlue.toARGB32();
-
   static Color surfaceFor(Brightness brightness, [Color? accent]) => switch (brightness) {
-        Brightness.dark when accent != null && isStash(accent) => const Color(0xFF202B33),
         Brightness.dark => const Color(0xFF0F0F0F),
         Brightness.light => Colors.white,
       };
@@ -110,7 +107,7 @@ abstract final class AppTheme {
   static ThemeData _build(Brightness brightness, Color accent) {
     final primary = accentFor(accent, brightness);
     final surface = surfaceFor(brightness, accent);
-    var scheme = ColorScheme.fromSeed(
+    final scheme = ColorScheme.fromSeed(
       seedColor: accent,
       brightness: brightness,
       dynamicSchemeVariant: DynamicSchemeVariant.neutral,
@@ -119,18 +116,6 @@ abstract final class AppTheme {
       onPrimary: readableOn(primary),
       surface: surface,
     );
-    if (isStash(accent)) {
-      final brown = ensureContrast(stashBrown, surface);
-      final brownContainer = Color.alphaBlend(stashBrown.withValues(alpha: 0.3), surface);
-      scheme = scheme.copyWith(
-        secondary: brown,
-        onSecondary: readableOn(brown),
-        secondaryContainer: brownContainer,
-        onSecondaryContainer: readableOn(brownContainer),
-        tertiary: brown,
-        onTertiary: readableOn(brown),
-      );
-    }
 
     return ThemeData(
       colorScheme: scheme,
@@ -144,8 +129,7 @@ abstract final class AppTheme {
       navigationBarTheme: NavigationBarThemeData(
         backgroundColor: scheme.surface,
         surfaceTintColor: Colors.transparent,
-        // Stash: the brown of its logo marks the selected tab.
-        indicatorColor: isStash(accent) ? scheme.secondaryContainer : scheme.surfaceContainerHighest,
+        indicatorColor: scheme.surfaceContainerHighest,
         height: 64,
       ),
       chipTheme: ChipThemeData(
