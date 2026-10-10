@@ -30,6 +30,21 @@ It is in beta:
 > [!IMPORTANT]
 > Signed Android builds are on the releases page; there is no iOS download yet (see [iOS](#ios)).
 
+## Screenshots
+
+<p align="center">
+  <img src="docs/images/screenshots/home.png" width="250" alt="Home feed with continue watching and shorts">
+  <img src="docs/images/screenshots/player.png" width="250" alt="Player with controls, rating, chapters and details">
+  <img src="docs/images/screenshots/shorts.png" width="250" alt="Shorts">
+</p>
+<p align="center">
+  <img src="docs/images/screenshots/channel.png" width="250" alt="A performer's channel page">
+  <img src="docs/images/screenshots/markers.png" width="250" alt="Markers in the library">
+  <img src="docs/images/screenshots/theme.png" width="250" alt="Choosing the theme after the first login">
+</p>
+
+The screenshots show a demo library made from Blender's open movies *Tears of Steel*, *Caminandes: Gran Dillama*, *Sintel* and *Big Buck Bunny* (© Blender Foundation, [blender.org](https://www.blender.org), licensed under Creative Commons Attribution). `tool/screenshots/` sets up that library and takes them again.
+
 ## Contents
 
 - [Features](#features)
