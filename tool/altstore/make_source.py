@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
-"""Build StashTube's AltStore source from the GitHub releases.
+"""
+Build StashTube's AltStore source from the GitHub releases.
 
     gh api repos/Two-Play/StashTube/releases --paginate > releases.json
     python3 tool/altstore/make_source.py releases.json > altstore.json
