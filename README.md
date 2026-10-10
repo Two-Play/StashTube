@@ -166,6 +166,8 @@ Stashy has a few settings for keeping things private, under *Settings → Privac
 > [!NOTE]
 > The PIN is stored only as a salted hash. API keys and passwords are kept in the system's secure storage (Keychain on iOS, Keystore on Android).
 
+Found a security problem? Please report it privately, as described in [`SECURITY.md`](SECURITY.md).
+
 ## Building from source
 
 You need:
