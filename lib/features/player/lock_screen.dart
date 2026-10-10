@@ -123,7 +123,7 @@ Future<StashAudioHandler>? _handler;
 Future<StashAudioHandler> _audioHandler() => _handler ??= AudioService.init(
       builder: StashAudioHandler.new,
       config: const AudioServiceConfig(
-        androidNotificationChannelId: 'stashy.playback',
+        androidNotificationChannelId: 'stashtube.playback',
         androidNotificationChannelName: 'Playback',
         androidNotificationIcon: 'mipmap/ic_launcher_monochrome',
         fastForwardInterval: Duration(seconds: 10),

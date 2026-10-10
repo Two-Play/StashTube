@@ -8,7 +8,7 @@ import '../../l10n/gen/app_localizations.dart';
 /// Launcher icons (11.3). On Android the name changes too; iOS can only
 /// change the icon (and shows a system confirmation).
 enum AppIconChoice {
-  stash('DefaultIcon', null, 'assets/icons/stashy.png'),
+  stash('DefaultIcon', null, 'assets/icons/stashtube.png'),
   notes('NotesIcon', 'AppIcon-Notes', 'assets/icons/notes.png'),
   calculator('CalculatorIcon', 'AppIcon-Calculator', 'assets/icons/calculator.png');
 

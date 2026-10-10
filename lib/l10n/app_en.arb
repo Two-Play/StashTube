@@ -1,6 +1,6 @@
 {
   "@@locale": "en",
-  "appTitle": "Stashy",
+  "appTitle": "StashTube",
   "scenesCount": "{count, plural, =1{1 scene} other{{count} scenes}}",
   "@scenesCount": {
     "placeholders": {
@@ -489,7 +489,7 @@
       }
     }
   },
-  "appIconStash": "Stashy",
+  "appIconStash": "StashTube",
   "appIconNotes": "Notes",
   "appIconCalculator": "Calculator",
   "unlockReason": "Unlock Stash",
@@ -740,7 +740,7 @@
   "airPlayHint": "Apple TV and AirPlay TVs",
   "allViews": "All views",
   "tabAll": "All",
-  "colorStashy": "Stashy",
+  "colorStashTube": "StashTube",
   "searchScenes": "Search scenes",
   "searchGalleries": "Search galleries",
   "searchNoResults": "Nothing matches \"{term}\"",
@@ -813,6 +813,6 @@
     }
   },
   "openSourceLicenses": "Open source licenses",
-  "openSourceLicensesSubtitle": "Licenses of the packages Stashy uses",
+  "openSourceLicensesSubtitle": "Licenses of the packages StashTube uses",
   "aboutLegalese": "A client for Stash servers. Not affiliated with the Stash project."
 }

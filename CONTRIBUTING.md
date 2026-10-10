@@ -1,4 +1,4 @@
-# Contributing to Stashy
+# Contributing to StashTube
 
 Thanks for helping! Bug reports, ideas, translations and pull requests are all welcome.
 
@@ -93,4 +93,4 @@ Native code (media_kit's players, picture-in-picture, the lock screen) can't run
 - Releases are made by the maintainers: a pull request from `develop` to `main` with the new version, then a tag on `main`.
 
 > [!NOTE]
-> Stashy is licensed under the [AGPL-3.0](LICENSE). By contributing, you agree that your contribution is published under the same license.
+> StashTube is licensed under the [AGPL-3.0](LICENSE). By contributing, you agree that your contribution is published under the same license.

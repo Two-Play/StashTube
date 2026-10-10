@@ -77,10 +77,10 @@ jobs:
           mkdir dist
           out=build/app/outputs
           for abi in arm64-v8a armeabi-v7a x86_64; do
-            cp "$out/flutter-apk/app-$abi-release.apk" "dist/stashy-$GITHUB_REF_NAME-$abi.apk"
+            cp "$out/flutter-apk/app-$abi-release.apk" "dist/stashtube-$GITHUB_REF_NAME-$abi.apk"
           done
-          cp "$out/flutter-apk/app-release.apk" "dist/stashy-$GITHUB_REF_NAME-universal.apk"
-          cp "$out/bundle/release/app-release.aab" "dist/stashy-$GITHUB_REF_NAME.aab"
+          cp "$out/flutter-apk/app-release.apk" "dist/stashtube-$GITHUB_REF_NAME-universal.apk"
+          cp "$out/bundle/release/app-release.aab" "dist/stashtube-$GITHUB_REF_NAME.aab"
           (cd dist && sha256sum * > SHA256SUMS)
 
       - name: Publish release
@@ -90,4 +90,4 @@ jobs:
           flags=()
           if [[ "$GITHUB_REF_NAME" == *-* ]]; then flags+=(--prerelease); fi
           gh release create "$GITHUB_REF_NAME" dist/* \
-            --title "Stashy $GITHUB_REF_NAME" --generate-notes --verify-tag "${flags[@]}"
+            --title "StashTube $GITHUB_REF_NAME" --generate-notes --verify-tag "${flags[@]}"

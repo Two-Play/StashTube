@@ -6,7 +6,7 @@
 #
 # Writes the iOS AppIcon set, the Android legacy and adaptive launcher icons
 # (background, foreground, monochrome for Android 13 themed icons), the in-app preview
-# `assets/icons/stashy.png`, the README's `docs/images/stashy-icon.png` and the full icon as
+# `assets/icons/stashtube.png`, the README's `docs/images/stashtube-icon.png` and the full icon as
 # `tool/app_icon.svg`. For the splash
 # screen it writes the mark on its own (`launch_logo` on Android up to 11 and the iOS
 # LaunchImage) and the Android 12+ splash icon; the background color (BACKGROUND) is
@@ -124,7 +124,7 @@ def main():
         save(FOREGROUND, round(108 * factor), folder / 'ic_launcher_foreground.png')
         save(MONOCHROME, round(108 * factor), folder / 'ic_launcher_monochrome.png')
 
-    save(FULL, 192, ROOT / 'assets/icons/stashy.png', opaque=True)
+    save(FULL, 192, ROOT / 'assets/icons/stashtube.png', opaque=True)
 
     # The README's icon: 96 px with rounded corners (Markdown can't size or
     # round images itself).
@@ -133,7 +133,7 @@ def main():
     ImageDraw.Draw(mask).rounded_rectangle([0, 0, 95, 95], radius=22, fill=255)
     readme.putalpha(mask)
     (ROOT / 'docs/images').mkdir(parents=True, exist_ok=True)
-    readme.save(ROOT / 'docs/images/stashy-icon.png', optimize=True)
+    readme.save(ROOT / 'docs/images/stashtube-icon.png', optimize=True)
 
     # Splash screen.
     for density, factor in densities.items():

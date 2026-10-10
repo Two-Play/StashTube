@@ -46,12 +46,12 @@ Color ensureContrast(Color color, Color background, {double minimum = 4.5}) {
 Color readableOn(Color color) =>
     contrastRatio(Colors.white, color) >= contrastRatio(Colors.black, color) ? Colors.white : Colors.black;
 
-/// Stashy's own blue, the color of the cards in its icon and logo.
-const stashyBlue = Color(0xFF3A8DFF);
+/// StashTube's own blue, the color of the cards in its icon and logo.
+const stashTubeBlue = Color(0xFF3A8DFF);
 
 /// Accent colors offered in the settings; the first one is the default.
 const accentColors = <String, Color>{
-  'Stashy': stashyBlue,
+  'StashTube': stashTubeBlue,
   'Red': Color(0xFFE53935),
   'Pink': Color(0xFFD81B60),
   'Purple': Color(0xFF8E24AA),
@@ -65,7 +65,7 @@ const accentColors = <String, Color>{
 class AccentColorNotifier extends Notifier<Color> {
   static const _key = 'accent_color';
 
-  /// Former blues that became [stashyBlue]: the default in Stash's colors,
+  /// Former blues that became [stashTubeBlue]: the default in Stash's colors,
   /// and "Blue", which looked almost the same.
   static const _formerBlues = {0xFF137CBD, 0xFF1E88E5};
 
@@ -85,7 +85,7 @@ class AccentColorNotifier extends Notifier<Color> {
 final accentColorProvider = NotifierProvider<AccentColorNotifier, Color>(AccentColorNotifier.new);
 
 /// YouTube-like look: neutral surfaces with a user-selectable accent
-/// (Stashy's blue by default).
+/// (StashTube's blue by default).
 abstract final class AppTheme {
   static ThemeData light(Color accent) => _build(Brightness.light, accent);
   static ThemeData dark(Color accent) => _build(Brightness.dark, accent);

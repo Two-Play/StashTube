@@ -1,6 +1,6 @@
 <h1 align="center">
-  <img src="docs/images/stashy-icon.png" width="96" height="96" alt="Stashy app icon"><br>
-  Stashy
+  <img src="docs/images/stashtube-icon.png" width="96" height="96" alt="StashTube app icon"><br>
+  StashTube
 </h1>
 
 <p align="center">
@@ -20,10 +20,10 @@
   <a href="https://apps.obtainium.imranr.dev/redirect?r=obtainium://add/https://github.com/Two-Play/StashAppMobile"><img src="https://raw.githubusercontent.com/ImranR98/Obtainium/main/assets/graphics/badge_obtainium.png" height="54" alt="Get it on Obtainium"></a>
 </p>
 
-Stashy feels like the YouTube app: a feed with large thumbnails, a miniplayer that keeps playing while you browse, performers and studios as "channels", and short portrait videos in a vertical Shorts feed. It talks to your own Stash server through its GraphQL API and plays the streams directly.
+StashTube feels like the YouTube app: a feed with large thumbnails, a miniplayer that keeps playing while you browse, performers and studios as "channels", and short portrait videos in a vertical Shorts feed. It talks to your own Stash server through its GraphQL API and plays the streams directly.
 
 > [!NOTE]
-> Stashy connects only to the Stash server you enter. It has no account, no analytics and no other services. It is not affiliated with the Stash project.
+> StashTube connects only to the Stash server you enter. It has no account, no analytics and no other services. It is not affiliated with the Stash project.
 
 It is in beta:
 
@@ -101,7 +101,7 @@ The backlog with every user story and its status is in [`docs/BACKLOG.md`](docs/
 
 1. Install Obtainium.
 2. Tap the **Get it on Obtainium** badge above on your phone, or add the app in Obtainium by its URL: `https://github.com/Two-Play/StashAppMobile`.
-3. While Stashy is in beta, turn on **Include prereleases** in the app's settings in Obtainium.
+3. While StashTube is in beta, turn on **Include prereleases** in the app's settings in Obtainium.
 4. Install. Obtainium picks the right APK for your phone and notifies you of updates.
 
 > [!TIP]
@@ -114,16 +114,16 @@ The backlog with every user story and its status is in [`docs/BACKLOG.md`](docs/
 
    | File | For |
    | --- | --- |
-   | `stashy-…-arm64-v8a.apk` | almost all phones of the last years |
-   | `stashy-…-armeabi-v7a.apk` | older 32-bit phones |
-   | `stashy-…-x86_64.apk` | emulators and x86 devices |
-   | `stashy-…-universal.apk` | any device, but larger |
+   | `stashtube-…-arm64-v8a.apk` | almost all phones of the last years |
+   | `stashtube-…-armeabi-v7a.apk` | older 32-bit phones |
+   | `stashtube-…-x86_64.apk` | emulators and x86 devices |
+   | `stashtube-…-universal.apk` | any device, but larger |
 
 3. Open the file and allow your browser or file manager to install apps when Android asks.
 4. To update later, install the newer APK over the old one; your servers and settings stay.
 
 > [!WARNING]
-> Only install APKs from this repository's releases. Every release is signed with the same key, and Android refuses an update signed with another one, so nothing else can replace Stashy.
+> Only install APKs from this repository's releases. Every release is signed with the same key, and Android refuses an update signed with another one, so nothing else can replace StashTube.
 
 #### Checking a download
 
@@ -137,14 +137,14 @@ The signing certificate's SHA-256 fingerprint starts with `F0:19:71:FF:8A:13:80:
 
 ### iOS
 
-There is no iOS download yet: TestFlight and the App Store need a paid Apple developer account. You can build Stashy yourself and install it with Xcode (see [Building from source](#building-from-source)).
+There is no iOS download yet: TestFlight and the App Store need a paid Apple developer account. You can build StashTube yourself and install it with Xcode (see [Building from source](#building-from-source)).
 
 > [!NOTE]
 > With a free Apple ID, apps installed from Xcode stop opening after 7 days and have to be installed again.
 
 ## First start
 
-1. Enter your server's address, for example `192.168.1.10`. Stash listens on port **9999** by default: without a port, Stashy tries that one as well, so you only need to add a port if yours is different. Stashy finds the GraphQL API (`/graphql`) itself.
+1. Enter your server's address, for example `192.168.1.10`. Stash listens on port **9999** by default: without a port, StashTube tries that one as well, so you only need to add a port if yours is different. StashTube finds the GraphQL API (`/graphql`) itself.
 2. If your Stash has a password, either enter an **API key** (create one in Stash under *Settings → Security*) or sign in with your **username and password**.
 3. Pick a theme and an accent color. You can change them, and everything else, in the settings (the gear at the top).
 
@@ -154,7 +154,7 @@ There is no iOS download yet: TestFlight and the App Store need a paid Apple dev
 Away from home:
 
 > [!WARNING]
-> Making your Stash server reachable from the internet is **not recommended**. To use Stashy on the go, connect your phone to your home network through a **VPN** (for example WireGuard, or a mesh VPN like Tailscale) and keep using the server's local address. That way Stash stays invisible to the internet.
+> Making your Stash server reachable from the internet is **not recommended**. To use StashTube on the go, connect your phone to your home network through a **VPN** (for example WireGuard, or a mesh VPN like Tailscale) and keep using the server's local address. That way Stash stays invisible to the internet.
 
 If you expose it anyway:
 
@@ -163,11 +163,11 @@ If you expose it anyway:
 
 ## Privacy and discretion
 
-Stashy has a few settings for keeping things private, under *Settings → Privacy & security*:
+StashTube has a few settings for keeping things private, under *Settings → Privacy & security*:
 
 - **App lock** with a PIN and optionally Face ID or fingerprint, right away or after 1, 5 or 15 minutes in the background
 - **Hide in app switcher**: covers the app in the recent apps view (always on with the app lock; on Android it also blocks screenshots)
-- **Disguised app icon**: Notes or Calculator instead of the Stashy icon
+- **Disguised app icon**: Notes or Calculator instead of the StashTube icon
 - **Lock screen controls** (under *Playback*) are off by default, so titles and thumbnails don't show on the lock screen
 
 > [!NOTE]
@@ -231,7 +231,7 @@ Bug reports, ideas and pull requests are welcome. [`CONTRIBUTING.md`](CONTRIBUTI
 
 ## License
 
-Stashy is free software under the [GNU Affero General Public License v3.0](LICENSE). The licenses of everything it uses are in the app under *Settings → About → Open source licenses*: the Flutter and Dart packages, and the native libraries of the video player (mpv, FFmpeg and their dependencies, under LGPL and permissive licenses).
+StashTube is free software under the [GNU Affero General Public License v3.0](LICENSE). The licenses of everything it uses are in the app under *Settings → About → Open source licenses*: the Flutter and Dart packages, and the native libraries of the video player (mpv, FFmpeg and their dependencies, under LGPL and permissive licenses).
 
 > [!NOTE]
-> Stashy is an independent project. It is not affiliated with, endorsed by or connected to the [Stash](https://github.com/stashapp/stash) project or its developers; "Stash" only names the server software Stashy connects to.
+> StashTube is an independent project. It is not affiliated with, endorsed by or connected to the [Stash](https://github.com/stashapp/stash) project or its developers; "Stash" only names the server software StashTube connects to.
