@@ -210,7 +210,8 @@ flutter pub run build_runner build --delete-conflicting-outputs   # after changi
 - **Video:** playback uses [media_kit](https://github.com/media-kit/media-kit) (mpv).
 - **Texts:** live in `lib/l10n/app_en.arb` and `app_de.arb`, never as string literals in the code.
 - **Dependencies:** `pubspec.lock` and `ios/Podfile.lock` are committed; CI runs `flutter pub get --enforce-lockfile`.
-- **Releases:** pushing a tag `vX.Y.Z` that matches `version:` in `pubspec.yaml` builds signed APKs and an AAB and publishes a GitHub release (`.github/workflows/release.yml`). Tags with a `-` become pre-releases.
+- **Branches:** work comes together in `develop` through pull requests; `main` only changes with a release.
+- **Releases:** a pull request from `develop` to `main` with the new version, then a tag `vX.Y.Z` on `main` that matches `version:` in `pubspec.yaml`, which builds signed APKs and an AAB and publishes a GitHub release (`.github/workflows/release.yml`). Tags with a `-` become pre-releases.
 
 [`CLAUDE.md`](CLAUDE.md) describes the architecture in detail: the server config and data flow, paginated lists, the shell and navigation, the player, Shorts, casting, privacy, theming and localization.
 

@@ -21,7 +21,8 @@ tool/update_stash_schema.sh v0.31.1                               # another Stas
 python3 tool/generate_app_icon.py                                 # app icon (iOS, Android adaptive, assets/icons/stashy.png); needs rsvg-convert + Pillow
 ```
 
-- CI (`.github/workflows/ci.yml`, every PR and pushes to main): l10n and GraphQL codegen, `dart analyze`, `flutter test`, then a debug APK and an unsigned iOS build. Use `flutter pub run`, not `dart run`, for build_runner: the system `dart` may not be Flutter's.
+- Branches: all work goes through pull requests into `develop` (the default branch); `main` only gets a pull request from `develop` for a release (version bump in `pubspec.yaml`), then the tag `vX.Y.Z` on `main`. Feature branches start from `develop`.
+- CI (`.github/workflows/ci.yml`, every PR and pushes to main and develop): l10n and GraphQL codegen, `dart analyze`, `flutter test`, then a debug APK and an unsigned iOS build. Use `flutter pub run`, not `dart run`, for build_runner: the system `dart` may not be Flutter's.
 
 - Releases (14.3): a tag `vX.Y.Z` matching `version:` in `pubspec.yaml` runs `.github/workflows/release.yml`, which writes `android/key.properties` from the `ANDROID_*` secrets and publishes signed APKs (per ABI and universal), an AAB and `SHA256SUMS` as a GitHub release; versionCode is the workflow's run number. Locally `android/key.properties` (git-ignored) names the upload keystore; without it release builds fall back to the debug key. The app ID `io.github.two_play.stashappmobile` (iOS `io.github.two-play.stashappmobile`) must not change after the first release.
 
