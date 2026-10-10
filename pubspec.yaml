@@ -50,8 +50,11 @@ dependencies:
   media_kit_video: ^2.0.1
   media_kit_libs_video: ^1.0.7
   http: ^1.6.0
+  # Not in the F-Droid build: tool/fdroid_prepare.sh drops the google-cast block.
+  # google-cast:start
   # 1.5 pulls in permission_handler_android, which needs compileSdk 37 (set in android/app/build.gradle.kts).
   flutter_chrome_cast: ^1.5.0
+  # google-cast:end
   image_picker: ^1.2.3
   crypto: ^3.0.7
   flutter_secure_storage: ^11.2.0

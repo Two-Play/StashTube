@@ -211,6 +211,8 @@ To install on an iPhone, open `ios/Runner.xcworkspace` in Xcode, choose your App
 > [!NOTE]
 > Without `android/key.properties`, which only the maintainers have, Android release builds are signed with the debug key. They install fine, but can't update the official releases, and the other way round.
 
+A build without Google Cast, and so without any Google Play Services, as F-Droid needs it, is described in [tool/fdroid/README.md](tool/fdroid/README.md).
+
 ## Development
 
 ```bash
