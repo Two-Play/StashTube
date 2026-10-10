@@ -18,6 +18,8 @@
 
 <p align="center">
   <a href="https://apps.obtainium.imranr.dev/redirect?r=obtainium://add/https://github.com/Two-Play/StashTube"><img src="https://raw.githubusercontent.com/ImranR98/Obtainium/main/assets/graphics/badge_obtainium.png" height="54" alt="Get it on Obtainium"></a>
+  <a href="https://testflight.apple.com/join/aG5H5Byb"><img src="docs/images/badges/testflight.png" height="54" alt="Join the beta on TestFlight"></a>
+  <a href="https://altstore.io/source/two-play.github.io/StashTube/altstore.json?app=io.github.twoplay.stashtube"><img src="docs/images/badges/altstore.png" height="54" alt="Download on AltStore"></a>
 </p>
 
 StashTube feels like the YouTube app: a feed with large thumbnails, a miniplayer that keeps playing while you browse, performers and studios as "channels", and short portrait videos in a vertical Shorts feed. It talks to your own Stash server through its GraphQL API and plays the streams directly.
@@ -133,6 +135,7 @@ The backlog with every user story and its status is in [`docs/BACKLOG.md`](docs/
    | `stashtube-…-armeabi-v7a.apk` | older 32-bit phones |
    | `stashtube-…-x86_64.apk` | emulators and x86 devices |
    | `stashtube-…-universal.apk` | any device, but larger |
+   | `stashtube-…-foss.apk` | any device, without Google Cast (no Google Play Services needed) |
 
 3. Open the file and allow your browser or file manager to install apps when Android asks.
 4. To update later, install the newer APK over the old one; your servers and settings stay.
@@ -152,10 +155,20 @@ The signing certificate's SHA-256 fingerprint starts with `F0:19:71:FF:8A:13:80:
 
 ### iOS
 
-There is no iOS download yet: TestFlight and the App Store need a paid Apple developer account. You can build StashTube yourself and install it with Xcode (see [Building from source](#building-from-source)).
+StashTube isn't in the App Store. There are two ways to get it:
+
+**TestFlight** (easiest): open the [public TestFlight link](https://testflight.apple.com/join/aG5H5Byb) on your iPhone, install Apple's TestFlight app when asked and tap *Accept* and *Install*. TestFlight updates StashTube for you; each beta build runs for 90 days. The number of testers is limited, so the link may be full.
+
+**AltStore or SideStore**, which sign the app with your own Apple ID:
+
+1. Install AltStore (with AltServer on a computer) or SideStore.
+2. In *Browse* → *Sources* (AltStore) or *Sources* (SideStore), add the source `https://two-play.github.io/StashTube/altstore.json`.
+3. Install StashTube from it. Updates show up in the app's *My Apps* tab.
+
+You can also download the `.ipa` from the [releases](https://github.com/Two-Play/StashTube/releases) and open it in AltStore or SideStore, or build StashTube yourself and install it with Xcode (see [Building from source](#building-from-source)).
 
 > [!NOTE]
-> With a free Apple ID, apps installed from Xcode stop opening after 7 days and have to be installed again.
+> With a free Apple ID, sideloaded apps have to be refreshed every 7 days (AltStore and SideStore do it in the background), and only three can be installed at a time.
 
 ## First start
 
@@ -210,6 +223,8 @@ To install on an iPhone, open `ios/Runner.xcworkspace` in Xcode, choose your App
 
 > [!NOTE]
 > Without `android/key.properties`, which only the maintainers have, Android release builds are signed with the debug key. They install fine, but can't update the official releases, and the other way round.
+
+A build without Google Cast, and so without any Google Play Services, as F-Droid needs it, is described in [tool/fdroid/README.md](tool/fdroid/README.md).
 
 ## Development
 

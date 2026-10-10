@@ -1,0 +1,62 @@
+# Template for StashTube's F-Droid build recipe. It belongs in the fdroiddata
+# repository (https://gitlab.com/fdroid/fdroiddata) as
+# metadata/io.github.two_play.stashappmobile.yml; see tool/fdroid/README.md.
+# Before submitting: update the build entry to the newest tag and check it
+# with `fdroid lint` and `fdroid build` (fdroidserver).
+Categories:
+  - Multimedia
+License: AGPL-3.0-only
+AuthorName: Two-Play
+SourceCode: https://github.com/Two-Play/StashTube
+IssueTracker: https://github.com/Two-Play/StashTube/issues
+Changelog: https://github.com/Two-Play/StashTube/releases
+
+AutoName: StashTube
+Summary: YouTube-style client for your own Stash media server
+Description: |-
+  StashTube is a client for a self-hosted Stash server. It shows your library
+  like a video app: a home feed, channels for performers and studios, search
+  with filters, shorts, markers, galleries and a player with chapters,
+  picture-in-picture and background playback.
+
+  It connects only to the server you enter, with an API key or a login, and
+  has no analytics. An optional app lock with PIN or biometrics, a cover in
+  the app switcher and a disguised app icon keep it discreet.
+
+  Casting to Chromecast is not available in this build, as it needs Google
+  Play Services.
+
+# Stash is commonly used for adult content; the app shows whatever the
+# server holds.
+AntiFeatures:
+  NSFW:
+    en-US: Shows the media of the connected Stash server, which may contain adult content.
+
+RepoType: git
+Repo: https://github.com/Two-Play/StashTube.git
+
+Builds:
+  - versionName: 1.0.0-beta.5
+    versionCode: 5
+    commit: v1.0.0-beta.5
+    output: build/app/outputs/flutter-apk/app-release.apk
+    srclibs:
+      - flutter@3.47.6
+    rm:
+      - ios
+    prebuild:
+      - export PUB_CACHE=$(pwd)/.pub-cache
+      - $$flutter$$/bin/flutter config --no-analytics
+      # Removes Google Cast (Play Services) and the release signing.
+      - tool/fdroid_prepare.sh $$flutter$$/bin/flutter
+    build:
+      - export PUB_CACHE=$(pwd)/.pub-cache
+      - $$flutter$$/bin/flutter build apk --release
+
+AutoUpdateMode: Version
+# All tags, betas too; once there are stable releases, `Tags ^v[0-9.]+$`
+# keeps F-Droid on those.
+UpdateCheckMode: Tags
+UpdateCheckData: pubspec.yaml|version:\s.+\+(\d+)|.|version:\s(.+)\+
+CurrentVersion: 1.0.0-beta.5
+CurrentVersionCode: 5

@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'airplay_service.dart';
 import 'cast_service.dart';
+import 'google_cast_service.dart';
 
 /// Google Cast and, on iOS, AirPlay. Overridden in tests with a fake.
 final castServiceProvider = Provider<CastService>(

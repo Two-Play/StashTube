@@ -1,0 +1,42 @@
+name: AltStore source
+
+# Publishes StashTube's AltStore/SideStore source on GitHub Pages:
+# https://two-play.github.io/StashTube/altstore.json. Built from the GitHub
+# releases that have an IPA (tool/altstore/make_source.py). release.yml runs
+# it after each release; run it by hand after editing a release.
+
+on:
+  workflow_call:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  source:
+    name: Build and deploy
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}altstore.json
+    steps:
+      - uses: actions/checkout@v7
+      - name: Source
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          mkdir site
+          gh api "repos/$GITHUB_REPOSITORY/releases" --paginate --slurp > "$RUNNER_TEMP/releases.json"
+          python3 tool/altstore/make_source.py "$RUNNER_TEMP/releases.json" > site/altstore.json
+          python3 -c "import json; s = json.load(open('site/altstore.json')); print(len(s['apps']), 'app(s)', [len(a['versions']) for a in s['apps']], 'version(s)')"
+      - uses: actions/upload-pages-artifact@v5
+        with:
+          path: site
+      - id: deploy
+        uses: actions/deploy-pages@v5

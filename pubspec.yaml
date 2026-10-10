@@ -16,7 +16,7 @@ publish_to: 'none' # Remove this line if you wish to publish to pub.dev
 # https://developer.apple.com/library/archive/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html
 # In Windows, build-name is used as the major, minor, and patch parts
 # of the product and file versions while build-number is used as the build suffix.
-version: 1.0.0-beta.4+4
+version: 1.0.0-beta.5+5
 
 environment:
   sdk: ^3.12.0 # flutter_riverpod 3 requires Dart 3.12
@@ -50,8 +50,11 @@ dependencies:
   media_kit_video: ^2.0.1
   media_kit_libs_video: ^1.0.7
   http: ^1.6.0
+  # Not in the F-Droid build: tool/fdroid_prepare.sh drops the google-cast block.
+  # google-cast:start
   # 1.5 pulls in permission_handler_android, which needs compileSdk 37 (set in android/app/build.gradle.kts).
   flutter_chrome_cast: ^1.5.0
+  # google-cast:end
   image_picker: ^1.2.3
   crypto: ^3.0.7
   flutter_secure_storage: ^11.2.0
