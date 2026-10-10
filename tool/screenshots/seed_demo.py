@@ -186,8 +186,8 @@ def add_markers(ids, tags):
 
 
 def reset_history(ids):
-    """The watch history always starts the same, also after a screenshot run
-    played scenes (the app saves the position back)."""
+    """Reset the watch history to the same start."""
+    # Also after a screenshot run played scenes: the app saves the position back.
     for scene_id in ids.values():
         gql('mutation($id: ID!) { sceneResetPlayCount(id: $id) }', id=scene_id)
         gql('mutation($id: ID!) { sceneResetActivity(id: $id, reset_resume: true, reset_duration: true) }', id=scene_id)
