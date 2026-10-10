@@ -75,8 +75,8 @@ void main() {
     expect(dark.onPrimary, Colors.black);
   });
 
-  test('the former Stash-colored default becomes Stashy\'s blue', () async {
-    SharedPreferences.setMockInitialValues({'accent_color': 0xFF137CBD});
+  test('the former blues become Stashy\'s blue', () async {
+    SharedPreferences.setMockInitialValues({'accent_color': 0xFF1E88E5});
     final prefs = await SharedPreferences.getInstance();
     final container = ProviderContainer(overrides: [sharedPreferencesProvider.overrideWithValue(prefs)]);
     addTearDown(container.dispose);

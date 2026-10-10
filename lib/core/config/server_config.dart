@@ -52,6 +52,22 @@ class ServerConfig {
   }
 
   /// Normalizes user input. Returns null when [input] is not an absolute http(s) URL.
+  /// The port Stash listens on unless configured otherwise.
+  static const stashPort = 9999;
+
+  /// The addresses to try for [input], best guess first: without a port,
+  /// also with Stash's default [stashPort] (first for http://, as Stash
+  /// usually runs there; second for https://, usually a proxy on 443).
+  /// Empty if [input] is no usable address.
+  static List<String> candidateUrls(String input) {
+    final url = normalizeUrl(input);
+    if (url == null) return const [];
+    final uri = Uri.parse(url);
+    if (uri.hasPort) return [url];
+    final withPort = uri.replace(port: stashPort).toString();
+    return uri.scheme == 'http' ? [withPort, url] : [url, withPort];
+  }
+
   static String? normalizeUrl(String input) {
     var url = input.trim();
     if (url.isEmpty) return null;

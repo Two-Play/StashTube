@@ -612,7 +612,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get loginIntro =>
-      'Enter the address of your Stash server, e.g. http://192.168.1.10:9999';
+      'Enter the address of your Stash server, e.g. 192.168.1.10. Without a port, Stash\'s default port 9999 is tried too.';
 
   @override
   String get savedServers => 'Saved servers';
@@ -813,9 +813,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get colorIndigo => 'Indigo';
-
-  @override
-  String get colorBlue => 'Blue';
 
   @override
   String get colorTeal => 'Teal';
