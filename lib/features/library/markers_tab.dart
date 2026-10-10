@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/config/server_config.dart';
 import '../../core/utils/format.dart';
 import '../../data/models/list_queries.dart';
 import '../../data/models/marker.dart';
@@ -10,6 +11,29 @@ import '../../widgets/paged_sliver.dart';
 import '../../widgets/stash_image.dart';
 import '../player/player_providers.dart';
 import '../../l10n/l10n.dart';
+
+/// Whether marker tiles play their short looping preview (settings, on by
+/// default, stored for all servers); off, they show the still frame.
+class MarkerPreviewsNotifier extends Notifier<bool> {
+  static const _key = 'marker_previews';
+
+  @override
+  bool build() {
+    try {
+      return ref.watch(sharedPreferencesProvider).getBool(_key) ?? true;
+    } catch (_) {
+      // Tests of single pages don't provide preferences.
+      return true;
+    }
+  }
+
+  Future<void> set(bool value) async {
+    state = value;
+    await ref.read(sharedPreferencesProvider).setBool(_key, value);
+  }
+}
+
+final markerPreviewsProvider = NotifierProvider<MarkerPreviewsNotifier, bool>(MarkerPreviewsNotifier.new);
 
 /// Scene markers of all scenes (the marked moments), like Stash's markers
 /// page. Tapping one plays its scene from the marker.
@@ -93,6 +117,9 @@ class MarkerTile extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final muted = theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurfaceVariant);
+    final still = StashImage(marker.screenshotUrl ?? marker.scene.screenshotUrl, fallbackIcon: Icons.bookmark_outline);
+    final animate = ref.watch(markerPreviewsProvider) && !MediaQuery.disableAnimationsOf(context);
+    final preview = animate ? marker.previewUrl : null;
     return InkWell(
       borderRadius: BorderRadius.circular(8),
       onTap: () => ref.read(nowPlayingProvider.notifier).play(marker.scene, at: marker.seconds),
@@ -106,7 +133,12 @@ class MarkerTile extends ConsumerWidget {
               child: Stack(
                 fit: StackFit.expand,
                 children: [
-                  StashImage(marker.screenshotUrl ?? marker.scene.screenshotUrl, fallbackIcon: Icons.bookmark_outline),
+                  if (preview != null)
+                    // Loops by itself (animated WebP); the still frame shows
+                    // until it loaded, and if Stash has none.
+                    StashImage(preview, standIn: still)
+                  else
+                    still,
                   Positioned(
                     right: 6,
                     bottom: 6,

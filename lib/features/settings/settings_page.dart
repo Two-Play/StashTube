@@ -2,11 +2,13 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/config/haptics.dart';
 import '../../core/config/locale.dart';
 import '../../core/pagination/paging_mode.dart';
 import '../../core/config/server_config.dart';
 import '../../data/models/scene_details.dart';
 import '../../data/providers.dart';
+import '../library/markers_tab.dart';
 import '../pip/pip.dart';
 import '../player/lock_screen.dart';
 import '../player/player_providers.dart';
@@ -139,7 +141,30 @@ class SettingsPage extends ConsumerWidget {
               },
             ),
           ),
+          ListTile(
+            leading: const Icon(Icons.vibration),
+            title: Text(l.haptics),
+            trailing: DropdownButton<HapticLevel>(
+              value: ref.watch(hapticLevelProvider),
+              underline: const SizedBox.shrink(),
+              items: [
+                DropdownMenuItem(value: HapticLevel.off, child: Text(l.hapticsOff)),
+                DropdownMenuItem(value: HapticLevel.light, child: Text(l.hapticsLight)),
+                DropdownMenuItem(value: HapticLevel.normal, child: Text(l.hapticsNormal)),
+              ],
+              onChanged: (level) {
+                if (level != null) ref.read(hapticLevelProvider.notifier).set(level);
+              },
+            ),
+          ),
           _SectionTitle(l.sectionSceneCards),
+          SwitchListTile(
+            secondary: const Icon(Icons.bookmarks_outlined),
+            title: Text(l.markerPreviews),
+            subtitle: Text(l.markerPreviewsSubtitle),
+            value: ref.watch(markerPreviewsProvider),
+            onChanged: (v) => ref.read(markerPreviewsProvider.notifier).set(v),
+          ),
           ListTile(
             leading: const Icon(Icons.account_circle_outlined),
             title: Text(l.cardChannel),
@@ -344,9 +369,10 @@ class _SecuritySettings extends ConsumerWidget {
         SwitchListTile(
           secondary: const Icon(Icons.visibility_off_outlined),
           title: Text(l.hideInSwitcher),
-          subtitle: Text(l.hideInSwitcherSubtitle),
-          value: settings.hideInSwitcher,
-          onChanged: notifier.setHideInSwitcher,
+          subtitle: Text(settings.enabled ? l.hideInSwitcherLocked : l.hideInSwitcherSubtitle),
+          // Always on while the app lock is on.
+          value: settings.hidesApp,
+          onChanged: settings.enabled ? null : notifier.setHideInSwitcher,
         ),
       ],
     );

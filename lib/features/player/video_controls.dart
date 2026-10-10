@@ -1,8 +1,8 @@
+import '../../core/config/haptics.dart';
 import 'dart:async';
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:media_kit/media_kit.dart';
 
@@ -194,7 +194,7 @@ class _StashVideoControlsState extends ConsumerState<StashVideoControls> {
   void _startHold() {
     final player = ref.read(playerProvider);
     if (_rateBeforeHold != null || !player.state.playing || _pointers.length > 1) return;
-    HapticFeedback.lightImpact();
+    Haptics.light();
     setState(() => _rateBeforeHold = player.state.rate);
     player.setRate(2);
   }
@@ -357,7 +357,10 @@ class _StashVideoControlsState extends ConsumerState<StashVideoControls> {
                                       iconSize: 56,
                                       tooltip: playing.data == true ? context.l10n.pause : context.l10n.play,
                                       icon: PlayPauseIcon(playing: playing.data == true),
-                                      onPressed: () => _act(player.playOrPause),
+                                      onPressed: () => _act(() {
+                                        Haptics.light();
+                                        player.playOrPause();
+                                      }),
                                     ),
                                   ),
                           ),

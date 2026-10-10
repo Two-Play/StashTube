@@ -1,5 +1,5 @@
+import '../../core/config/haptics.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/config/server_config.dart';
@@ -90,7 +90,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
       }
       if (mounted && widget._pushed) Navigator.of(context).pop();
     } catch (e) {
-      HapticFeedback.vibrate();
+      Haptics.error();
       if (mounted) setState(() => _error = errorText(context.l10n, e));
     } finally {
       if (mounted) setState(() => _connecting = false);

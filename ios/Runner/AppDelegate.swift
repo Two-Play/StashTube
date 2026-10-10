@@ -7,6 +7,7 @@ import UIKit
 @objc class AppDelegate: FlutterAppDelegate, FlutterImplicitEngineDelegate {
   private var airPlay: AirPlayController?
   private var pictureInPicture: PictureInPictureController?
+  private var privacyCover: PrivacyCoverController?
 
   override func application(
     _ application: UIApplication,
@@ -20,6 +21,9 @@ import UIKit
     registerAppIconChannel(engineBridge.pluginRegistry)
     if let registrar = engineBridge.pluginRegistry.registrar(forPlugin: "StashAirPlay") {
       airPlay = AirPlayController(messenger: registrar.messenger())
+    }
+    if let registrar = engineBridge.pluginRegistry.registrar(forPlugin: "StashPrivacy") {
+      privacyCover = PrivacyCoverController(messenger: registrar.messenger())
     }
     if let registrar = engineBridge.pluginRegistry.registrar(forPlugin: "StashPictureInPicture") {
       pictureInPicture = PictureInPictureController(messenger: registrar.messenger())
@@ -208,6 +212,76 @@ final class AirPlayController: NSObject, FlutterStreamHandler {
   func onCancel(withArguments arguments: Any?) -> FlutterError? {
     events = nil
     return nil
+  }
+}
+
+/// Covers the app natively as soon as it resigns active (11.1, 11.2), for
+/// `SecureWindow` in Dart: locking the phone or opening the app switcher
+/// moves the app to the background before Flutter draws another frame, so
+/// its last frame, with the content, would show on return until the lock
+/// screen is drawn, and in the app switcher. Methods on `stash/privacy`:
+/// setCoverOnResign (bool), uncover (once Flutter has drawn again).
+final class PrivacyCoverController: NSObject {
+  private var enabled = false
+  private var cover: UIView?
+  /// Bumped on every deactivation, so a fallback timer from an earlier
+  /// activation can't remove a newer cover.
+  private var generation = 0
+
+  init(messenger: FlutterBinaryMessenger) {
+    super.init()
+    let channel = FlutterMethodChannel(name: "stash/privacy", binaryMessenger: messenger)
+    channel.setMethodCallHandler { [weak self] call, result in
+      switch call.method {
+      case "setCoverOnResign":
+        self?.enabled = call.arguments as? Bool ?? false
+        if self?.enabled == false { self?.removeCover() }
+      case "uncover":
+        self?.removeCover()
+      default:
+        result(FlutterMethodNotImplemented)
+        return
+      }
+      result(nil)
+    }
+    let center = NotificationCenter.default
+    center.addObserver(self, selector: #selector(willDeactivate), name: UIScene.willDeactivateNotification, object: nil)
+    center.addObserver(self, selector: #selector(didActivate), name: UIScene.didActivateNotification, object: nil)
+  }
+
+  @objc private func willDeactivate(_ notification: Notification) {
+    generation += 1
+    guard enabled, cover == nil,
+          let scene = notification.object as? UIWindowScene,
+          let window = scene.windows.first(where: { $0.isKeyWindow }) ?? scene.windows.first else { return }
+    let view = UIView(frame: window.bounds)
+    view.autoresizingMask = [.flexibleWidth, .flexibleHeight]
+    view.backgroundColor = .systemBackground
+    let lock = UIImageView(image: UIImage(systemName: "lock.fill"))
+    lock.tintColor = .secondaryLabel
+    lock.translatesAutoresizingMaskIntoConstraints = false
+    view.addSubview(lock)
+    NSLayoutConstraint.activate([
+      lock.centerXAnchor.constraint(equalTo: view.centerXAnchor),
+      lock.centerYAnchor.constraint(equalTo: view.centerYAnchor),
+      lock.widthAnchor.constraint(equalToConstant: 44),
+      lock.heightAnchor.constraint(equalToConstant: 52)
+    ])
+    window.addSubview(view)
+    cover = view
+  }
+
+  /// Flutter removes the cover once it has drawn; this is only a fallback.
+  @objc private func didActivate(_ notification: Notification) {
+    let current = generation
+    DispatchQueue.main.asyncAfter(deadline: .now() + 2) { [weak self] in
+      if self?.generation == current { self?.removeCover() }
+    }
+  }
+
+  private func removeCover() {
+    cover?.removeFromSuperview()
+    cover = nil
   }
 }
 

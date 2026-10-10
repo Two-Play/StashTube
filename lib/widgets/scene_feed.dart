@@ -1,3 +1,4 @@
+import '../core/config/haptics.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -88,6 +89,7 @@ class _SceneFeedViewState extends ConsumerState<SceneFeedView> {
   /// Applies a saved filter's criteria, search and sort; tapping the active
   /// one again turns it off.
   void _toggleSavedFilter(SavedFilter saved) {
+    Haptics.selection();
     if (_savedFilterId == saved.id) {
       setState(() {
         _savedFilterId = null;

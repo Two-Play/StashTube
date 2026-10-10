@@ -1,3 +1,4 @@
+import '../../core/config/haptics.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screen_lock/flutter_screen_lock.dart';
@@ -27,11 +28,16 @@ class _AppLockGateState extends ConsumerState<AppLockGate> {
     super.initState();
     _lifecycle = AppLifecycleListener(
       onInactive: () => setState(() => _inactive = true),
-      onResume: () => setState(() => _inactive = false),
+      onResume: () {
+        setState(() => _inactive = false);
+        // The native cover (iOS) goes once this frame, with the lock screen
+        // if locked, is drawn.
+        WidgetsBinding.instance.endOfFrame.then((_) => SecureWindow.uncover());
+      },
       onHide: () => ref.read(appLockedProvider.notifier).appHidden(),
       onShow: () => ref.read(appLockedProvider.notifier).appShown(),
     );
-    SecureWindow.set(ref.read(appLockSettingsProvider).hideInSwitcher);
+    SecureWindow.set(ref.read(appLockSettingsProvider).hidesApp);
   }
 
   @override
@@ -42,13 +48,13 @@ class _AppLockGateState extends ConsumerState<AppLockGate> {
 
   @override
   Widget build(BuildContext context) {
-    ref.listen(appLockSettingsProvider.select((s) => s.hideInSwitcher), (_, hide) => SecureWindow.set(hide));
+    ref.listen(appLockSettingsProvider.select((s) => s.hidesApp), (_, hide) => SecureWindow.set(hide));
     final locked = ref.watch(appLockedProvider);
     final settings = ref.watch(appLockSettingsProvider);
     // Android's picture-in-picture window is inactive too, but shows the video.
     final cover = !locked &&
         _inactive &&
-        (settings.hideInSwitcher || settings.enabled) &&
+        settings.hidesApp &&
         !ref.watch(pipProvider);
 
     return Stack(
@@ -143,7 +149,11 @@ class _LockScreenState extends ConsumerState<LockScreen> {
               // against its stored hash in onValidate.
               correctString: '0' * settings.pinLength,
               onValidate: (input) async => ref.read(appLockSettingsProvider.notifier).verify(input),
-              onUnlocked: () => ref.read(appLockedProvider.notifier).unlock(),
+              onUnlocked: () {
+                Haptics.medium();
+                ref.read(appLockedProvider.notifier).unlock();
+              },
+              onError: (_) => Haptics.error(),
               title: Text(context.l10n.enterPin),
               useBlur: false,
               customizedButtonChild: settings.biometrics ? const Icon(Icons.fingerprint) : null,
@@ -182,6 +192,7 @@ Future<bool> confirmPin(BuildContext context, WidgetRef ref) async {
       correctString: '0' * ref.read(appLockSettingsProvider).pinLength,
       onValidate: (input) async => ref.read(appLockSettingsProvider.notifier).verify(input),
       useBlur: false,
+      onError: (_) => Haptics.error(),
       onUnlocked: () => Navigator.of(context).pop(true),
       onCancelled: () => Navigator.of(context).pop(false),
     ),

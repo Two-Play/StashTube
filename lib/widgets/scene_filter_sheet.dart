@@ -1,3 +1,4 @@
+import '../core/config/haptics.dart';
 import 'dart:async';
 
 import 'package:flutter/material.dart';
@@ -166,7 +167,10 @@ class _SceneFilterSheetState extends ConsumerState<SceneFilterSheet> {
                     ),
                     const Spacer(),
                     FilledButton(
-                      onPressed: () => Navigator.pop(context, _filter),
+                      onPressed: () {
+                        Haptics.light();
+                        Navigator.pop(context, _filter);
+                      },
                       child: Text(context.l10n.apply),
                     ),
                   ],

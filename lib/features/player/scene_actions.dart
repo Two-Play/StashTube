@@ -1,7 +1,7 @@
+import '../../core/config/haptics.dart';
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/utils/format.dart';
@@ -48,7 +48,7 @@ class SceneActions extends ConsumerWidget {
                   icon: Icon(i <= stars ? Icons.star_rounded : Icons.star_outline_rounded,
                       color: i <= stars ? Colors.amber.shade600 : colors.onSurfaceVariant),
                   onPressed: () {
-                    HapticFeedback.selectionClick();
+                    Haptics.selection();
                     // Tapping the current rating again removes it.
                     ref.read(sceneEditsProvider.notifier).rate(scene, i == stars ? 0 : i).catchError(showError);
                   },
@@ -66,7 +66,7 @@ class SceneActions extends ConsumerWidget {
                 label: Text('$oCount'),
                 tooltip: l.addO,
                 onPressed: () async {
-                  HapticFeedback.mediumImpact();
+                  Haptics.medium();
                   final messenger = ScaffoldMessenger.of(context);
                   try {
                     final count = await ref.read(sceneEditsProvider.notifier).addO(scene);

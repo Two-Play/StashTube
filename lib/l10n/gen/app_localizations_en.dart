@@ -1475,4 +1475,26 @@ class AppLocalizationsEn extends AppLocalizations {
     );
     return '$_temp0';
   }
+
+  @override
+  String get hideInSwitcherLocked => 'Always on while the app lock is on.';
+
+  @override
+  String get haptics => 'Haptic feedback';
+
+  @override
+  String get hapticsOff => 'Off';
+
+  @override
+  String get hapticsLight => 'Light';
+
+  @override
+  String get hapticsNormal => 'Normal';
+
+  @override
+  String get markerPreviews => 'Play marker previews';
+
+  @override
+  String get markerPreviewsSubtitle =>
+      'Markers show a short looping clip instead of a still frame.';
 }

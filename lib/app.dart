@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import 'core/config/haptics.dart';
 import 'core/config/locale.dart';
 import 'core/config/server_config.dart';
 import 'core/config/theme.dart';
@@ -17,6 +18,8 @@ class StashApp extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final server = ref.watch(serverProfilesProvider).active;
     final accent = ref.watch(accentColorProvider);
+    // Applies the stored haptics level to Haptics.
+    ref.watch(hapticLevelProvider);
 
     return MaterialApp(
       onGenerateTitle: (context) => context.l10n.appTitle,

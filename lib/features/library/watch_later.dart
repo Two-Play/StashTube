@@ -1,3 +1,4 @@
+import '../../core/config/haptics.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/config/server_config.dart';
@@ -29,6 +30,7 @@ class WatchLaterNotifier extends Notifier<List<String>> {
   /// Adds or removes; returns whether the scene is now saved.
   Future<bool> toggle(String sceneId) async {
     final saved = !state.contains(sceneId);
+    Haptics.light();
     await _save(saved ? [...state, sceneId] : state.where((id) => id != sceneId).toList());
     return saved;
   }

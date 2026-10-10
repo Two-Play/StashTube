@@ -1,3 +1,4 @@
+import '../../core/config/haptics.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -270,7 +271,10 @@ class _MiniInfo extends ConsumerWidget {
             final cast = ref.watch(castServiceProvider);
             return IconButton(
               icon: PlayPauseIcon(playing: playing),
-              onPressed: playing ? cast.pause : cast.play,
+              onPressed: () {
+                Haptics.light();
+                playing ? cast.pause() : cast.play();
+              },
             );
           })
         else
@@ -279,7 +283,10 @@ class _MiniInfo extends ConsumerWidget {
             initialData: player.state.playing,
             builder: (_, snapshot) => IconButton(
               icon: PlayPauseIcon(playing: snapshot.data == true),
-              onPressed: player.playOrPause,
+              onPressed: () {
+                Haptics.light();
+                player.playOrPause();
+              },
             ),
           ),
         IconButton(

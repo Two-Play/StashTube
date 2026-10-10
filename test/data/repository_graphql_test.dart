@@ -97,6 +97,7 @@ void main() {
           'seconds': 83.5,
           'end_seconds': null,
           'screenshot': 'http://s/scene/1/scene_marker/m1/screenshot',
+          'preview': 'http://s/scene/1/scene_marker/m1/preview',
           'primary_tag': {'__typename': 'Tag', 'id': '3', 'name': 'Outdoor'},
           'scene': sceneJson({'id': '1', 'title': 'Sunset'}),
         },
@@ -106,6 +107,7 @@ void main() {
     final marker = result.items.single;
     expect([marker.title, marker.seconds, marker.tag.id, marker.scene.title], ['Outdoor', 83.5, '3', 'Sunset']);
     expect(marker.screenshotUrl, 'http://s/scene/1/scene_marker/m1/screenshot');
+    expect(marker.previewUrl, 'http://s/scene/1/scene_marker/m1/preview');
     expect(result.totalCount, 1);
     expect(sent.single.variables['filter'], containsPair('sort', 'title'));
   });

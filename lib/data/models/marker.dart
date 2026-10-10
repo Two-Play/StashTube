@@ -14,6 +14,7 @@ class Marker {
     required this.scene,
     this.endSeconds,
     this.screenshotUrl,
+    this.previewUrl,
   });
 
   final String id;
@@ -28,6 +29,10 @@ class Marker {
   /// The frame at the marker.
   final String? screenshotUrl;
 
+  /// A short looping clip from the marker (animated WebP), if Stash has
+  /// generated it.
+  final String? previewUrl;
+
   factory Marker.fromGraphql(Query$FindSceneMarkers$findSceneMarkers$scene_markers m) {
     final tag = Tag.fromRef(m.primary_tag);
     return Marker(
@@ -38,6 +43,7 @@ class Marker {
       tag: tag,
       scene: Scene.fromFields(m.scene),
       screenshotUrl: nonEmpty(m.screenshot),
+      previewUrl: nonEmpty(m.preview),
     );
   }
 }

@@ -1,9 +1,9 @@
+import '../../core/config/haptics.dart';
 import 'dart:async';
 
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:media_kit/media_kit.dart';
 
@@ -141,7 +141,7 @@ class _PreviewSeekBarState extends ConsumerState<PreviewSeekBar> {
     if (_drag == null) widget.onInteractionStart?.call();
     final fraction = (dx / _barWidth).clamp(0.0, 1.0);
     final snapped = _markerNear(fraction);
-    if (snapped != null && snapped != _snappedTo) HapticFeedback.selectionClick();
+    if (snapped != null && snapped != _snappedTo) Haptics.selection();
     _snappedTo = snapped;
     setState(() {
       _loadThumbnails = true;

@@ -1482,4 +1482,27 @@ class AppLocalizationsDe extends AppLocalizations {
     );
     return '$_temp0';
   }
+
+  @override
+  String get hideInSwitcherLocked =>
+      'Immer an, solange die App-Sperre aktiv ist.';
+
+  @override
+  String get haptics => 'Haptisches Feedback';
+
+  @override
+  String get hapticsOff => 'Aus';
+
+  @override
+  String get hapticsLight => 'Wenig';
+
+  @override
+  String get hapticsNormal => 'Normal';
+
+  @override
+  String get markerPreviews => 'Marker-Vorschauen abspielen';
+
+  @override
+  String get markerPreviewsSubtitle =>
+      'Marker zeigen eine kurze Vorschau in Dauerschleife statt eines Standbilds.';
 }

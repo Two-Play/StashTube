@@ -1,3 +1,4 @@
+import '../../core/config/haptics.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -23,7 +24,10 @@ class ThemeModeSelector extends ConsumerWidget {
         ButtonSegment(value: ThemeMode.dark, label: Text(l.themeDark), icon: const Icon(Icons.dark_mode_outlined)),
       ],
       selected: {ref.watch(themeModeProvider)},
-      onSelectionChanged: (s) => ref.read(themeModeProvider.notifier).set(s.first),
+      onSelectionChanged: (s) {
+        Haptics.selection();
+        ref.read(themeModeProvider.notifier).set(s.first);
+      },
     );
   }
 }
@@ -48,7 +52,10 @@ class AccentColorPicker extends ConsumerWidget {
             name: accentColorName(l, name),
             color: color,
             selected: color.toARGB32() == accent.toARGB32(),
-            onTap: () => ref.read(accentColorProvider.notifier).set(color),
+            onTap: () {
+              Haptics.selection();
+              ref.read(accentColorProvider.notifier).set(color);
+            },
           ),
       ],
     );

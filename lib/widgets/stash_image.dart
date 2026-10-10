@@ -22,6 +22,7 @@ class StashImage extends ConsumerWidget {
     this.height,
     this.decodeAtDisplaySize = true,
     this.fallbackIcon = Icons.image_not_supported_outlined,
+    this.standIn,
   });
 
   final String? url;
@@ -33,6 +34,10 @@ class StashImage extends ConsumerWidget {
   final double? height;
   final bool decodeAtDisplaySize;
   final IconData fallbackIcon;
+
+  /// Shown while loading and if the image fails, instead of the shimmer and
+  /// the icon; e.g. a still frame under an animated preview.
+  final Widget? standIn;
 
   /// Decode size for a box of [width]×[height] logical pixels: only the larger
   /// side is constrained, so the aspect ratio is kept.
@@ -68,12 +73,14 @@ class StashImage extends ConsumerWidget {
           memCacheHeight: size.height,
           fadeInDuration: const Duration(milliseconds: 250),
           fadeOutDuration: const Duration(milliseconds: 150),
-          placeholder: (_, _) => preview == null
-              ? ShimmerBox(width: width, height: height)
-              : BlurredPreview(url: preview, headers: headers, fit: fit),
+          placeholder: (_, _) =>
+              standIn ??
+              (preview == null
+                  ? ShimmerBox(width: width, height: height)
+                  : BlurredPreview(url: preview, headers: headers, fit: fit)),
           // Stash serves SVG placeholders for missing studio/performer images,
           // which CachedNetworkImage can't decode; show an icon instead.
-          errorWidget: (_, _, _) => _fallback(colors),
+          errorWidget: (_, _, _) => standIn ?? _fallback(colors),
         );
       },
     );

@@ -1,3 +1,4 @@
+import '../../core/config/haptics.dart';
 import 'dart:async';
 
 import 'package:flutter/material.dart';
@@ -228,6 +229,7 @@ class _ShortsPageState extends ConsumerState<ShortsPage> {
   }
 
   void _onPageChanged(int index, List<Scene> items) {
+    Haptics.selection();
     setState(() {
       _index = index;
       _paused = false;
@@ -256,6 +258,7 @@ class _ShortsPageState extends ConsumerState<ShortsPage> {
   }
 
   void _togglePause() {
+    Haptics.light();
     setState(() => _paused = !_paused);
     // Playing a short again takes over from the main player.
     if (!_paused && ref.read(nowPlayingProvider) != null) ref.read(playerProvider).pause();
@@ -263,7 +266,7 @@ class _ShortsPageState extends ConsumerState<ShortsPage> {
   }
 
   void _toggleFullscreen() {
-    HapticFeedback.selectionClick();
+    Haptics.selection();
     setState(() => _fullscreen = !_fullscreen);
   }
 
@@ -564,7 +567,7 @@ class _ShortViewState extends ConsumerState<_ShortView> {
     final player = _player;
     // A paused short stays paused while held.
     if (player == null || fast == _fast || (fast && widget.paused)) return;
-    if (fast) HapticFeedback.lightImpact();
+    if (fast) Haptics.light();
     player.setRate(fast ? 2 : 1);
     setState(() => _fast = fast);
   }
@@ -575,7 +578,7 @@ class _ShortViewState extends ConsumerState<_ShortView> {
   }
 
   void _rate(int stars) {
-    HapticFeedback.selectionClick();
+    Haptics.selection();
     final current = effectiveStars(ref, widget.scene);
     // Tapping the current rating again removes it.
     ref.read(sceneEditsProvider.notifier).rate(widget.scene, stars == current ? 0 : stars).catchError(_showError);
@@ -583,7 +586,7 @@ class _ShortViewState extends ConsumerState<_ShortView> {
   }
 
   Future<void> _addO() async {
-    HapticFeedback.mediumImpact();
+    Haptics.medium();
     final l = context.l10n;
     final messenger = ScaffoldMessenger.of(context);
     final notifier = ref.read(sceneEditsProvider.notifier);

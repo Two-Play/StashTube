@@ -1,3 +1,4 @@
+import '../../core/config/haptics.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -198,7 +199,10 @@ class CastingControls extends ConsumerWidget {
                               iconSize: 48,
                               tooltip: playback.playing ? context.l10n.pause : context.l10n.play,
                               icon: PlayPauseIcon(playing: playback.playing),
-                              onPressed: playback.playing ? service.pause : service.play,
+                              onPressed: () {
+                                Haptics.light();
+                                playback.playing ? service.pause() : service.play();
+                              },
                             ),
                       const SizedBox(width: 16),
                       IconButton(

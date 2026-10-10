@@ -1,3 +1,4 @@
+import '../core/config/haptics.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -34,7 +35,7 @@ Future<void> refreshFuture(WidgetRef ref, Refreshable<Future<Object?>> future) a
   } catch (_) {
     // The error state is rendered by the list itself.
   }
-  HapticFeedback.mediumImpact();
+  Haptics.medium();
 }
 
 /// Renders a [PagedState] as slivers: loading / error / empty / items + footer.

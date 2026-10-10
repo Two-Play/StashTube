@@ -11,6 +11,7 @@ import 'package:stash_app_mobile/features/library/markers_tab.dart';
 import 'package:stash_app_mobile/features/player/player_providers.dart';
 import 'package:stash_app_mobile/features/shell/nav_bar_config.dart';
 import 'package:stash_app_mobile/features/shell/navigation.dart';
+import 'package:stash_app_mobile/widgets/stash_image.dart';
 
 import '../helpers.dart';
 
@@ -24,7 +25,15 @@ class _Repo implements StashRepository {
     queries.add(query);
     return const PageResult(
       items: [
-        Marker(id: 'm1', title: 'Sunset', seconds: 83, tag: Tag(id: 't1', name: 'Outdoor'), scene: _scene),
+        Marker(
+          id: 'm1',
+          title: 'Sunset',
+          seconds: 83,
+          tag: Tag(id: 't1', name: 'Outdoor'),
+          scene: _scene,
+          screenshotUrl: 'http://s/m1/screenshot',
+          previewUrl: 'http://s/m1/preview',
+        ),
         Marker(id: 'm2', title: 'Outdoor', seconds: 5, tag: Tag(id: 't1', name: 'Outdoor'), scene: _scene),
       ],
       totalCount: 2,
@@ -45,6 +54,13 @@ class _Playing extends NowPlayingNotifier {
   void play(Scene scene, {double? at}) => played.add((scene.id, at));
 }
 
+/// The image placeholders shimmer forever: pump a while instead of settling.
+Future<void> settle(WidgetTester tester) async {
+  for (var i = 0; i < 5; i++) {
+    await tester.pump(const Duration(milliseconds: 100));
+  }
+}
+
 void main() {
   testWidgets('lists the markers and plays a scene from its marker', (tester) async {
     final repo = _Repo();
@@ -57,7 +73,7 @@ void main() {
       ],
       child: const MaterialApp(home: Scaffold(body: MarkersTab())),
     ));
-    await tester.pumpAndSettle();
+    await settle(tester);
 
     expect(find.text('2 markers'), findsOneWidget);
     expect(find.text('Sunset'), findsOneWidget);
@@ -69,7 +85,7 @@ void main() {
     expect(playing.played, [('s1', 83.0)]);
 
     await tester.tap(find.text('A–Z'));
-    await tester.pumpAndSettle();
+    await settle(tester);
     expect(repo.queries.last.sort, MarkerSort.title);
     expect(repo.queries.last.direction, 'ASC');
   });
@@ -83,5 +99,28 @@ void main() {
 
   test('the markers tab starts hidden in the bar', () {
     expect(NavBarConfig.standard.isVisible(AppTab.markers), isFalse);
+  });
+
+  testWidgets('marker tiles loop their preview over the still, unless switched off', (tester) async {
+    Future<List<String?>> urls({required bool previews}) async {
+      await tester.pumpWidget(ProviderScope(
+        key: UniqueKey(),
+        overrides: [
+          ...testServer,
+          stashRepositoryProvider.overrideWithValue(_Repo()),
+          markerPreviewsProvider.overrideWithBuild((ref, notifier) => previews),
+        ],
+        child: const MaterialApp(home: Scaffold(body: MarkersTab())),
+      ));
+      await settle(tester);
+      final tile = find.byType(MarkerTile).first;
+      return [
+        for (final image in tester.widgetList<StashImage>(find.descendant(of: tile, matching: find.byType(StashImage))))
+          image.url,
+      ];
+    }
+
+    expect(await urls(previews: true), ['http://s/m1/preview', 'http://s/m1/screenshot']);
+    expect(await urls(previews: false), ['http://s/m1/screenshot']);
   });
 }

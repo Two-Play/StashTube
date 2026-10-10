@@ -1,3 +1,4 @@
+import '../../core/config/haptics.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -57,12 +58,14 @@ class AppShell extends ConsumerWidget {
       });
     }
 
+    final scrollControllers = ref.watch(tabScrollControllersProvider);
+
     void selectTab(AppTab tab) {
       if (tab == currentTab) {
-        // Re-selecting a tab pops back to its root, like YouTube.
-        navigatorKeys[tab]!.currentState?.popUntil((r) => r.isFirst);
+        reselectTab(navigatorKeys[tab]!.currentState, scrollControllers[tab]!);
+        Haptics.selection();
       } else {
-        HapticFeedback.selectionClick();
+        Haptics.selection();
         ref.read(currentTabProvider.notifier).select(tab);
       }
     }
@@ -98,7 +101,12 @@ class AppShell extends ConsumerWidget {
                   for (final tab in tabs)
                     Navigator(
                       key: navigatorKeys[tab],
-                      onGenerateRoute: (_) => MaterialPageRoute(builder: (_) => rootPage(tab)),
+                      onGenerateRoute: (_) => MaterialPageRoute(
+                        builder: (_) => PrimaryScrollController(
+                          controller: scrollControllers[tab]!,
+                          child: rootPage(tab),
+                        ),
+                      ),
                     ),
                 ],
               ),

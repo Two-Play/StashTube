@@ -1,3 +1,4 @@
+import '../core/config/haptics.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -181,7 +182,10 @@ class SceneGridTile extends ConsumerWidget {
     return InkWell(
       borderRadius: BorderRadius.circular(8),
       onTap: () => ref.read(nowPlayingProvider.notifier).play(scene),
-      onLongPress: () => showSceneMenu(context, ref, scene),
+      onLongPress: () {
+        Haptics.heavy();
+        showSceneMenu(context, ref, scene);
+      },
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
