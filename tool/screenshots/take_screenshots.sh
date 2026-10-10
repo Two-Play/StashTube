@@ -20,7 +20,7 @@ xcrun simctl bootstatus "$id" >/dev/null
 xcrun simctl status_bar "$id" override --time 9:41 --batteryState charged --batteryLevel 100 \
   --cellularMode active --cellularBars 4 --wifiBars 3 --dataNetwork wifi
 xcrun simctl ui "$id" appearance dark
-xcrun simctl uninstall "$id" io.github.two-play.stashtube 2>/dev/null || true
+xcrun simctl uninstall "$id" io.github.twoplay.stashtube 2>/dev/null || true
 
 flutter drive --driver=test_driver/integration_test.dart --target=integration_test/screenshots_test.dart -d "$id"
 
