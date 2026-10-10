@@ -8,16 +8,16 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/Two-Play/StashAppMobile/releases"><img src="https://img.shields.io/github/v/release/Two-Play/StashAppMobile?include_prereleases&sort=semver&label=release" alt="Latest release"></a>
-  <a href="https://github.com/Two-Play/StashAppMobile/actions/workflows/ci.yml"><img src="https://github.com/Two-Play/StashAppMobile/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
-  <a href="https://github.com/Two-Play/StashAppMobile/releases"><img src="https://img.shields.io/github/downloads/Two-Play/StashAppMobile/total?label=downloads" alt="Downloads"></a>
+  <a href="https://github.com/Two-Play/StashTube/releases"><img src="https://img.shields.io/github/v/release/Two-Play/StashTube?include_prereleases&sort=semver&label=release" alt="Latest release"></a>
+  <a href="https://github.com/Two-Play/StashTube/actions/workflows/ci.yml"><img src="https://github.com/Two-Play/StashTube/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
+  <a href="https://github.com/Two-Play/StashTube/releases"><img src="https://img.shields.io/github/downloads/Two-Play/StashTube/total?label=downloads" alt="Downloads"></a>
   <img src="https://img.shields.io/badge/platform-Android%20%7C%20iOS-lightgrey" alt="Platforms: Android and iOS">
   <a href="https://flutter.dev"><img src="https://img.shields.io/badge/Flutter-3.47-02569B?logo=flutter" alt="Flutter 3.47"></a>
-  <a href="LICENSE"><img src="https://img.shields.io/github/license/Two-Play/StashAppMobile" alt="License: AGPL-3.0"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/github/license/Two-Play/StashTube" alt="License: AGPL-3.0"></a>
 </p>
 
 <p align="center">
-  <a href="https://apps.obtainium.imranr.dev/redirect?r=obtainium://add/https://github.com/Two-Play/StashAppMobile"><img src="https://raw.githubusercontent.com/ImranR98/Obtainium/main/assets/graphics/badge_obtainium.png" height="54" alt="Get it on Obtainium"></a>
+  <a href="https://apps.obtainium.imranr.dev/redirect?r=obtainium://add/https://github.com/Two-Play/StashTube"><img src="https://raw.githubusercontent.com/ImranR98/Obtainium/main/assets/graphics/badge_obtainium.png" height="54" alt="Get it on Obtainium"></a>
 </p>
 
 StashTube feels like the YouTube app: a feed with large thumbnails, a miniplayer that keeps playing while you browse, performers and studios as "channels", and short portrait videos in a vertical Shorts feed. It talks to your own Stash server through its GraphQL API and plays the streams directly.
@@ -115,7 +115,7 @@ The backlog with every user story and its status is in [`docs/BACKLOG.md`](docs/
 [Obtainium](https://github.com/ImranR98/Obtainium) installs apps straight from their GitHub releases and keeps them up to date.
 
 1. Install Obtainium.
-2. Tap the **Get it on Obtainium** badge above on your phone, or add the app in Obtainium by its URL: `https://github.com/Two-Play/StashAppMobile`.
+2. Tap the **Get it on Obtainium** badge above on your phone, or add the app in Obtainium by its URL: `https://github.com/Two-Play/StashTube`.
 3. While StashTube is in beta, turn on **Include prereleases** in the app's settings in Obtainium.
 4. Install. Obtainium picks the right APK for your phone and notifies you of updates.
 
@@ -124,7 +124,7 @@ The backlog with every user story and its status is in [`docs/BACKLOG.md`](docs/
 
 ### Android with an APK
 
-1. Open the [latest release](https://github.com/Two-Play/StashAppMobile/releases) on your phone.
+1. Open the [latest release](https://github.com/Two-Play/StashTube/releases) on your phone.
 2. Download the APK for your phone:
 
    | File | For |
@@ -200,8 +200,8 @@ You need:
 - a Stash server reachable from the device; a recent Stash release is recommended (features whose GraphQL fields an older server lacks are hidden)
 
 ```bash
-git clone https://github.com/Two-Play/StashAppMobile.git
-cd StashAppMobile
+git clone https://github.com/Two-Play/StashTube.git
+cd StashTube
 flutter pub get
 flutter run            # on a connected phone or a simulator
 ```

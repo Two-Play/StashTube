@@ -28,7 +28,7 @@ android {
     }
 
     defaultConfig {
-        // Derived from github.com/Two-Play/StashAppMobile; fixed since the first release.
+        // Derived from the repository's first name, github.com/Two-Play/StashAppMobile; fixed since the first release.
         applicationId = "io.github.two_play.stashappmobile"
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.

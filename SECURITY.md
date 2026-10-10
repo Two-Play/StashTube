@@ -18,8 +18,8 @@ StashTube is in beta. Security fixes go into the next release; older releases ar
 
 Report it privately through GitHub instead:
 
-1. Open the repository's [**Security** tab](https://github.com/Two-Play/StashAppMobile/security).
-2. Choose [**Report a vulnerability**](https://github.com/Two-Play/StashAppMobile/security/advisories/new).
+1. Open the repository's [**Security** tab](https://github.com/Two-Play/StashTube/security).
+2. Choose [**Report a vulnerability**](https://github.com/Two-Play/StashTube/security/advisories/new).
 3. Describe the problem, how to reproduce it, the app version and platform (Android or iOS), and what an attacker could do with it.
 
 StashTube is maintained in spare time. You'll usually get an answer within a week; a fix and a release follow as soon as possible, depending on how serious the problem is. Once it is fixed, the advisory is published and you are credited, unless you'd rather not be.
