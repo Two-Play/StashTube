@@ -49,6 +49,14 @@ extension GallerySortLabel on GallerySort {
       };
 }
 
+extension MarkerSortLabel on MarkerSort {
+  String label(AppLocalizations l) => switch (this) {
+        MarkerSort.recentlyAdded => l.sortRecentlyAdded,
+        MarkerSort.random => l.sortShuffle,
+        MarkerSort.title => l.sortAlphabetical,
+      };
+}
+
 extension TagSortLabel on TagSort {
   String label(AppLocalizations l) => switch (this) {
         TagSort.mostScenes => l.sortMostScenes,

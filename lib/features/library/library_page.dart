@@ -9,6 +9,7 @@ import '../shell/navigation.dart';
 import 'galleries_tab.dart';
 import 'groups.dart';
 import 'images_tab.dart';
+import 'markers_tab.dart';
 import 'stats_tab.dart';
 import 'watch_later_tab.dart';
 import '../settings/settings_button.dart';
@@ -20,6 +21,7 @@ enum LibrarySection {
   history(Icons.history),
   watchLater(Icons.watch_later_outlined),
   groups(Icons.playlist_play),
+  markers(Icons.bookmarks_outlined),
   images(Icons.image_outlined),
   galleries(Icons.photo_library_outlined),
   stats(Icons.insights_outlined);
@@ -33,6 +35,7 @@ enum LibrarySection {
         history => l.libraryHistory,
         watchLater => l.libraryWatchLater,
         groups => l.libraryGroups,
+        markers => l.libraryMarkers,
         images => l.libraryImages,
         galleries => l.libraryGalleries,
         stats => l.libraryStats,
@@ -62,6 +65,7 @@ enum LibrarySection {
           ),
         watchLater => const WatchLaterTab(),
         groups => const GroupsTab(),
+        markers => const MarkersTab(),
         images => const ImagesTab(),
         galleries => const GalleriesTab(),
         stats => const StatsTab(),

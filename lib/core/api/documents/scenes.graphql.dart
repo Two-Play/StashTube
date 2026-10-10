@@ -1627,6 +1627,711 @@ class Query$FindScenes$findScenes {
   }
 }
 
+class Variables$Query$FindSceneMarkers {
+  factory Variables$Query$FindSceneMarkers({
+    Input$FindFilterType? filter,
+    Input$SceneMarkerFilterType? scene_marker_filter,
+  }) => Variables$Query$FindSceneMarkers._({
+    if (filter != null) r'filter': filter,
+    if (scene_marker_filter != null)
+      r'scene_marker_filter': scene_marker_filter,
+  });
+
+  Variables$Query$FindSceneMarkers._(this._$data);
+
+  factory Variables$Query$FindSceneMarkers.fromJson(Map<String, dynamic> data) {
+    final result$data = <String, dynamic>{};
+    if (data.containsKey('filter')) {
+      final l$filter = data['filter'];
+      result$data['filter'] = l$filter == null
+          ? null
+          : Input$FindFilterType.fromJson((l$filter as Map<String, dynamic>));
+    }
+    if (data.containsKey('scene_marker_filter')) {
+      final l$scene_marker_filter = data['scene_marker_filter'];
+      result$data['scene_marker_filter'] = l$scene_marker_filter == null
+          ? null
+          : Input$SceneMarkerFilterType.fromJson(
+              (l$scene_marker_filter as Map<String, dynamic>),
+            );
+    }
+    return Variables$Query$FindSceneMarkers._(result$data);
+  }
+
+  Map<String, dynamic> _$data;
+
+  Input$FindFilterType? get filter =>
+      (_$data['filter'] as Input$FindFilterType?);
+
+  Input$SceneMarkerFilterType? get scene_marker_filter =>
+      (_$data['scene_marker_filter'] as Input$SceneMarkerFilterType?);
+
+  Map<String, dynamic> toJson() {
+    final result$data = <String, dynamic>{};
+    if (_$data.containsKey('filter')) {
+      final l$filter = filter;
+      result$data['filter'] = l$filter?.toJson();
+    }
+    if (_$data.containsKey('scene_marker_filter')) {
+      final l$scene_marker_filter = scene_marker_filter;
+      result$data['scene_marker_filter'] = l$scene_marker_filter?.toJson();
+    }
+    return result$data;
+  }
+
+  @override
+  bool operator ==(Object other) {
+    if (identical(this, other)) {
+      return true;
+    }
+    if (other is! Variables$Query$FindSceneMarkers ||
+        runtimeType != other.runtimeType) {
+      return false;
+    }
+    final l$filter = filter;
+    final lOther$filter = other.filter;
+    if (_$data.containsKey('filter') != other._$data.containsKey('filter')) {
+      return false;
+    }
+    if (l$filter != lOther$filter) {
+      return false;
+    }
+    final l$scene_marker_filter = scene_marker_filter;
+    final lOther$scene_marker_filter = other.scene_marker_filter;
+    if (_$data.containsKey('scene_marker_filter') !=
+        other._$data.containsKey('scene_marker_filter')) {
+      return false;
+    }
+    if (l$scene_marker_filter != lOther$scene_marker_filter) {
+      return false;
+    }
+    return true;
+  }
+
+  @override
+  int get hashCode {
+    final l$filter = filter;
+    final l$scene_marker_filter = scene_marker_filter;
+    return Object.hashAll([
+      _$data.containsKey('filter') ? l$filter : const {},
+      _$data.containsKey('scene_marker_filter')
+          ? l$scene_marker_filter
+          : const {},
+    ]);
+  }
+}
+
+class Query$FindSceneMarkers {
+  Query$FindSceneMarkers({
+    required this.findSceneMarkers,
+    this.$__typename = 'Query',
+  });
+
+  factory Query$FindSceneMarkers.fromJson(Map<String, dynamic> json) {
+    final l$findSceneMarkers = json['findSceneMarkers'];
+    final l$$__typename = json['__typename'];
+    return Query$FindSceneMarkers(
+      findSceneMarkers: Query$FindSceneMarkers$findSceneMarkers.fromJson(
+        (l$findSceneMarkers as Map<String, dynamic>),
+      ),
+      $__typename: (l$$__typename as String),
+    );
+  }
+
+  final Query$FindSceneMarkers$findSceneMarkers findSceneMarkers;
+
+  final String $__typename;
+
+  Map<String, dynamic> toJson() {
+    final _resultData = <String, dynamic>{};
+    final l$findSceneMarkers = findSceneMarkers;
+    _resultData['findSceneMarkers'] = l$findSceneMarkers.toJson();
+    final l$$__typename = $__typename;
+    _resultData['__typename'] = l$$__typename;
+    return _resultData;
+  }
+
+  @override
+  int get hashCode {
+    final l$findSceneMarkers = findSceneMarkers;
+    final l$$__typename = $__typename;
+    return Object.hashAll([l$findSceneMarkers, l$$__typename]);
+  }
+
+  @override
+  bool operator ==(Object other) {
+    if (identical(this, other)) {
+      return true;
+    }
+    if (other is! Query$FindSceneMarkers || runtimeType != other.runtimeType) {
+      return false;
+    }
+    final l$findSceneMarkers = findSceneMarkers;
+    final lOther$findSceneMarkers = other.findSceneMarkers;
+    if (l$findSceneMarkers != lOther$findSceneMarkers) {
+      return false;
+    }
+    final l$$__typename = $__typename;
+    final lOther$$__typename = other.$__typename;
+    if (l$$__typename != lOther$$__typename) {
+      return false;
+    }
+    return true;
+  }
+}
+
+const documentNodeQueryFindSceneMarkers = DocumentNode(
+  definitions: [
+    OperationDefinitionNode(
+      type: OperationType.query,
+      name: NameNode(value: 'FindSceneMarkers'),
+      variableDefinitions: [
+        VariableDefinitionNode(
+          variable: VariableNode(name: NameNode(value: 'filter')),
+          type: NamedTypeNode(
+            name: NameNode(value: 'FindFilterType'),
+            isNonNull: false,
+          ),
+          defaultValue: DefaultValueNode(value: null),
+          directives: [],
+        ),
+        VariableDefinitionNode(
+          variable: VariableNode(name: NameNode(value: 'scene_marker_filter')),
+          type: NamedTypeNode(
+            name: NameNode(value: 'SceneMarkerFilterType'),
+            isNonNull: false,
+          ),
+          defaultValue: DefaultValueNode(value: null),
+          directives: [],
+        ),
+      ],
+      directives: [],
+      selectionSet: SelectionSetNode(
+        selections: [
+          FieldNode(
+            name: NameNode(value: 'findSceneMarkers'),
+            alias: null,
+            arguments: [
+              ArgumentNode(
+                name: NameNode(value: 'filter'),
+                value: VariableNode(name: NameNode(value: 'filter')),
+              ),
+              ArgumentNode(
+                name: NameNode(value: 'scene_marker_filter'),
+                value: VariableNode(
+                  name: NameNode(value: 'scene_marker_filter'),
+                ),
+              ),
+            ],
+            directives: [],
+            selectionSet: SelectionSetNode(
+              selections: [
+                FieldNode(
+                  name: NameNode(value: 'count'),
+                  alias: null,
+                  arguments: [],
+                  directives: [],
+                  selectionSet: null,
+                ),
+                FieldNode(
+                  name: NameNode(value: 'scene_markers'),
+                  alias: null,
+                  arguments: [],
+                  directives: [],
+                  selectionSet: SelectionSetNode(
+                    selections: [
+                      FieldNode(
+                        name: NameNode(value: 'id'),
+                        alias: null,
+                        arguments: [],
+                        directives: [],
+                        selectionSet: null,
+                      ),
+                      FieldNode(
+                        name: NameNode(value: 'title'),
+                        alias: null,
+                        arguments: [],
+                        directives: [],
+                        selectionSet: null,
+                      ),
+                      FieldNode(
+                        name: NameNode(value: 'seconds'),
+                        alias: null,
+                        arguments: [],
+                        directives: [],
+                        selectionSet: null,
+                      ),
+                      FieldNode(
+                        name: NameNode(value: 'end_seconds'),
+                        alias: null,
+                        arguments: [],
+                        directives: [],
+                        selectionSet: null,
+                      ),
+                      FieldNode(
+                        name: NameNode(value: 'screenshot'),
+                        alias: null,
+                        arguments: [],
+                        directives: [],
+                        selectionSet: null,
+                      ),
+                      FieldNode(
+                        name: NameNode(value: 'primary_tag'),
+                        alias: null,
+                        arguments: [],
+                        directives: [],
+                        selectionSet: SelectionSetNode(
+                          selections: [
+                            FragmentSpreadNode(
+                              name: NameNode(value: 'TagRef'),
+                              directives: [],
+                            ),
+                            FieldNode(
+                              name: NameNode(value: '__typename'),
+                              alias: null,
+                              arguments: [],
+                              directives: [],
+                              selectionSet: null,
+                            ),
+                          ],
+                        ),
+                      ),
+                      FieldNode(
+                        name: NameNode(value: 'scene'),
+                        alias: null,
+                        arguments: [],
+                        directives: [],
+                        selectionSet: SelectionSetNode(
+                          selections: [
+                            FragmentSpreadNode(
+                              name: NameNode(value: 'SceneFields'),
+                              directives: [],
+                            ),
+                            FieldNode(
+                              name: NameNode(value: '__typename'),
+                              alias: null,
+                              arguments: [],
+                              directives: [],
+                              selectionSet: null,
+                            ),
+                          ],
+                        ),
+                      ),
+                      FieldNode(
+                        name: NameNode(value: '__typename'),
+                        alias: null,
+                        arguments: [],
+                        directives: [],
+                        selectionSet: null,
+                      ),
+                    ],
+                  ),
+                ),
+                FieldNode(
+                  name: NameNode(value: '__typename'),
+                  alias: null,
+                  arguments: [],
+                  directives: [],
+                  selectionSet: null,
+                ),
+              ],
+            ),
+          ),
+          FieldNode(
+            name: NameNode(value: '__typename'),
+            alias: null,
+            arguments: [],
+            directives: [],
+            selectionSet: null,
+          ),
+        ],
+      ),
+    ),
+    fragmentDefinitionTagRef,
+    fragmentDefinitionSceneFields,
+    fragmentDefinitionStudioRef,
+    fragmentDefinitionPerformerRef,
+  ],
+);
+Query$FindSceneMarkers _parserFn$Query$FindSceneMarkers(
+  Map<String, dynamic> data,
+) => Query$FindSceneMarkers.fromJson(data);
+typedef OnQueryComplete$Query$FindSceneMarkers = FutureOr<void> Function(
+  Map<String, dynamic>?,
+  Query$FindSceneMarkers?,
+);
+
+class Options$Query$FindSceneMarkers
+    extends graphql.QueryOptions<Query$FindSceneMarkers> {
+  Options$Query$FindSceneMarkers({
+    String? operationName,
+    Variables$Query$FindSceneMarkers? variables,
+    graphql.FetchPolicy? fetchPolicy,
+    graphql.ErrorPolicy? errorPolicy,
+    graphql.CacheRereadPolicy? cacheRereadPolicy,
+    Object? optimisticResult,
+    Query$FindSceneMarkers? typedOptimisticResult,
+    Duration? pollInterval,
+    graphql.Context? context,
+    OnQueryComplete$Query$FindSceneMarkers? onComplete,
+    graphql.OnQueryError? onError,
+  }) : onCompleteWithParsed = onComplete,
+       super(
+         variables: variables?.toJson() ?? {},
+         operationName: operationName ?? 'FindSceneMarkers',
+         fetchPolicy: fetchPolicy,
+         errorPolicy: errorPolicy,
+         cacheRereadPolicy: cacheRereadPolicy,
+         optimisticResult: optimisticResult ?? typedOptimisticResult?.toJson(),
+         pollInterval: pollInterval,
+         context: context,
+         onComplete: onComplete == null
+             ? null
+             : (data) => onComplete(
+                 data,
+                 data == null ? null : _parserFn$Query$FindSceneMarkers(data),
+               ),
+         onError: onError,
+         document: documentNodeQueryFindSceneMarkers,
+         parserFn: _parserFn$Query$FindSceneMarkers,
+       );
+
+  final OnQueryComplete$Query$FindSceneMarkers? onCompleteWithParsed;
+
+  @override
+  List<Object?> get properties => [
+    ...super.onComplete == null
+        ? super.properties
+        : super.properties.where((property) => property != onComplete),
+    onCompleteWithParsed,
+  ];
+}
+
+class WatchOptions$Query$FindSceneMarkers
+    extends graphql.WatchQueryOptions<Query$FindSceneMarkers> {
+  WatchOptions$Query$FindSceneMarkers({
+    String? operationName,
+    Variables$Query$FindSceneMarkers? variables,
+    graphql.FetchPolicy? fetchPolicy,
+    graphql.ErrorPolicy? errorPolicy,
+    graphql.CacheRereadPolicy? cacheRereadPolicy,
+    Object? optimisticResult,
+    Query$FindSceneMarkers? typedOptimisticResult,
+    graphql.Context? context,
+    Duration? pollInterval,
+    bool? eagerlyFetchResults,
+    bool carryForwardDataOnException = true,
+    bool fetchResults = false,
+  }) : super(
+         variables: variables?.toJson() ?? {},
+         operationName: operationName ?? 'FindSceneMarkers',
+         fetchPolicy: fetchPolicy,
+         errorPolicy: errorPolicy,
+         cacheRereadPolicy: cacheRereadPolicy,
+         optimisticResult: optimisticResult ?? typedOptimisticResult?.toJson(),
+         context: context,
+         document: documentNodeQueryFindSceneMarkers,
+         pollInterval: pollInterval,
+         eagerlyFetchResults: eagerlyFetchResults,
+         carryForwardDataOnException: carryForwardDataOnException,
+         fetchResults: fetchResults,
+         parserFn: _parserFn$Query$FindSceneMarkers,
+       );
+}
+
+class FetchMoreOptions$Query$FindSceneMarkers extends graphql.FetchMoreOptions {
+  FetchMoreOptions$Query$FindSceneMarkers({
+    required graphql.UpdateQuery updateQuery,
+    Variables$Query$FindSceneMarkers? variables,
+  }) : super(
+         updateQuery: updateQuery,
+         variables: variables?.toJson() ?? {},
+         document: documentNodeQueryFindSceneMarkers,
+       );
+}
+
+extension ClientExtension$Query$FindSceneMarkers on graphql.GraphQLClient {
+  Future<graphql.QueryResult<Query$FindSceneMarkers>> query$FindSceneMarkers([
+    Options$Query$FindSceneMarkers? options,
+  ]) async => await this.query(options ?? Options$Query$FindSceneMarkers());
+
+  graphql.ObservableQuery<Query$FindSceneMarkers> watchQuery$FindSceneMarkers([
+    WatchOptions$Query$FindSceneMarkers? options,
+  ]) => this.watchQuery(options ?? WatchOptions$Query$FindSceneMarkers());
+
+  void writeQuery$FindSceneMarkers({
+    required Query$FindSceneMarkers data,
+    Variables$Query$FindSceneMarkers? variables,
+    bool broadcast = true,
+  }) => this.writeQuery(
+    graphql.Request(
+      operation: graphql.Operation(document: documentNodeQueryFindSceneMarkers),
+      variables: variables?.toJson() ?? const {},
+    ),
+    data: data.toJson(),
+    broadcast: broadcast,
+  );
+
+  Query$FindSceneMarkers? readQuery$FindSceneMarkers({
+    Variables$Query$FindSceneMarkers? variables,
+    bool optimistic = true,
+  }) {
+    final result = this.readQuery(
+      graphql.Request(
+        operation: graphql.Operation(
+          document: documentNodeQueryFindSceneMarkers,
+        ),
+        variables: variables?.toJson() ?? const {},
+      ),
+      optimistic: optimistic,
+    );
+    return result == null ? null : Query$FindSceneMarkers.fromJson(result);
+  }
+}
+
+class Query$FindSceneMarkers$findSceneMarkers {
+  Query$FindSceneMarkers$findSceneMarkers({
+    required this.count,
+    required this.scene_markers,
+    this.$__typename = 'FindSceneMarkersResultType',
+  });
+
+  factory Query$FindSceneMarkers$findSceneMarkers.fromJson(
+    Map<String, dynamic> json,
+  ) {
+    final l$count = json['count'];
+    final l$scene_markers = json['scene_markers'];
+    final l$$__typename = json['__typename'];
+    return Query$FindSceneMarkers$findSceneMarkers(
+      count: (l$count as int),
+      scene_markers: (l$scene_markers as List<dynamic>)
+          .map(
+            (e) =>
+                Query$FindSceneMarkers$findSceneMarkers$scene_markers.fromJson(
+                  (e as Map<String, dynamic>),
+                ),
+          )
+          .toList(),
+      $__typename: (l$$__typename as String),
+    );
+  }
+
+  final int count;
+
+  final List<Query$FindSceneMarkers$findSceneMarkers$scene_markers>
+  scene_markers;
+
+  final String $__typename;
+
+  Map<String, dynamic> toJson() {
+    final _resultData = <String, dynamic>{};
+    final l$count = count;
+    _resultData['count'] = l$count;
+    final l$scene_markers = scene_markers;
+    _resultData['scene_markers'] = l$scene_markers
+        .map((e) => e.toJson())
+        .toList();
+    final l$$__typename = $__typename;
+    _resultData['__typename'] = l$$__typename;
+    return _resultData;
+  }
+
+  @override
+  int get hashCode {
+    final l$count = count;
+    final l$scene_markers = scene_markers;
+    final l$$__typename = $__typename;
+    return Object.hashAll([
+      l$count,
+      Object.hashAll(l$scene_markers.map((v) => v)),
+      l$$__typename,
+    ]);
+  }
+
+  @override
+  bool operator ==(Object other) {
+    if (identical(this, other)) {
+      return true;
+    }
+    if (other is! Query$FindSceneMarkers$findSceneMarkers ||
+        runtimeType != other.runtimeType) {
+      return false;
+    }
+    final l$count = count;
+    final lOther$count = other.count;
+    if (l$count != lOther$count) {
+      return false;
+    }
+    final l$scene_markers = scene_markers;
+    final lOther$scene_markers = other.scene_markers;
+    if (l$scene_markers.length != lOther$scene_markers.length) {
+      return false;
+    }
+    for (int i = 0; i < l$scene_markers.length; i++) {
+      final l$scene_markers$entry = l$scene_markers[i];
+      final lOther$scene_markers$entry = lOther$scene_markers[i];
+      if (l$scene_markers$entry != lOther$scene_markers$entry) {
+        return false;
+      }
+    }
+    final l$$__typename = $__typename;
+    final lOther$$__typename = other.$__typename;
+    if (l$$__typename != lOther$$__typename) {
+      return false;
+    }
+    return true;
+  }
+}
+
+class Query$FindSceneMarkers$findSceneMarkers$scene_markers {
+  Query$FindSceneMarkers$findSceneMarkers$scene_markers({
+    required this.id,
+    required this.title,
+    required this.seconds,
+    this.end_seconds,
+    required this.screenshot,
+    required this.primary_tag,
+    required this.scene,
+    this.$__typename = 'SceneMarker',
+  });
+
+  factory Query$FindSceneMarkers$findSceneMarkers$scene_markers.fromJson(
+    Map<String, dynamic> json,
+  ) {
+    final l$id = json['id'];
+    final l$title = json['title'];
+    final l$seconds = json['seconds'];
+    final l$end_seconds = json['end_seconds'];
+    final l$screenshot = json['screenshot'];
+    final l$primary_tag = json['primary_tag'];
+    final l$scene = json['scene'];
+    final l$$__typename = json['__typename'];
+    return Query$FindSceneMarkers$findSceneMarkers$scene_markers(
+      id: (l$id as String),
+      title: (l$title as String),
+      seconds: (l$seconds as num).toDouble(),
+      end_seconds: (l$end_seconds as num?)?.toDouble(),
+      screenshot: (l$screenshot as String),
+      primary_tag: Fragment$TagRef.fromJson(
+        (l$primary_tag as Map<String, dynamic>),
+      ),
+      scene: Fragment$SceneFields.fromJson((l$scene as Map<String, dynamic>)),
+      $__typename: (l$$__typename as String),
+    );
+  }
+
+  final String id;
+
+  final String title;
+
+  final double seconds;
+
+  final double? end_seconds;
+
+  final String screenshot;
+
+  final Fragment$TagRef primary_tag;
+
+  final Fragment$SceneFields scene;
+
+  final String $__typename;
+
+  Map<String, dynamic> toJson() {
+    final _resultData = <String, dynamic>{};
+    final l$id = id;
+    _resultData['id'] = l$id;
+    final l$title = title;
+    _resultData['title'] = l$title;
+    final l$seconds = seconds;
+    _resultData['seconds'] = l$seconds;
+    final l$end_seconds = end_seconds;
+    _resultData['end_seconds'] = l$end_seconds;
+    final l$screenshot = screenshot;
+    _resultData['screenshot'] = l$screenshot;
+    final l$primary_tag = primary_tag;
+    _resultData['primary_tag'] = l$primary_tag.toJson();
+    final l$scene = scene;
+    _resultData['scene'] = l$scene.toJson();
+    final l$$__typename = $__typename;
+    _resultData['__typename'] = l$$__typename;
+    return _resultData;
+  }
+
+  @override
+  int get hashCode {
+    final l$id = id;
+    final l$title = title;
+    final l$seconds = seconds;
+    final l$end_seconds = end_seconds;
+    final l$screenshot = screenshot;
+    final l$primary_tag = primary_tag;
+    final l$scene = scene;
+    final l$$__typename = $__typename;
+    return Object.hashAll([
+      l$id,
+      l$title,
+      l$seconds,
+      l$end_seconds,
+      l$screenshot,
+      l$primary_tag,
+      l$scene,
+      l$$__typename,
+    ]);
+  }
+
+  @override
+  bool operator ==(Object other) {
+    if (identical(this, other)) {
+      return true;
+    }
+    if (other is! Query$FindSceneMarkers$findSceneMarkers$scene_markers ||
+        runtimeType != other.runtimeType) {
+      return false;
+    }
+    final l$id = id;
+    final lOther$id = other.id;
+    if (l$id != lOther$id) {
+      return false;
+    }
+    final l$title = title;
+    final lOther$title = other.title;
+    if (l$title != lOther$title) {
+      return false;
+    }
+    final l$seconds = seconds;
+    final lOther$seconds = other.seconds;
+    if (l$seconds != lOther$seconds) {
+      return false;
+    }
+    final l$end_seconds = end_seconds;
+    final lOther$end_seconds = other.end_seconds;
+    if (l$end_seconds != lOther$end_seconds) {
+      return false;
+    }
+    final l$screenshot = screenshot;
+    final lOther$screenshot = other.screenshot;
+    if (l$screenshot != lOther$screenshot) {
+      return false;
+    }
+    final l$primary_tag = primary_tag;
+    final lOther$primary_tag = other.primary_tag;
+    if (l$primary_tag != lOther$primary_tag) {
+      return false;
+    }
+    final l$scene = scene;
+    final lOther$scene = other.scene;
+    if (l$scene != lOther$scene) {
+      return false;
+    }
+    final l$$__typename = $__typename;
+    final lOther$$__typename = other.$__typename;
+    if (l$$__typename != lOther$$__typename) {
+      return false;
+    }
+    return true;
+  }
+}
+
 class Variables$Query$FindScenesByIds {
   factory Variables$Query$FindScenesByIds({List<String>? ids}) =>
       Variables$Query$FindScenesByIds._({if (ids != null) r'ids': ids});

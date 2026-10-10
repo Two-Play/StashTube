@@ -25,6 +25,7 @@ enum AppTab {
   history(Icons.history, Icons.history, LibrarySection.history),
   watchLater(Icons.watch_later_outlined, Icons.watch_later, LibrarySection.watchLater),
   groups(Icons.playlist_play, Icons.playlist_play, LibrarySection.groups),
+  markers(Icons.bookmarks_outlined, Icons.bookmarks, LibrarySection.markers),
   images(Icons.image_outlined, Icons.image, LibrarySection.images),
   galleries(Icons.photo_library_outlined, Icons.photo_library, LibrarySection.galleries),
   shorts(Icons.slow_motion_video_outlined, Icons.slow_motion_video),

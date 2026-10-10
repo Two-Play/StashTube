@@ -87,6 +87,29 @@ void main() {
     expect((await r.libraryStats()).sceneCount, 12);
   });
 
+  test('markers come with their tag and scene', () async {
+    final r = repo({
+      'FindSceneMarkers': page('findSceneMarkers', 'FindSceneMarkersResultType', 'scene_markers', [
+        {
+          '__typename': 'SceneMarker',
+          'id': 'm1',
+          'title': '',
+          'seconds': 83.5,
+          'end_seconds': null,
+          'screenshot': 'http://s/scene/1/scene_marker/m1/screenshot',
+          'primary_tag': {'__typename': 'Tag', 'id': '3', 'name': 'Outdoor'},
+          'scene': sceneJson({'id': '1', 'title': 'Sunset'}),
+        },
+      ]),
+    });
+    final result = await r.findMarkers(MarkerQuery(sort: MarkerSort.title));
+    final marker = result.items.single;
+    expect([marker.title, marker.seconds, marker.tag.id, marker.scene.title], ['Outdoor', 83.5, '3', 'Sunset']);
+    expect(marker.screenshotUrl, 'http://s/scene/1/scene_marker/m1/screenshot');
+    expect(result.totalCount, 1);
+    expect(sent.single.variables['filter'], containsPair('sort', 'title'));
+  });
+
   test('filters are sent in the schema\'s input types', () async {
     final r = repo({'FindScenes': page('findScenes', 'FindScenesResultType', 'scenes', const [])});
     final saved = convertSavedSceneFilter({

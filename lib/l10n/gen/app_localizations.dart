@@ -2503,6 +2503,30 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Title, picture and controls on the lock screen and in the notification. Leave off for discretion.'**
   String get lockScreenControlsSubtitle;
+
+  /// No description provided for @libraryMarkers.
+  ///
+  /// In en, this message translates to:
+  /// **'Markers'**
+  String get libraryMarkers;
+
+  /// No description provided for @markersEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No markers yet'**
+  String get markersEmpty;
+
+  /// No description provided for @markersEmptyHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Mark a moment in the player with \"Marker\".'**
+  String get markersEmptyHint;
+
+  /// No description provided for @markersCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 marker} other{{count} markers}}'**
+  String markersCount(int count);
 }
 
 class _AppLocalizationsDelegate

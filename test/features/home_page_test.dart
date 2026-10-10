@@ -10,8 +10,7 @@ import 'package:stash_app_mobile/data/models/scene.dart';
 import 'package:stash_app_mobile/data/repositories/stash_repository.dart';
 import 'package:stash_app_mobile/features/home/home_page.dart';
 import 'package:stash_app_mobile/features/shell/all_views_page.dart';
-import 'package:stash_app_mobile/features/shell/navigation.dart';
-import 'package:stash_app_mobile/features/shorts/shorts_page.dart';
+import 'package:stash_app_mobile/features/shorts/shorts_feed.dart';
 import 'package:stash_app_mobile/features/shorts/shorts_shelf.dart';
 
 import '../helpers.dart';
@@ -87,18 +86,24 @@ void main() {
     expect(find.text('Short 4'), findsNothing);
   });
 
-  testWidgets('a short opens in the shorts tab when the bar has it', (tester) async {
-    await pumpHome(tester, prefs: {
-      'nav_bar_order': ['home', 'shorts', 'library', 'stats', 'all'],
-      'nav_bar_hidden': <String>[],
-    });
-    container.listen(currentTabProvider, (_, _) {});
-    await tester.ensureVisible(find.text('Short 2'));
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('Short 2'));
-    await tester.pump();
-    expect(container.read(currentTabProvider), AppTab.shorts);
-    expect(container.read(shortsJumpProvider), 2, reason: 'for the shorts tab to jump to');
+  testWidgets('every tile of the shelf has a queue of its own', (tester) async {
+    await pumpHome(tester);
+    for (var lane = 0; lane < ShortsShelf.count; lane++) {
+      expect(container.exists(shortsFeedFamily(ShortsSource.lane(lane))), isTrue);
+    }
+    expect(container.exists(shortsFeedProvider), isFalse, reason: 'the tab feed loads only when opened');
+  });
+
+  test('shelf tiles skip shorts an earlier tile shows', () {
+    Scene short(String id) => Scene(id: id, title: id);
+    final picks = shelfPicks([
+      [short('a'), short('b')],
+      [short('a'), short('c')],
+      [short('a'), short('c')],
+      [],
+    ]);
+    expect([for (final p in picks) p?.scene.id], ['a', 'c', null, null]);
+    expect(picks[1]?.index, 1, reason: 'opens its queue where the tile\'s short is');
   });
 
   testWidgets('"all views" lists only what is not in the bar, plus the settings', (tester) async {

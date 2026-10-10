@@ -19,6 +19,7 @@ import '../models/group.dart';
 import '../models/image_item.dart';
 import '../models/json.dart';
 import '../models/list_queries.dart';
+import '../models/marker.dart';
 import '../models/page_result.dart';
 import '../models/performer.dart';
 import '../models/scene.dart';
@@ -174,6 +175,25 @@ class StashRepository implements PlaybackActivityApi {
     final performer = data.findPerformer;
     if (performer == null) throw const StashApiException('Performer not found.', kind: StashErrorKind.notFound);
     return Performer.fromFields(performer, details: performer.details);
+  }
+
+  /// Scene markers of all scenes, for the markers page.
+  Future<PageResult<Marker>> findMarkers(MarkerQuery query, {int page = 1, int perPage = defaultPageSize}) async {
+    final data = await _query(
+      Options$Query$FindSceneMarkers(
+        variables: Variables$Query$FindSceneMarkers(
+          filter: _findFilter(
+            search: query.search,
+            page: page,
+            perPage: perPage,
+            sort: query.sortField,
+            direction: query.direction,
+          ),
+        ),
+      ),
+    );
+    final result = data.findSceneMarkers;
+    return PageResult(items: [for (final m in result.scene_markers) Marker.fromGraphql(m)], totalCount: result.count);
   }
 
   Future<PageResult<Studio>> findStudios(StudioQuery query, {int page = 1, int perPage = defaultPageSize}) async {

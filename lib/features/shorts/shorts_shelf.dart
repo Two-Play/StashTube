@@ -10,9 +10,30 @@ import '../shell/navigation.dart';
 import 'shorts_feed.dart';
 import 'shorts_page.dart';
 
-/// Four portrait shorts as a 2×2 grid on the home page (4.23). Tapping one
-/// opens the shorts feed at that short: in the shorts tab if the bar has
-/// it, else on top of the home page. Hidden when there are no shorts.
+/// The short a shelf tile shows: the first of its lane's queue that no
+/// earlier tile shows, and where it is in that queue.
+typedef ShelfPick = ({Scene scene, int index});
+
+/// One pick per lane (null while a lane has none to offer), so the four
+/// tiles never show the same short.
+List<ShelfPick?> shelfPicks(List<List<Scene>> lanes) {
+  final shown = <String>{};
+  return [
+    for (final items in lanes)
+      () {
+        final index = items.indexWhere((s) => !shown.contains(s.id));
+        if (index < 0) return null;
+        shown.add(items[index].id);
+        return (scene: items[index], index: index);
+      }(),
+  ];
+}
+
+/// Four portrait shorts as a 2×2 grid on the home page (4.23). Every tile
+/// has a queue of its own ([ShortsSource.lane]): tapping it opens the
+/// shorts at that short, continuing with that queue. The heading opens the
+/// shorts tab (or the feed on top of the home page). Hidden when there are
+/// no shorts.
 class ShortsShelf extends ConsumerWidget {
   const ShortsShelf({super.key});
 
@@ -20,28 +41,38 @@ class ShortsShelf extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final shorts = ref.watch(shortsFeedProvider).items.take(count).toList();
-    if (shorts.isEmpty) return const SizedBox.shrink();
+    // Watched here so the queues stay loaded while their shorts are open.
+    final picks = shelfPicks([
+      for (var lane = 0; lane < count; lane++) ref.watch(shortsFeedFamily(ShortsSource.lane(lane))).items,
+    ]);
+    if (picks.every((p) => p == null)) return const SizedBox.shrink();
     final theme = Theme.of(context);
 
-    void open(int index) {
+    void openFeed() {
       if (ref.read(navBarConfigProvider).isVisible(AppTab.shorts)) {
-        ref.read(shortsJumpProvider.notifier).jumpTo(index);
         ref.read(currentTabProvider.notifier).select(AppTab.shorts);
       } else {
-        openPage(ref, ShortsPage(initialIndex: index));
+        openPage(ref, const ShortsPage());
       }
     }
 
-    Widget tile(int i) => Expanded(
-          child: i < shorts.length ? _ShortTile(scene: shorts[i], onTap: () => open(i)) : const SizedBox.shrink(),
-        );
+    Widget tile(int lane) {
+      final pick = picks[lane];
+      return Expanded(
+        child: pick == null
+            ? const SizedBox.shrink()
+            : _ShortTile(
+                scene: pick.scene,
+                onTap: () => openPage(ref, ShortsPage(source: ShortsSource.lane(lane), initialIndex: pick.index)),
+              ),
+      );
+    }
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         InkWell(
-          onTap: () => open(0),
+          onTap: openFeed,
           child: Padding(
             padding: const EdgeInsets.fromLTRB(16, 8, 8, 8),
             child: Row(

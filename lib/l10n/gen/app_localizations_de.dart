@@ -1462,4 +1462,24 @@ class AppLocalizationsDe extends AppLocalizations {
   @override
   String get lockScreenControlsSubtitle =>
       'Titel, Vorschaubild und Steuerung auf dem Sperrbildschirm und in der Benachrichtigung. Für mehr Diskretion aus lassen.';
+
+  @override
+  String get libraryMarkers => 'Marker';
+
+  @override
+  String get markersEmpty => 'Noch keine Marker';
+
+  @override
+  String get markersEmptyHint => 'Markiere eine Stelle im Player mit „Marker“.';
+
+  @override
+  String markersCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count Marker',
+      one: '1 Marker',
+    );
+    return '$_temp0';
+  }
 }
