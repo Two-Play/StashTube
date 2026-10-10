@@ -18,6 +18,8 @@ flutter build ios --simulator --debug
 flutter build apk --debug
 flutter pub run build_runner build --delete-conflicting-outputs   # GraphQL types after changing a .graphql file
 tool/update_stash_schema.sh v0.31.1                               # another Stash schema, then build_runner
+tool/screenshots/demo_server.sh <work dir>                        # demo Stash (Docker, Blender open movies) on :9999
+tool/screenshots/take_screenshots.sh                              # README screenshots on the iOS simulator (integration_test)
 python3 tool/generate_app_icon.py                                 # app icon (iOS, Android adaptive, assets/icons/stashtube.png); needs rsvg-convert + Pillow
 ```
 
@@ -26,6 +28,7 @@ python3 tool/generate_app_icon.py                                 # app icon (iO
 
 - Releases (14.3): a tag `vX.Y.Z` matching `version:` in `pubspec.yaml` runs `.github/workflows/release.yml`, which writes `android/key.properties` from the `ANDROID_*` secrets and publishes signed APKs (per ABI and universal), an AAB and `SHA256SUMS` as a GitHub release; versionCode is the workflow's run number. Locally `android/key.properties` (git-ignored) names the upload keystore; without it release builds fall back to the debug key. The app ID `io.github.two_play.stashappmobile` (iOS `io.github.two-play.stashappmobile`) must not change after the first release.
 
+- README screenshots (`docs/images/screenshots/`): `demo_server.sh` downloads Blender's open movies once, cuts scenes, portrait shorts, stills, covers and character portraits, runs `stashapp/stash` as the container `stashtube-demo` and fills it with `seed_demo.py` (GraphQL, idempotent; it also resets the watch history, which a run changes). `take_screenshots.sh` drives the real app with `integration_test/screenshots_test.dart` (signs in to `localhost` without a port, English via the `locale` pref) and `test_driver/integration_test.dart` saves the images; find widgets in the bar/grid/tabs, since the collapsed player holds the same texts. `flutter test` doesn't run it.
 - `pubspec.lock` and `ios/Podfile.lock` are committed (exceptions to `*.lock` in `.gitignore`) and pin the dependencies (commit `Podfile.lock` too when an iOS build changes it); CI and releases run `flutter pub get --enforce-lockfile`, so commit the lock file after changing `pubspec.yaml` or upgrading. Because the generator is pinned, CI fails when the committed GraphQL types are out of date. Older transitive versions (`archive` 3.4, `win32` 5.4) don't compile on the current Dart SDK.
 - Android uses Gradle 9.3.1 / AGP 9.1.0 / Kotlin 2.4.0 with Kotlin DSL, matching the current Flutter template. `android.builtInKotlin=false` and `android.newDsl=false` in `gradle.properties` keep older plugins such as media_kit working.
 - Riverpod 3. All providers are written by hand: there is no codegen and no `@riverpod`. riverpod_lint 3 is enabled under `plugins:` in `analysis_options.yaml` (analysis_server_plugin, no custom_lint).

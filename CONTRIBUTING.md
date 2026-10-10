@@ -16,7 +16,7 @@ Thanks for helping! Bug reports, ideas, translations and pull requests are all w
 
 ## Reporting bugs and ideas
 
-Open an [issue](https://github.com/Two-Play/StashAppMobile/issues) and include:
+Open an [issue](https://github.com/Two-Play/StashTube/issues) and include:
 
 - the app version (*Settings → About*) and your platform (Android or iOS, with version)
 - your Stash version (*Settings → Server*)
@@ -32,8 +32,8 @@ Ideas fit best as an issue first, so we can talk about them before you spend tim
 You need Flutter **3.47.6** (the version CI uses), a current JDK and the Android SDK, and for iOS a Mac with Xcode and CocoaPods.
 
 ```bash
-git clone https://github.com/Two-Play/StashAppMobile.git
-cd StashAppMobile
+git clone https://github.com/Two-Play/StashTube.git
+cd StashTube
 flutter pub get --enforce-lockfile
 flutter run
 ```
