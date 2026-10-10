@@ -113,11 +113,15 @@ jobs:
       - run: flutter pub get --enforce-lockfile
 
       # AltStore and SideStore sign the app with the user's Apple ID when
-      # installing. The run number in the file name is the build number,
-      # which tool/altstore/make_source.py puts into the source.
+      # installing. They compare the app's version and build number with the
+      # source's, so both are set explicitly: the version without "-beta.N"
+      # (Flutter would turn 1.0.0-beta.5 into 1.0.0.5), as on TestFlight, and
+      # the run number, which the file name carries to
+      # tool/altstore/make_source.py.
       - name: Build
         run: |
-          flutter build ios --release --no-codesign --build-number ${{ github.run_number }}
+          version=$(sed -n 's/^version: *\([^+-]*\).*/\1/p' pubspec.yaml)
+          flutter build ios --release --no-codesign --build-name "$version" --build-number ${{ github.run_number }}
           mkdir -p ipa/Payload dist
           cp -R build/ios/iphoneos/Runner.app ipa/Payload/
           (cd ipa && zip -qry "../dist/stashtube-$GITHUB_REF_NAME-${{ github.run_number }}.ipa" Payload)
