@@ -152,7 +152,7 @@ The signing certificate's SHA-256 fingerprint starts with `F0:19:71:FF:8A:13:80:
 
 ### iOS
 
-There is no iOS download yet: TestFlight and the App Store need a paid Apple developer account. You can build StashTube yourself and install it with Xcode (see [Building from source](#building-from-source)).
+Release builds go to TestFlight, but only for internal testers so far; there is no public TestFlight link or App Store release yet. You can build StashTube yourself and install it with Xcode (see [Building from source](#building-from-source)).
 
 > [!NOTE]
 > With a free Apple ID, apps installed from Xcode stop opening after 7 days and have to be installed again.

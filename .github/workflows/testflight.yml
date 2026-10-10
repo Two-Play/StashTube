@@ -1,0 +1,113 @@
+name: TestFlight
+
+# Builds the iOS app and uploads it to App Store Connect, where it shows up in
+# TestFlight (14.3). Runs for every release tag vX.Y.Z (like release.yml) and
+# by hand ("Run workflow") for the selected branch.
+#
+# Signing is Xcode's automatic signing with an App Store Connect API key, so
+# no certificates or profiles are stored here. Secrets: APPSTORE_KEY_ID,
+# APPSTORE_ISSUER_ID, APPSTORE_KEY_P8 (the .p8 file's content, plain or
+# base64), APPLE_TEAM_ID. The key needs the Admin role, which lets Xcode
+# create the cloud-managed distribution certificate.
+#
+# App Store versions may only contain numbers and dots, so 1.0.0-beta.4 is
+# uploaded as 1.0.0; the workflow's run number is the build number.
+
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  FLUTTER_VERSION: 3.47.6
+
+jobs:
+  ios:
+    name: Upload to TestFlight
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: stable
+          cache: true
+
+      - name: Version
+        id: version
+        run: |
+          version=$(sed -n 's/^version: *\([^+]*\).*/\1/p' pubspec.yaml)
+          if [ "$GITHUB_REF_TYPE" = tag ] && [ "v$version" != "$GITHUB_REF_NAME" ]; then
+            echo "::error::pubspec.yaml has version $version, but the tag is $GITHUB_REF_NAME."
+            exit 1
+          fi
+          echo "name=${version%%-*}" >> "$GITHUB_OUTPUT"
+
+      - name: API key
+        env:
+          KEY_ID: ${{ secrets.APPSTORE_KEY_ID }}
+          KEY_P8: ${{ secrets.APPSTORE_KEY_P8 }}
+        run: |
+          if [ -z "$KEY_ID" ] || [ -z "$KEY_P8" ]; then
+            echo "::error::The App Store Connect secrets are missing."
+            exit 1
+          fi
+          key="$RUNNER_TEMP/AuthKey_$KEY_ID.p8"
+          if [[ "$KEY_P8" == *"BEGIN PRIVATE KEY"* ]]; then
+            printf '%s\n' "$KEY_P8" > "$key"
+          else
+            echo "$KEY_P8" | base64 --decode > "$key"
+          fi
+          echo "KEY_PATH=$key" >> "$GITHUB_ENV"
+
+      - run: flutter pub get --enforce-lockfile
+
+      # Generates the Flutter build settings (version, build number) and the
+      # pods; the signed archive comes from xcodebuild, which can sign in with
+      # the API key.
+      - name: Build
+        run: |
+          flutter build ios --release --no-codesign \
+            --build-name ${{ steps.version.outputs.name }} \
+            --build-number ${{ github.run_number }}
+
+      - name: Archive and upload
+        env:
+          KEY_ID: ${{ secrets.APPSTORE_KEY_ID }}
+          ISSUER_ID: ${{ secrets.APPSTORE_ISSUER_ID }}
+          TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+        run: |
+          auth=(-allowProvisioningUpdates
+            -authenticationKeyPath "$KEY_PATH"
+            -authenticationKeyID "$KEY_ID"
+            -authenticationKeyIssuerID "$ISSUER_ID")
+          xcodebuild archive \
+            -workspace ios/Runner.xcworkspace -scheme Runner -configuration Release \
+            -destination 'generic/platform=iOS' \
+            -archivePath "$RUNNER_TEMP/Runner.xcarchive" \
+            "${auth[@]}"
+          cat > "$RUNNER_TEMP/ExportOptions.plist" <<EOF
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0">
+          <dict>
+            <key>method</key><string>app-store-connect</string>
+            <key>destination</key><string>upload</string>
+            <key>signingStyle</key><string>automatic</string>
+            <key>teamID</key><string>$TEAM_ID</string>
+            <key>manageAppVersionAndBuildNumber</key><false/>
+          </dict>
+          </plist>
+          EOF
+          xcodebuild -exportArchive \
+            -archivePath "$RUNNER_TEMP/Runner.xcarchive" \
+            -exportOptionsPlist "$RUNNER_TEMP/ExportOptions.plist" \
+            -exportPath "$RUNNER_TEMP/export" \
+            "${auth[@]}"
+
+      - name: Remove the key
+        if: always()
+        run: rm -f "$RUNNER_TEMP"/AuthKey_*.p8
