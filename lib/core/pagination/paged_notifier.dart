@@ -84,10 +84,13 @@ abstract class PagedNotifier<T, A> extends AsyncNotifier<PagedState<T>> {
     return PagedState(items: result.items, totalCount: result.totalCount, page: 1, perPage: pageSize);
   }
 
-  Future<void> loadMore() async {
+  /// Loads the next page. After a failed page only with [retry] (the "try
+  /// again" button), so scrolling doesn't fire a request per scroll event.
+  Future<void> loadMore({bool retry = false}) async {
     if (ref.read(pagingModeProvider) == PagingMode.pages) return;
     final current = state.value;
     if (current == null || !current.hasMore || current.isLoadingMore || state.isLoading) return;
+    if (current.loadMoreError != null && !retry) return;
 
     final loading = current.copyWith(isLoadingMore: true);
     state = AsyncData(loading);

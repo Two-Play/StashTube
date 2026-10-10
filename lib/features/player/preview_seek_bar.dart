@@ -183,7 +183,8 @@ class _PreviewSeekBarState extends ConsumerState<PreviewSeekBar> {
       unawaited(precacheImage(CachedNetworkImageProvider(thumbs.spriteUrl, headers: headers), context,
           onError: (_, _) {}));
     }
-    final details = ref.watch(sceneDetailsProvider(widget.sceneId)).value;
+    // Like the thumbnails, only once the bar is shown or touched.
+    final details = _loadThumbnails ? ref.watch(sceneDetailsProvider(widget.sceneId)).value : null;
     final markers = details?.markers ?? const <SceneMarker>[];
     _markerFractions = [
       if (_totalMs > 0)

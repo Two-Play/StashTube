@@ -72,12 +72,18 @@ class _LoginPageState extends ConsumerState<LoginPage> {
           password: password.isEmpty ? null : password,
         );
 
+    final candidates = ServerConfig.candidateUrls(_urlController.text).map(configFor).toList();
+    if (candidates.isNotEmpty && candidates.first.isUnencryptedOverInternet && !await _confirmUnencrypted(candidates.first)) {
+      return;
+    }
+    if (!mounted) return;
+
     setState(() {
       _connecting = true;
       _error = null;
     });
     try {
-      final config = await findServer(ServerConfig.candidateUrls(_urlController.text).map(configFor).toList());
+      final config = await findServer(candidates);
       final servers = ref.read(serverProfilesProvider.notifier);
       final edit = widget.edit;
       if (edit != null) {
@@ -98,6 +104,23 @@ class _LoginPageState extends ConsumerState<LoginPage> {
       if (mounted) setState(() => _connecting = false);
     }
   }
+
+  /// Plain HTTP over the internet sends the API key or password in the
+  /// clear: ask first.
+  Future<bool> _confirmUnencrypted(ServerConfig config) async =>
+      await showDialog<bool>(
+        context: context,
+        builder: (context) => AlertDialog(
+          icon: const Icon(Icons.lock_open_outlined),
+          title: Text(context.l10n.insecureConnectionTitle),
+          content: Text(context.l10n.insecureConnectionBody(Uri.parse(config.baseUrl).host)),
+          actions: [
+            TextButton(onPressed: () => Navigator.pop(context, false), child: Text(context.l10n.cancel)),
+            TextButton(onPressed: () => Navigator.pop(context, true), child: Text(context.l10n.connectAnyway)),
+          ],
+        ),
+      ) ??
+      false;
 
   @override
   Widget build(BuildContext context) {

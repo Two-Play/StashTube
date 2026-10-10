@@ -2,20 +2,24 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:stash_app_mobile/core/config/image_cache.dart';
 import 'package:stash_app_mobile/core/config/secret_store.dart';
 import 'package:stash_app_mobile/core/config/server_config.dart';
 import 'package:stash_app_mobile/features/auth/login_page.dart';
 import 'package:stash_app_mobile/features/library/watch_later.dart';
 import 'package:stash_app_mobile/features/player/scene_edits.dart';
+import 'package:stash_app_mobile/features/search/search_history.dart';
 
 void main() {
   late SharedPreferences prefs;
   late MemorySecretStore secrets;
+  var imageCacheCleared = 0;
 
   ProviderContainer restart() {
     final c = ProviderContainer(overrides: [
       sharedPreferencesProvider.overrideWithValue(prefs),
       secretStoreProvider.overrideWithValue(secrets),
+      clearImageCacheProvider.overrideWithValue(() => imageCacheCleared++),
     ]);
     addTearDown(c.dispose);
     return c;
@@ -123,10 +127,38 @@ void main() {
     await servers.activate(a.id);
     expect(c.read(watchLaterProvider), ['scene-on-a']);
 
+    imageCacheCleared = 0;
     await servers.remove(a.id);
     expect(prefs.getStringList('watch_later:${a.id}'), isNull);
+    expect(imageCacheCleared, 1, reason: "the removed server's thumbnails don't stay on the device");
     await servers.activate(b.id);
     expect(c.read(watchLaterProvider), isEmpty);
+  });
+
+  test('lists of the single-server versions move to the first server only', () async {
+    final c = await containerWith({
+      'url': 'http://a:1',
+      'watch_later': ['old-scene'],
+      'search_history': ['old term'],
+    });
+    final first = c.read(serverProfilesProvider).active!;
+    expect(c.read(watchLaterProvider), ['old-scene']);
+    expect(c.read(searchHistoryProvider), ['old term']);
+    expect(prefs.getStringList('watch_later'), isNull);
+
+    await c.read(serverProfilesProvider.notifier).add(const ServerConfig(baseUrl: 'http://b:1'));
+    expect(c.read(watchLaterProvider), isEmpty, reason: 'not on every other server');
+    expect(c.read(searchHistoryProvider), isEmpty);
+    await c.read(serverProfilesProvider.notifier).activate(first.id);
+    expect(c.read(watchLaterProvider), ['old-scene']);
+  });
+
+  test('damaged stored servers lead back to the login instead of crashing', () async {
+    var c = await containerWith({'server_profiles': '[{"id": 1, "url": null}, "x", {"id": "ok", "url": "http://a:1"}]'});
+    expect(c.read(serverProfilesProvider).profiles.single.name, 'a:1', reason: 'readable entries stay');
+
+    c = await containerWith({'server_profiles': '{not json'});
+    expect(c.read(serverProfilesProvider).profiles, isEmpty);
   });
 
   test('switching servers drops cached edits of the old server', () async {
@@ -143,6 +175,22 @@ void main() {
   test('ServerConfig has value equality', () {
     expect(const ServerConfig(baseUrl: 'http://a', apiKey: 'k'), const ServerConfig(baseUrl: 'http://a', apiKey: 'k'));
     expect(const ServerConfig(baseUrl: 'http://a'), isNot(const ServerConfig(baseUrl: 'http://a', apiKey: 'k')));
+  });
+
+  testWidgets('login asks before plain HTTP over the internet', (tester) async {
+    final c = await tester.runAsync(() => containerWith({}));
+    await tester.pumpWidget(UncontrolledProviderScope(container: c!, child: const MaterialApp(home: LoginPage())));
+    await tester.enterText(find.widgetWithText(TextFormField, 'Server URL'), 'stash.example.com');
+    await tester.ensureVisible(find.text('Connect'));
+    await tester.tap(find.text('Connect'));
+    await tester.pumpAndSettle();
+    expect(find.text('Unencrypted connection'), findsOneWidget);
+
+    await tester.tap(find.text('Cancel'));
+    await tester.pumpAndSettle();
+    expect(find.text('Unencrypted connection'), findsNothing);
+    expect(find.byType(CircularProgressIndicator), findsNothing, reason: 'nothing was sent');
+    expect(c.read(serverProfilesProvider).profiles, isEmpty);
   });
 
   testWidgets('login page lists saved servers; tapping one switches to it', (tester) async {

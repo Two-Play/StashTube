@@ -20,6 +20,13 @@ abc_sprite.jpg#xywh=320,90,160,90
 
 void main() {
   group('ScrubThumbnails.parse', () {
+    test('skips cues with an empty region', () {
+      const vtt = 'WEBVTT\n\n00:00.000 --> 00:05.000\ns.jpg#xywh=0,0,0,90\n\n00:05.000 --> 00:10.000\ns.jpg#xywh=0,0,160,90\n';
+      final t = ScrubThumbnails.parse(vtt, spriteUrl: 'http://s/sprite', vttUrl: 'http://s/vtt')!;
+      expect(t.cues.single.start, 5);
+      expect(ScrubThumbnails.parse('WEBVTT\n\n00:00.000 --> 00:05.000\ns.jpg#xywh=0,0,160,0\n', vttUrl: 'http://s/vtt'), isNull);
+    });
+
     test('reads cues and prefers the sprite URL from the API', () {
       final t = ScrubThumbnails.parse(_vtt, spriteUrl: 'http://s/sprite', vttUrl: 'http://s/scene/1/vtt/thumbs')!;
       expect(t.spriteUrl, 'http://s/sprite');

@@ -99,7 +99,8 @@ class SceneActions extends ConsumerWidget {
                 label: Text(l.marker),
                 tooltip: l.addMarkerHere,
                 onPressed: () {
-                  final position = ref.read(playerProvider).state.position;
+                  // On the TV while casting, not in the paused local player.
+                  final position = ref.read(nowPlayingProvider.notifier).currentPosition();
                   showAddMarkerSheet(context, scene: scene, seconds: position.inMilliseconds / 1000);
                 },
               ),
@@ -152,16 +153,18 @@ class _AddMarkerSheetState extends ConsumerState<AddMarkerSheet> {
     final messenger = ScaffoldMessenger.of(context);
     final navigator = Navigator.of(context);
     final l = context.l10n;
+    final container = ProviderScope.containerOf(context, listen: false);
     try {
-      await ref.read(stashRepositoryProvider).createMarker(
+      await container.read(stashRepositoryProvider).createMarker(
             sceneId: widget.scene.id,
             seconds: widget.seconds,
             primaryTagId: tag.id,
             title: _title.text.trim(),
           );
       // Chapters come from the scene details.
-      ref.invalidate(sceneDetailsProvider(widget.scene.id));
-      navigator.pop();
+      container.invalidate(sceneDetailsProvider(widget.scene.id));
+      // Closed meanwhile: popping now would remove the page below the sheet.
+      if (mounted) navigator.pop();
       messenger.showSnackBar(SnackBar(content: Text(l.markerAdded(formatDuration(widget.seconds)))));
     } catch (e) {
       if (mounted) setState(() => _saving = false);

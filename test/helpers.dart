@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/misc.dart' show Override;
 import 'package:stash_app_mobile/core/config/server_config.dart';
+import 'package:stash_app_mobile/features/security/app_lock.dart';
 import 'package:stash_app_mobile/features/settings/scene_card_config.dart';
 
 /// A server in use, for tests that don't care which one: per-server state
@@ -14,7 +15,14 @@ final List<Override> testServer = [
 final List<Override> testServerOnly = [
   activeServerIdProvider.overrideWithValue('test-server'),
   serverConfigProvider.overrideWithValue(const ServerConfig(baseUrl: 'http://test')),
+  // Not locked: the lock state would otherwise need SharedPreferences.
+  appLockedProvider.overrideWith(_Unlocked.new),
 ];
+
+class _Unlocked extends AppLockStateNotifier {
+  @override
+  bool build() => false;
+}
 
 class _DefaultCardConfig extends SceneCardConfigNotifier {
   @override

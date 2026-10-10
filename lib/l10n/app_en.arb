@@ -814,5 +814,25 @@
   },
   "openSourceLicenses": "Open source licenses",
   "openSourceLicensesSubtitle": "Licenses of the packages StashTube uses",
-  "aboutLegalese": "A client for Stash servers. Not affiliated with the Stash project."
+  "aboutLegalese": "A client for Stash servers. Not affiliated with the Stash project.",
+  "pinTooManyAttempts": "Too many wrong PINs.",
+  "pinTryAgainIn": "Try again in {time}.",
+  "@pinTryAgainIn": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "insecureConnectionTitle": "Unencrypted connection",
+  "insecureConnectionBody": "{host} is outside your home network and is reached over plain HTTP. Your API key or password and everything you watch can be read along the way. Use https:// or a VPN.",
+  "@insecureConnectionBody": {
+    "placeholders": {
+      "host": {
+        "type": "String"
+      }
+    }
+  },
+  "connectAnyway": "Connect anyway",
+  "castApiKeyHint": "While casting, the cast device receives the stream address including your API key. Other devices on this Wi-Fi may be able to read it."
 }

@@ -186,7 +186,7 @@ StashTube has a few settings for keeping things private, under *Settings → Pri
 - **Lock screen controls** (under *Playback*) are off by default, so titles and thumbnails don't show on the lock screen
 
 > [!NOTE]
-> The PIN is stored only as a salted hash. API keys and passwords are kept in the system's secure storage (Keychain on iOS, Keystore on Android).
+> The PIN is stored only as a salted hash. It, API keys and passwords are kept in the system's secure storage (Keychain on iOS, Keystore on Android).
 
 Found a security problem? Please report it privately, as described in [`SECURITY.md`](SECURITY.md).
 

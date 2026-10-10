@@ -420,5 +420,11 @@
   "appVersionValue": "{version} (Build {build})",
   "openSourceLicenses": "Open-Source-Lizenzen",
   "openSourceLicensesSubtitle": "Lizenzen der Pakete, die StashTube verwendet",
-  "aboutLegalese": "Ein Client für Stash-Server. Nicht mit dem Stash-Projekt verbunden."
+  "aboutLegalese": "Ein Client für Stash-Server. Nicht mit dem Stash-Projekt verbunden.",
+  "pinTooManyAttempts": "Zu viele falsche PINs.",
+  "pinTryAgainIn": "Neuer Versuch in {time}.",
+  "insecureConnectionTitle": "Unverschlüsselte Verbindung",
+  "insecureConnectionBody": "{host} liegt außerhalb deines Heimnetzes und wird über unverschlüsseltes HTTP erreicht. Dein API-Key oder Passwort und alles, was du ansiehst, können unterwegs mitgelesen werden. Nutze https:// oder ein VPN.",
+  "connectAnyway": "Trotzdem verbinden",
+  "castApiKeyHint": "Beim Streamen erhält das Cast-Gerät die Stream-Adresse samt deinem API-Key. Andere Geräte in diesem WLAN können sie unter Umständen auslesen."
 }

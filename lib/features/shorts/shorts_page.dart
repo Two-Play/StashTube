@@ -22,6 +22,7 @@ import '../player/player_providers.dart';
 import '../player/preview_seek_bar.dart';
 import '../player/scene_edits.dart';
 import '../settings/settings_button.dart';
+import '../security/app_lock.dart';
 import '../shell/navigation.dart';
 import 'shorts_feed.dart';
 import 'shorts_settings_sheet.dart';
@@ -310,6 +311,8 @@ class _ShortsPageState extends ConsumerState<ShortsPage> {
         (ModalRoute.of(context)?.isCurrent ?? true) &&
         !ref.watch(settingsOpenProvider) &&
         _appVisible &&
+        // Nothing plays behind the lock screen.
+        !ref.watch(appLockedProvider) &&
         !mainCovers;
     if (visible != _visible) _onVisibilityChanged(visible);
     if (visible) _started = true;
@@ -543,11 +546,18 @@ class _ShortViewState extends ConsumerState<_ShortView> {
   void didUpdateWidget(_ShortView oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.fullscreen != widget.fullscreen) _showBar();
+    // The pool's player moved on to another short: don't leave it at 2×.
+    if (_fast && oldWidget.controller != widget.controller) {
+      oldWidget.controller?.player.setRate(1);
+      _fast = false;
+    }
   }
 
   @override
   void dispose() {
     _barTimer?.cancel();
+    // Swiped away while holding: the release never arrives here.
+    if (_fast) _player?.setRate(1);
     super.dispose();
   }
 

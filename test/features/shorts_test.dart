@@ -26,10 +26,17 @@ class _ShortsRepository implements StashRepository {
   final int tagged;
   final int others;
   final queries = <SceneQuery>[];
+  final pages = <int>[];
+  bool failNext = false;
 
   @override
   Future<PageResult<Scene>> findScenes(SceneQuery query, {int page = 1, int perPage = 24}) async {
     queries.add(query);
+    pages.add(page);
+    if (failNext) {
+      failNext = false;
+      throw const StashApiException('offline', isNetworkError: true);
+    }
     final isTagged = query.filter.tags.isNotEmpty;
     final all = _scenes(isTagged ? 't' : 'o', isTagged ? tagged : others);
     return PageResult(items: all.skip((page - 1) * perPage).take(perPage).toList(), totalCount: all.length);
@@ -170,6 +177,21 @@ void main() {
       final c = await _container(_ShortsRepository(others: 30));
       expect((await _loaded(c)).items, hasLength(24));
       await c.read(shortsFeedProvider.notifier).loadMore();
+      expect(c.read(shortsFeedProvider).items, hasLength(30));
+    });
+
+    test('loads a failed page again instead of skipping it', () async {
+      final repo = _ShortsRepository(others: 30);
+      final c = await _container(repo);
+      expect((await _loaded(c)).items, hasLength(24));
+
+      repo.failNext = true;
+      await c.read(shortsFeedProvider.notifier).loadMore();
+      expect(c.read(shortsFeedProvider).error, isNotNull);
+      expect(c.read(shortsFeedProvider).items, hasLength(24));
+
+      await c.read(shortsFeedProvider.notifier).loadMore();
+      expect(repo.pages, [1, 2, 2]);
       expect(c.read(shortsFeedProvider).items, hasLength(30));
     });
   });
