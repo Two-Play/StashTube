@@ -108,6 +108,18 @@ jobs:
             -exportPath "$RUNNER_TEMP/export" \
             "${auth[@]}"
 
+      # xcodebuild only prints a summary; the reason (e.g. Apple's API answer)
+      # is in the distribution logs. Lines with tokens are left out.
+      - name: Distribution log
+        if: failure()
+        run: |
+          find "${TMPDIR:-/tmp}" -path '*.xcdistributionlogs/*' -name '*.log' 2>/dev/null \
+            | while read -r log; do
+                echo "== $(basename "$log")"
+                grep -iE 'error|fail|status|reason|message' "$log" \
+                  | grep -viE 'authorization|bearer|token' | tail -60
+              done
+
       - name: Remove the key
         if: always()
         run: rm -f "$RUNNER_TEMP"/AuthKey_*.p8
