@@ -133,6 +133,7 @@ The backlog with every user story and its status is in [`docs/BACKLOG.md`](docs/
    | `stashtube-…-armeabi-v7a.apk` | older 32-bit phones |
    | `stashtube-…-x86_64.apk` | emulators and x86 devices |
    | `stashtube-…-universal.apk` | any device, but larger |
+   | `stashtube-…-foss.apk` | any device, without Google Cast (no Google Play Services needed) |
 
 3. Open the file and allow your browser or file manager to install apps when Android asks.
 4. To update later, install the newer APK over the old one; your servers and settings stay.
@@ -152,10 +153,16 @@ The signing certificate's SHA-256 fingerprint starts with `F0:19:71:FF:8A:13:80:
 
 ### iOS
 
-Release builds go to TestFlight, but only for internal testers so far; there is no public TestFlight link or App Store release yet. You can build StashTube yourself and install it with Xcode (see [Building from source](#building-from-source)).
+StashTube isn't in the App Store. Install it with [AltStore](https://altstore.io) or [SideStore](https://sidestore.io), which sign the app with your own Apple ID:
+
+1. Install AltStore (with AltServer on a computer) or SideStore.
+2. In *Browse* → *Sources* (AltStore) or *Sources* (SideStore), add the source `https://two-play.github.io/StashTube/altstore.json`.
+3. Install StashTube from it. Updates show up in the app's *My Apps* tab.
+
+You can also download the `.ipa` from the [releases](https://github.com/Two-Play/StashTube/releases) and open it in AltStore or SideStore, or build StashTube yourself and install it with Xcode (see [Building from source](#building-from-source)).
 
 > [!NOTE]
-> With a free Apple ID, apps installed from Xcode stop opening after 7 days and have to be installed again.
+> With a free Apple ID, sideloaded apps have to be refreshed every 7 days (AltStore and SideStore do it in the background), and only three can be installed at a time.
 
 ## First start
 

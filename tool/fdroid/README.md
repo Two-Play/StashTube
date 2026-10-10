@@ -1,6 +1,9 @@
 # F-Droid build
 
-F-Droid only ships free software, and Google Cast needs Google Play Services. So the F-Droid build leaves Chromecast out; everything else is the same app.
+F-Droid only ships free software, and Google Cast needs Google Play Services. So the F-Droid build leaves Chromecast out; everything else is the same app. Every GitHub release also has this variant, signed with the release key, as `stashtube-<tag>-foss.apk` (for IzzyOnDroid and people without Play Services).
+
+> [!WARNING]
+> Not submittable yet: `media_kit_libs_android_video` downloads prebuilt libmpv libraries (`.jar`s from `media-kit/libmpv-android-video-build`) during the build, and F-Droid builds everything from source without network access. The recipe would need to build libmpv from source first (for example as a srclib with that repository's build scripts).
 
 - `tool/fdroid_prepare.sh [flutter]` turns a checkout into that build: it drops `flutter_chrome_cast` (the `google-cast` blocks in `pubspec.yaml` and the Android manifest), puts `google_cast_service.dart` from this folder in place of the real one, so casting reports itself as unsupported and the cast button doesn't show, removes the release signing (F-Droid signs itself) and runs `flutter pub get`. Don't commit the result.
 - `io.github.two_play.stashappmobile.yml` is a template for the recipe in [fdroiddata](https://gitlab.com/fdroid/fdroiddata), which runs the script in `prebuild`.
