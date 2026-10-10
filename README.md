@@ -144,7 +144,7 @@ There is no iOS download yet: TestFlight and the App Store need a paid Apple dev
 
 ## First start
 
-1. Enter your server's address, for example `http://192.168.1.10:9999`. Stash listens on port **9999** by default; Stashy talks to its GraphQL API at that address plus `/graphql`, so enter only the address and port.
+1. Enter your server's address, for example `192.168.1.10`. Stash listens on port **9999** by default: without a port, Stashy tries that one as well, so you only need to add a port if yours is different. Stashy finds the GraphQL API (`/graphql`) itself.
 2. If your Stash has a password, either enter an **API key** (create one in Stash under *Settings → Security*) or sign in with your **username and password**.
 3. Pick a theme and an accent color. You can change them, and everything else, in the settings (the gear at the top).
 
@@ -230,7 +230,7 @@ Bug reports, ideas and pull requests are welcome. [`CONTRIBUTING.md`](CONTRIBUTI
 
 ## License
 
-Stashy is free software under the [GNU Affero General Public License v3.0](LICENSE). The licenses of all packages it uses are in the app under *Settings → About → Open source licenses*.
+Stashy is free software under the [GNU Affero General Public License v3.0](LICENSE). The licenses of everything it uses are in the app under *Settings → About → Open source licenses*: the Flutter and Dart packages, and the native libraries of the video player (mpv, FFmpeg and their dependencies, under LGPL and permissive licenses).
 
 > [!NOTE]
 > Stashy is an independent project. It is not affiliated with, endorsed by or connected to the [Stash](https://github.com/stashapp/stash) project or its developers; "Stash" only names the server software Stashy connects to.

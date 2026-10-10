@@ -56,7 +56,6 @@ const accentColors = <String, Color>{
   'Pink': Color(0xFFD81B60),
   'Purple': Color(0xFF8E24AA),
   'Indigo': Color(0xFF3949AB),
-  'Blue': Color(0xFF1E88E5),
   'Teal': Color(0xFF00897B),
   'Green': Color(0xFF43A047),
   'Orange': Color(0xFFF4511E),
@@ -66,13 +65,14 @@ const accentColors = <String, Color>{
 class AccentColorNotifier extends Notifier<Color> {
   static const _key = 'accent_color';
 
-  /// The former default, a theme in Stash's colors; it became [stashyBlue].
-  static const _formerDefault = 0xFF137CBD;
+  /// Former blues that became [stashyBlue]: the default in Stash's colors,
+  /// and "Blue", which looked almost the same.
+  static const _formerBlues = {0xFF137CBD, 0xFF1E88E5};
 
   @override
   Color build() {
     final value = ref.watch(sharedPreferencesProvider).getInt(_key);
-    if (value == null || value == _formerDefault) return accentColors.values.first;
+    if (value == null || _formerBlues.contains(value)) return accentColors.values.first;
     return Color(value);
   }
 

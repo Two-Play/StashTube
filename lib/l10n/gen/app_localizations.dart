@@ -1007,7 +1007,7 @@ abstract class AppLocalizations {
   /// No description provided for @loginIntro.
   ///
   /// In en, this message translates to:
-  /// **'Enter the address of your Stash server, e.g. http://192.168.1.10:9999'**
+  /// **'Enter the address of your Stash server, e.g. 192.168.1.10. Without a port, Stash\'s default port 9999 is tried too.'**
   String get loginIntro;
 
   /// No description provided for @savedServers.
@@ -1369,12 +1369,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Indigo'**
   String get colorIndigo;
-
-  /// No description provided for @colorBlue.
-  ///
-  /// In en, this message translates to:
-  /// **'Blue'**
-  String get colorBlue;
 
   /// No description provided for @colorTeal.
   ///

@@ -65,26 +65,28 @@ class _LoginPageState extends ConsumerState<LoginPage> {
     final apiKey = _apiKeyController.text.trim();
     final username = _usernameController.text.trim();
     final password = _passwordController.text;
-    final config = ServerConfig(
-      baseUrl: ServerConfig.normalizeUrl(_urlController.text)!,
-      apiKey: apiKey.isEmpty ? null : apiKey,
-      username: username.isEmpty ? null : username,
-      password: password.isEmpty ? null : password,
-    );
+    ServerConfig configFor(String url) => ServerConfig(
+          baseUrl: url,
+          apiKey: apiKey.isEmpty ? null : apiKey,
+          username: username.isEmpty ? null : username,
+          password: password.isEmpty ? null : password,
+        );
 
     setState(() {
       _connecting = true;
       _error = null;
     });
     try {
-      await StashRepository.verifyServer(config);
+      final config = await findServer(ServerConfig.candidateUrls(_urlController.text).map(configFor).toList());
       final servers = ref.read(serverProfilesProvider.notifier);
       final edit = widget.edit;
       if (edit != null) {
         await servers.update(edit.id, config, name: _nameController.text);
       } else {
         // The first login asks for a theme once the shell is there.
-        if (ref.read(serverProfilesProvider).profiles.isEmpty) await ref.read(themeWelcomeProvider.notifier).request();
+        if (ref.read(serverProfilesProvider).profiles.isEmpty) {
+          await ref.read(themeWelcomeProvider.notifier).request();
+        }
         // Activating the server swaps the app to its shell (see StashApp).
         await servers.add(config, name: _nameController.text);
       }
@@ -252,4 +254,30 @@ class _LoginPageState extends ConsumerState<LoginPage> {
       ),
     );
   }
+}
+
+/// The first of [candidates] (the same server with and without Stash's
+/// default port) that answers as a Stash server. All are tried, since
+/// something else may answer on one of them (e.g. a proxy). If none works,
+/// the error of one that reached a server (e.g. a wrong API key) is shown
+/// rather than failing to connect; [verify] is replaceable for tests.
+Future<ServerConfig> findServer(
+  List<ServerConfig> candidates, {
+  Future<void> Function(ServerConfig) verify = StashRepository.verifyServer,
+}) async {
+  final errors = <(Object, StackTrace)>[];
+  for (final config in candidates) {
+    try {
+      await verify(config);
+      return config;
+    } catch (e, stack) {
+      errors.add((e, stack));
+    }
+  }
+  if (errors.isEmpty) throw StateError('No address to try');
+  final (error, stack) = errors.firstWhere(
+    (e) => e.$1 is StashApiException && !(e.$1 as StashApiException).isNetworkError,
+    orElse: () => errors.first,
+  );
+  Error.throwWithStackTrace(error, stack);
 }
