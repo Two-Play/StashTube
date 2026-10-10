@@ -1404,7 +1404,7 @@ class AppLocalizationsDe extends AppLocalizations {
   String get tabAll => 'Alle';
 
   @override
-  String get colorStash => 'Stash (Blau/Braun)';
+  String get colorStashy => 'Stashy';
 
   @override
   String get searchScenes => 'Szenen suchen';
@@ -1524,4 +1524,26 @@ class AppLocalizationsDe extends AppLocalizations {
   @override
   String get markerPreviewsSubtitle =>
       'Marker zeigen einen kurzen Clip in Dauerschleife statt eines Standbilds.';
+
+  @override
+  String get sectionAbout => 'Über';
+
+  @override
+  String get appVersion => 'Version';
+
+  @override
+  String appVersionValue(String version, String build) {
+    return '$version (Build $build)';
+  }
+
+  @override
+  String get openSourceLicenses => 'Open-Source-Lizenzen';
+
+  @override
+  String get openSourceLicensesSubtitle =>
+      'Lizenzen der Pakete, die Stashy verwendet';
+
+  @override
+  String get aboutLegalese =>
+      'Ein Client für Stash-Server. Nicht mit dem Stash-Projekt verbunden.';
 }

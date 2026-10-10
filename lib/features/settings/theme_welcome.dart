@@ -50,7 +50,7 @@ class ThemeWelcomeDialog extends StatelessWidget {
       icon: Center(
         child: ClipRRect(
           borderRadius: BorderRadius.circular(16),
-          child: Image.asset('assets/icons/stash.png', width: 64, height: 64),
+          child: Image.asset('assets/icons/stashy.png', width: 64, height: 64),
         ),
       ),
       title: Text(l.themeWelcomeTitle),

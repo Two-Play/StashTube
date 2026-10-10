@@ -89,15 +89,6 @@ class _AccentSwatch extends StatelessWidget {
             margin: const EdgeInsets.all(2),
             decoration: BoxDecoration(
               color: shown,
-              // The Stash theme shows both of its colors.
-              gradient: AppTheme.isStash(color)
-                  ? LinearGradient(
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                      stops: const [0.5, 0.5],
-                      colors: [shown, AppTheme.accentFor(stashBrown, Theme.of(context).brightness)],
-                    )
-                  : null,
               shape: BoxShape.circle,
               border: selected ? Border.all(color: Theme.of(context).colorScheme.onSurface, width: 3) : null,
             ),
@@ -120,6 +111,6 @@ String accentColorName(AppLocalizations l, String name) => switch (name) {
   'Green' => l.colorGreen,
   'Orange' => l.colorOrange,
   'Amber' => l.colorAmber,
-  'Stash' => l.colorStash,
+  'Stashy' => l.colorStashy,
   _ => name,
 };
