@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/config/haptics.dart';
+import '../../core/config/server_config.dart';
 import '../../core/utils/format.dart';
 import '../../widgets/play_pause_icon.dart';
 import '../player/player_providers.dart';
@@ -130,6 +131,15 @@ class _CastSheet extends ConsumerWidget {
                       );
                     }
                   },
+                ),
+              // Cast devices can't send headers, so the key travels in the URL.
+              if (ref.watch(serverConfigProvider)?.apiKey?.isNotEmpty ?? false)
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+                  child: Text(
+                    context.l10n.castApiKeyHint,
+                    style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+                  ),
                 ),
               const SizedBox(height: 8),
             ],

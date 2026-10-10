@@ -48,7 +48,8 @@ class _ImageViewerPageState extends ConsumerState<ImageViewerPage> {
     });
     final state = ref.read(imageListProvider(widget.query)).current;
     if (state != null && index >= state.items.length - 5) {
-      ref.read(imageListProvider(widget.query).notifier).loadMore();
+      // The viewer has no "try again" button: paging on retries a failed page.
+      ref.read(imageListProvider(widget.query).notifier).loadMore(retry: true);
     }
   }
 

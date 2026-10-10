@@ -94,10 +94,12 @@ class _SceneEditPageState extends ConsumerState<SceneEditPage> with _UrlsLoader 
     diffUrls(changes);
     if (changes.isEmpty) return false;
 
-    final updated = await ref.read(stashRepositoryProvider).updateScene(s.id, changes);
-    ref.read(nowPlayingProvider.notifier).replaceScene(updated);
-    ref.read(sceneEditsProvider.notifier).forget(updated.id);
-    ref.invalidate(sceneListProvider);
+    // The page may be gone once the server answers: no `ref` after it.
+    final container = ProviderScope.containerOf(context, listen: false);
+    final updated = await container.read(stashRepositoryProvider).updateScene(s.id, changes);
+    container.read(nowPlayingProvider.notifier).replaceScene(updated);
+    container.read(sceneEditsProvider.notifier).forget(updated.id);
+    container.invalidate(sceneListProvider);
     return true;
   }
 
@@ -208,9 +210,11 @@ class _PerformerEditPageState extends ConsumerState<PerformerEditPage> with _Url
     diffUrls(changes);
     if (changes.isEmpty) return false;
 
-    await ref.read(stashRepositoryProvider).updatePerformer(p.id, changes);
-    ref.invalidate(performerProvider(p.id));
-    ref.invalidate(performerListProvider);
+    // The page may be gone once the server answers: no `ref` after it.
+    final container = ProviderScope.containerOf(context, listen: false);
+    await container.read(stashRepositoryProvider).updatePerformer(p.id, changes);
+    container.invalidate(performerProvider(p.id));
+    container.invalidate(performerListProvider);
     return true;
   }
 
@@ -299,9 +303,11 @@ class _StudioEditPageState extends ConsumerState<StudioEditPage> {
     if (_image != null) changes['image'] = _image!.value;
     if (changes.isEmpty) return false;
 
-    await ref.read(stashRepositoryProvider).updateStudio(s.id, changes);
-    ref.invalidate(studioProvider(s.id));
-    ref.invalidate(studioListProvider);
+    // The page may be gone once the server answers: no `ref` after it.
+    final container = ProviderScope.containerOf(context, listen: false);
+    await container.read(stashRepositoryProvider).updateStudio(s.id, changes);
+    container.invalidate(studioProvider(s.id));
+    container.invalidate(studioListProvider);
     return true;
   }
 
@@ -381,9 +387,11 @@ class _TagEditPageState extends ConsumerState<TagEditPage> {
     if (_image != null) changes['image'] = _image!.value;
     if (changes.isEmpty) return false;
 
-    await ref.read(stashRepositoryProvider).updateTag(t.id, changes);
-    ref.invalidate(tagProvider(t.id));
-    ref.invalidate(tagListProvider);
+    // The page may be gone once the server answers: no `ref` after it.
+    final container = ProviderScope.containerOf(context, listen: false);
+    await container.read(stashRepositoryProvider).updateTag(t.id, changes);
+    container.invalidate(tagProvider(t.id));
+    container.invalidate(tagListProvider);
     return true;
   }
 
@@ -448,9 +456,11 @@ class _GalleryEditPageState extends ConsumerState<GalleryEditPage> with _UrlsLoa
     diffUrls(changes);
     if (changes.isEmpty) return false;
 
-    await ref.read(stashRepositoryProvider).updateGallery(g.id, changes);
-    ref.invalidate(galleryProvider(g.id));
-    ref.invalidate(galleryListProvider);
+    // The page may be gone once the server answers: no `ref` after it.
+    final container = ProviderScope.containerOf(context, listen: false);
+    await container.read(stashRepositoryProvider).updateGallery(g.id, changes);
+    container.invalidate(galleryProvider(g.id));
+    container.invalidate(galleryListProvider);
     return true;
   }
 

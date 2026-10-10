@@ -1,6 +1,6 @@
 <h1 align="center">
-  <img src="docs/images/stashy-icon.png" width="96" height="96" alt="Stashy app icon"><br>
-  Stashy
+  <img src="docs/images/stashtube-icon.png" width="96" height="96" alt="StashTube app icon"><br>
+  StashTube
 </h1>
 
 <p align="center">
@@ -8,27 +8,42 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/Two-Play/StashAppMobile/releases"><img src="https://img.shields.io/github/v/release/Two-Play/StashAppMobile?include_prereleases&sort=semver&label=release" alt="Latest release"></a>
-  <a href="https://github.com/Two-Play/StashAppMobile/actions/workflows/ci.yml"><img src="https://github.com/Two-Play/StashAppMobile/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
-  <a href="https://github.com/Two-Play/StashAppMobile/releases"><img src="https://img.shields.io/github/downloads/Two-Play/StashAppMobile/total?label=downloads" alt="Downloads"></a>
+  <a href="https://github.com/Two-Play/StashTube/releases"><img src="https://img.shields.io/github/v/release/Two-Play/StashTube?include_prereleases&sort=semver&label=release" alt="Latest release"></a>
+  <a href="https://github.com/Two-Play/StashTube/actions/workflows/ci.yml"><img src="https://github.com/Two-Play/StashTube/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
+  <a href="https://github.com/Two-Play/StashTube/releases"><img src="https://img.shields.io/github/downloads/Two-Play/StashTube/total?label=downloads" alt="Downloads"></a>
   <img src="https://img.shields.io/badge/platform-Android%20%7C%20iOS-lightgrey" alt="Platforms: Android and iOS">
   <a href="https://flutter.dev"><img src="https://img.shields.io/badge/Flutter-3.47-02569B?logo=flutter" alt="Flutter 3.47"></a>
-  <a href="LICENSE"><img src="https://img.shields.io/github/license/Two-Play/StashAppMobile" alt="License: AGPL-3.0"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/github/license/Two-Play/StashTube" alt="License: AGPL-3.0"></a>
 </p>
 
 <p align="center">
-  <a href="https://apps.obtainium.imranr.dev/redirect?r=obtainium://add/https://github.com/Two-Play/StashAppMobile"><img src="https://raw.githubusercontent.com/ImranR98/Obtainium/main/assets/graphics/badge_obtainium.png" height="54" alt="Get it on Obtainium"></a>
+  <a href="https://apps.obtainium.imranr.dev/redirect?r=obtainium://add/https://github.com/Two-Play/StashTube"><img src="https://raw.githubusercontent.com/ImranR98/Obtainium/main/assets/graphics/badge_obtainium.png" height="54" alt="Get it on Obtainium"></a>
 </p>
 
-Stashy feels like the YouTube app: a feed with large thumbnails, a miniplayer that keeps playing while you browse, performers and studios as "channels", and short portrait videos in a vertical Shorts feed. It talks to your own Stash server through its GraphQL API and plays the streams directly.
+StashTube feels like the YouTube app: a feed with large thumbnails, a miniplayer that keeps playing while you browse, performers and studios as "channels", and short portrait videos in a vertical Shorts feed. It talks to your own Stash server through its GraphQL API and plays the streams directly.
 
 > [!NOTE]
-> Stashy connects only to the Stash server you enter. It has no account, no analytics and no other services. It is not affiliated with the Stash project.
+> StashTube connects only to the Stash server you enter. It has no account, no analytics and no other services. It is not affiliated with the Stash project.
 
 It is in beta:
 
 > [!IMPORTANT]
 > Signed Android builds are on the releases page; there is no iOS download yet (see [iOS](#ios)).
+
+## Screenshots
+
+<p align="center">
+  <img src="docs/images/screenshots/home.png" width="250" alt="Home feed with continue watching and shorts">
+  <img src="docs/images/screenshots/player.png" width="250" alt="Player with controls, rating, chapters and details">
+  <img src="docs/images/screenshots/shorts.png" width="250" alt="Shorts">
+</p>
+<p align="center">
+  <img src="docs/images/screenshots/channel.png" width="250" alt="A performer's channel page">
+  <img src="docs/images/screenshots/markers.png" width="250" alt="Markers in the library">
+  <img src="docs/images/screenshots/theme.png" width="250" alt="Choosing the theme after the first login">
+</p>
+
+The screenshots show a demo library made from Blender's open movies *Tears of Steel*, *Caminandes: Gran Dillama*, *Sintel* and *Big Buck Bunny* (© Blender Foundation, [blender.org](https://www.blender.org), licensed under Creative Commons Attribution). `tool/screenshots/` sets up that library and takes them again.
 
 ## Contents
 
@@ -100,8 +115,8 @@ The backlog with every user story and its status is in [`docs/BACKLOG.md`](docs/
 [Obtainium](https://github.com/ImranR98/Obtainium) installs apps straight from their GitHub releases and keeps them up to date.
 
 1. Install Obtainium.
-2. Tap the **Get it on Obtainium** badge above on your phone, or add the app in Obtainium by its URL: `https://github.com/Two-Play/StashAppMobile`.
-3. While Stashy is in beta, turn on **Include prereleases** in the app's settings in Obtainium.
+2. Tap the **Get it on Obtainium** badge above on your phone, or add the app in Obtainium by its URL: `https://github.com/Two-Play/StashTube`.
+3. While StashTube is in beta, turn on **Include prereleases** in the app's settings in Obtainium.
 4. Install. Obtainium picks the right APK for your phone and notifies you of updates.
 
 > [!TIP]
@@ -109,21 +124,21 @@ The backlog with every user story and its status is in [`docs/BACKLOG.md`](docs/
 
 ### Android with an APK
 
-1. Open the [latest release](https://github.com/Two-Play/StashAppMobile/releases) on your phone.
+1. Open the [latest release](https://github.com/Two-Play/StashTube/releases) on your phone.
 2. Download the APK for your phone:
 
    | File | For |
    | --- | --- |
-   | `stashy-…-arm64-v8a.apk` | almost all phones of the last years |
-   | `stashy-…-armeabi-v7a.apk` | older 32-bit phones |
-   | `stashy-…-x86_64.apk` | emulators and x86 devices |
-   | `stashy-…-universal.apk` | any device, but larger |
+   | `stashtube-…-arm64-v8a.apk` | almost all phones of the last years |
+   | `stashtube-…-armeabi-v7a.apk` | older 32-bit phones |
+   | `stashtube-…-x86_64.apk` | emulators and x86 devices |
+   | `stashtube-…-universal.apk` | any device, but larger |
 
 3. Open the file and allow your browser or file manager to install apps when Android asks.
 4. To update later, install the newer APK over the old one; your servers and settings stay.
 
 > [!WARNING]
-> Only install APKs from this repository's releases. Every release is signed with the same key, and Android refuses an update signed with another one, so nothing else can replace Stashy.
+> Only install APKs from this repository's releases. Every release is signed with the same key, and Android refuses an update signed with another one, so nothing else can replace StashTube.
 
 #### Checking a download
 
@@ -137,14 +152,14 @@ The signing certificate's SHA-256 fingerprint starts with `F0:19:71:FF:8A:13:80:
 
 ### iOS
 
-There is no iOS download yet: TestFlight and the App Store need a paid Apple developer account. You can build Stashy yourself and install it with Xcode (see [Building from source](#building-from-source)).
+There is no iOS download yet: TestFlight and the App Store need a paid Apple developer account. You can build StashTube yourself and install it with Xcode (see [Building from source](#building-from-source)).
 
 > [!NOTE]
 > With a free Apple ID, apps installed from Xcode stop opening after 7 days and have to be installed again.
 
 ## First start
 
-1. Enter your server's address, for example `http://192.168.1.10:9999`. Stash listens on port **9999** by default; Stashy talks to its GraphQL API at that address plus `/graphql`, so enter only the address and port.
+1. Enter your server's address, for example `192.168.1.10`. Stash listens on port **9999** by default: without a port, StashTube tries that one as well, so you only need to add a port if yours is different. StashTube finds the GraphQL API (`/graphql`) itself.
 2. If your Stash has a password, either enter an **API key** (create one in Stash under *Settings → Security*) or sign in with your **username and password**.
 3. Pick a theme and an accent color. You can change them, and everything else, in the settings (the gear at the top).
 
@@ -154,7 +169,7 @@ There is no iOS download yet: TestFlight and the App Store need a paid Apple dev
 Away from home:
 
 > [!WARNING]
-> Making your Stash server reachable from the internet is **not recommended**. To use Stashy on the go, connect your phone to your home network through a **VPN** (for example WireGuard, or a mesh VPN like Tailscale) and keep using the server's local address. That way Stash stays invisible to the internet.
+> Making your Stash server reachable from the internet is **not recommended**. To use StashTube on the go, connect your phone to your home network through a **VPN** (for example WireGuard, or a mesh VPN like Tailscale) and keep using the server's local address. That way Stash stays invisible to the internet.
 
 If you expose it anyway:
 
@@ -163,15 +178,15 @@ If you expose it anyway:
 
 ## Privacy and discretion
 
-Stashy has a few settings for keeping things private, under *Settings → Privacy & security*:
+StashTube has a few settings for keeping things private, under *Settings → Privacy & security*:
 
 - **App lock** with a PIN and optionally Face ID or fingerprint, right away or after 1, 5 or 15 minutes in the background
 - **Hide in app switcher**: covers the app in the recent apps view (always on with the app lock; on Android it also blocks screenshots)
-- **Disguised app icon**: Notes or Calculator instead of the Stashy icon
+- **Disguised app icon**: Notes or Calculator instead of the StashTube icon
 - **Lock screen controls** (under *Playback*) are off by default, so titles and thumbnails don't show on the lock screen
 
 > [!NOTE]
-> The PIN is stored only as a salted hash. API keys and passwords are kept in the system's secure storage (Keychain on iOS, Keystore on Android).
+> The PIN is stored only as a salted hash. It, API keys and passwords are kept in the system's secure storage (Keychain on iOS, Keystore on Android).
 
 Found a security problem? Please report it privately, as described in [`SECURITY.md`](SECURITY.md).
 
@@ -185,8 +200,8 @@ You need:
 - a Stash server reachable from the device; a recent Stash release is recommended (features whose GraphQL fields an older server lacks are hidden)
 
 ```bash
-git clone https://github.com/Two-Play/StashAppMobile.git
-cd StashAppMobile
+git clone https://github.com/Two-Play/StashTube.git
+cd StashTube
 flutter pub get
 flutter run            # on a connected phone or a simulator
 ```
@@ -210,7 +225,8 @@ flutter pub run build_runner build --delete-conflicting-outputs   # after changi
 - **Video:** playback uses [media_kit](https://github.com/media-kit/media-kit) (mpv).
 - **Texts:** live in `lib/l10n/app_en.arb` and `app_de.arb`, never as string literals in the code.
 - **Dependencies:** `pubspec.lock` and `ios/Podfile.lock` are committed; CI runs `flutter pub get --enforce-lockfile`.
-- **Releases:** pushing a tag `vX.Y.Z` that matches `version:` in `pubspec.yaml` builds signed APKs and an AAB and publishes a GitHub release (`.github/workflows/release.yml`). Tags with a `-` become pre-releases.
+- **Branches:** work comes together in `develop` through pull requests; `main` only changes with a release.
+- **Releases:** a pull request from `develop` to `main` with the new version, then a tag `vX.Y.Z` on `main` that matches `version:` in `pubspec.yaml`, which builds signed APKs and an AAB and publishes a GitHub release (`.github/workflows/release.yml`). Tags with a `-` become pre-releases.
 
 [`CLAUDE.md`](CLAUDE.md) describes the architecture in detail: the server config and data flow, paginated lists, the shell and navigation, the player, Shorts, casting, privacy, theming and localization.
 
@@ -230,7 +246,7 @@ Bug reports, ideas and pull requests are welcome. [`CONTRIBUTING.md`](CONTRIBUTI
 
 ## License
 
-Stashy is free software under the [GNU Affero General Public License v3.0](LICENSE). The licenses of all packages it uses are in the app under *Settings → About → Open source licenses*.
+StashTube is free software under the [GNU Affero General Public License v3.0](LICENSE). The licenses of everything it uses are in the app under *Settings → About → Open source licenses*: the Flutter and Dart packages, and the native libraries of the video player (mpv, FFmpeg and their dependencies, under LGPL and permissive licenses).
 
 > [!NOTE]
-> Stashy is an independent project. It is not affiliated with, endorsed by or connected to the [Stash](https://github.com/stashapp/stash) project or its developers; "Stash" only names the server software Stashy connects to.
+> StashTube is an independent project. It is not affiliated with, endorsed by or connected to the [Stash](https://github.com/stashapp/stash) project or its developers; "Stash" only names the server software StashTube connects to.

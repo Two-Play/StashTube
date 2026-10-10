@@ -106,11 +106,10 @@ String accentColorName(AppLocalizations l, String name) => switch (name) {
   'Pink' => l.colorPink,
   'Purple' => l.colorPurple,
   'Indigo' => l.colorIndigo,
-  'Blue' => l.colorBlue,
   'Teal' => l.colorTeal,
   'Green' => l.colorGreen,
   'Orange' => l.colorOrange,
   'Amber' => l.colorAmber,
-  'Stashy' => l.colorStashy,
+  'StashTube' => l.colorStashTube,
   _ => name,
 };

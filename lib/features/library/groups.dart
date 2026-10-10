@@ -43,7 +43,7 @@ class GroupsTab extends ConsumerWidget {
                 crossAxisSpacing: 12,
               ),
               onRetry: () => ref.invalidate(provider),
-              onLoadMore: () => ref.read(provider.notifier).loadMore(),
+              onLoadMore: () => ref.read(provider.notifier).loadMore(retry: true),
               onGoToPage: (page) => ref.read(provider.notifier).goToPage(page),
               itemBuilder: (_, group) => GroupTile(group: group),
             ),
@@ -96,11 +96,13 @@ class GroupPage extends ConsumerWidget {
   Future<void> _playAll(BuildContext context, WidgetRef ref, Group group) async {
     final messenger = ScaffoldMessenger.of(context);
     final l = context.l10n;
+    // Read before the await: the page may be gone by then.
+    final nowPlaying = ref.read(nowPlayingProvider.notifier);
     try {
       final result = await ref
           .read(stashRepositoryProvider)
           .findScenes(SceneQuery(groupId: groupId, sort: SceneSort.groupOrder), perPage: 500);
-      ref.read(nowPlayingProvider.notifier).playQueue(result.items, title: group.name);
+      nowPlaying.playQueue(result.items, title: group.name);
     } catch (e) {
       messenger.showSnackBar(SnackBar(content: Text(l.groupLoadFailed(errorText(l, e)))));
     }

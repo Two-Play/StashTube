@@ -60,7 +60,7 @@ void main() {
     final container = ProviderContainer(overrides: [sharedPreferencesProvider.overrideWithValue(prefs)]);
     addTearDown(container.dispose);
 
-    expect(container.read(accentColorProvider), stashyBlue, reason: 'Stashy\'s blue is the default');
+    expect(container.read(accentColorProvider), stashTubeBlue, reason: 'StashTube\'s blue is the default');
     await container.read(accentColorProvider.notifier).set(accentColors['Amber']!);
     expect(prefs.getInt('accent_color'), accentColors['Amber']!.toARGB32());
 
@@ -75,11 +75,11 @@ void main() {
     expect(dark.onPrimary, Colors.black);
   });
 
-  test('the former Stash-colored default becomes Stashy\'s blue', () async {
-    SharedPreferences.setMockInitialValues({'accent_color': 0xFF137CBD});
+  test('the former blues become StashTube\'s blue', () async {
+    SharedPreferences.setMockInitialValues({'accent_color': 0xFF1E88E5});
     final prefs = await SharedPreferences.getInstance();
     final container = ProviderContainer(overrides: [sharedPreferencesProvider.overrideWithValue(prefs)]);
     addTearDown(container.dispose);
-    expect(container.read(accentColorProvider), stashyBlue);
+    expect(container.read(accentColorProvider), stashTubeBlue);
   });
 }

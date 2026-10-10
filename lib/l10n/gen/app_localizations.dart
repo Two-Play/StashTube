@@ -101,7 +101,7 @@ abstract class AppLocalizations {
   /// No description provided for @appTitle.
   ///
   /// In en, this message translates to:
-  /// **'Stashy'**
+  /// **'StashTube'**
   String get appTitle;
 
   /// No description provided for @scenesCount.
@@ -1007,7 +1007,7 @@ abstract class AppLocalizations {
   /// No description provided for @loginIntro.
   ///
   /// In en, this message translates to:
-  /// **'Enter the address of your Stash server, e.g. http://192.168.1.10:9999'**
+  /// **'Enter the address of your Stash server, e.g. 192.168.1.10. Without a port, Stash\'s default port 9999 is tried too.'**
   String get loginIntro;
 
   /// No description provided for @savedServers.
@@ -1370,12 +1370,6 @@ abstract class AppLocalizations {
   /// **'Indigo'**
   String get colorIndigo;
 
-  /// No description provided for @colorBlue.
-  ///
-  /// In en, this message translates to:
-  /// **'Blue'**
-  String get colorBlue;
-
   /// No description provided for @colorTeal.
   ///
   /// In en, this message translates to:
@@ -1523,7 +1517,7 @@ abstract class AppLocalizations {
   /// No description provided for @appIconStash.
   ///
   /// In en, this message translates to:
-  /// **'Stashy'**
+  /// **'StashTube'**
   String get appIconStash;
 
   /// No description provided for @appIconNotes.
@@ -2414,11 +2408,11 @@ abstract class AppLocalizations {
   /// **'All'**
   String get tabAll;
 
-  /// No description provided for @colorStashy.
+  /// No description provided for @colorStashTube.
   ///
   /// In en, this message translates to:
-  /// **'Stashy'**
-  String get colorStashy;
+  /// **'StashTube'**
+  String get colorStashTube;
 
   /// No description provided for @searchScenes.
   ///
@@ -2621,7 +2615,7 @@ abstract class AppLocalizations {
   /// No description provided for @openSourceLicensesSubtitle.
   ///
   /// In en, this message translates to:
-  /// **'Licenses of the packages Stashy uses'**
+  /// **'Licenses of the packages StashTube uses'**
   String get openSourceLicensesSubtitle;
 
   /// No description provided for @aboutLegalese.
@@ -2629,6 +2623,42 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'A client for Stash servers. Not affiliated with the Stash project.'**
   String get aboutLegalese;
+
+  /// No description provided for @pinTooManyAttempts.
+  ///
+  /// In en, this message translates to:
+  /// **'Too many wrong PINs.'**
+  String get pinTooManyAttempts;
+
+  /// No description provided for @pinTryAgainIn.
+  ///
+  /// In en, this message translates to:
+  /// **'Try again in {time}.'**
+  String pinTryAgainIn(String time);
+
+  /// No description provided for @insecureConnectionTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Unencrypted connection'**
+  String get insecureConnectionTitle;
+
+  /// No description provided for @insecureConnectionBody.
+  ///
+  /// In en, this message translates to:
+  /// **'{host} is outside your home network and is reached over plain HTTP. Your API key or password and everything you watch can be read along the way. Use https:// or a VPN.'**
+  String insecureConnectionBody(String host);
+
+  /// No description provided for @connectAnyway.
+  ///
+  /// In en, this message translates to:
+  /// **'Connect anyway'**
+  String get connectAnyway;
+
+  /// No description provided for @castApiKeyHint.
+  ///
+  /// In en, this message translates to:
+  /// **'While casting, the cast device receives the stream address including your API key. Other devices on this Wi-Fi may be able to read it.'**
+  String get castApiKeyHint;
 }
 
 class _AppLocalizationsDelegate

@@ -59,7 +59,7 @@ class _TagsPageState extends ConsumerState<TagsPage> {
                 padding: const EdgeInsets.all(12),
                 gridDelegate: tagGridDelegate,
                 onRetry: () => ref.invalidate(provider),
-                onLoadMore: () => ref.read(provider.notifier).loadMore(),
+                onLoadMore: () => ref.read(provider.notifier).loadMore(retry: true),
                 onGoToPage: (page) => ref.read(provider.notifier).goToPage(page),
                 itemBuilder: (_, tag) => TagTile(tag: tag),
               ),

@@ -7,6 +7,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:local_auth/local_auth.dart';
 
+import '../../core/config/secret_store.dart';
 import '../../core/config/server_config.dart';
 
 /// App lock (11.1) and app switcher privacy (11.2) settings.
@@ -51,15 +52,42 @@ class AppLockSettingsNotifier extends Notifier<AppLockSettings> {
   static const _lockAfter = 'lock_after_seconds';
   static const _hide = 'lock_hide_in_switcher';
   static const _pinLength = 'lock_pin_length';
-  static const _salt = 'lock_pin_salt';
-  static const _hash = 'lock_pin_hash';
+
+  /// `<salt>:<hash>` in the [SecretStore]: one value, so changing the PIN
+  /// can't leave a new salt with the old hash.
+  static const _pin = 'lock_pin';
+  // Where versions before the secret store kept them (SharedPreferences).
+  static const _legacySalt = 'lock_pin_salt';
+  static const _legacyHash = 'lock_pin_hash';
+
+  /// Salt and hash of the PIN, or null when none is set.
+  ({String salt, String hash})? _storedPin() {
+    final stored = ref.read(secretStoreProvider).read(_pin);
+    final separator = stored?.indexOf(':') ?? -1;
+    if (stored != null && separator > 0) {
+      return (salt: stored.substring(0, separator), hash: stored.substring(separator + 1));
+    }
+    final prefs = ref.read(sharedPreferencesProvider);
+    final salt = prefs.getString(_legacySalt);
+    final hash = prefs.getString(_legacyHash);
+    return salt == null || hash == null ? null : (salt: salt, hash: hash);
+  }
 
   @override
   AppLockSettings build() {
     final prefs = ref.watch(sharedPreferencesProvider);
+    final secrets = ref.watch(secretStoreProvider);
+    final pin = _storedPin();
+    if (pin != null && secrets.read(_pin) == null) {
+      // Move a PIN of an older version out of SharedPreferences.
+      secrets.write(_pin, '${pin.salt}:${pin.hash}').then((_) async {
+        await prefs.remove(_legacySalt);
+        await prefs.remove(_legacyHash);
+      });
+    }
     return AppLockSettings(
       // Only "enabled" when a PIN exists, so a half-set-up lock can't lock out.
-      enabled: (prefs.getBool(_enabled) ?? false) && prefs.getString(_hash) != null,
+      enabled: (prefs.getBool(_enabled) ?? false) && pin != null,
       biometrics: prefs.getBool(_biometrics) ?? false,
       lockAfter: Duration(seconds: prefs.getInt(_lockAfter) ?? 0),
       hideInSwitcher: prefs.getBool(_hide) ?? false,
@@ -72,27 +100,40 @@ class AppLockSettingsNotifier extends Notifier<AppLockSettings> {
     final prefs = ref.read(sharedPreferencesProvider);
     final random = Random.secure();
     final salt = base64Encode(List<int>.generate(16, (_) => random.nextInt(256)));
-    await prefs.setString(_salt, salt);
-    await prefs.setString(_hash, hashPin(pin, salt));
+    await ref.read(secretStoreProvider).write(_pin, '$salt:${hashPin(pin, salt)}');
+    await prefs.remove(_legacySalt);
+    await prefs.remove(_legacyHash);
     await prefs.setInt(_pinLength, pin.length);
     await prefs.setBool(_enabled, true);
+    if (!ref.mounted) return;
+    ref.read(pinThrottleProvider.notifier).reset();
     state = state.copyWith(enabled: true, pinLength: pin.length);
   }
 
   Future<void> disable() async {
     final prefs = ref.read(sharedPreferencesProvider);
-    await prefs.remove(_hash);
-    await prefs.remove(_salt);
+    await ref.read(secretStoreProvider).write(_pin, null);
+    await prefs.remove(_legacyHash);
+    await prefs.remove(_legacySalt);
     await prefs.setBool(_enabled, false);
     await prefs.setBool(_biometrics, false);
+    if (!ref.mounted) return;
     state = state.copyWith(enabled: false, biometrics: false);
   }
 
+  /// Checks [pin]. Wrong PINs count towards [PinThrottle]; while it blocks,
+  /// every PIN is rejected.
   bool verify(String pin) {
-    final prefs = ref.read(sharedPreferencesProvider);
-    final salt = prefs.getString(_salt);
-    final hash = prefs.getString(_hash);
-    return salt != null && hash != null && hashPin(pin, salt) == hash;
+    final throttle = ref.read(pinThrottleProvider.notifier);
+    if (throttle.remaining() > Duration.zero) return false;
+    final stored = _storedPin();
+    final ok = stored != null && hashPin(pin, stored.salt) == stored.hash;
+    if (ok) {
+      throttle.reset();
+    } else {
+      throttle.recordFailure();
+    }
+    return ok;
   }
 
   Future<void> setBiometrics(bool value) async {
@@ -113,6 +154,85 @@ class AppLockSettingsNotifier extends Notifier<AppLockSettings> {
 
 final appLockSettingsProvider =
     NotifierProvider<AppLockSettingsNotifier, AppLockSettings>(AppLockSettingsNotifier.new);
+
+/// Wrong PIN entries in a row. After [freeAttempts] of them, each further
+/// one blocks the PIN pad for a growing time, so a 4-digit PIN can't simply
+/// be tried out. Stored on the device: restarting the app doesn't reset it.
+@immutable
+class PinThrottle {
+  const PinThrottle({this.failures = 0, this.blockedUntil});
+
+  static const freeAttempts = 5;
+  static const _delays = [
+    Duration(seconds: 30),
+    Duration(minutes: 1),
+    Duration(minutes: 5),
+    Duration(minutes: 15),
+    Duration(hours: 1),
+  ];
+
+  final int failures;
+  final DateTime? blockedUntil;
+
+  /// How long the PIN pad is blocked after [failures] wrong entries in a row.
+  static Duration delayAfter(int failures) =>
+      failures < freeAttempts ? Duration.zero : _delays[(failures - freeAttempts).clamp(0, _delays.length - 1)];
+}
+
+class PinThrottleNotifier extends Notifier<PinThrottle> {
+  static const _failures = 'lock_failed_attempts';
+  static const _blockedUntil = 'lock_blocked_until';
+
+  /// Injectable clock for tests.
+  @visibleForTesting
+  DateTime Function() now = DateTime.now;
+
+  @override
+  PinThrottle build() {
+    final prefs = ref.watch(sharedPreferencesProvider);
+    final until = prefs.getInt(_blockedUntil);
+    return PinThrottle(
+      failures: prefs.getInt(_failures) ?? 0,
+      blockedUntil: until == null ? null : DateTime.fromMillisecondsSinceEpoch(until),
+    );
+  }
+
+  /// Time left until the PIN may be tried again; zero when not blocked.
+  Duration remaining() {
+    final until = state.blockedUntil;
+    if (until == null) return Duration.zero;
+    final left = until.difference(now());
+    if (left <= Duration.zero) return Duration.zero;
+    // Never longer than the delay itself, e.g. after the clock was set back.
+    final delay = PinThrottle.delayAfter(state.failures);
+    return left > delay ? delay : left;
+  }
+
+  void recordFailure() {
+    final failures = state.failures + 1;
+    final delay = PinThrottle.delayAfter(failures);
+    final until = delay == Duration.zero ? null : now().add(delay);
+    state = PinThrottle(failures: failures, blockedUntil: until);
+    final prefs = ref.read(sharedPreferencesProvider);
+    prefs.setInt(_failures, failures);
+    if (until == null) {
+      prefs.remove(_blockedUntil);
+    } else {
+      prefs.setInt(_blockedUntil, until.millisecondsSinceEpoch);
+    }
+  }
+
+  /// After a successful unlock.
+  void reset() {
+    if (state.failures == 0 && state.blockedUntil == null) return;
+    state = const PinThrottle();
+    final prefs = ref.read(sharedPreferencesProvider);
+    prefs.remove(_failures);
+    prefs.remove(_blockedUntil);
+  }
+}
+
+final pinThrottleProvider = NotifierProvider<PinThrottleNotifier, PinThrottle>(PinThrottleNotifier.new);
 
 /// Whether the lock screen is showing. Locked at start when the lock is on;
 /// locks again after [AppLockSettings.lockAfter] in the background. With no
@@ -140,7 +260,9 @@ class AppLockStateNotifier extends Notifier<bool> {
     _backgroundedAt = null;
     final settings = ref.read(appLockSettingsProvider);
     if (!settings.enabled || since == null) return;
-    if (now().difference(since) >= settings.lockAfter) state = true;
+    final away = now().difference(since);
+    // A negative time means the clock was set back: lock as well.
+    if (away.isNegative || away >= settings.lockAfter) state = true;
   }
 
   void unlock() => state = false;

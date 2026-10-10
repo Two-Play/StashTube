@@ -70,11 +70,26 @@ final playbackTrackerProvider = Provider<PlaybackTracker>((ref) {
     api: ref.watch(stashRepositoryProvider),
     onResumeSaved: (id, time) => ref.read(resumeTimesProvider.notifier).set(id, time),
   );
+  // While casting, the TV plays and the local player only waits (paused):
+  // the tracker then follows the cast device instead.
+  bool casting() => ref.read(isCastingProvider);
   final subscriptions = [
-    player.stream.position.listen(tracker.onPosition),
-    player.stream.playing.listen(tracker.onPlaying),
+    player.stream.position.listen((position) {
+      if (!casting()) tracker.onPosition(position);
+    }),
+    player.stream.playing.listen((playing) {
+      if (!casting()) tracker.onPlaying(playing);
+    }),
     player.stream.duration.listen(tracker.onDuration),
   ];
+  ref.listen(castPlaybackProvider, (_, next) {
+    final playback = next.value;
+    if (playback == null || !casting()) return;
+    tracker.onPlaying(playback.playing);
+    tracker.onPosition(playback.position);
+  });
+  // Handing over in either direction ends a stretch of watching: save it.
+  ref.listen(isCastingProvider, (_, _) => tracker.onPlaying(false));
   // Save progress when the app is backgrounded or closed.
   final lifecycle = AppLifecycleListener(onHide: tracker.flush, onDetach: tracker.flush);
 
@@ -172,7 +187,7 @@ class NowPlayingNotifier extends Notifier<Scene?> {
     });
     ref.listen(castPlaybackProvider, (_, next) {
       final position = next.value?.position;
-      if (position != null && position > Duration.zero) _lastCastPosition = position;
+      if (position != null && position > Duration.zero && ref.read(isCastingProvider)) _lastCastPosition = position;
     });
     ref.listen(isCastingProvider, (wasCasting, casting) {
       final scene = state;
@@ -271,6 +286,8 @@ class NowPlayingNotifier extends Notifier<Scene?> {
 
   /// Plays [scene] on the connected cast device from [start].
   Future<void> _castScene(Scene scene, Duration start) async {
+    // Until the device reports its own: not the position of an earlier scene.
+    _lastCastPosition = start;
     final details = ref.listen(sceneDetailsProvider(scene.id).future, (_, _) {});
     try {
       final media = castMediaFor(
@@ -297,6 +314,11 @@ class NowPlayingNotifier extends Notifier<Scene?> {
     ref.read(currentStreamProvider.notifier).set(stream.isDirect ? null : stream);
     await ref.read(preferredStreamProvider.notifier).set(stream.isDirect ? null : stream.label);
   }
+
+  /// Where playback is: on the cast device while casting, else in the
+  /// local player.
+  Duration currentPosition() =>
+      ref.read(isCastingProvider) ? _lastCastPosition : ref.read(playerProvider).state.position;
 
   void seekTo(double seconds) =>
       ref.read(playerProvider).seek(Duration(milliseconds: (seconds * 1000).round()));

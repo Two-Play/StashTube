@@ -76,7 +76,8 @@ class AppShell extends ConsumerWidget {
         if (didPop) return;
         final navigator = navigatorKeys[currentTab]!.currentState;
         if (navigator != null && navigator.canPop()) {
-          navigator.pop();
+          // maybePop: a page may ask to stay (e.g. while it saves).
+          navigator.maybePop();
         } else if (currentTab != tabs.first) {
           ref.read(currentTabProvider.notifier).select(tabs.first);
         } else {

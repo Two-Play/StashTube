@@ -1,6 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:graphql_flutter/graphql_flutter.dart';
 import 'package:http/http.dart' as http;
+import 'package:http/testing.dart';
 import 'package:stash_app_mobile/data/repositories/stash_repository.dart';
 
 StashRepository _repoFailingWith(LinkException exception) => StashRepository(GraphQLClient(
@@ -8,7 +9,29 @@ StashRepository _repoFailingWith(LinkException exception) => StashRepository(Gra
       link: Link.function((request, [forward]) => Stream.error(exception)),
     ));
 
+/// A repository whose server answers every request with [response], going
+/// through the real HTTP link (which is what turns it into exceptions).
+StashRepository _repoAnswering(http.Response response) => StashRepository(GraphQLClient(
+      cache: GraphQLCache(),
+      link: HttpLink('http://stash.test/graphql', httpClient: MockClient((_) async => response)),
+    ));
+
 void main() {
+  test('an error page names its HTTP status; only server-side failures are retried', () async {
+    await expectLater(
+      _repoAnswering(http.Response('<html>Not found</html>', 404)).libraryStats(),
+      throwsA(isA<StashApiException>()
+          .having((e) => e.detail, 'detail', 'HTTP 404')
+          .having((e) => e.isNetworkError, 'isNetworkError', isFalse)),
+    );
+    await expectLater(
+      _repoAnswering(http.Response('<html>Bad gateway</html>', 502)).libraryStats(),
+      throwsA(isA<StashApiException>()
+          .having((e) => e.detail, 'detail', 'HTTP 502')
+          .having((e) => e.isNetworkError, 'isNetworkError', isTrue)),
+    );
+  });
+
   test('HTTP 422 with GraphQL errors is a query error, not a network error', () async {
     final repo = _repoFailingWith(HttpLinkServerException(
       response: http.Response('{}', 422),

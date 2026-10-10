@@ -9,7 +9,7 @@ class AppLocalizationsEn extends AppLocalizations {
   AppLocalizationsEn([String locale = 'en']) : super(locale);
 
   @override
-  String get appTitle => 'Stashy';
+  String get appTitle => 'StashTube';
 
   @override
   String scenesCount(int count) {
@@ -612,7 +612,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get loginIntro =>
-      'Enter the address of your Stash server, e.g. http://192.168.1.10:9999';
+      'Enter the address of your Stash server, e.g. 192.168.1.10. Without a port, Stash\'s default port 9999 is tried too.';
 
   @override
   String get savedServers => 'Saved servers';
@@ -815,9 +815,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get colorIndigo => 'Indigo';
 
   @override
-  String get colorBlue => 'Blue';
-
-  @override
   String get colorTeal => 'Teal';
 
   @override
@@ -903,7 +900,7 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get appIconStash => 'Stashy';
+  String get appIconStash => 'StashTube';
 
   @override
   String get appIconNotes => 'Notes';
@@ -1398,7 +1395,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get tabAll => 'All';
 
   @override
-  String get colorStashy => 'Stashy';
+  String get colorStashTube => 'StashTube';
 
   @override
   String get searchScenes => 'Search scenes';
@@ -1533,9 +1530,32 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get openSourceLicensesSubtitle =>
-      'Licenses of the packages Stashy uses';
+      'Licenses of the packages StashTube uses';
 
   @override
   String get aboutLegalese =>
       'A client for Stash servers. Not affiliated with the Stash project.';
+
+  @override
+  String get pinTooManyAttempts => 'Too many wrong PINs.';
+
+  @override
+  String pinTryAgainIn(String time) {
+    return 'Try again in $time.';
+  }
+
+  @override
+  String get insecureConnectionTitle => 'Unencrypted connection';
+
+  @override
+  String insecureConnectionBody(String host) {
+    return '$host is outside your home network and is reached over plain HTTP. Your API key or password and everything you watch can be read along the way. Use https:// or a VPN.';
+  }
+
+  @override
+  String get connectAnyway => 'Connect anyway';
+
+  @override
+  String get castApiKeyHint =>
+      'While casting, the cast device receives the stream address including your API key. Other devices on this Wi-Fi may be able to read it.';
 }

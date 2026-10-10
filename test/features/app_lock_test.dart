@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screen_lock/flutter_screen_lock.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:stash_app_mobile/core/config/secret_store.dart';
 import 'package:stash_app_mobile/core/config/server_config.dart';
 import 'package:stash_app_mobile/features/security/app_lock.dart';
 import 'package:stash_app_mobile/features/security/app_lock_gate.dart';
@@ -25,17 +26,21 @@ class FakeBiometrics implements BiometricAuth {
 
 void main() {
   late SharedPreferences prefs;
+  late MemorySecretStore secrets;
   late FakeBiometrics biometrics;
 
   setUp(() async {
     SharedPreferences.setMockInitialValues({});
     prefs = await SharedPreferences.getInstance();
+    secrets = MemorySecretStore();
     biometrics = FakeBiometrics();
   });
 
+  /// A container on the same device storage, as after restarting the app.
   ProviderContainer container() {
     final c = ProviderContainer(overrides: [
       sharedPreferencesProvider.overrideWithValue(prefs),
+      secretStoreProvider.overrideWithValue(secrets),
       biometricAuthProvider.overrideWithValue(biometrics),
     ]);
     addTearDown(c.dispose);
@@ -60,6 +65,80 @@ void main() {
     await settings.disable();
     expect(c.read(appLockSettingsProvider).enabled, isFalse);
     expect(settings.verify('2580'), isFalse);
+  });
+
+  test('the PIN hash is kept in the secret store, as one value', () async {
+    final c = container();
+    await c.read(appLockSettingsProvider.notifier).enable('2580');
+    expect(secrets.read('lock_pin'), matches(RegExp(r'^[^:]+:[0-9a-f]{64}$')));
+    expect(prefs.getKeys().where((k) => k.startsWith('lock_pin_') && k != 'lock_pin_length'), isEmpty);
+    expect(container().read(appLockSettingsProvider.notifier).verify('2580'), isTrue, reason: 'after a restart');
+  });
+
+  test('a PIN of an older version moves out of SharedPreferences', () async {
+    SharedPreferences.setMockInitialValues({
+      'lock_enabled': true,
+      'lock_pin_salt': 'salt',
+      'lock_pin_hash': hashPin('1234', 'salt'),
+    });
+    prefs = await SharedPreferences.getInstance();
+    final c = container();
+    expect(c.read(appLockSettingsProvider).enabled, isTrue);
+    expect(c.read(appLockSettingsProvider.notifier).verify('1234'), isTrue);
+    await pumpEventQueue();
+    expect(prefs.getString('lock_pin_hash'), isNull);
+    expect(secrets.read('lock_pin'), 'salt:${hashPin('1234', 'salt')}');
+    expect(container().read(appLockSettingsProvider.notifier).verify('1234'), isTrue);
+  });
+
+  test('wrong PINs block the PIN for a growing time, across restarts', () async {
+    var c = container();
+    await c.read(appLockSettingsProvider.notifier).enable('1234');
+    var now = DateTime(2026, 1, 1, 12);
+    var throttle = c.read(pinThrottleProvider.notifier)..now = () => now;
+    final settings = c.read(appLockSettingsProvider.notifier);
+
+    for (var i = 0; i < PinThrottle.freeAttempts - 1; i++) {
+      expect(settings.verify('0000'), isFalse);
+    }
+    expect(throttle.remaining(), Duration.zero, reason: 'a few mistakes are free');
+    expect(settings.verify('0000'), isFalse);
+    expect(throttle.remaining(), const Duration(seconds: 30));
+    expect(settings.verify('1234'), isFalse, reason: 'even the right PIN has to wait');
+
+    // Restarting the app doesn't help.
+    c = container();
+    throttle = c.read(pinThrottleProvider.notifier)..now = () => now;
+    expect(throttle.remaining(), const Duration(seconds: 30));
+
+    now = now.add(const Duration(seconds: 31));
+    expect(throttle.remaining(), Duration.zero);
+    expect(c.read(appLockSettingsProvider.notifier).verify('0000'), isFalse);
+    expect(throttle.remaining(), const Duration(minutes: 1), reason: 'the next mistake waits longer');
+
+    // Setting the clock back doesn't stretch the wait beyond the delay.
+    now = now.subtract(const Duration(days: 1));
+    expect(throttle.remaining(), const Duration(minutes: 1));
+
+    now = now.add(const Duration(days: 2));
+    expect(c.read(appLockSettingsProvider.notifier).verify('1234'), isTrue);
+    expect(c.read(pinThrottleProvider).failures, 0, reason: 'a successful unlock starts over');
+    expect(prefs.getInt('lock_failed_attempts'), isNull);
+  });
+
+  test('locks when the clock was set back while in the background', () async {
+    await container().read(appLockSettingsProvider.notifier).enable('1234');
+    final c = container();
+    await c.read(appLockSettingsProvider.notifier).setLockAfter(const Duration(minutes: 5));
+    final lock = c.read(appLockedProvider.notifier);
+    var now = DateTime(2026, 1, 1, 12);
+    lock.now = () => now;
+    lock.unlock();
+
+    lock.appHidden();
+    now = now.subtract(const Duration(hours: 1));
+    lock.appShown();
+    expect(c.read(appLockedProvider), isTrue);
   });
 
   test('locks at start and after the background delay', () async {
@@ -99,7 +178,7 @@ void main() {
       container: c,
       child: MaterialApp(
         builder: (context, child) => AppLockGate(child: child!),
-        home: const Scaffold(body: Text('secret content')),
+        home: const Scaffold(body: TextField(autofocus: true, decoration: InputDecoration(labelText: 'secret content'))),
       ),
     ));
     await tester.pumpAndSettle();
@@ -126,6 +205,44 @@ void main() {
     expect(c.read(appLockedProvider), isFalse);
     expect(find.byType(LockScreen), findsNothing);
     expect(find.text('secret content'), findsOneWidget);
+  });
+
+  testWidgets('while locked, the app behind takes no focus, semantics or back', (tester) async {
+    final semantics = tester.ensureSemantics();
+    await tester.runAsync(() => container().read(appLockSettingsProvider.notifier).enable('1234'));
+    final c = await pumpGate(tester);
+    expect(find.semantics.byLabel('secret content'), findsNothing, reason: 'screen readers must not read it');
+    expect(tester.testTextInput.isVisible, isFalse, reason: 'no keyboard focus behind the lock');
+    expect(lockBackGuard.locked, isTrue);
+    expect(await lockBackGuard.didPopRoute(), isTrue, reason: 'back leaves the app instead of popping pages');
+
+    await enterPin(tester, '1234');
+    expect(c.read(appLockedProvider), isFalse);
+    expect(find.semantics.byLabel('secret content'), findsOneWidget);
+    expect(lockBackGuard.locked, isFalse);
+    expect(await lockBackGuard.didPopRoute(), isFalse);
+    semantics.dispose();
+  });
+
+  testWidgets('too many wrong PINs show how long to wait instead of the PIN pad', (tester) async {
+    await tester.runAsync(() => container().read(appLockSettingsProvider.notifier).enable('1234'));
+    final c = await pumpGate(tester);
+    var now = DateTime(2026, 1, 1, 12);
+    c.read(pinThrottleProvider.notifier).now = () => now;
+
+    for (var i = 0; i < PinThrottle.freeAttempts; i++) {
+      await enterPin(tester, '9999');
+    }
+    expect(find.text('Too many wrong PINs.'), findsOneWidget);
+    expect(find.text('Try again in 0:30.'), findsOneWidget);
+    expect(find.descendant(of: find.byType(LockScreen), matching: find.text('1')), findsNothing,
+        reason: 'no PIN pad to keep guessing on');
+
+    now = now.add(const Duration(seconds: 31));
+    await tester.pump(const Duration(seconds: 1));
+    await tester.pump();
+    await enterPin(tester, '1234');
+    expect(c.read(appLockedProvider), isFalse);
   });
 
   testWidgets('biometric unlock starts automatically when enabled', (tester) async {

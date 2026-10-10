@@ -191,7 +191,7 @@ class _ImageGridViewState extends ConsumerState<ImageGridView> {
                 crossAxisSpacing: 2,
               ),
               onRetry: () => ref.invalidate(provider),
-              onLoadMore: () => ref.read(provider.notifier).loadMore(),
+              onLoadMore: () => ref.read(provider.notifier).loadMore(retry: true),
               onGoToPage: (page) => ref.read(provider.notifier).goToPage(page),
               itemBuilder: (context, image) => GestureDetector(
                 onTap: () {

@@ -120,6 +120,9 @@ class _StashVideoControlsState extends ConsumerState<StashVideoControls> {
     }
   }
 
+  /// The player being held at 2×, kept for [dispose] (no `ref` there).
+  Player? _heldPlayer;
+
   /// -1 = rewound, 1 = skipped forward; shown briefly as feedback.
   int _seekFeedback = 0;
   Timer? _feedbackTimer;
@@ -128,6 +131,10 @@ class _StashVideoControlsState extends ConsumerState<StashVideoControls> {
   void dispose() {
     _hideTimer?.cancel();
     _feedbackTimer?.cancel();
+    // Minimized or closed while holding: the release never arrives here, and
+    // mpv would keep 2× for every following scene.
+    final rate = _rateBeforeHold;
+    if (rate != null) _heldPlayer?.setRate(rate);
     super.dispose();
   }
 
@@ -196,6 +203,7 @@ class _StashVideoControlsState extends ConsumerState<StashVideoControls> {
     if (_rateBeforeHold != null || !player.state.playing || _pointers.length > 1) return;
     Haptics.light();
     setState(() => _rateBeforeHold = player.state.rate);
+    _heldPlayer = player;
     player.setRate(2);
   }
 
@@ -203,6 +211,7 @@ class _StashVideoControlsState extends ConsumerState<StashVideoControls> {
     final rate = _rateBeforeHold;
     if (rate == null) return;
     setState(() => _rateBeforeHold = null);
+    _heldPlayer = null;
     ref.read(playerProvider).setRate(rate);
   }
 

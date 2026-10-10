@@ -55,6 +55,10 @@ class ScrubThumbnails {
       final start = parseTimestamp(times.group(1)!);
       final end = parseTimestamp(times.group(2)!);
       if (region == null || start == null || end == null) continue;
+      final width = double.parse(region.group(3)!);
+      final height = double.parse(region.group(4)!);
+      // An empty region can't be shown (and would divide by zero when scaled).
+      if (width <= 0 || height <= 0) continue;
 
       fileName ??= target.substring(0, target.indexOf('#'));
       cues.add(ScrubCue(
@@ -62,8 +66,8 @@ class ScrubThumbnails {
         end: end,
         x: double.parse(region.group(1)!),
         y: double.parse(region.group(2)!),
-        width: double.parse(region.group(3)!),
-        height: double.parse(region.group(4)!),
+        width: width,
+        height: height,
       ));
     }
     if (cues.isEmpty) return null;

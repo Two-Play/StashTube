@@ -8,6 +8,7 @@ import 'package:stash_app_mobile/core/config/server_config.dart';
 import 'package:stash_app_mobile/data/models/scene.dart';
 import 'package:stash_app_mobile/data/models/scene_details.dart';
 import 'package:stash_app_mobile/data/providers.dart';
+import 'package:stash_app_mobile/data/repositories/stash_repository.dart';
 import 'package:stash_app_mobile/features/cast/cast_media.dart';
 import 'package:stash_app_mobile/features/cast/cast_providers.dart';
 import 'package:stash_app_mobile/features/cast/airplay_service.dart';
@@ -54,6 +55,21 @@ class FakeCastService implements CastService {
   Future<void> pause() async => commands.add('pause');
   @override
   Future<void> seek(Duration position) async => commands.add('seek ${position.inSeconds}');
+}
+
+/// Records what the playback tracker saves.
+class _RecordingRepository implements StashRepository {
+  final saved = <({double resumeTime, double playDuration})>[];
+
+  @override
+  Future<void> saveActivity(String sceneId, {required double resumeTime, required double playDuration}) async =>
+      saved.add((resumeTime: resumeTime, playDuration: playDuration));
+
+  @override
+  Future<void> addPlay(String sceneId) async {}
+
+  @override
+  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
 }
 
 class _NoopActivity implements PlaybackActivityApi {
@@ -125,7 +141,7 @@ void main() {
 
     // Built inside each test so streams and timers run in the test's fake
     // async zone.
-    Future<void> setUpCast(WidgetTester tester) async {
+    Future<void> setUpCast(WidgetTester tester, {StashRepository? repository}) async {
       SharedPreferences.setMockInitialValues({'url': 'http://s', 'api_key': 'k'});
       final prefs = await SharedPreferences.getInstance();
       player = FakePlayer(position: const Duration(seconds: 30));
@@ -134,7 +150,11 @@ void main() {
         sharedPreferencesProvider.overrideWithValue(prefs),
         playerProvider.overrideWithValue(player),
         castServiceProvider.overrideWithValue(cast),
-        playbackTrackerProvider.overrideWithValue(PlaybackTracker(api: _NoopActivity())),
+        // With a repository the real tracker runs and saves into it.
+        if (repository == null)
+          playbackTrackerProvider.overrideWithValue(PlaybackTracker(api: _NoopActivity()))
+        else
+          stashRepositoryProvider.overrideWithValue(repository),
         sceneDetailsProvider.overrideWith((ref, id) async => _details),
         scrubThumbnailsProvider.overrideWith((ref, id) async => null),
       ]);
@@ -219,6 +239,42 @@ void main() {
       await cast.disconnect();
       await tester.pumpAndSettle();
       expect(player.seeks.last, const Duration(seconds: 95));
+    });
+
+    testWidgets('watching on the TV is saved as progress', (tester) async {
+      final repo = _RecordingRepository();
+      await setUpCast(tester, repository: repo);
+      final nowPlaying = container.read(nowPlayingProvider.notifier);
+      nowPlaying.play(scene);
+      await cast.connect(const CastTarget(id: 'tv', name: 'TV'));
+      await tester.pumpAndSettle();
+
+      for (final seconds in [30, 31, 32]) {
+        cast.playbackController.add(CastPlayback(playing: true, position: Duration(seconds: seconds)));
+        await tester.pump();
+      }
+      expect(nowPlaying.currentPosition(), const Duration(seconds: 32), reason: 'markers go where the TV is');
+
+      await cast.disconnect();
+      await tester.pumpAndSettle();
+      expect(repo.saved.last.resumeTime, 32);
+      expect(repo.saved.map((s) => s.playDuration).reduce((a, b) => a + b), 2);
+    });
+
+    testWidgets('a scene cast next does not inherit the last position', (tester) async {
+      await setUpCast(tester);
+      container.read(nowPlayingProvider.notifier).play(scene);
+      await cast.connect(const CastTarget(id: 'tv', name: 'TV'));
+      await tester.pumpAndSettle();
+      cast.playbackController.add(const CastPlayback(playing: true, position: Duration(seconds: 95)));
+      await tester.pump();
+
+      // The next scene starts at 0; the TV hasn't reported anything yet.
+      container.read(nowPlayingProvider.notifier).play(next);
+      await tester.pumpAndSettle();
+      await cast.disconnect();
+      await tester.pumpAndSettle();
+      expect(player.seeks.last, Duration.zero);
     });
   });
 

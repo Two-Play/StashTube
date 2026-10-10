@@ -14,8 +14,10 @@ import '../../l10n/l10n.dart';
 /// Creates a tag and refreshes tag lists. Throws [StashApiException] on errors
 /// (e.g. the name already exists).
 Future<Tag> createTag(WidgetRef ref, String name) async {
-  final tag = await ref.read(stashRepositoryProvider).createTag(name.trim());
-  ref.invalidate(tagListProvider);
+  // The dialog or sheet may be closed before the server answers.
+  final container = ProviderScope.containerOf(ref.context, listen: false);
+  final tag = await container.read(stashRepositoryProvider).createTag(name.trim());
+  container.invalidate(tagListProvider);
   return tag;
 }
 
@@ -145,7 +147,8 @@ class _SceneTagEditorState extends ConsumerState<SceneTagEditor> {
     final navigator = Navigator.of(context);
     try {
       await ref.read(sceneEditsProvider.notifier).setTags(widget.scene, _tags);
-      navigator.pop();
+      // Closed meanwhile: popping now would remove the page below the sheet.
+      if (mounted) navigator.pop();
     } catch (e) {
       if (mounted) setState(() => _busy = false);
       messenger.showSnackBar(SnackBar(content: Text(l.tagsSaveFailed(errorText(l, e)))));

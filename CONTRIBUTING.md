@@ -1,4 +1,4 @@
-# Contributing to Stashy
+# Contributing to StashTube
 
 Thanks for helping! Bug reports, ideas, translations and pull requests are all welcome.
 
@@ -16,7 +16,7 @@ Thanks for helping! Bug reports, ideas, translations and pull requests are all w
 
 ## Reporting bugs and ideas
 
-Open an [issue](https://github.com/Two-Play/StashAppMobile/issues) and include:
+Open an [issue](https://github.com/Two-Play/StashTube/issues) and include:
 
 - the app version (*Settings → About*) and your platform (Android or iOS, with version)
 - your Stash version (*Settings → Server*)
@@ -32,8 +32,8 @@ Ideas fit best as an issue first, so we can talk about them before you spend tim
 You need Flutter **3.47.6** (the version CI uses), a current JDK and the Android SDK, and for iOS a Mac with Xcode and CocoaPods.
 
 ```bash
-git clone https://github.com/Two-Play/StashAppMobile.git
-cd StashAppMobile
+git clone https://github.com/Two-Play/StashTube.git
+cd StashTube
 flutter pub get --enforce-lockfile
 flutter run
 ```
@@ -45,7 +45,7 @@ You also need a Stash server to try things with. A local one with a few test sce
 
 ## Making a change
 
-1. Fork the repository and create a branch: `feature/<what>` for features, `fix/<what>` for bug fixes, `docs/<what>` for documentation.
+1. Fork the repository and create a branch **from `develop`**: `feature/<what>` for features, `fix/<what>` for bug fixes, `docs/<what>` for documentation.
 2. Make the change, with tests.
 3. Run the same checks as CI:
 
@@ -89,7 +89,8 @@ Native code (media_kit's players, picture-in-picture, the lock screen) can't run
 - Write commit messages in English: a short summary line, then a blank line and what changed and why.
 - Keep a pull request to one topic. Describe what changed, how you tested it, and on which devices.
 - CI (analysis, tests, Android and iOS builds) and Codacy must pass before a pull request is merged.
-- Releases are tagged by the maintainers.
+- Open pull requests against **`develop`**, where all work comes together. `main` only changes with a release.
+- Releases are made by the maintainers: a pull request from `develop` to `main` with the new version, then a tag on `main`.
 
 > [!NOTE]
-> Stashy is licensed under the [AGPL-3.0](LICENSE). By contributing, you agree that your contribution is published under the same license.
+> StashTube is licensed under the [AGPL-3.0](LICENSE). By contributing, you agree that your contribution is published under the same license.
