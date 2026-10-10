@@ -169,6 +169,7 @@ Eine wartbare Basis, damit Features unabhängig voneinander wachsen können.
 | 13.14 | Als Nutzer möchte ich spürbares haptisches Feedback und dessen Stärke wählen. | Einstellung „Haptisches Feedback“: Aus, Wenig (nur die spürbaren Rückmeldungen: Favorit, O-Zähler, Langdruck-Menü, Aktualisieren, Entsperren, falsche PIN), Normal (zusätzlich Tabs, Sortier- und Filter-Chips, Schalter, Play/Pause, Wischen in den Shorts, Später ansehen, Theme/Farbe). | Next | ✅ |
 | 13.15 | Als Nutzer möchte ich durch erneutes Tippen auf den aktiven Tab nach oben scrollen. | Aus einer Unterseite geht es zurück zur Startseite des Tabs, dort scrollen die Listen sanft nach oben (wie YouTube). | Next | ✅ |
 | 13.16 | Als Nutzer möchte ich in Listen eine bewegte Vorschau sehen. | Ruht das Scrollen eine Weile (Standard 1,5 s, einstellbar 0,5–3 s), spielt das oberste vollständig sichtbare Video seine WebP-Vorschau (Stash `paths.webp`) über dem Standbild in Dauerschleife, wie YouTube; Scrollen stoppt sie. Gilt für alle Szenenlisten (Start, Bibliothek, Suche, Verlauf, Kanäle, Gruppen). Einstellung „Vorschauen in Listen abspielen“, bei „Bewegung reduzieren“ aus. | Next | ✅ |
+| 13.17 | Als Nutzer möchte ich die App-Version und die Open-Source-Lizenzen sehen. | Einstellungen → „Über“: Version mit Build-Nummer (`package_info_plus`) und „Open-Source-Lizenzen“ (Flutters Lizenzseite mit allen Paketen, dazu der Hinweis zum Stash-Logo, AGPL-3.0). | Next | ✅ |
 
 ## Epic 14 – Plattform & Release
 

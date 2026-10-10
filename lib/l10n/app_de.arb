@@ -415,5 +415,11 @@
   "feedPreviewDelay": "Vorschau startet nach",
   "secondsValue": "{seconds} s",
   "markerPreviews": "Marker-Vorschauen abspielen",
-  "markerPreviewsSubtitle": "Marker zeigen einen kurzen Clip in Dauerschleife statt eines Standbilds."
+  "markerPreviewsSubtitle": "Marker zeigen einen kurzen Clip in Dauerschleife statt eines Standbilds.",
+  "sectionAbout": "Über",
+  "appVersion": "Version",
+  "appVersionValue": "{version} (Build {build})",
+  "openSourceLicenses": "Open-Source-Lizenzen",
+  "openSourceLicensesSubtitle": "Lizenzen der Pakete, die Stashy verwendet",
+  "aboutLegalese": "Ein Client für Stash-Server. Nicht mit dem Stash-Projekt verbunden."
 }

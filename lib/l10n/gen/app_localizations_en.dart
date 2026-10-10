@@ -1516,4 +1516,26 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get markerPreviewsSubtitle =>
       'Markers loop a short clip instead of a still frame.';
+
+  @override
+  String get sectionAbout => 'About';
+
+  @override
+  String get appVersion => 'Version';
+
+  @override
+  String appVersionValue(String version, String build) {
+    return '$version (build $build)';
+  }
+
+  @override
+  String get openSourceLicenses => 'Open source licenses';
+
+  @override
+  String get openSourceLicensesSubtitle =>
+      'Licenses of the packages Stashy uses';
+
+  @override
+  String get aboutLegalese =>
+      'A client for Stash servers. Not affiliated with the Stash project.';
 }

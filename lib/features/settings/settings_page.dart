@@ -16,6 +16,7 @@ import '../auth/server_switcher.dart';
 import '../security/app_icon.dart';
 import '../security/app_lock_gate.dart';
 import '../shell/nav_bar_config.dart';
+import 'about.dart';
 import 'appearance_picker.dart';
 import 'nav_bar_settings_page.dart';
 import 'scene_card_config.dart';
@@ -224,6 +225,8 @@ class SettingsPage extends ConsumerWidget {
           const _PlaybackModeTiles(),
           _SectionTitle(l.sectionPrivacy),
           const _SecuritySettings(),
+          _SectionTitle(l.sectionAbout),
+          const AboutSettings(),
           const SizedBox(height: 16),
           ListTile(
             leading: Icon(Icons.logout, color: theme.colorScheme.error),

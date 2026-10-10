@@ -102,4 +102,6 @@ lib/
 
 **App icon and splash.** `tool/generate_app_icon.py` (rsvg-convert + Pillow) renders both from one SVG mark: the iOS AppIcon set, Android's legacy and adaptive icons (with a monochrome layer), the splash logo (`drawable-*/launch_logo.png`, iOS `LaunchImage`) and the Android 12+ splash icon (`splash_icon.png`). The splash background `#111111` is in `res/values/colors.xml` and `LaunchScreen.storyboard`; Android 12+ takes it from `values-v31`/`values-night-v31`. Rerun the script after changing the mark.
 
+**About.** *Settings → About* (`features/settings/about.dart`) shows the version (`appInfoProvider`, package_info_plus; null in tests) and Flutter's license page, which collects every package's license; `registerAppLicenses` (called in `main`) adds the Stash logo's AGPL-3.0 notice. Repository docs: `README.md`, `SECURITY.md` (private vulnerability reporting), `CONTRIBUTING.md`.
+
 **Images and auth.** Always load server images through `StashImage` or `ChannelAvatar`, which add the `ApiKey` header. Stash serves SVG placeholders for missing images, which fall back to an icon or the name's initial.

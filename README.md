@@ -39,6 +39,7 @@ Stashy feels like the YouTube app: a feed with large thumbnails, a miniplayer th
 - [Privacy and discretion](#privacy-and-discretion)
 - [Building from source](#building-from-source)
 - [Development](#development)
+- [Contributing](#contributing)
 - [Credits](#credits)
 
 ## Features
@@ -217,7 +218,12 @@ lib/
   l10n/       ARB files and generated localizations
 ```
 
+## Contributing
+
+Bug reports, ideas and pull requests are welcome. [`CONTRIBUTING.md`](CONTRIBUTING.md) explains how to set up, the code conventions and what a pull request needs.
+
 ## Credits
 
 - [Stash](https://github.com/stashapp/stash) is the server this app is a client for. The Stash logo (the open box) and its colors come from the Stash project, which is licensed under AGPL-3.0.
 - This app is not affiliated with the Stash project.
+- The licenses of all packages Stashy uses are in the app under *Settings → About → Open source licenses*.

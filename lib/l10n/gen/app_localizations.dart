@@ -2593,6 +2593,42 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Markers loop a short clip instead of a still frame.'**
   String get markerPreviewsSubtitle;
+
+  /// No description provided for @sectionAbout.
+  ///
+  /// In en, this message translates to:
+  /// **'About'**
+  String get sectionAbout;
+
+  /// No description provided for @appVersion.
+  ///
+  /// In en, this message translates to:
+  /// **'Version'**
+  String get appVersion;
+
+  /// No description provided for @appVersionValue.
+  ///
+  /// In en, this message translates to:
+  /// **'{version} (build {build})'**
+  String appVersionValue(String version, String build);
+
+  /// No description provided for @openSourceLicenses.
+  ///
+  /// In en, this message translates to:
+  /// **'Open source licenses'**
+  String get openSourceLicenses;
+
+  /// No description provided for @openSourceLicensesSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Licenses of the packages Stashy uses'**
+  String get openSourceLicensesSubtitle;
+
+  /// No description provided for @aboutLegalese.
+  ///
+  /// In en, this message translates to:
+  /// **'A client for Stash servers. Not affiliated with the Stash project.'**
+  String get aboutLegalese;
 }
 
 class _AppLocalizationsDelegate
