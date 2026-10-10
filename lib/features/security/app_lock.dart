@@ -191,7 +191,8 @@ final biometricAuthProvider = Provider<BiometricAuth>((ref) => LocalBiometricAut
 ///
 /// Android: FLAG_SECURE hides the app in the recents screen (and blocks
 /// screenshots). iOS: a native cover goes over the app as soon as it
-/// resigns active (locking the phone, the app switcher). Flutter can't draw
+/// resigns active (locking the phone, the app switcher), when
+/// [AppLockSettings.hidesApp]. Flutter can't draw
 /// its own cover in time there: the app is in the background before the
 /// next frame, so its last frame, with the content, would show on return
 /// until the lock screen is drawn. The cover stays until [uncover], once
@@ -199,11 +200,10 @@ final biometricAuthProvider = Provider<BiometricAuth>((ref) => LocalBiometricAut
 class SecureWindow {
   static const _channel = MethodChannel('stash/privacy');
 
-  static Future<void> set(bool secure) => _invoke(switch (defaultTargetPlatform) {
-        TargetPlatform.android => 'setSecure',
-        TargetPlatform.iOS => 'setCoverOnResign',
-        _ => null,
-      }, secure);
+  /// Android only: iOS reads the setting itself when the app resigns
+  /// active (a message sent at startup could arrive before its handler).
+  static Future<void> set(bool secure) =>
+      _invoke(defaultTargetPlatform == TargetPlatform.android ? 'setSecure' : null, secure);
 
   /// iOS: removes the native cover once Flutter has drawn a frame again.
   static Future<void> uncover() => _invoke(defaultTargetPlatform == TargetPlatform.iOS ? 'uncover' : null);

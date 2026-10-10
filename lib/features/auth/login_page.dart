@@ -1,7 +1,7 @@
-import '../../core/config/haptics.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/config/haptics.dart';
 import '../../core/config/server_config.dart';
 import '../../data/repositories/stash_repository.dart';
 import '../../l10n/l10n.dart';

@@ -10,7 +10,7 @@ fragment SceneFields on Scene {
   resume_time
   organized
   files { basename duration width height }
-  paths { screenshot preview stream }
+  paths { screenshot preview webp stream }
   studio { ...StudioRef }
   performers { ...PerformerRef country favorite }
   tags { ...TagRef }

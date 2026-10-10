@@ -1,4 +1,3 @@
-import '../../core/config/haptics.dart';
 import 'dart:async';
 import 'dart:math' as math;
 
@@ -6,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:media_kit/media_kit.dart';
 
+import '../../core/config/haptics.dart';
 import '../../core/utils/format.dart';
 import '../../data/models/scene.dart';
 import '../../widgets/hold_detector.dart';
@@ -335,7 +335,7 @@ class _StashVideoControlsState extends ConsumerState<StashVideoControls> {
                           ),
                           IconButton(
                             tooltip: context.l10n.quality,
-                            icon: const Icon(Icons.settings_outlined),
+                            icon: const Icon(Icons.hd_outlined),
                             onPressed: () => _act(widget.onQuality),
                           ),
                         ],

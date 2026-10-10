@@ -1,8 +1,8 @@
-import '../../core/config/haptics.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screen_lock/flutter_screen_lock.dart';
 
+import '../../core/config/haptics.dart';
 import '../pip/pip.dart';
 import 'app_lock.dart';
 import '../../l10n/l10n.dart';

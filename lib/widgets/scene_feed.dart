@@ -1,11 +1,13 @@
-import '../core/config/haptics.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../core/config/haptics.dart';
 import '../data/models/list_queries.dart';
 import '../data/models/scene.dart';
 import '../data/models/saved_filter.dart';
 import '../data/providers.dart';
+import 'animated_previews.dart';
+import 'auto_preview.dart';
 import 'chip_bar.dart';
 import 'paged_sliver.dart';
 import 'scene_card.dart';
@@ -136,7 +138,10 @@ class _SceneFeedViewState extends ConsumerState<SceneFeedView> {
     final provider = sceneListProvider(_query);
     final value = ref.watch(provider);
 
-    final list = LoadMoreListener(
+    // The first fully shown video plays its preview once scrolling stops.
+    final list = AutoPreviewScope(
+      delay: ref.watch(feedPreviewDelayProvider),
+      child: LoadMoreListener(
       onLoadMore: () => ref.read(provider.notifier).loadMore(),
       child: CustomScrollView(
           // Pull-to-refresh must work even when the list is shorter than the screen.
@@ -214,6 +219,7 @@ class _SceneFeedViewState extends ConsumerState<SceneFeedView> {
             ),
           ],
         ),
+    ),
     );
     if (!widget.refreshable) return list;
     return RefreshIndicator(

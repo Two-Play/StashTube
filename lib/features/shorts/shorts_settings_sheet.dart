@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/config/haptics.dart';
 import '../../data/models/list_queries.dart';
 import '../../data/models/tag.dart';
 import '../../data/providers.dart';
@@ -113,9 +114,9 @@ class _ShortsSettingsSheetState extends ConsumerState<ShortsSettingsSheet> {
                     title: Text(l.shortsOnlyTags),
                     subtitle: Text(l.shortsOnlyTagsHint),
                     value: _settings.onlyTags,
-                    onChanged: _settings.tags.isEmpty
+                    onChanged: withHaptic(_settings.tags.isEmpty
                         ? null
-                        : (v) => setState(() => _settings = _settings.copyWith(onlyTags: v)),
+                        : (v) => setState(() => _settings = _settings.copyWith(onlyTags: v))),
                   ),
                   section(l.shortsMaxLength),
                   Wrap(
@@ -134,7 +135,7 @@ class _ShortsSettingsSheetState extends ConsumerState<ShortsSettingsSheet> {
                     contentPadding: EdgeInsets.zero,
                     title: Text(l.shortsPortraitOnly),
                     value: _settings.portraitOnly,
-                    onChanged: (v) => setState(() => _settings = _settings.copyWith(portraitOnly: v)),
+                    onChanged: withHaptic((v) => setState(() => _settings = _settings.copyWith(portraitOnly: v))),
                   ),
                   const SizedBox(height: 16),
                 ],

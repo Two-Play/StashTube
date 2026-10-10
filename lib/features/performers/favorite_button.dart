@@ -1,7 +1,7 @@
-import '../../core/config/haptics.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/config/haptics.dart';
 import '../../data/models/performer.dart';
 import '../../widgets/confetti.dart';
 import 'performer_favorites.dart';

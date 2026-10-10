@@ -846,7 +846,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get preferredQualityHint =>
-      'Used when a scene offers it, otherwise the next lower one. Smaller videos play their original file. Also changes with ⚙ in the player.';
+      'Used when a scene offers it, otherwise the next lower one. Smaller videos play their original file. Also changes with HD in the player.';
 
   @override
   String get sectionPrivacy => 'Privacy & security';
@@ -1492,9 +1492,28 @@ class AppLocalizationsEn extends AppLocalizations {
   String get hapticsNormal => 'Normal';
 
   @override
+  String get feedPreviews => 'Play previews in lists';
+
+  @override
+  String get feedPreviewsSubtitle =>
+      'The first fully shown video plays a short preview.';
+
+  @override
+  String get feedPreviewDelay => 'Preview starts after';
+
+  @override
+  String secondsValue(double seconds) {
+    final intl.NumberFormat secondsNumberFormat =
+        intl.NumberFormat.decimalPattern(localeName);
+    final String secondsString = secondsNumberFormat.format(seconds);
+
+    return '$secondsString s';
+  }
+
+  @override
   String get markerPreviews => 'Play marker previews';
 
   @override
   String get markerPreviewsSubtitle =>
-      'Markers show a short looping clip instead of a still frame.';
+      'Markers loop a short clip instead of a still frame.';
 }

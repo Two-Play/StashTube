@@ -222,7 +222,7 @@
   "sectionPlayback": "Wiedergabe",
   "preferredQuality": "Bevorzugte Qualität",
   "qualityOriginal": "Original",
-  "preferredQualityHint": "Gilt, wenn eine Szene sie anbietet, sonst die nächstniedrigere. Kleinere Videos laufen als Originaldatei. Ändert sich auch über ⚙ im Player.",
+  "preferredQualityHint": "Gilt, wenn eine Szene sie anbietet, sonst die nächstniedrigere. Kleinere Videos laufen als Originaldatei. Ändert sich auch über HD im Player.",
   "sectionPrivacy": "Privatsphäre & Sicherheit",
   "removeThisServer": "Diesen Server entfernen",
   "lockImmediately": "Sofort",
@@ -410,6 +410,10 @@
   "hapticsOff": "Aus",
   "hapticsLight": "Wenig",
   "hapticsNormal": "Normal",
+  "feedPreviews": "Vorschauen in Listen abspielen",
+  "feedPreviewsSubtitle": "Das erste vollständig sichtbare Video spielt eine kurze Vorschau.",
+  "feedPreviewDelay": "Vorschau startet nach",
+  "secondsValue": "{seconds} s",
   "markerPreviews": "Marker-Vorschauen abspielen",
-  "markerPreviewsSubtitle": "Marker zeigen eine kurze Vorschau in Dauerschleife statt eines Standbilds."
+  "markerPreviewsSubtitle": "Marker zeigen einen kurzen Clip in Dauerschleife statt eines Standbilds."
 }

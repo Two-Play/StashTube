@@ -461,7 +461,7 @@
   "sectionPlayback": "Playback",
   "preferredQuality": "Preferred quality",
   "qualityOriginal": "Original",
-  "preferredQualityHint": "Used when a scene offers it, otherwise the next lower one. Smaller videos play their original file. Also changes with ⚙ in the player.",
+  "preferredQualityHint": "Used when a scene offers it, otherwise the next lower one. Smaller videos play their original file. Also changes with HD in the player.",
   "sectionPrivacy": "Privacy & security",
   "removeThisServer": "Remove this server",
   "lockImmediately": "Immediately",
@@ -786,6 +786,18 @@
   "hapticsOff": "Off",
   "hapticsLight": "Light",
   "hapticsNormal": "Normal",
+  "feedPreviews": "Play previews in lists",
+  "feedPreviewsSubtitle": "The first fully shown video plays a short preview.",
+  "feedPreviewDelay": "Preview starts after",
+  "secondsValue": "{seconds} s",
+  "@secondsValue": {
+    "placeholders": {
+      "seconds": {
+        "type": "double",
+        "format": "decimalPattern"
+      }
+    }
+  },
   "markerPreviews": "Play marker previews",
-  "markerPreviewsSubtitle": "Markers show a short looping clip instead of a still frame."
+  "markerPreviewsSubtitle": "Markers loop a short clip instead of a still frame."
 }

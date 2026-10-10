@@ -849,7 +849,7 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get preferredQualityHint =>
-      'Gilt, wenn eine Szene sie anbietet, sonst die nächstniedrigere. Kleinere Videos laufen als Originaldatei. Ändert sich auch über ⚙ im Player.';
+      'Gilt, wenn eine Szene sie anbietet, sonst die nächstniedrigere. Kleinere Videos laufen als Originaldatei. Ändert sich auch über HD im Player.';
 
   @override
   String get sectionPrivacy => 'Privatsphäre & Sicherheit';
@@ -1500,9 +1500,28 @@ class AppLocalizationsDe extends AppLocalizations {
   String get hapticsNormal => 'Normal';
 
   @override
+  String get feedPreviews => 'Vorschauen in Listen abspielen';
+
+  @override
+  String get feedPreviewsSubtitle =>
+      'Das erste vollständig sichtbare Video spielt eine kurze Vorschau.';
+
+  @override
+  String get feedPreviewDelay => 'Vorschau startet nach';
+
+  @override
+  String secondsValue(double seconds) {
+    final intl.NumberFormat secondsNumberFormat =
+        intl.NumberFormat.decimalPattern(localeName);
+    final String secondsString = secondsNumberFormat.format(seconds);
+
+    return '$secondsString s';
+  }
+
+  @override
   String get markerPreviews => 'Marker-Vorschauen abspielen';
 
   @override
   String get markerPreviewsSubtitle =>
-      'Marker zeigen eine kurze Vorschau in Dauerschleife statt eines Standbilds.';
+      'Marker zeigen einen kurzen Clip in Dauerschleife statt eines Standbilds.';
 }
