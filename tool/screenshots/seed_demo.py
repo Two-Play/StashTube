@@ -17,9 +17,12 @@ import os
 import sys
 import time
 import urllib.error
+import urllib.parse
 import urllib.request
 
 URL = (sys.argv[1] if len(sys.argv) > 1 else 'http://localhost:9999').rstrip('/') + '/graphql'
+if urllib.parse.urlparse(URL).scheme not in ('http', 'https'):
+    sys.exit(f'Not an http(s) address: {URL}')
 # demo_server.sh's work dir, with covers/ and portraits/ (optional).
 WORK = sys.argv[2] if len(sys.argv) > 2 else None
 
@@ -36,7 +39,8 @@ def gql(query, **variables):
     body = json.dumps({'query': query, 'variables': variables}).encode()
     request = urllib.request.Request(URL, body, {'Content-Type': 'application/json'})
     try:
-        with urllib.request.urlopen(request, timeout=60) as response:  # nosec B310: the local demo server
+        # Only http(s), checked where URL is set: the demo server.
+        with urllib.request.urlopen(request, timeout=60) as response:  # nosec B310 # nosemgrep
             data = json.load(response)
     except urllib.error.HTTPError as e:
         # Stash answers invalid queries with 422 and the errors in the body.
@@ -119,9 +123,8 @@ def ensure(kind, name, create, extra=None):
                input={'name': name, **(extra or {})})[create[0].lower() + create[1:]]['id']
 
 
-def main():
-    status = wait_for_server()
-    if status == 'SETUP':
+def setup_and_scan():
+    if wait_for_server() == 'SETUP':
         gql('mutation($input: SetupInput!) { setup(input: $input) }', input={
             'configLocation': '', 'databaseFile': '', 'generatedLocation': '', 'cacheLocation': '',
             'blobsLocation': '', 'storeBlobsInDatabase': False,
@@ -133,8 +136,12 @@ def main():
         'scanGenerateThumbnails: true}) }')
     wait_for_jobs()
 
+
+def add_people_and_tags():
+    """Studios (with their parent), performers with portraits, and tags."""
     parent = ensure('Studio', STUDIO_PARENT, 'StudioCreate')
     studios = {name: ensure('Studio', name, 'StudioCreate', {'parent_id': parent}) for name in STUDIOS}
+    studios[STUDIO_PARENT] = parent
     performers = {name: ensure('Performer', name, 'PerformerCreate')
                   for scene in SCENES.values() for name in scene['performers']}
     for name, performer_id in performers.items():
@@ -143,7 +150,11 @@ def main():
             gql('mutation($input: PerformerUpdateInput!) { performerUpdate(input: $input) { id } }',
                 input={'id': performer_id, 'image': portrait})
     tags = {name: ensure('Tag', name, 'TagCreate') for scene in SCENES.values() for name in scene['tags']}
+    return studios, performers, tags
 
+
+def describe_scenes(studios, performers, tags):
+    """Titles, people, tags, ratings and covers; returns the scene ids by file name."""
     scenes = gql('{ findScenes(filter: {per_page: -1}) { scenes { id files { basename } } } }')['findScenes']['scenes']
     ids = {}
     for scene in scenes:
@@ -152,24 +163,32 @@ def main():
         if meta is None:
             continue
         ids[key] = scene['id']
-        gql('mutation($input: SceneUpdateInput!) { sceneUpdate(input: $input) { id } }', input={
+        update = {
             'id': scene['id'], 'title': meta['title'], 'date': meta['date'], 'rating100': meta['rating'],
             'studio_id': studios[meta['studio']], 'performer_ids': [performers[p] for p in meta['performers']],
             'tag_ids': [tags[t] for t in meta['tags']], 'organized': True,
             'details': 'From the Blender open movie project, licensed under CC BY.',
-            **({'cover_image': cover} if (cover := image_data(os.path.join(WORK or '', 'covers', f'{key}.jpg'))) else {}),
-        })
+        }
+        cover = image_data(os.path.join(WORK or '', 'covers', f'{key}.jpg'))
+        if cover:
+            update['cover_image'] = cover
+        gql('mutation($input: SceneUpdateInput!) { sceneUpdate(input: $input) { id } }', input=update)
+    return ids
 
-    # Each part checks whether it ran already, so the script can run again.
-    if not gql('{ findSceneMarkers { count } }')['findSceneMarkers']['count']:
-        for key, markers in MARKERS.items():
-            for seconds, title, tag in markers:
-                gql('mutation($input: SceneMarkerCreateInput!) { sceneMarkerCreate(input: $input) { id } }', input={
-                    'scene_id': ids[key], 'seconds': seconds, 'title': title, 'primary_tag_id': tags[tag]})
 
-    # The watch history always starts the same, also after a screenshot run
-    # played scenes (the app saves the position back).
-    for key, scene_id in ids.items():
+def add_markers(ids, tags):
+    if gql('{ findSceneMarkers { count } }')['findSceneMarkers']['count']:
+        return
+    for key, markers in MARKERS.items():
+        for seconds, title, tag in markers:
+            gql('mutation($input: SceneMarkerCreateInput!) { sceneMarkerCreate(input: $input) { id } }', input={
+                'scene_id': ids[key], 'seconds': seconds, 'title': title, 'primary_tag_id': tags[tag]})
+
+
+def reset_history(ids):
+    """The watch history always starts the same, also after a screenshot run
+    played scenes (the app saves the position back)."""
+    for scene_id in ids.values():
         gql('mutation($id: ID!) { sceneResetPlayCount(id: $id) }', id=scene_id)
         gql('mutation($id: ID!) { sceneResetActivity(id: $id, reset_resume: true, reset_duration: true) }', id=scene_id)
     for key, (resume, count) in HISTORY.items():
@@ -179,27 +198,47 @@ def main():
             gql('mutation($id: ID!, $t: Float) { sceneSaveActivity(id: $id, resume_time: $t, playDuration: 30) }',
                 id=ids[key], t=float(resume))
 
-    if not gql('{ findGroups { count } }')['findGroups']['count']:
-        group = gql('mutation($input: GroupCreateInput!) { groupCreate(input: $input) { id } }', input={
-            'name': 'Tears of Steel', 'studio_id': studios['Tears of Steel'], 'date': '2012-09-26',
-            'synopsis': 'All parts of the film, in order.'})['groupCreate']['id']
-        parts = ['tos-the-bridge', 'tos-old-memories', 'tos-the-robots', 'tos-last-stand', 'tos-ending']
-        for index, key in enumerate(parts, start=1):
-            gql('mutation($input: SceneUpdateInput!) { sceneUpdate(input: $input) { id } }', input={
-                'id': ids[key], 'groups': [{'group_id': group, 'scene_index': index}]})
 
-    if not gql('{ findGalleries { count } }')['findGalleries']['count']:
-        images = gql('{ findImages(filter: {per_page: -1}) { images { id } } }')['findImages']['images']
-        if images:
-            gallery = gql('mutation($input: GalleryCreateInput!) { galleryCreate(input: $input) { id } }', input={
-                'title': 'Stills', 'studio_id': parent, 'date': '2012-09-26'})['galleryCreate']['id']
-            gql('mutation($input: GalleryAddInput!) { addGalleryImages(input: $input) }',
-                input={'gallery_id': gallery, 'image_ids': [i['id'] for i in images]})
+def add_group(ids, studios):
+    if gql('{ findGroups { count } }')['findGroups']['count']:
+        return
+    group = gql('mutation($input: GroupCreateInput!) { groupCreate(input: $input) { id } }', input={
+        'name': 'Tears of Steel', 'studio_id': studios['Tears of Steel'], 'date': '2012-09-26',
+        'synopsis': 'All parts of the film, in order.'})['groupCreate']['id']
+    parts = ['tos-the-bridge', 'tos-old-memories', 'tos-the-robots', 'tos-last-stand', 'tos-ending']
+    for index, key in enumerate(parts, start=1):
+        gql('mutation($input: SceneUpdateInput!) { sceneUpdate(input: $input) { id } }', input={
+            'id': ids[key], 'groups': [{'group_id': group, 'scene_index': index}]})
 
+
+def add_gallery(studios):
+    if gql('{ findGalleries { count } }')['findGalleries']['count']:
+        return
+    images = gql('{ findImages(filter: {per_page: -1}) { images { id } } }')['findImages']['images']
+    if not images:
+        return
+    gallery = gql('mutation($input: GalleryCreateInput!) { galleryCreate(input: $input) { id } }', input={
+        'title': 'Stills', 'studio_id': studios[STUDIO_PARENT], 'date': '2012-09-26'})['galleryCreate']['id']
+    gql('mutation($input: GalleryAddInput!) { addGalleryImages(input: $input) }',
+        input={'gallery_id': gallery, 'image_ids': [i['id'] for i in images]})
+
+
+def generate():
     print('generating')
     gql('mutation { metadataGenerate(input: {covers: true, sprites: true, previews: true, imagePreviews: true, '
         'markers: true, markerImagePreviews: true, markerScreenshots: true, imageThumbnails: true}) }')
     wait_for_jobs()
+
+
+def main():
+    setup_and_scan()
+    studios, performers, tags = add_people_and_tags()
+    ids = describe_scenes(studios, performers, tags)
+    add_markers(ids, tags)
+    reset_history(ids)
+    add_group(ids, studios)
+    add_gallery(studios)
+    generate()
     print(f'done: {len(ids)} scenes')
 
 
