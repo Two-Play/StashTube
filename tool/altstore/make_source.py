@@ -1,14 +1,12 @@
 #!/usr/bin/env python3
-"""
-Build StashTube's AltStore source from the GitHub releases.
+"""Build StashTube's AltStore source from the GitHub releases."""
 
-    gh api repos/Two-Play/StashTube/releases --paginate > releases.json
-    python3 tool/altstore/make_source.py releases.json > altstore.json
-
-Every release with an .ipa asset becomes a version, newest first. The IPA
-must have been built with the release's version and run number (see
-release.yml): AltStore checks both against the app's Info.plist.
-"""
+# gh api repos/Two-Play/StashTube/releases --paginate --slurp > releases.json
+# python3 tool/altstore/make_source.py releases.json > altstore.json
+#
+# Every release with an .ipa asset becomes a version, newest first. The IPA
+# must have been built with the release's version and run number (see
+# release.yml): AltStore checks both against the app's Info.plist.
 
 import json
 import re
