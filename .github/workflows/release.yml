@@ -2,9 +2,11 @@ name: Release
 
 # Pushing a tag like v1.2.0 (matching `version:` in pubspec.yaml) builds
 # signed Android packages and publishes them as a GitHub release (14.3):
-# APKs per ABI, a universal APK, an AAB and SHA256SUMS. Obtainium and
-# IzzyOnDroid pick the APKs up from there. Tags with a "-" (v1.2.0-beta.1)
-# become pre-releases.
+# APKs per ABI, a universal APK, an AAB, a universal APK without Google Cast
+# (`-foss`, the F-Droid variant from tool/fdroid_prepare.sh, same key), an
+# unsigned IPA for AltStore/SideStore and SHA256SUMS. Obtainium and
+# IzzyOnDroid pick the APKs up from there; afterwards altstore.yml updates
+# the AltStore source. Tags with a "-" (v1.2.0-beta.1) become pre-releases.
 #
 # Signing secrets: ANDROID_KEYSTORE_BASE64 (the upload keystore, base64),
 # ANDROID_KEYSTORE_PASSWORD, ANDROID_KEY_ALIAS, ANDROID_KEY_PASSWORD.
@@ -21,7 +23,7 @@ env:
 
 jobs:
   android:
-    name: Signed Android release
+    name: Signed Android packages
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
@@ -81,13 +83,79 @@ jobs:
           done
           cp "$out/flutter-apk/app-release.apk" "dist/stashtube-$GITHUB_REF_NAME-universal.apk"
           cp "$out/bundle/release/app-release.aab" "dist/stashtube-$GITHUB_REF_NAME.aab"
-          (cd dist && sha256sum * > SHA256SUMS)
+
+      # The same app without Google Cast (Play Services), signed with the same
+      # key and versionCode as the universal APK, so the two replace each
+      # other. fdroid_prepare.sh drops the signing for F-Droid; put it back.
+      - name: Build without Google Cast
+        run: |
+          tool/fdroid_prepare.sh
+          git checkout android/app/build.gradle.kts
+          flutter build apk --release --build-number ${{ github.run_number }}
+          cp build/app/outputs/flutter-apk/app-release.apk "dist/stashtube-$GITHUB_REF_NAME-foss.apk"
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: android
+          path: dist/
+          if-no-files-found: error
+
+  ios:
+    name: Unsigned IPA (AltStore)
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: stable
+          cache: true
+      - run: flutter pub get --enforce-lockfile
+
+      # AltStore and SideStore sign the app with the user's Apple ID when
+      # installing. The run number in the file name is the build number,
+      # which tool/altstore/make_source.py puts into the source.
+      - name: Build
+        run: |
+          flutter build ios --release --no-codesign --build-number ${{ github.run_number }}
+          mkdir -p ipa/Payload dist
+          cp -R build/ios/iphoneos/Runner.app ipa/Payload/
+          (cd ipa && zip -qry "../dist/stashtube-$GITHUB_REF_NAME-${{ github.run_number }}.ipa" Payload)
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: ios
+          path: dist/
+          if-no-files-found: error
+
+  publish:
+    name: GitHub release
+    needs: [android, ios]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/download-artifact@v8
+        with:
+          path: dist
+          merge-multiple: true
 
       - name: Publish release
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
+          (cd dist && sha256sum * > SHA256SUMS)
           flags=()
           if [[ "$GITHUB_REF_NAME" == *-* ]]; then flags+=(--prerelease); fi
           gh release create "$GITHUB_REF_NAME" dist/* \
             --title "StashTube $GITHUB_REF_NAME" --generate-notes --verify-tag "${flags[@]}"
+
+  # A release made with the workflow token doesn't trigger other workflows,
+  # so the AltStore source is updated from here.
+  altstore:
+    name: AltStore source
+    needs: publish
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    uses: ./.github/workflows/altstore.yml
