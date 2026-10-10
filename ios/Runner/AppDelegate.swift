@@ -265,7 +265,7 @@ final class PrivacyCoverController: NSObject {
       lock.centerXAnchor.constraint(equalTo: view.centerXAnchor),
       lock.centerYAnchor.constraint(equalTo: view.centerYAnchor),
       lock.widthAnchor.constraint(equalToConstant: 44),
-      lock.heightAnchor.constraint(equalToConstant: 52),
+      lock.heightAnchor.constraint(equalToConstant: 52)
     ])
     window.addSubview(view)
     cover = view
