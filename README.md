@@ -18,6 +18,8 @@
 
 <p align="center">
   <a href="https://apps.obtainium.imranr.dev/redirect?r=obtainium://add/https://github.com/Two-Play/StashTube"><img src="https://raw.githubusercontent.com/ImranR98/Obtainium/main/assets/graphics/badge_obtainium.png" height="54" alt="Get it on Obtainium"></a>
+  <a href="https://testflight.apple.com/join/aG5H5Byb"><img src="docs/images/badges/testflight.png" height="54" alt="Join the beta on TestFlight"></a>
+  <a href="https://altstore.io/source/two-play.github.io/StashTube/altstore.json?app=io.github.twoplay.stashtube"><img src="docs/images/badges/altstore.png" height="54" alt="Download on AltStore"></a>
 </p>
 
 StashTube feels like the YouTube app: a feed with large thumbnails, a miniplayer that keeps playing while you browse, performers and studios as "channels", and short portrait videos in a vertical Shorts feed. It talks to your own Stash server through its GraphQL API and plays the streams directly.
@@ -153,7 +155,11 @@ The signing certificate's SHA-256 fingerprint starts with `F0:19:71:FF:8A:13:80:
 
 ### iOS
 
-StashTube isn't in the App Store. Install it with [AltStore](https://altstore.io) or [SideStore](https://sidestore.io), which sign the app with your own Apple ID:
+StashTube isn't in the App Store. There are two ways to get it:
+
+**TestFlight** (easiest): open the [public TestFlight link](https://testflight.apple.com/join/aG5H5Byb) on your iPhone, install Apple's TestFlight app when asked and tap *Accept* and *Install*. TestFlight updates StashTube for you; each beta build runs for 90 days. The number of testers is limited, so the link may be full.
+
+**AltStore or SideStore**, which sign the app with your own Apple ID:
 
 1. Install AltStore (with AltServer on a computer) or SideStore.
 2. In *Browse* → *Sources* (AltStore) or *Sources* (SideStore), add the source `https://two-play.github.io/StashTube/altstore.json`.
