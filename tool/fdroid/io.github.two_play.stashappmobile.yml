@@ -36,9 +36,9 @@ RepoType: git
 Repo: https://github.com/Two-Play/StashTube.git
 
 Builds:
-  - versionName: 1.0.0-beta.4
-    versionCode: 4
-    commit: v1.0.0-beta.4
+  - versionName: 1.0.0-beta.5
+    versionCode: 5
+    commit: v1.0.0-beta.5
     output: build/app/outputs/flutter-apk/app-release.apk
     srclibs:
       - flutter@3.47.6
@@ -58,5 +58,5 @@ AutoUpdateMode: Version
 # keeps F-Droid on those.
 UpdateCheckMode: Tags
 UpdateCheckData: pubspec.yaml|version:\s.+\+(\d+)|.|version:\s(.+)\+
-CurrentVersion: 1.0.0-beta.4
-CurrentVersionCode: 4
+CurrentVersion: 1.0.0-beta.5
+CurrentVersionCode: 5
