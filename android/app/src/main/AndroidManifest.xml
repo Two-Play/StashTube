@@ -1,10 +1,17 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
+    <!-- No backups: server addresses, the search history and watch later
+         list must not end up in a cloud backup or on another device (the API
+         keys and the PIN are in the Keystore anyway).
+         Cleartext stays allowed for Stash servers in the home network; the
+         app asks before using plain HTTP over the internet. -->
     <application
         android:label="StashTube"
         android:name="${applicationName}"
         android:usesCleartextTraffic="true"
         android:allowBackup="false"
+        android:fullBackupContent="false"
+        android:dataExtractionRules="@xml/data_extraction_rules"
         android:icon="@mipmap/ic_launcher">
         <activity
             android:name=".MainActivity"

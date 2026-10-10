@@ -97,7 +97,7 @@ class _GalleryGridViewState extends ConsumerState<GalleryGridView> {
                 crossAxisSpacing: 12,
               ),
               onRetry: () => ref.invalidate(provider),
-              onLoadMore: () => ref.read(provider.notifier).loadMore(),
+              onLoadMore: () => ref.read(provider.notifier).loadMore(retry: true),
               onGoToPage: (page) => ref.read(provider.notifier).goToPage(page),
               itemBuilder: (_, gallery) => GalleryTile(gallery: gallery),
             ),

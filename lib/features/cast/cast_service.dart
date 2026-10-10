@@ -147,15 +147,35 @@ class GoogleCastService implements CastService {
         return connected ? CastConnection(deviceName: session.device?.friendlyName ?? 'Cast device') : null;
       });
 
+  /// Emits on every status change and on the device's position updates, so
+  /// the position keeps moving while it plays.
   @override
-  Stream<CastPlayback> get playback => GoogleCastRemoteMediaClient.instance.mediaStatusStream.map((status) {
-        final state = status?.playerState;
-        return CastPlayback(
-          playing: state == CastMediaPlayerState.playing,
-          loading: state == CastMediaPlayerState.buffering || state == CastMediaPlayerState.loading,
-          position: GoogleCastRemoteMediaClient.instance.playerPosition,
-        );
-      });
+  Stream<CastPlayback> get playback {
+    final client = GoogleCastRemoteMediaClient.instance;
+    late final StreamController<CastPlayback> controller;
+    final subscriptions = <StreamSubscription<Object?>>[];
+    void emit() {
+      final state = client.mediaStatus?.playerState;
+      controller.add(CastPlayback(
+        playing: state == CastMediaPlayerState.playing,
+        loading: state == CastMediaPlayerState.buffering || state == CastMediaPlayerState.loading,
+        position: client.playerPosition,
+      ));
+    }
+
+    controller = StreamController<CastPlayback>(
+      onListen: () => subscriptions.addAll([
+        client.mediaStatusStream.listen((_) => emit()),
+        client.playerPositionStream.listen((_) => emit()),
+      ]),
+      onCancel: () async {
+        for (final s in subscriptions) {
+          await s.cancel();
+        }
+      },
+    );
+    return controller.stream;
+  }
 
   @override
   Future<void> connect(CastTarget target) async {

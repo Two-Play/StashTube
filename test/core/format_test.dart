@@ -38,6 +38,26 @@ void main() {
       expect(ServerConfig.normalizeUrl(' http://stash:9999/graphql '), 'http://stash:9999');
     });
 
+    test('drops query and fragment, keeps sub-paths and credentials', () {
+      expect(ServerConfig.normalizeUrl('https://host/?x=1#top'), 'https://host');
+      expect(ServerConfig.normalizeUrl('https://host/stash/graphql?x=1'), 'https://host/stash');
+      expect(ServerConfig.normalizeUrl('https://user:pw@host:8443/stash/'), 'https://user:pw@host:8443/stash');
+    });
+
+    test('knows local hosts and warns about plain HTTP over the internet', () {
+      for (final host in ['localhost', 'nas', 'stash.lan', 'nas.tail1234.ts.net', '127.0.0.1', '172.20.1.1',
+          '192.168.0.9', '100.101.102.103', '::1', 'fd12::1', 'fe80::1']) {
+        expect(ServerConfig.isLocalHost(host), isTrue, reason: host);
+      }
+      for (final host in ['example.com', '8.8.8.8', '172.32.0.1', '100.128.0.1', '2001:db8::1']) {
+        expect(ServerConfig.isLocalHost(host), isFalse, reason: host);
+      }
+      expect(const ServerConfig(baseUrl: 'http://stash.example.com').isUnencryptedOverInternet, isTrue);
+      expect(const ServerConfig(baseUrl: 'https://stash.example.com').isUnencryptedOverInternet, isFalse);
+      expect(const ServerConfig(baseUrl: 'http://192.168.1.5:9999').isUnencryptedOverInternet, isFalse);
+      expect(const ServerConfig(baseUrl: 'http://[fd12::1]:9999').isUnencryptedOverInternet, isFalse);
+    });
+
     test('rejects invalid input', () {
       expect(ServerConfig.normalizeUrl(''), isNull);
       expect(ServerConfig.normalizeUrl('ftp://host'), isNull);

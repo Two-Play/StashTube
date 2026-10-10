@@ -18,7 +18,9 @@ class SearchHistoryNotifier extends Notifier<List<String>> {
     ref.watch(activeServerIdProvider);
     final key = _serverKey;
     if (key == null) return const [];
-    return prefs.getStringList(key) ?? prefs.getStringList(_key) ?? const [];
+    // Lists of the single-server versions are moved to the first server
+    // (ServerProfilesNotifier).
+    return prefs.getStringList(key) ?? const [];
   }
 
   Future<void> add(String term) async {

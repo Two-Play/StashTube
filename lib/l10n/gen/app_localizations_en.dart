@@ -1535,4 +1535,27 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get aboutLegalese =>
       'A client for Stash servers. Not affiliated with the Stash project.';
+
+  @override
+  String get pinTooManyAttempts => 'Too many wrong PINs.';
+
+  @override
+  String pinTryAgainIn(String time) {
+    return 'Try again in $time.';
+  }
+
+  @override
+  String get insecureConnectionTitle => 'Unencrypted connection';
+
+  @override
+  String insecureConnectionBody(String host) {
+    return '$host is outside your home network and is reached over plain HTTP. Your API key or password and everything you watch can be read along the way. Use https:// or a VPN.';
+  }
+
+  @override
+  String get connectAnyway => 'Connect anyway';
+
+  @override
+  String get castApiKeyHint =>
+      'While casting, the cast device receives the stream address including your API key. Other devices on this Wi-Fi may be able to read it.';
 }

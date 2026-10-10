@@ -68,7 +68,13 @@ class _EditScaffoldState extends State<EditScaffold> {
   }
 
   @override
-  Widget build(BuildContext context) => Scaffold(
+  Widget build(BuildContext context) => PopScope(
+        // Stay until the save is through, so its result isn't lost.
+        canPop: !_saving,
+        child: _buildPage(context),
+      );
+
+  Widget _buildPage(BuildContext context) => Scaffold(
         appBar: AppBar(
           // In a sheet (openEditor) an X closes it without saving.
           leading: CupertinoSheetRoute.hasParentSheet(context)

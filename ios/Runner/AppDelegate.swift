@@ -229,13 +229,13 @@ final class AirPlayController: NSObject, FlutterStreamHandler {
 final class PrivacyCoverController: NSObject {
   private var cover: UIView?
 
-  /// As `AppLockSettings.hidesApp` in Dart: the lock is on (with a PIN), or
-  /// "hide in app switcher".
+  /// As `AppLockSettings.hidesApp` in Dart: the lock is on, or "hide in app
+  /// switcher". The PIN itself is in the Keychain; covering once too often
+  /// (a lock without a PIN) does no harm.
   private var enabled: Bool {
     let defaults = UserDefaults.standard
-    let locked = defaults.bool(forKey: "flutter.lock_enabled")
-      && defaults.string(forKey: "flutter.lock_pin_hash") != nil
-    return locked || defaults.bool(forKey: "flutter.lock_hide_in_switcher")
+    return defaults.bool(forKey: "flutter.lock_enabled")
+      || defaults.bool(forKey: "flutter.lock_hide_in_switcher")
   }
   /// Bumped on every deactivation, so a fallback timer from an earlier
   /// activation can't remove a newer cover.

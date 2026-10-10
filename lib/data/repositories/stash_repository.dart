@@ -587,6 +587,16 @@ class StashRepository implements PlaybackActivityApi {
       if (status == 401 || status == 403) {
         throw const StashApiException('Not authorized – check the API key.', kind: StashErrorKind.unauthorized);
       }
+      if (link is HttpLinkParserException && status != null && status >= 300) {
+        // Not a Stash answer (wrong address, a proxy's error page): retrying
+        // only helps when the server side is failing.
+        throw StashApiException(
+          'The server answered with HTTP $status.',
+          isNetworkError: status >= 500,
+          kind: StashErrorKind.unreachable,
+          detail: 'HTTP $status',
+        );
+      }
       if (link != null) {
         final cause = link.originalException ?? link;
         throw StashApiException(

@@ -77,7 +77,11 @@ void main() {
     expect(state.items, hasLength(24));
     expect(state.loadMoreError, isA<StashApiException>());
 
+    // Scrolling on doesn't retry by itself; the "try again" button does.
     await notifier.loadMore();
+    expect(repo.requestedPages, [1, 2], reason: 'no automatic retry after a failed page');
+
+    await notifier.loadMore(retry: true);
     state = container.read(sceneListProvider(query)).requireValue;
     expect(state.items, hasLength(48));
     expect(state.loadMoreError, isNull);

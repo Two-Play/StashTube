@@ -59,6 +59,9 @@ class PagedSliver<T> extends ConsumerWidget {
   final AsyncValue<PagedState<T>> value;
   final Widget Function(BuildContext context, T item) itemBuilder;
   final VoidCallback onRetry;
+
+  /// The footer's "try again" after a page failed to load:
+  /// `loadMore(retry: true)`.
   final VoidCallback onLoadMore;
 
   /// Shows a page (`PagedNotifier.goToPage`); without it the list scrolls

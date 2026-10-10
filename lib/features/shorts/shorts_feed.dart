@@ -192,9 +192,18 @@ class ShortsFeedNotifier extends Notifier<ShortsFeedState> {
   }
 
   Future<void> _load({required bool preferred}) async {
+    final generation = _generation;
     final query = preferred ? _preferredQuery! : _othersQuery!;
-    final page = preferred ? ++_preferredPage : ++_othersPage;
+    final page = (preferred ? _preferredPage : _othersPage) + 1;
     final result = await ref.read(stashRepositoryProvider).findScenes(query, page: page, perPage: _pageSize);
+    // Rebuilt meanwhile: the result belongs to the previous feed.
+    if (!ref.mounted || generation != _generation) return;
+    // Only now, so a failed page is loaded again instead of skipped.
+    if (preferred) {
+      _preferredPage = page;
+    } else {
+      _othersPage = page;
+    }
     final playable = result.items.where((s) => s.streamUrl != null);
     final done = result.items.isEmpty || page * _pageSize >= result.totalCount;
     if (preferred) {

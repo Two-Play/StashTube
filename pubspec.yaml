@@ -42,6 +42,7 @@ dependencies:
   local_auth: ^3.0.2
   flutter_screen_lock: ^9.0.2
   cached_network_image: ^4.0.4
+  flutter_cache_manager: ^3.4.1
   flutter_riverpod: ^3.4.3
   miniplayer: ^1.0.1
   country_flags: ^4.1.2
