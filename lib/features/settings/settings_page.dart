@@ -8,6 +8,7 @@ import '../../core/config/server_config.dart';
 import '../../data/models/scene_details.dart';
 import '../../data/providers.dart';
 import '../pip/pip.dart';
+import '../player/lock_screen.dart';
 import '../player/player_providers.dart';
 import '../security/app_lock.dart';
 import '../auth/server_switcher.dart';
@@ -214,6 +215,15 @@ class _PlaybackModeTiles extends ConsumerWidget {
           value: modes.background,
           onChanged: (v) => ref.read(playbackModesProvider.notifier).setBackground(v),
         ),
+        if (ref.watch(lockScreenSupportedProvider))
+          SwitchListTile(
+            secondary: const Icon(Icons.lock_outline),
+            title: Text(l.lockScreenControls),
+            subtitle: Text(l.lockScreenControlsSubtitle),
+            isThreeLine: true,
+            value: modes.lockScreen,
+            onChanged: (v) => ref.read(playbackModesProvider.notifier).setLockScreen(v),
+          ),
       ],
     );
   }

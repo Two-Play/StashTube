@@ -1448,4 +1448,11 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get themeWelcomeText =>
       'Light or dark, and an accent color. You can change this anytime in the settings.';
+
+  @override
+  String get lockScreenControls => 'Show on the lock screen';
+
+  @override
+  String get lockScreenControlsSubtitle =>
+      'Title, picture and controls on the lock screen and in the notification. Leave off for discretion.';
 }

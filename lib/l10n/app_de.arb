@@ -398,5 +398,7 @@
   "backgroundPlaybackSubtitle": "Der Ton läuft weiter, während die App im Hintergrund ist.",
   "performerShorts": "{count, plural, =1{1 Short} other{{count} Shorts}}",
   "themeWelcomeTitle": "Wähle dein Design",
-  "themeWelcomeText": "Hell oder dunkel und eine Akzentfarbe. Das kannst du jederzeit in den Einstellungen ändern."
+  "themeWelcomeText": "Hell oder dunkel und eine Akzentfarbe. Das kannst du jederzeit in den Einstellungen ändern.",
+  "lockScreenControls": "Auf dem Sperrbildschirm anzeigen",
+  "lockScreenControlsSubtitle": "Titel, Vorschaubild und Steuerung auf dem Sperrbildschirm und in der Benachrichtigung. Für mehr Diskretion aus lassen."
 }

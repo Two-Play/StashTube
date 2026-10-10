@@ -2491,6 +2491,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Light or dark, and an accent color. You can change this anytime in the settings.'**
   String get themeWelcomeText;
+
+  /// No description provided for @lockScreenControls.
+  ///
+  /// In en, this message translates to:
+  /// **'Show on the lock screen'**
+  String get lockScreenControls;
+
+  /// No description provided for @lockScreenControlsSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Title, picture and controls on the lock screen and in the notification. Leave off for discretion.'**
+  String get lockScreenControlsSubtitle;
 }
 
 class _AppLocalizationsDelegate
