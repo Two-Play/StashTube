@@ -52,11 +52,11 @@ const nativeLibraries = [
   ),
 ];
 
-/// Adds what the license page can't find in the Dart packages: Stashy's own
+/// Adds what the license page can't find in the Dart packages: StashTube's own
 /// license and the [nativeLibraries]. Called once in `main`.
 void registerAppLicenses() {
   LicenseRegistry.addLicense(() async* {
-    yield LicenseEntryWithLineBreaks(['Stashy'], await rootBundle.loadString('LICENSE'));
+    yield LicenseEntryWithLineBreaks(['StashTube'], await rootBundle.loadString('LICENSE'));
     for (final library in nativeLibraries) {
       final texts = [for (final file in library.files) await rootBundle.loadString('assets/licenses/$file')];
       yield LicenseEntryWithLineBreaks(
@@ -98,7 +98,7 @@ class AboutSettings extends ConsumerWidget {
               padding: const EdgeInsets.all(12),
               child: ClipRRect(
                 borderRadius: BorderRadius.circular(14),
-                child: Image.asset('assets/icons/stashy.png', width: 64, height: 64),
+                child: Image.asset('assets/icons/stashtube.png', width: 64, height: 64),
               ),
             ),
             applicationLegalese: l.aboutLegalese,

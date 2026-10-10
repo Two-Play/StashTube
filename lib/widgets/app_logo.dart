@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../core/config/theme.dart';
 
-/// Stashy's logo: two cards behind a front card with a play button, drawn
+/// StashTube's logo: two cards behind a front card with a play button, drawn
 /// from the same shapes as the app icon (`tool/generate_app_icon.py`), so it
 /// needs no image asset and stays sharp at any size. With [background] it
 /// sits on the app icon's dark rounded tile.
@@ -10,7 +10,7 @@ class AppLogo extends StatelessWidget {
   const AppLogo({super.key, this.size = 28, this.background});
 
   /// The cards' blue (CARD in the icon script), also the default accent.
-  static const blue = stashyBlue;
+  static const blue = stashTubeBlue;
 
   /// The app icon's background (BACKGROUND in the icon script).
   static const tile = Color(0xFF111111);

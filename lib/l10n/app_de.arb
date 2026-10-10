@@ -1,6 +1,6 @@
 {
   "@@locale": "de",
-  "appTitle": "Stashy",
+  "appTitle": "StashTube",
   "scenesCount": "{count, plural, =1{1 Szene} other{{count} Szenen}}",
   "imagesCount": "{count, plural, =1{1 Bild} other{{count} Bilder}}",
   "playsCount": "{count, plural, =0{Keine Wiedergaben} =1{1 Wiedergabe} other{{count} Wiedergaben}}",
@@ -236,7 +236,7 @@
   "appIcon": "App-Symbol",
   "appIconHint": "Auf Android ändert sich auch der Name auf dem Startbildschirm, und der Launcher braucht evtl. einen Moment. Auf iOS ändert sich nur das Symbol, und das System zeigt eine Bestätigung.",
   "appIconFailed": "Das Symbol konnte nicht geändert werden: {error}",
-  "appIconStash": "Stashy",
+  "appIconStash": "StashTube",
   "appIconNotes": "Notizen",
   "appIconCalculator": "Rechner",
   "unlockReason": "Stash entsperren",
@@ -385,7 +385,7 @@
   "airPlayHint": "Apple TV und AirPlay-Fernseher",
   "allViews": "Alle Ansichten",
   "tabAll": "Alle",
-  "colorStashy": "Stashy",
+  "colorStashTube": "StashTube",
   "searchScenes": "Szenen suchen",
   "searchGalleries": "Galerien suchen",
   "searchNoResults": "Nichts gefunden zu „{term}“",
@@ -419,6 +419,6 @@
   "appVersion": "Version",
   "appVersionValue": "{version} (Build {build})",
   "openSourceLicenses": "Open-Source-Lizenzen",
-  "openSourceLicensesSubtitle": "Lizenzen der Pakete, die Stashy verwendet",
+  "openSourceLicensesSubtitle": "Lizenzen der Pakete, die StashTube verwendet",
   "aboutLegalese": "Ein Client für Stash-Server. Nicht mit dem Stash-Projekt verbunden."
 }

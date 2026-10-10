@@ -9,7 +9,7 @@ class AppLocalizationsEn extends AppLocalizations {
   AppLocalizationsEn([String locale = 'en']) : super(locale);
 
   @override
-  String get appTitle => 'Stashy';
+  String get appTitle => 'StashTube';
 
   @override
   String scenesCount(int count) {
@@ -900,7 +900,7 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get appIconStash => 'Stashy';
+  String get appIconStash => 'StashTube';
 
   @override
   String get appIconNotes => 'Notes';
@@ -1395,7 +1395,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get tabAll => 'All';
 
   @override
-  String get colorStashy => 'Stashy';
+  String get colorStashTube => 'StashTube';
 
   @override
   String get searchScenes => 'Search scenes';
@@ -1530,7 +1530,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get openSourceLicensesSubtitle =>
-      'Licenses of the packages Stashy uses';
+      'Licenses of the packages StashTube uses';
 
   @override
   String get aboutLegalese =>

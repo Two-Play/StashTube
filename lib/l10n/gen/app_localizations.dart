@@ -101,7 +101,7 @@ abstract class AppLocalizations {
   /// No description provided for @appTitle.
   ///
   /// In en, this message translates to:
-  /// **'Stashy'**
+  /// **'StashTube'**
   String get appTitle;
 
   /// No description provided for @scenesCount.
@@ -1517,7 +1517,7 @@ abstract class AppLocalizations {
   /// No description provided for @appIconStash.
   ///
   /// In en, this message translates to:
-  /// **'Stashy'**
+  /// **'StashTube'**
   String get appIconStash;
 
   /// No description provided for @appIconNotes.
@@ -2408,11 +2408,11 @@ abstract class AppLocalizations {
   /// **'All'**
   String get tabAll;
 
-  /// No description provided for @colorStashy.
+  /// No description provided for @colorStashTube.
   ///
   /// In en, this message translates to:
-  /// **'Stashy'**
-  String get colorStashy;
+  /// **'StashTube'**
+  String get colorStashTube;
 
   /// No description provided for @searchScenes.
   ///
@@ -2615,7 +2615,7 @@ abstract class AppLocalizations {
   /// No description provided for @openSourceLicensesSubtitle.
   ///
   /// In en, this message translates to:
-  /// **'Licenses of the packages Stashy uses'**
+  /// **'Licenses of the packages StashTube uses'**
   String get openSourceLicensesSubtitle;
 
   /// No description provided for @aboutLegalese.

@@ -4,7 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:stash_app_mobile/features/settings/about.dart';
 
 void main() {
-  testWidgets('the licenses include Stashy\'s own and the native video libraries', (tester) async {
+  testWidgets('the licenses include StashTube\'s own and the native video libraries', (tester) async {
     registerAppLicenses();
     // Tall enough for the whole list.
     await tester.binding.setSurfaceSize(const Size(800, 2400));
@@ -21,7 +21,7 @@ void main() {
       await tester.pump();
     }
     expect(find.byType(LicensePage), findsOneWidget);
-    expect(find.text('Stashy'), findsWidgets);
+    expect(find.text('StashTube'), findsWidgets);
     for (final library in nativeLibraries) {
       expect(find.text(library.name), findsOneWidget, reason: library.name);
     }
