@@ -52,6 +52,6 @@ This is how it is meant to work; reports that show otherwise are exactly what we
 > [!WARNING]
 > Some things are by design and not vulnerabilities, but good to know:
 >
-> - Plain `http://` is allowed, for servers on the home network. Over the internet, use `https://`, or your API key or password travels unencrypted.
+> - Plain `http://` is allowed, for servers on the home network. Making Stash reachable from the internet is not recommended; use a VPN to reach it from outside. If you expose it anyway, use `https://`, or your API key or password travels unencrypted.
 > - Casting to a Chromecast or AirPlay device puts the API key into the stream URL, because these devices can't send headers.
 > - With a server that needs no login, anyone who can reach the server can use it, with or without Stashy.

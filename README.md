@@ -1,16 +1,24 @@
-# Stashy
+<h1 align="center">
+  <img src="docs/images/stashy-icon.png" width="96" height="96" alt="Stashy app icon"><br>
+  Stashy
+</h1>
 
-![Stashy app icon](docs/images/stashy-icon.png)
+<p align="center">
+  A YouTube-style mobile client for your own <a href="https://github.com/stashapp/stash">Stash</a> server, for Android and iOS.
+</p>
 
-A YouTube-style mobile client for your own [Stash](https://github.com/stashapp/stash) server, for Android and iOS.
+<p align="center">
+  <a href="https://github.com/Two-Play/StashAppMobile/releases"><img src="https://img.shields.io/github/v/release/Two-Play/StashAppMobile?include_prereleases&sort=semver&label=release" alt="Latest release"></a>
+  <a href="https://github.com/Two-Play/StashAppMobile/actions/workflows/ci.yml"><img src="https://github.com/Two-Play/StashAppMobile/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
+  <a href="https://github.com/Two-Play/StashAppMobile/releases"><img src="https://img.shields.io/github/downloads/Two-Play/StashAppMobile/total?label=downloads" alt="Downloads"></a>
+  <img src="https://img.shields.io/badge/platform-Android%20%7C%20iOS-lightgrey" alt="Platforms: Android and iOS">
+  <a href="https://flutter.dev"><img src="https://img.shields.io/badge/Flutter-3.47-02569B?logo=flutter" alt="Flutter 3.47"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/github/license/Two-Play/StashAppMobile" alt="License: AGPL-3.0"></a>
+</p>
 
-[![Latest release](https://img.shields.io/github/v/release/Two-Play/StashAppMobile?include_prereleases&sort=semver&label=release)](https://github.com/Two-Play/StashAppMobile/releases)
-[![CI](https://github.com/Two-Play/StashAppMobile/actions/workflows/ci.yml/badge.svg)](https://github.com/Two-Play/StashAppMobile/actions/workflows/ci.yml)
-[![Downloads](https://img.shields.io/github/downloads/Two-Play/StashAppMobile/total?label=downloads)](https://github.com/Two-Play/StashAppMobile/releases)
-![Platforms: Android and iOS](https://img.shields.io/badge/platform-Android%20%7C%20iOS-lightgrey)
-[![Flutter 3.47](https://img.shields.io/badge/Flutter-3.47-02569B?logo=flutter)](https://flutter.dev)
-[![License: AGPL-3.0](https://img.shields.io/github/license/Two-Play/StashAppMobile)](LICENSE)
-[![Get it on Obtainium](https://img.shields.io/badge/Obtainium-get%20it-6750A4)](https://apps.obtainium.imranr.dev/redirect?r=obtainium://add/https://github.com/Two-Play/StashAppMobile)
+<p align="center">
+  <a href="https://apps.obtainium.imranr.dev/redirect?r=obtainium://add/https://github.com/Two-Play/StashAppMobile"><img src="https://raw.githubusercontent.com/ImranR98/Obtainium/main/assets/graphics/badge_obtainium.png" height="54" alt="Get it on Obtainium"></a>
+</p>
 
 Stashy feels like the YouTube app: a feed with large thumbnails, a miniplayer that keeps playing while you browse, performers and studios as "channels", and short portrait videos in a vertical Shorts feed. It talks to your own Stash server through its GraphQL API and plays the streams directly.
 
@@ -92,7 +100,7 @@ The backlog with every user story and its status is in [`docs/BACKLOG.md`](docs/
 [Obtainium](https://github.com/ImranR98/Obtainium) installs apps straight from their GitHub releases and keeps them up to date.
 
 1. Install Obtainium.
-2. Tap the **Obtainium** badge above on your phone, or add the app in Obtainium by its URL: `https://github.com/Two-Play/StashAppMobile`.
+2. Tap the **Get it on Obtainium** badge above on your phone, or add the app in Obtainium by its URL: `https://github.com/Two-Play/StashAppMobile`.
 3. While Stashy is in beta, turn on **Include prereleases** in the app's settings in Obtainium.
 4. Install. Obtainium picks the right APK for your phone and notifies you of updates.
 
@@ -136,17 +144,22 @@ There is no iOS download yet: TestFlight and the App Store need a paid Apple dev
 
 ## First start
 
-1. Enter your server's address, for example `http://192.168.1.10:9999`.
+1. Enter your server's address, for example `http://192.168.1.10:9999`. Stash listens on port **9999** by default; Stashy talks to its GraphQL API at that address plus `/graphql`, so enter only the address and port.
 2. If your Stash has a password, either enter an **API key** (create one in Stash under *Settings → Security*) or sign in with your **username and password**.
 3. Pick a theme and an accent color. You can change them, and everything else, in the settings (the gear at the top).
 
 > [!TIP]
 > Plain `http://` works on your home network: Android allows cleartext traffic, and iOS has an exception for local servers and media.
 
-Outside your home network:
+Away from home:
+
+> [!WARNING]
+> Making your Stash server reachable from the internet is **not recommended**. To use Stashy on the go, connect your phone to your home network through a **VPN** (for example WireGuard, or a mesh VPN like Tailscale) and keep using the server's local address. That way Stash stays invisible to the internet.
+
+If you expose it anyway:
 
 > [!CAUTION]
-> Use `https://` when your server is reachable from the internet. Over `http://` your API key or password travels unencrypted. Casting always puts the API key into the stream URL, because cast devices can't send headers.
+> Use `https://`, a strong password or API key, and keep Stash up to date. Over `http://` your API key or password travels unencrypted. Casting always puts the API key into the stream URL, because cast devices can't send headers.
 
 ## Privacy and discretion
 
