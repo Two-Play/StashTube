@@ -6,7 +6,8 @@
 #
 # Writes the iOS AppIcon set, the Android legacy and adaptive launcher icons
 # (background, foreground, monochrome for Android 13 themed icons), the in-app preview
-# `assets/icons/stashy.png` and the full icon as `tool/app_icon.svg`. For the splash
+# `assets/icons/stashy.png`, the README's `docs/images/stashy-icon.png` and the full icon as
+# `tool/app_icon.svg`. For the splash
 # screen it writes the mark on its own (`launch_logo` on Android up to 11 and the iOS
 # LaunchImage) and the Android 12+ splash icon; the background color (BACKGROUND) is
 # set in `res/values/colors.xml` and `LaunchScreen.storyboard`.
@@ -17,7 +18,7 @@ import io
 import subprocess  # nosec B404: only runs rsvg-convert with fixed arguments
 from pathlib import Path
 
-from PIL import Image
+from PIL import Image, ImageDraw
 
 ROOT = Path(__file__).resolve().parent.parent
 # Top and bottom of the background gradient (both rgb(17, 17, 17): solid).
@@ -124,6 +125,15 @@ def main():
         save(MONOCHROME, round(108 * factor), folder / 'ic_launcher_monochrome.png')
 
     save(FULL, 192, ROOT / 'assets/icons/stashy.png', opaque=True)
+
+    # The README's icon: 96 px with rounded corners (Markdown can't size or
+    # round images itself).
+    readme = render(FULL, 96).convert('RGBA')
+    mask = Image.new('L', readme.size, 0)
+    ImageDraw.Draw(mask).rounded_rectangle([0, 0, 95, 95], radius=22, fill=255)
+    readme.putalpha(mask)
+    (ROOT / 'docs/images').mkdir(parents=True, exist_ok=True)
+    readme.save(ROOT / 'docs/images/stashy-icon.png', optimize=True)
 
     # Splash screen.
     for density, factor in densities.items():

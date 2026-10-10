@@ -1,32 +1,26 @@
-<h1 align="center">
-  <img src="assets/icons/stashy.png" width="96" height="96" alt="Stashy app icon"><br>
-  Stashy
-</h1>
+# Stashy
 
-<p align="center">
-  A YouTube-style mobile client for your own <a href="https://github.com/stashapp/stash">Stash</a> server, for Android and iOS.
-</p>
+![Stashy app icon](docs/images/stashy-icon.png)
 
-<p align="center">
-  <a href="https://github.com/Two-Play/StashAppMobile/releases"><img src="https://img.shields.io/github/v/release/Two-Play/StashAppMobile?include_prereleases&sort=semver&label=release" alt="Latest release"></a>
-  <a href="https://github.com/Two-Play/StashAppMobile/actions/workflows/ci.yml"><img src="https://github.com/Two-Play/StashAppMobile/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
-  <a href="https://github.com/Two-Play/StashAppMobile/releases"><img src="https://img.shields.io/github/downloads/Two-Play/StashAppMobile/total?label=downloads" alt="Downloads"></a>
-  <img src="https://img.shields.io/badge/platform-Android%20%7C%20iOS-lightgrey" alt="Platforms: Android and iOS">
-  <a href="https://flutter.dev"><img src="https://img.shields.io/badge/Flutter-3.47-02569B?logo=flutter" alt="Flutter 3.47"></a>
-  <a href="LICENSE"><img src="https://img.shields.io/github/license/Two-Play/StashAppMobile" alt="License: AGPL-3.0"></a>
-</p>
+A YouTube-style mobile client for your own [Stash](https://github.com/stashapp/stash) server, for Android and iOS.
 
-<p align="center">
-  <a href="https://apps.obtainium.imranr.dev/redirect?r=obtainium://add/https://github.com/Two-Play/StashAppMobile"><img src="https://raw.githubusercontent.com/ImranR98/Obtainium/main/assets/graphics/badge_obtainium.png" height="54" alt="Get it on Obtainium"></a>
-</p>
+[![Latest release](https://img.shields.io/github/v/release/Two-Play/StashAppMobile?include_prereleases&sort=semver&label=release)](https://github.com/Two-Play/StashAppMobile/releases)
+[![CI](https://github.com/Two-Play/StashAppMobile/actions/workflows/ci.yml/badge.svg)](https://github.com/Two-Play/StashAppMobile/actions/workflows/ci.yml)
+[![Downloads](https://img.shields.io/github/downloads/Two-Play/StashAppMobile/total?label=downloads)](https://github.com/Two-Play/StashAppMobile/releases)
+![Platforms: Android and iOS](https://img.shields.io/badge/platform-Android%20%7C%20iOS-lightgrey)
+[![Flutter 3.47](https://img.shields.io/badge/Flutter-3.47-02569B?logo=flutter)](https://flutter.dev)
+[![License: AGPL-3.0](https://img.shields.io/github/license/Two-Play/StashAppMobile)](LICENSE)
+[![Get it on Obtainium](https://img.shields.io/badge/Obtainium-get%20it-6750A4)](https://apps.obtainium.imranr.dev/redirect?r=obtainium://add/https://github.com/Two-Play/StashAppMobile)
 
 Stashy feels like the YouTube app: a feed with large thumbnails, a miniplayer that keeps playing while you browse, performers and studios as "channels", and short portrait videos in a vertical Shorts feed. It talks to your own Stash server through its GraphQL API and plays the streams directly.
 
 > [!NOTE]
 > Stashy connects only to the Stash server you enter. It has no account, no analytics and no other services. It is not affiliated with the Stash project.
 
+It is in beta:
+
 > [!IMPORTANT]
-> Stashy is in beta. Signed Android builds are on the releases page; there is no iOS download yet (see [iOS](#ios)).
+> Signed Android builds are on the releases page; there is no iOS download yet (see [iOS](#ios)).
 
 ## Contents
 
@@ -98,7 +92,7 @@ The backlog with every user story and its status is in [`docs/BACKLOG.md`](docs/
 [Obtainium](https://github.com/ImranR98/Obtainium) installs apps straight from their GitHub releases and keeps them up to date.
 
 1. Install Obtainium.
-2. Tap the **Get it on Obtainium** badge above on your phone, or add the app in Obtainium by its URL: `https://github.com/Two-Play/StashAppMobile`.
+2. Tap the **Obtainium** badge above on your phone, or add the app in Obtainium by its URL: `https://github.com/Two-Play/StashAppMobile`.
 3. While Stashy is in beta, turn on **Include prereleases** in the app's settings in Obtainium.
 4. Install. Obtainium picks the right APK for your phone and notifies you of updates.
 
@@ -123,8 +117,7 @@ The backlog with every user story and its status is in [`docs/BACKLOG.md`](docs/
 > [!WARNING]
 > Only install APKs from this repository's releases. Every release is signed with the same key, and Android refuses an update signed with another one, so nothing else can replace Stashy.
 
-<details>
-<summary>Checking a download</summary>
+#### Checking a download
 
 Every release has a `SHA256SUMS` file. Compare it with the APK you downloaded, for example on a computer:
 
@@ -133,8 +126,6 @@ sha256sum -c SHA256SUMS --ignore-missing
 ```
 
 The signing certificate's SHA-256 fingerprint starts with `F0:19:71:FF:8A:13:80:A8`.
-
-</details>
 
 ### iOS
 
@@ -151,6 +142,8 @@ There is no iOS download yet: TestFlight and the App Store need a paid Apple dev
 
 > [!TIP]
 > Plain `http://` works on your home network: Android allows cleartext traffic, and iOS has an exception for local servers and media.
+
+Outside your home network:
 
 > [!CAUTION]
 > Use `https://` when your server is reachable from the internet. Over `http://` your API key or password travels unencrypted. Casting always puts the API key into the stream URL, because cast devices can't send headers.
