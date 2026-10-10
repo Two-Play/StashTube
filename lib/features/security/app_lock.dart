@@ -111,7 +111,9 @@ final appLockSettingsProvider =
     NotifierProvider<AppLockSettingsNotifier, AppLockSettings>(AppLockSettingsNotifier.new);
 
 /// Whether the lock screen is showing. Locked at start when the lock is on;
-/// locks again after [AppLockSettings.lockAfter] in the background.
+/// locks again after [AppLockSettings.lockAfter] in the background. With no
+/// delay it locks as the app is hidden, so neither the app switcher nor the
+/// way back shows the content.
 class AppLockStateNotifier extends Notifier<bool> {
   DateTime? _backgroundedAt;
 
@@ -123,7 +125,10 @@ class AppLockStateNotifier extends Notifier<bool> {
   bool build() => ref.read(appLockSettingsProvider).enabled;
 
   void appHidden() {
-    if (ref.read(appLockSettingsProvider).enabled) _backgroundedAt ??= now();
+    final settings = ref.read(appLockSettingsProvider);
+    if (!settings.enabled) return;
+    _backgroundedAt ??= now();
+    if (settings.lockAfter == Duration.zero) state = true;
   }
 
   void appShown() {

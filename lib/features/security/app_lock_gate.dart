@@ -7,8 +7,8 @@ import 'app_lock.dart';
 import '../../l10n/l10n.dart';
 
 /// Sits above every page and dialog (MaterialApp.builder): shows the lock
-/// screen while locked (11.1) and covers the app while it is inactive or in
-/// the app switcher when that is enabled (11.2).
+/// screen while locked (11.1) and covers the app while it is inactive, when
+/// the lock is on or the app switcher should not show it (11.2).
 class AppLockGate extends ConsumerStatefulWidget {
   const AppLockGate({super.key, required this.child});
 
@@ -44,15 +44,19 @@ class _AppLockGateState extends ConsumerState<AppLockGate> {
   Widget build(BuildContext context) {
     ref.listen(appLockSettingsProvider.select((s) => s.hideInSwitcher), (_, hide) => SecureWindow.set(hide));
     final locked = ref.watch(appLockedProvider);
-    final hide = ref.watch(appLockSettingsProvider.select((s) => s.hideInSwitcher));
+    final settings = ref.watch(appLockSettingsProvider);
+    // Android's picture-in-picture window is inactive too, but shows the video.
+    final cover = !locked &&
+        _inactive &&
+        (settings.hideInSwitcher || settings.enabled) &&
+        !ref.watch(pipProvider);
 
     return Stack(
       children: [
         // Keeps the app's state while covered, but no taps reach it.
         IgnorePointer(ignoring: locked, child: widget.child),
         if (locked) const Positioned.fill(child: LockScreen()),
-        // Android's picture-in-picture window is inactive too, but shows the video.
-        if (!locked && hide && _inactive && !ref.watch(pipProvider)) const Positioned.fill(child: PrivacyCover()),
+        if (cover) const Positioned.fill(child: PrivacyCover()),
       ],
     );
   }
@@ -73,6 +77,12 @@ class PrivacyCover extends StatelessWidget {
 }
 
 /// PIN pad with optional biometric unlock.
+///
+/// Face ID / fingerprint is asked for once the app is in the foreground:
+/// asked while iOS still has the app inactive (just back from the
+/// background), the system cancels it. It is asked again after the app was
+/// in the background, but not after its own prompt (which makes the app
+/// inactive too), so cancelling it leaves the PIN pad.
 class LockScreen extends ConsumerStatefulWidget {
   const LockScreen({super.key});
 
@@ -81,9 +91,43 @@ class LockScreen extends ConsumerStatefulWidget {
 }
 
 class _LockScreenState extends ConsumerState<LockScreen> {
+  late final AppLifecycleListener _lifecycle;
+  bool _askBiometrics = true;
+  bool _asking = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _lifecycle = AppLifecycleListener(
+      onHide: () => _askBiometrics = true,
+      onResume: _maybeAskBiometrics,
+    );
+    WidgetsBinding.instance.addPostFrameCallback((_) => _maybeAskBiometrics());
+  }
+
+  @override
+  void dispose() {
+    _lifecycle.dispose();
+    super.dispose();
+  }
+
+  void _maybeAskBiometrics() {
+    if (!mounted || !_askBiometrics || !ref.read(appLockSettingsProvider).biometrics) return;
+    final state = WidgetsBinding.instance.lifecycleState;
+    if (state != null && state != AppLifecycleState.resumed) return;
+    _askBiometrics = false;
+    _biometric();
+  }
+
   Future<void> _biometric() async {
-    final ok = await ref.read(biometricAuthProvider).authenticate(context.l10n.unlockReason);
-    if (ok && mounted) ref.read(appLockedProvider.notifier).unlock();
+    if (_asking) return;
+    _asking = true;
+    try {
+      final ok = await ref.read(biometricAuthProvider).authenticate(context.l10n.unlockReason);
+      if (ok && mounted) ref.read(appLockedProvider.notifier).unlock();
+    } finally {
+      _asking = false;
+    }
   }
 
   @override
@@ -102,7 +146,6 @@ class _LockScreenState extends ConsumerState<LockScreen> {
               onUnlocked: () => ref.read(appLockedProvider.notifier).unlock(),
               title: Text(context.l10n.enterPin),
               useBlur: false,
-              onOpened: settings.biometrics ? _biometric : null,
               customizedButtonChild: settings.biometrics ? const Icon(Icons.fingerprint) : null,
               customizedButtonTap: settings.biometrics ? _biometric : null,
             ),
@@ -113,35 +156,41 @@ class _LockScreenState extends ConsumerState<LockScreen> {
   }
 }
 
-/// Asks for a new PIN twice; returns it, or null if cancelled.
-Future<String?> showCreatePin(BuildContext context) async {
-  String? pin;
-  await screenLockCreate(
-    context: context,
-    title: Text(context.l10n.choosePin),
-    confirmTitle: Text(context.l10n.repeatPin),
-    canCancel: true,
-    onConfirmed: (value) {
-      pin = value;
-      Navigator.pop(context);
-    },
-  );
-  return pin;
+/// Asks for a new PIN twice; returns it, or null if cancelled. Covers the
+/// whole app like the lock screen, also above the settings sheet.
+Future<String?> showCreatePin(BuildContext context) {
+  final l = context.l10n;
+  return Navigator.of(context, rootNavigator: true).push<String>(_PinRoute(
+    builder: (context) => ScreenLock.create(
+      title: Text(l.choosePin),
+      confirmTitle: Text(l.repeatPin),
+      useBlur: false,
+      onConfirmed: (pin) => Navigator.of(context).pop(pin),
+      onCancelled: () => Navigator.of(context).pop(),
+    ),
+  ));
 }
 
-/// Asks for the current PIN; returns whether it was entered correctly.
+/// Asks for the current PIN before a setting that needs it (turning the
+/// lock off, a new PIN); returns whether it was entered correctly. Covers
+/// the whole app like the lock screen.
 Future<bool> confirmPin(BuildContext context, WidgetRef ref) async {
-  var ok = false;
-  await screenLock(
-    context: context,
-    title: Text(context.l10n.enterYourPin),
-    correctString: '0' * ref.read(appLockSettingsProvider).pinLength,
-    onValidate: (input) async => ref.read(appLockSettingsProvider.notifier).verify(input),
-    canCancel: true,
-    onUnlocked: () {
-      ok = true;
-      Navigator.pop(context);
-    },
-  );
-  return ok;
+  final l = context.l10n;
+  final ok = await Navigator.of(context, rootNavigator: true).push<bool>(_PinRoute(
+    builder: (context) => ScreenLock(
+      title: Text(l.enterYourPin),
+      correctString: '0' * ref.read(appLockSettingsProvider).pinLength,
+      onValidate: (input) async => ref.read(appLockSettingsProvider.notifier).verify(input),
+      useBlur: false,
+      onUnlocked: () => Navigator.of(context).pop(true),
+      onCancelled: () => Navigator.of(context).pop(false),
+    ),
+  ));
+  return ok ?? false;
+}
+
+/// Full screen and opaque, so nothing of the app shows behind the PIN pad.
+class _PinRoute<T> extends MaterialPageRoute<T> {
+  _PinRoute({required WidgetBuilder builder})
+      : super(fullscreenDialog: true, builder: (context) => Material(child: builder(context)));
 }
