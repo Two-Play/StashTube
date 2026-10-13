@@ -6,6 +6,7 @@ import '../../core/config/server_config.dart';
 import '../../data/repositories/stash_repository.dart';
 import '../../l10n/l10n.dart';
 import '../../widgets/app_logo.dart';
+import '../demo/demo_server.dart';
 import '../settings/theme_welcome.dart';
 
 /// Connects the app to a Stash server (URL, optional name, and an API key
@@ -100,6 +101,28 @@ class _LoginPageState extends ConsumerState<LoginPage> {
     } catch (e) {
       Haptics.error();
       if (mounted) setState(() => _error = errorText(context.l10n, e));
+    } finally {
+      if (mounted) setState(() => _connecting = false);
+    }
+  }
+
+  /// Opens the built-in demo (sample library, no server needed).
+  Future<void> _tryDemo() async {
+    final l = context.l10n;
+    setState(() {
+      _connecting = true;
+      _error = null;
+    });
+    try {
+      await DemoServer.instance.start();
+      final servers = ref.read(serverProfilesProvider.notifier);
+      if (ref.read(serverProfilesProvider).profiles.isEmpty) {
+        await ref.read(themeWelcomeProvider.notifier).request();
+      }
+      await servers.add(const ServerConfig(baseUrl: ServerConfig.demoUrl), name: l.demoServerName);
+    } catch (e) {
+      Haptics.error();
+      if (mounted) setState(() => _error = errorText(l, e));
     } finally {
       if (mounted) setState(() => _connecting = false);
     }
@@ -268,6 +291,21 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                           ? const SizedBox.square(dimension: 20, child: CircularProgressIndicator(strokeWidth: 2))
                           : Text(editing ? context.l10n.save : context.l10n.connect),
                     ),
+                    if (!widget._pushed) ...[
+                      const SizedBox(height: 32),
+                      OutlinedButton.icon(
+                        onPressed: _connecting ? null : _tryDemo,
+                        style: OutlinedButton.styleFrom(minimumSize: const Size.fromHeight(48)),
+                        icon: const Icon(Icons.play_circle_outline),
+                        label: Text(context.l10n.tryDemo),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        context.l10n.tryDemoHint,
+                        textAlign: TextAlign.center,
+                        style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+                      ),
+                    ],
                   ],
                 ),
               ),

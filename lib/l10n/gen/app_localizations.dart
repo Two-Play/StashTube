@@ -1094,6 +1094,24 @@ abstract class AppLocalizations {
   /// **'Connect'**
   String get connect;
 
+  /// No description provided for @tryDemo.
+  ///
+  /// In en, this message translates to:
+  /// **'Try the demo'**
+  String get tryDemo;
+
+  /// No description provided for @tryDemoHint.
+  ///
+  /// In en, this message translates to:
+  /// **'No Stash server at hand? Explore the app with sample videos from Big Buck Bunny, the open movie by the Blender Foundation (CC BY 3.0).'**
+  String get tryDemoHint;
+
+  /// No description provided for @demoServerName.
+  ///
+  /// In en, this message translates to:
+  /// **'Demo'**
+  String get demoServerName;
+
   /// No description provided for @removeServerTitle.
   ///
   /// In en, this message translates to:
