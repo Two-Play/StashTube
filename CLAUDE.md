@@ -20,6 +20,7 @@ flutter pub run build_runner build --delete-conflicting-outputs   # GraphQL type
 tool/update_stash_schema.sh v0.31.1                               # another Stash schema, then build_runner
 tool/screenshots/demo_server.sh <work dir>                        # demo Stash (Docker, Blender open movies) on :9999
 tool/screenshots/take_screenshots.sh                              # README screenshots on the iOS simulator (integration_test)
+tool/demo/make_demo_assets.sh                                     # media of the built-in demo (assets/demo/); needs ffmpeg
 python3 tool/generate_app_icon.py                                 # app icon (iOS, Android adaptive, assets/icons/stashtube.png); needs rsvg-convert + Pillow
 ```
 
@@ -48,7 +49,7 @@ lib/
   data/models/            app models built from the generated types; list query args (SceneQuery, ...)
   data/repositories/      StashRepository: the only place that talks GraphQL
   data/providers.dart     list/detail providers built on the repository
-  features/<feature>/     screens (auth, shell, home, player, search, performers, studios, settings)
+  features/<feature>/     screens (auth, shell, home, player, search, performers, studios, settings, demo)
   widgets/                shared UI (SceneCard, PagedSliver, SceneFeedView, StashImage, ...)
 ```
 
@@ -77,6 +78,8 @@ lib/
 **Library.** The `library` tab (`features/library/`) has a sub-tab per `LibrarySection`. The markers section (`markers_tab.dart`, `markerListProvider`/`MarkerQuery`, `StashRepository.findMarkers`) lists the scene markers of all scenes; a tile plays its scene from the marker via `NowPlayingNotifier.play(scene, at:)`. All scenes uses `SceneFeedView` with `SceneFeedLayout.grid`. Images and galleries share `ImageGridView`, which takes an `ImageQuery` (optionally with a `galleryId`); tapping an image opens `ImageViewerPage` on the root navigator, so it covers the shell and the player. The fourth sub-tab is stats (`libraryStatsProvider` plus the optional `activityStatsProvider`, which returns null on Stash versions without those fields).
 
 **Login (session).** Instead of an API key a server can have a username and password (`ServerConfig.usesSession`: credentials and no API key). `StashSessionNotifier` (`data/repositories/stash_session.dart`) signs in through `POST /login` for Stash's `session` cookie, renews it shortly before it expires, and `StashSessionClient` (the `stashHttpClientProvider` used by GraphQL and the repository) sends it and signs in again on a 401, repeating the request. `authHeadersProvider` (images, streams) adds the cookie; the repository deliberately doesn't watch it, so a renewed cookie doesn't reload everything. Cast devices can't send cookies, so casting still needs an API key.
+
+**Demo (App Store review).** `features/demo/`. The login's "Try the demo" button starts `DemoServer`, a Stash look-alike on `ServerConfig.demoUrl` (`http://127.0.0.1:47999`, loopback only), and saves it as the server "Demo"; `main()` starts it again when a saved server has that URL (`ServerProfilesNotifier.hasDemo`), and it rebinds on resume (iOS can take the socket away). The rest of the app talks to it like to any Stash. `DemoHandler` (no sockets, so tests call it directly) answers `POST /graphql` through `DemoGraphql`, a small executor that runs the app's own documents (fragments, aliases, variables) against `DemoLibrary`'s object graph of maps with `__typename`s, and serves `assets/demo/` with byte ranges plus generated sprite WebVTT. `DemoLibrary` keeps the sample data in memory (edits last until the app restarts) and implements the criteria, sorts (`random_<seed>`) and paging the app sends; a field it lacks resolves to null, so a new field in a document needs a value there too (`test/features/demo_test.dart` runs every repository call against it). The media are clips from Big Buck Bunny (CC BY 3.0, credited in `registerAppLicenses`) built by `tool/demo/make_demo_assets.sh`, which also writes `assets/demo/manifest.json` (durations, sizes); keep them small, they ship in every build. Casting doesn't work with the demo (the TV can't reach the phone's loopback).
 
 **Errors.** `StashRepository._run` maps failures to `StashApiException` (a response that doesn't parse into the generated types too). Stash answers invalid queries with HTTP 422 plus GraphQL errors, which gql_http_link raises as `HttpLinkServerException`; these count as query errors (`isNetworkError == false`), and 401/403 become "check the API key" (Stash's 401 has no JSON body, a `HttpLinkParserException`). Other non-JSON error pages (a proxy's) report their HTTP status and are retried only for 5xx. Fields that only newer Stash versions have should go into a separate, optional query (see `activityStats`).
 
