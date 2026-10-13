@@ -2,123 +2,123 @@
  "clips": {
   "a-butterfly-appears": {
    "audio_codec": "aac",
-   "bit_rate": 276036,
+   "bit_rate": 115368,
    "duration": 19.0,
    "frame_rate": 24.0,
-   "height": 360,
-   "size": 655587,
+   "height": 270,
+   "size": 274001,
    "video_codec": "h264",
-   "width": 640
+   "width": 480
   },
   "morning-sky": {
    "audio_codec": "aac",
-   "bit_rate": 214572,
+   "bit_rate": 84003,
    "duration": 10.0,
    "frame_rate": 24.0,
-   "height": 360,
-   "size": 268216,
+   "height": 270,
+   "size": 105004,
    "video_codec": "h264",
-   "width": 640
+   "width": 480
   },
   "opening-titles": {
    "audio_codec": "aac",
-   "bit_rate": 251326,
+   "bit_rate": 102347,
    "duration": 11.0,
    "frame_rate": 24.0,
-   "height": 360,
-   "size": 345574,
+   "height": 270,
+   "size": 140728,
    "video_codec": "h264",
-   "width": 640
+   "width": 480
   },
   "rise-and-shine": {
    "audio_codec": "aac",
-   "bit_rate": 247222,
+   "bit_rate": 101342,
    "duration": 14.0,
    "frame_rate": 24.0,
-   "height": 360,
-   "size": 432639,
+   "height": 270,
+   "size": 177349,
    "video_codec": "h264",
-   "width": 640
+   "width": 480
   },
   "riverside": {
    "audio_codec": "aac",
-   "bit_rate": 312518,
+   "bit_rate": 119560,
    "duration": 6.5,
    "frame_rate": 24.0,
-   "height": 360,
-   "size": 253921,
+   "height": 270,
+   "size": 97143,
    "video_codec": "h264",
-   "width": 640
+   "width": 480
   },
   "short-bird": {
    "audio_codec": "aac",
-   "bit_rate": 256141,
+   "bit_rate": 116164,
    "duration": 6.0,
    "frame_rate": 24.0,
-   "height": 640,
-   "size": 192106,
+   "height": 480,
+   "size": 87123,
    "video_codec": "h264",
-   "width": 360
+   "width": 270
   },
   "short-butterfly": {
    "audio_codec": "aac",
-   "bit_rate": 305170,
+   "bit_rate": 127038,
    "duration": 10.0,
    "frame_rate": 24.0,
-   "height": 640,
-   "size": 381463,
+   "height": 480,
+   "size": 158798,
    "video_codec": "h264",
-   "width": 360
+   "width": 270
   },
   "short-stretch": {
    "audio_codec": "aac",
-   "bit_rate": 265553,
+   "bit_rate": 115513,
    "duration": 8.0,
    "frame_rate": 24.0,
-   "height": 640,
-   "size": 265553,
+   "height": 480,
+   "size": 115513,
    "video_codec": "h264",
-   "width": 360
+   "width": 270
   },
   "short-wake-up": {
    "audio_codec": "aac",
-   "bit_rate": 155252,
+   "bit_rate": 73304,
    "duration": 9.0,
    "frame_rate": 24.0,
-   "height": 640,
-   "size": 174659,
+   "height": 480,
+   "size": 82467,
    "video_codec": "h264",
-   "width": 360
+   "width": 270
   },
   "sunny-side": {
    "audio_codec": "aac",
-   "bit_rate": 223219,
+   "bit_rate": 100532,
    "duration": 14.0,
    "frame_rate": 24.0,
-   "height": 360,
-   "size": 390634,
+   "height": 270,
+   "size": 175932,
    "video_codec": "h264",
-   "width": 640
+   "width": 480
   },
   "the-burrow": {
    "audio_codec": "aac",
-   "bit_rate": 240515,
+   "bit_rate": 97600,
    "duration": 18.0,
    "frame_rate": 24.0,
-   "height": 360,
-   "size": 541160,
+   "height": 270,
+   "size": 219601,
    "video_codec": "h264",
-   "width": 640
+   "width": 480
   },
   "the-early-bird": {
    "audio_codec": "aac",
-   "bit_rate": 200623,
+   "bit_rate": 90184,
    "duration": 8.0,
    "frame_rate": 24.0,
-   "height": 360,
-   "size": 200623,
+   "height": 270,
+   "size": 90184,
    "video_codec": "h264",
-   "width": 640
+   "width": 480
   }
  },
  "images": [
@@ -129,10 +129,6 @@
   "still-05",
   "still-06",
   "still-07",
-  "still-08",
-  "still-09",
-  "still-10",
-  "still-11",
-  "still-12"
+  "still-08"
  ]
 }
