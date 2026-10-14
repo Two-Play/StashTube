@@ -17,19 +17,14 @@ class NavBarConfig {
 
   static const alwaysShown = AppTab.all;
 
-  /// The bar as it ships: home, performers, library, stats and "all views",
-  /// which has everything else.
+  /// The bar as it ships: home, performers, library, shorts and "all
+  /// views", which has everything else.
   static final standard = NavBarConfig(
     order: AppTab.values,
     hidden: {
       for (final tab in AppTab.values)
         if (tab != alwaysShown &&
-            tab != AppTab.stats &&
-            (tab.section != null ||
-                tab == AppTab.studios ||
-                tab == AppTab.tags ||
-                tab == AppTab.search ||
-                tab == AppTab.shorts))
+            (tab.section != null || tab == AppTab.studios || tab == AppTab.tags || tab == AppTab.search))
           tab,
     },
   );
