@@ -6,6 +6,7 @@ import '../../core/config/server_config.dart';
 import '../../data/repositories/stash_repository.dart';
 import '../../l10n/l10n.dart';
 import '../../widgets/app_logo.dart';
+import '../demo/demo_server.dart';
 import '../settings/theme_welcome.dart';
 
 /// Connects the app to a Stash server (URL, optional name, and an API key
@@ -35,6 +36,8 @@ class _LoginPageState extends ConsumerState<LoginPage> {
   bool _connecting = false;
   bool _obscureKey = true;
   bool _obscurePassword = true;
+  /// Whether the username and password fields are expanded and used.
+  bool _useLogin = false;
   String? _error;
 
   @override
@@ -47,6 +50,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
       _apiKeyController.text = edit.apiKey ?? '';
       _usernameController.text = edit.username ?? '';
       _passwordController.text = edit.password ?? '';
+      _useLogin = edit.username != null;
     }
   }
 
@@ -63,8 +67,9 @@ class _LoginPageState extends ConsumerState<LoginPage> {
   Future<void> _connect() async {
     if (!_formKey.currentState!.validate()) return;
     final apiKey = _apiKeyController.text.trim();
-    final username = _usernameController.text.trim();
-    final password = _passwordController.text;
+    // Collapsed, the sign-in fields don't count (they keep their text).
+    final username = _useLogin ? _usernameController.text.trim() : '';
+    final password = _useLogin ? _passwordController.text : '';
     ServerConfig configFor(String url) => ServerConfig(
           baseUrl: url,
           apiKey: apiKey.isEmpty ? null : apiKey,
@@ -100,6 +105,28 @@ class _LoginPageState extends ConsumerState<LoginPage> {
     } catch (e) {
       Haptics.error();
       if (mounted) setState(() => _error = errorText(context.l10n, e));
+    } finally {
+      if (mounted) setState(() => _connecting = false);
+    }
+  }
+
+  /// Opens the built-in demo (sample library, no server needed).
+  Future<void> _tryDemo() async {
+    final l = context.l10n;
+    setState(() {
+      _connecting = true;
+      _error = null;
+    });
+    try {
+      await DemoServer.instance.start();
+      final servers = ref.read(serverProfilesProvider.notifier);
+      if (ref.read(serverProfilesProvider).profiles.isEmpty) {
+        await ref.read(themeWelcomeProvider.notifier).request();
+      }
+      await servers.add(const ServerConfig(baseUrl: ServerConfig.demoUrl), name: l.demoServerName);
+    } catch (e) {
+      Haptics.error();
+      if (mounted) setState(() => _error = errorText(l, e));
     } finally {
       if (mounted) setState(() => _connecting = false);
     }
@@ -201,7 +228,10 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                       obscureText: _obscureKey,
                       autocorrect: false,
                       enableSuggestions: false,
-                      textInputAction: TextInputAction.next,
+                      textInputAction: _useLogin ? TextInputAction.next : TextInputAction.done,
+                      onFieldSubmitted: (_) {
+                        if (!_useLogin) _connect();
+                      },
                       decoration: InputDecoration(
                         border: const OutlineInputBorder(),
                         labelText: context.l10n.apiKeyOptional,
@@ -214,47 +244,59 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                         ),
                       ),
                     ),
-                    const SizedBox(height: 24),
-                    Text(context.l10n.orSignIn, style: theme.textTheme.titleSmall),
-                    const SizedBox(height: 4),
-                    Text(
-                      context.l10n.orSignInHint,
-                      style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurfaceVariant),
-                    ),
-                    const SizedBox(height: 12),
-                    TextFormField(
-                      controller: _usernameController,
-                      autocorrect: false,
-                      enableSuggestions: false,
-                      autofillHints: const [AutofillHints.username],
-                      textInputAction: TextInputAction.next,
-                      decoration: InputDecoration(
-                        border: const OutlineInputBorder(),
-                        labelText: context.l10n.username,
-                        prefixIcon: const Icon(Icons.person_outline),
-                      ),
-                      validator: (v) => (v ?? '').trim().isEmpty != _passwordController.text.isEmpty
-                          ? context.l10n.loginIncomplete
-                          : null,
-                    ),
                     const SizedBox(height: 16),
-                    TextFormField(
-                      controller: _passwordController,
-                      obscureText: _obscurePassword,
-                      autocorrect: false,
-                      enableSuggestions: false,
-                      autofillHints: const [AutofillHints.password],
-                      textInputAction: TextInputAction.done,
-                      onFieldSubmitted: (_) => _connect(),
-                      decoration: InputDecoration(
-                        border: const OutlineInputBorder(),
-                        labelText: context.l10n.password,
-                        prefixIcon: const Icon(Icons.lock_outline),
-                        suffixIcon: IconButton(
-                          icon: Icon(_obscurePassword ? Icons.visibility : Icons.visibility_off),
-                          onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
-                        ),
+                    ExpansionTile(
+                      initiallyExpanded: _useLogin,
+                      onExpansionChanged: (expanded) {
+                        Haptics.selection();
+                        setState(() => _useLogin = expanded);
+                      },
+                      shape: const Border(),
+                      collapsedShape: const Border(),
+                      tilePadding: EdgeInsets.zero,
+                      childrenPadding: const EdgeInsets.only(top: 8),
+                      leading: const Icon(Icons.login),
+                      title: Text(context.l10n.signInWithPassword, style: theme.textTheme.titleSmall),
+                      subtitle: Text(
+                        context.l10n.signInWithPasswordHint,
+                        style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurfaceVariant),
                       ),
+                      children: [
+                        TextFormField(
+                          controller: _usernameController,
+                          autocorrect: false,
+                          enableSuggestions: false,
+                          autofillHints: const [AutofillHints.username],
+                          textInputAction: TextInputAction.next,
+                          decoration: InputDecoration(
+                            border: const OutlineInputBorder(),
+                            labelText: context.l10n.username,
+                            prefixIcon: const Icon(Icons.person_outline),
+                          ),
+                          validator: (v) => (v ?? '').trim().isEmpty != _passwordController.text.isEmpty
+                              ? context.l10n.loginIncomplete
+                              : null,
+                        ),
+                        const SizedBox(height: 16),
+                        TextFormField(
+                          controller: _passwordController,
+                          obscureText: _obscurePassword,
+                          autocorrect: false,
+                          enableSuggestions: false,
+                          autofillHints: const [AutofillHints.password],
+                          textInputAction: TextInputAction.done,
+                          onFieldSubmitted: (_) => _connect(),
+                          decoration: InputDecoration(
+                            border: const OutlineInputBorder(),
+                            labelText: context.l10n.password,
+                            prefixIcon: const Icon(Icons.lock_outline),
+                            suffixIcon: IconButton(
+                              icon: Icon(_obscurePassword ? Icons.visibility : Icons.visibility_off),
+                              onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                     if (_error != null) ...[
                       const SizedBox(height: 16),
@@ -268,6 +310,21 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                           ? const SizedBox.square(dimension: 20, child: CircularProgressIndicator(strokeWidth: 2))
                           : Text(editing ? context.l10n.save : context.l10n.connect),
                     ),
+                    if (!widget._pushed) ...[
+                      const SizedBox(height: 32),
+                      OutlinedButton.icon(
+                        onPressed: _connecting ? null : _tryDemo,
+                        style: OutlinedButton.styleFrom(minimumSize: const Size.fromHeight(48)),
+                        icon: const Icon(Icons.play_circle_outline),
+                        label: Text(context.l10n.tryDemo),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        context.l10n.tryDemoHint,
+                        textAlign: TextAlign.center,
+                        style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+                      ),
+                    ],
                   ],
                 ),
               ),

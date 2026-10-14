@@ -109,7 +109,7 @@ void main() {
   testWidgets('"all views" lists only what is not in the bar, plus the settings', (tester) async {
     await pumpHome(tester, home: const AllViewsPage());
     expect(find.text('Studios'), findsOneWidget);
-    expect(find.text('Shorts'), findsOneWidget);
+    expect(find.text('Stats'), findsOneWidget);
     expect(find.text('Settings'), findsOneWidget);
     expect(find.text('Performers'), findsNothing, reason: 'in the standard bar');
     expect(find.text('Home'), findsNothing);

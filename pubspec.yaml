@@ -16,6 +16,9 @@ publish_to: 'none' # Remove this line if you wish to publish to pub.dev
 # https://developer.apple.com/library/archive/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html
 # In Windows, build-name is used as the major, minor, and patch parts
 # of the product and file versions while build-number is used as the build suffix.
+# Releases get their version and build number from the pipeline
+# (.github/workflows/release.yml, tool/release/next_version.py); this one is
+# only for local builds and needs no bump.
 version: 1.0.0-beta.5+5
 
 environment:
@@ -63,6 +66,8 @@ dependencies:
   gql: ^1.0.1
   audio_service: ^0.18.19
   package_info_plus: ^10.2.2
+  # Tells when the phone is upright again after leaving fullscreen sideways (player_controls.dart).
+  sensors_plus: ^7.1.1
 
 dev_dependencies:
   integration_test:
@@ -97,6 +102,14 @@ flutter:
     - assets/icons/
     # License texts for the about page (registerAppLicenses).
     - assets/licenses/
+    # The built-in demo (DemoServer; tool/demo/make_demo_assets.sh).
+    - assets/demo/
+    - assets/demo/scenes/
+    - assets/demo/covers/
+    - assets/demo/previews/
+    - assets/demo/sprites/
+    - assets/demo/images/
+    - assets/demo/portraits/
     - LICENSE
     #- images/a_dot_ham.jpeg
 
