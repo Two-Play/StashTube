@@ -31,6 +31,8 @@ PODS:
   - permission_handler_apple (9.4.8):
     - Flutter
   - Protobuf (5.36.2)
+  - sensors_plus (0.0.1):
+    - Flutter
   - shared_preferences_foundation (0.0.1):
     - Flutter
     - FlutterMacOS
@@ -54,6 +56,7 @@ DEPENDENCIES:
   - media_kit_video (from `.symlinks/plugins/media_kit_video/ios`)
   - package_info_plus (from `.symlinks/plugins/package_info_plus/ios`)
   - permission_handler_apple (from `.symlinks/plugins/permission_handler_apple/ios`)
+  - sensors_plus (from `.symlinks/plugins/sensors_plus/ios`)
   - shared_preferences_foundation (from `.symlinks/plugins/shared_preferences_foundation/darwin`)
   - sqflite_darwin (from `.symlinks/plugins/sqflite_darwin/darwin`)
   - wakelock_plus (from `.symlinks/plugins/wakelock_plus/ios`)
@@ -90,6 +93,8 @@ EXTERNAL SOURCES:
     :path: ".symlinks/plugins/package_info_plus/ios"
   permission_handler_apple:
     :path: ".symlinks/plugins/permission_handler_apple/ios"
+  sensors_plus:
+    :path: ".symlinks/plugins/sensors_plus/ios"
   shared_preferences_foundation:
     :path: ".symlinks/plugins/shared_preferences_foundation/darwin"
   sqflite_darwin:
@@ -113,6 +118,7 @@ SPEC CHECKSUMS:
   package_info_plus: af8e2ca6888548050f16fa2f1938db7b5a5df499
   permission_handler_apple: 92d754bbaa7361d436db2d6c3c1c2a0fdcec462e
   Protobuf: 2520aae1505ff88eabfd6a0687ad3feace61640f
+  sensors_plus: b70a93b69dafdabd26ce4ac3f4d0529ab9acc4ca
   shared_preferences_foundation: 7036424c3d8ec98dfe75ff1667cb0cd531ec82bb
   sqflite_darwin: 20b2a3a3b70e43edae938624ce550a3cbf66a3d0
   wakelock_plus: d4ca1e4e4bc9de42cb55d57b5bdc158af318e3c6

@@ -42,9 +42,13 @@ Color ensureContrast(Color color, Color background, {double minimum = 4.5}) {
   return hsl.toColor();
 }
 
-/// White or black, whichever is easier to read on [color].
+/// White on [color] unless that is clearly hard to read (below 4:1, e.g.
+/// on amber), else black. White wins even where black has a little more
+/// contrast: black labels on a mid-tone accent look muddy.
 Color readableOn(Color color) =>
-    contrastRatio(Colors.white, color) >= contrastRatio(Colors.black, color) ? Colors.white : Colors.black;
+    contrastRatio(Colors.white, color) >= 4 || contrastRatio(Colors.white, color) >= contrastRatio(Colors.black, color)
+        ? Colors.white
+        : Colors.black;
 
 /// StashTube's own blue, the color of the cards in its icon and logo.
 const stashTubeBlue = Color(0xFF3A8DFF);
@@ -101,8 +105,20 @@ abstract final class AppTheme {
 
   /// The accent as shown in [brightness] mode: same hue, lightened on dark
   /// or darkened on light surfaces until it is readable there (WCAG AA).
-  static Color accentFor(Color accent, Brightness brightness) =>
-      ensureContrast(accent, surfaceFor(brightness, accent));
+  /// On dark surfaces a light accent is also darkened, as far as it stays
+  /// readable there, so the white labels of filled buttons read well too.
+  static Color accentFor(Color accent, Brightness brightness) {
+    final surface = surfaceFor(brightness, accent);
+    final readable = ensureContrast(accent, surface);
+    if (brightness == Brightness.light) return readable;
+    var hsl = HSLColor.fromColor(readable);
+    while (contrastRatio(Colors.white, hsl.toColor()) < 4.5) {
+      final darker = hsl.withLightness((hsl.lightness - 0.01).clamp(0.0, 1.0));
+      if (contrastRatio(darker.toColor(), surface) < 4.5) break;
+      hsl = darker;
+    }
+    return hsl.toColor();
+  }
 
   static ThemeData _build(Brightness brightness, Color accent) {
     final primary = accentFor(accent, brightness);

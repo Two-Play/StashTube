@@ -63,6 +63,8 @@ dependencies:
   gql: ^1.0.1
   audio_service: ^0.18.19
   package_info_plus: ^10.2.2
+  # Tells when the phone is upright again after leaving fullscreen sideways (player_controls.dart).
+  sensors_plus: ^7.1.1
 
 dev_dependencies:
   integration_test:
