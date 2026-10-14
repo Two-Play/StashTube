@@ -219,4 +219,30 @@ void main() {
     await tester.pump();
     expect(c.$1.read(serverProfilesProvider).activeId, c.$2);
   });
+
+  testWidgets('username and password fields expand on demand', (tester) async {
+    final c = await tester.runAsync(() => containerWith({}));
+    await tester.pumpWidget(UncontrolledProviderScope(container: c!, child: const MaterialApp(home: LoginPage())));
+    expect(find.widgetWithText(TextFormField, 'Username'), findsNothing);
+
+    await tester.ensureVisible(find.text('Sign in with username and password'));
+    await tester.tap(find.text('Sign in with username and password'));
+    await tester.pumpAndSettle();
+    expect(find.widgetWithText(TextFormField, 'Username'), findsOneWidget);
+    expect(find.widgetWithText(TextFormField, 'Password'), findsOneWidget);
+  });
+
+  testWidgets('editing a server with a login starts expanded', (tester) async {
+    final c = await tester.runAsync(() async {
+      final c = await containerWith({});
+      final profile = await c
+          .read(serverProfilesProvider.notifier)
+          .add(const ServerConfig(baseUrl: 'http://home:9999', username: 'me', password: 'secret'));
+      return (c, profile);
+    });
+    await tester.pumpWidget(
+      UncontrolledProviderScope(container: c!.$1, child: MaterialApp(home: LoginPage(edit: c.$2))),
+    );
+    expect(find.widgetWithText(TextFormField, 'me'), findsOneWidget);
+  });
 }

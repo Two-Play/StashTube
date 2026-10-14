@@ -20,7 +20,7 @@ Future<ProviderContainer> _container([Map<String, Object> prefs = const {}]) asy
 void main() {
   test('the standard bar ends with "all views"', () {
     expect(NavBarConfig.standard.visible,
-        [AppTab.home, AppTab.performers, AppTab.library, AppTab.stats, AppTab.all]);
+        [AppTab.home, AppTab.performers, AppTab.library, AppTab.shorts, AppTab.all]);
   });
 
   test('a full stored bar makes room for "all views" by dropping its last hideable tab', () async {
@@ -63,7 +63,7 @@ void main() {
         ),
       ),
     ));
-    expect(find.text('Start,Performer,Bibliothek,Statistik,Alle'), findsOneWidget);
+    expect(find.text('Start,Performer,Bibliothek,Shorts,Alle'), findsOneWidget);
   });
 
   test('"all views" cannot be hidden, and the bar keeps 2 to 5 tabs', () {
@@ -77,7 +77,7 @@ void main() {
     expect(config.visible, contains(AppTab.tags));
     expect(config.visible, isNot(contains(AppTab.performers)));
 
-    config = config.toggle(AppTab.home).toggle(AppTab.library).toggle(AppTab.stats);
+    config = config.toggle(AppTab.home).toggle(AppTab.library).toggle(AppTab.shorts);
     expect(config.visible, [AppTab.tags, AppTab.all]);
     expect(config.canToggle(AppTab.tags), isFalse);
   });
@@ -105,7 +105,7 @@ void main() {
     );
     addTearDown(restarted.dispose);
     expect(restarted.read(navBarConfigProvider).visible,
-        [AppTab.library, AppTab.home, AppTab.search, AppTab.stats, AppTab.all]);
+        [AppTab.library, AppTab.home, AppTab.shorts, AppTab.search, AppTab.all]);
     // The app starts on the first tab of the bar.
     expect(restarted.read(currentTabProvider), AppTab.library);
 
@@ -153,7 +153,7 @@ void main() {
     await tester.tap(find.text('Tags'));
     await tester.pump();
     expect(c.read(navBarConfigProvider).visible,
-        [AppTab.home, AppTab.library, AppTab.tags, AppTab.stats, AppTab.all]);
+        [AppTab.home, AppTab.library, AppTab.shorts, AppTab.tags, AppTab.all]);
 
     await tester.tap(find.text('Reset'));
     await tester.pump();

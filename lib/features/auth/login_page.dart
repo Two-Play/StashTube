@@ -36,6 +36,8 @@ class _LoginPageState extends ConsumerState<LoginPage> {
   bool _connecting = false;
   bool _obscureKey = true;
   bool _obscurePassword = true;
+  /// Whether the username and password fields are expanded and used.
+  bool _useLogin = false;
   String? _error;
 
   @override
@@ -48,6 +50,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
       _apiKeyController.text = edit.apiKey ?? '';
       _usernameController.text = edit.username ?? '';
       _passwordController.text = edit.password ?? '';
+      _useLogin = edit.username != null;
     }
   }
 
@@ -64,8 +67,9 @@ class _LoginPageState extends ConsumerState<LoginPage> {
   Future<void> _connect() async {
     if (!_formKey.currentState!.validate()) return;
     final apiKey = _apiKeyController.text.trim();
-    final username = _usernameController.text.trim();
-    final password = _passwordController.text;
+    // Collapsed, the sign-in fields don't count (they keep their text).
+    final username = _useLogin ? _usernameController.text.trim() : '';
+    final password = _useLogin ? _passwordController.text : '';
     ServerConfig configFor(String url) => ServerConfig(
           baseUrl: url,
           apiKey: apiKey.isEmpty ? null : apiKey,
@@ -224,7 +228,10 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                       obscureText: _obscureKey,
                       autocorrect: false,
                       enableSuggestions: false,
-                      textInputAction: TextInputAction.next,
+                      textInputAction: _useLogin ? TextInputAction.next : TextInputAction.done,
+                      onFieldSubmitted: (_) {
+                        if (!_useLogin) _connect();
+                      },
                       decoration: InputDecoration(
                         border: const OutlineInputBorder(),
                         labelText: context.l10n.apiKeyOptional,
@@ -237,47 +244,59 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                         ),
                       ),
                     ),
-                    const SizedBox(height: 24),
-                    Text(context.l10n.orSignIn, style: theme.textTheme.titleSmall),
-                    const SizedBox(height: 4),
-                    Text(
-                      context.l10n.orSignInHint,
-                      style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurfaceVariant),
-                    ),
-                    const SizedBox(height: 12),
-                    TextFormField(
-                      controller: _usernameController,
-                      autocorrect: false,
-                      enableSuggestions: false,
-                      autofillHints: const [AutofillHints.username],
-                      textInputAction: TextInputAction.next,
-                      decoration: InputDecoration(
-                        border: const OutlineInputBorder(),
-                        labelText: context.l10n.username,
-                        prefixIcon: const Icon(Icons.person_outline),
-                      ),
-                      validator: (v) => (v ?? '').trim().isEmpty != _passwordController.text.isEmpty
-                          ? context.l10n.loginIncomplete
-                          : null,
-                    ),
                     const SizedBox(height: 16),
-                    TextFormField(
-                      controller: _passwordController,
-                      obscureText: _obscurePassword,
-                      autocorrect: false,
-                      enableSuggestions: false,
-                      autofillHints: const [AutofillHints.password],
-                      textInputAction: TextInputAction.done,
-                      onFieldSubmitted: (_) => _connect(),
-                      decoration: InputDecoration(
-                        border: const OutlineInputBorder(),
-                        labelText: context.l10n.password,
-                        prefixIcon: const Icon(Icons.lock_outline),
-                        suffixIcon: IconButton(
-                          icon: Icon(_obscurePassword ? Icons.visibility : Icons.visibility_off),
-                          onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
-                        ),
+                    ExpansionTile(
+                      initiallyExpanded: _useLogin,
+                      onExpansionChanged: (expanded) {
+                        Haptics.selection();
+                        setState(() => _useLogin = expanded);
+                      },
+                      shape: const Border(),
+                      collapsedShape: const Border(),
+                      tilePadding: EdgeInsets.zero,
+                      childrenPadding: const EdgeInsets.only(top: 8),
+                      leading: const Icon(Icons.login),
+                      title: Text(context.l10n.signInWithPassword, style: theme.textTheme.titleSmall),
+                      subtitle: Text(
+                        context.l10n.signInWithPasswordHint,
+                        style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurfaceVariant),
                       ),
+                      children: [
+                        TextFormField(
+                          controller: _usernameController,
+                          autocorrect: false,
+                          enableSuggestions: false,
+                          autofillHints: const [AutofillHints.username],
+                          textInputAction: TextInputAction.next,
+                          decoration: InputDecoration(
+                            border: const OutlineInputBorder(),
+                            labelText: context.l10n.username,
+                            prefixIcon: const Icon(Icons.person_outline),
+                          ),
+                          validator: (v) => (v ?? '').trim().isEmpty != _passwordController.text.isEmpty
+                              ? context.l10n.loginIncomplete
+                              : null,
+                        ),
+                        const SizedBox(height: 16),
+                        TextFormField(
+                          controller: _passwordController,
+                          obscureText: _obscurePassword,
+                          autocorrect: false,
+                          enableSuggestions: false,
+                          autofillHints: const [AutofillHints.password],
+                          textInputAction: TextInputAction.done,
+                          onFieldSubmitted: (_) => _connect(),
+                          decoration: InputDecoration(
+                            border: const OutlineInputBorder(),
+                            labelText: context.l10n.password,
+                            prefixIcon: const Icon(Icons.lock_outline),
+                            suffixIcon: IconButton(
+                              icon: Icon(_obscurePassword ? Icons.visibility : Icons.visibility_off),
+                              onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                     if (_error != null) ...[
                       const SizedBox(height: 16),

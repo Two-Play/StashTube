@@ -69,10 +69,11 @@ void main() {
     expect(theme.colorScheme.primary, AppTheme.accentFor(accentColors['Amber']!, Brightness.light));
     expect(HSLColor.fromColor(theme.colorScheme.primary).hue,
         closeTo(HSLColor.fromColor(accentColors['Amber']!).hue, 1));
-    // On the dark page it is used as is, with dark text on top.
+    // On the dark page it is darkened too, so white labels read on it.
     final dark = AppTheme.dark(accentColors['Amber']!).colorScheme;
-    expect(dark.primary, accentColors['Amber']);
-    expect(dark.onPrimary, Colors.black);
+    expect(dark.primary, AppTheme.accentFor(accentColors['Amber']!, Brightness.dark));
+    expect(HSLColor.fromColor(dark.primary).hue, closeTo(HSLColor.fromColor(accentColors['Amber']!).hue, 1));
+    expect(dark.onPrimary, Colors.white);
   });
 
   test('the former blues become StashTube\'s blue', () async {

@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
@@ -5,6 +6,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:media_kit/media_kit.dart';
 import 'package:media_kit_video/media_kit_video.dart';
+import 'package:sensors_plus/sensors_plus.dart';
 
 import '../../core/utils/format.dart';
 import '../../data/models/scene.dart';
@@ -42,6 +44,10 @@ final playerVideoKey = GlobalKey<VideoState>();
 /// back to portrait then leaves it again.
 final fullscreenByRotation = ValueNotifier<bool>(false);
 
+/// Whether gravity (an accelerometer reading in m/s²) shows the phone held
+/// upright, not sideways or lying flat.
+bool isHeldUpright(double x, double y) => y.abs() > 7 && y.abs() > 2 * x.abs();
+
 /// Width / height of [scene]'s video: the decoded size once known (it
 /// accounts for rotation metadata), else the file's size from Stash. With
 /// [sceneFirst], Stash's size wins: right after switching scenes the
@@ -72,6 +78,61 @@ class PlayerVideo extends ConsumerStatefulWidget {
 class _PlayerVideoState extends ConsumerState<PlayerVideo> {
   Orientation? _orientation;
 
+  /// Held in portrait after leaving fullscreen while sideways (see
+  /// [_onExitFullscreen]) until the phone is upright again ([_upright]) or
+  /// the panel collapses.
+  bool _portraitLocked = false;
+  StreamSubscription<AccelerometerEvent>? _upright;
+
+  @override
+  void didUpdateWidget(PlayerVideo oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (!widget.showControls) _releasePortrait();
+  }
+
+  @override
+  void dispose() {
+    _releasePortrait();
+    super.dispose();
+  }
+
+  void _releasePortrait() {
+    _stopWatchingUpright();
+    if (!_portraitLocked) return;
+    _portraitLocked = false;
+    SystemChrome.setPreferredOrientations([]);
+  }
+
+  void _stopWatchingUpright() {
+    _upright?.cancel();
+    _upright = null;
+  }
+
+  /// Without a lock, leaving fullscreen while the phone is held sideways
+  /// keeps the app in landscape: the expanded player then fills the screen
+  /// with its controls hidden and looks stuck in fullscreen. Like YouTube,
+  /// go back to portrait. The UI can't turn then, so the accelerometer tells
+  /// when the phone is upright again: the lock goes, and turning the phone
+  /// enters fullscreen as before. Without a sensor the lock stays until the
+  /// panel collapses (releasing it sideways would enter fullscreen again).
+  Future<void> _onExitFullscreen() async {
+    final sideways = _orientation == Orientation.landscape;
+    fullscreenByRotation.value = false;
+    await defaultExitNativeFullscreen();
+    if (!sideways || !mounted || !widget.showControls || !(Platform.isAndroid || Platform.isIOS)) return;
+    _portraitLocked = true;
+    await SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
+    if (!mounted || !_portraitLocked) return;
+    _stopWatchingUpright();
+    _upright = accelerometerEventStream(samplingPeriod: SensorInterval.uiInterval).listen(
+      (event) {
+        if (isHeldUpright(event.x, event.y)) _releasePortrait();
+      },
+      onError: (Object _) => _stopWatchingUpright(),
+      cancelOnError: true,
+    );
+  }
+
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
@@ -100,11 +161,13 @@ class _PlayerVideoState extends ConsumerState<PlayerVideo> {
       controller: ref.watch(videoControllerProvider),
       // backgroundPlaybackProvider decides (4.12): keep the sound, or pause.
       pauseUponEnteringBackgroundMode: false,
-      onEnterFullscreen: () => _enterFullscreen(ref.read(playerProvider).state, scene),
-      onExitFullscreen: () {
-        fullscreenByRotation.value = false;
-        return defaultExitNativeFullscreen();
+      onEnterFullscreen: () {
+        // The fullscreen sets its own orientations.
+        _portraitLocked = false;
+        _stopWatchingUpright();
+        return _enterFullscreen(ref.read(playerProvider).state, scene);
       },
+      onExitFullscreen: _onExitFullscreen,
       // The same builder is used by media_kit's fullscreen route.
       controls: widget.showControls
           ? (state) => StashVideoControls(
