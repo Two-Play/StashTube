@@ -640,11 +640,11 @@ class AppLocalizationsEn extends AppLocalizations {
       'For a server with a password: the API key (Stash → Settings → Security), or sign in below.';
 
   @override
-  String get orSignIn => 'Or sign in';
+  String get signInWithPassword => 'Sign in with username and password';
 
   @override
-  String get orSignInHint =>
-      'With the username and password of your Stash server. Casting to a TV needs the API key.';
+  String get signInWithPasswordHint =>
+      'Instead of an API key. Casting to a TV needs the API key.';
 
   @override
   String get username => 'Username';
