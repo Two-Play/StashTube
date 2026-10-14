@@ -1058,17 +1058,17 @@ abstract class AppLocalizations {
   /// **'For a server with a password: the API key (Stash → Settings → Security), or sign in below.'**
   String get apiKeyHelper;
 
-  /// No description provided for @orSignIn.
+  /// No description provided for @signInWithPassword.
   ///
   /// In en, this message translates to:
-  /// **'Or sign in'**
-  String get orSignIn;
+  /// **'Sign in with username and password'**
+  String get signInWithPassword;
 
-  /// No description provided for @orSignInHint.
+  /// No description provided for @signInWithPasswordHint.
   ///
   /// In en, this message translates to:
-  /// **'With the username and password of your Stash server. Casting to a TV needs the API key.'**
-  String get orSignInHint;
+  /// **'Instead of an API key. Casting to a TV needs the API key.'**
+  String get signInWithPasswordHint;
 
   /// No description provided for @username.
   ///
@@ -1093,6 +1093,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Connect'**
   String get connect;
+
+  /// No description provided for @tryDemo.
+  ///
+  /// In en, this message translates to:
+  /// **'Try the demo'**
+  String get tryDemo;
+
+  /// No description provided for @tryDemoHint.
+  ///
+  /// In en, this message translates to:
+  /// **'No Stash server at hand? Explore the app with sample videos from Big Buck Bunny, the open movie by the Blender Foundation (CC BY 3.0).'**
+  String get tryDemoHint;
+
+  /// No description provided for @demoServerName.
+  ///
+  /// In en, this message translates to:
+  /// **'Demo'**
+  String get demoServerName;
 
   /// No description provided for @removeServerTitle.
   ///

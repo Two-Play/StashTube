@@ -56,12 +56,14 @@ def versions(releases):
                     if a['name'].endswith('.ipa')), None)
         if ipa is None or build_number(ipa) is None:
             continue
+        # The IPA's version has no "-beta.N" (see release.yml).
+        tag = release['tag_name']
+        notes = (release.get('body') or '').strip()
         result.append({
-            'version': release['tag_name'].removeprefix('v'),
+            'version': tag.removeprefix('v').split('-')[0],
             'buildVersion': build_number(ipa),
             'date': release['published_at'],
-            'localizedDescription': (release.get('body') or '').strip()
-            or release['tag_name'],
+            'localizedDescription': f'{tag}\n\n{notes}' if notes else tag,
             'downloadURL': ipa['browser_download_url'],
             'size': ipa['size'],
             'minOSVersion': '15.0',

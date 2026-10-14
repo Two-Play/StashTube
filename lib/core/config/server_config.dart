@@ -33,6 +33,9 @@ class ServerConfig {
 
   String get graphqlEndpoint => '$baseUrl/graphql';
 
+  /// Where the built-in demo runs (`DemoServer`, loopback interface only).
+  static const demoUrl = 'http://127.0.0.1:47999';
+
   // Value equality: an unchanged config must not rebuild the API client.
   @override
   bool operator ==(Object other) =>
@@ -264,6 +267,11 @@ class ServerProfilesNotifier extends Notifier<ServerProfiles> {
     _moveLegacyLists(prefs, profile.id);
     return migrated;
   }
+
+  /// Whether the demo (`ServerConfig.demoUrl`) is among the stored servers,
+  /// read before the app starts so `main()` can start its server.
+  static bool hasDemo(SharedPreferences prefs) =>
+      _decode(prefs.getString(_profilesKey) ?? '[]').any((p) => p['url'] == ServerConfig.demoUrl);
 
   /// The stored profiles; empty when the JSON is damaged, which leads back
   /// to the login instead of crashing at every start.

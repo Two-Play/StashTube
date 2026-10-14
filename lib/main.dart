@@ -8,6 +8,7 @@ import 'core/config/image_cache.dart';
 import 'core/config/secret_store.dart';
 import 'core/config/server_config.dart';
 import 'data/repositories/stash_repository.dart';
+import 'features/demo/demo_server.dart';
 import 'features/security/app_lock_gate.dart';
 import 'features/settings/about.dart';
 
@@ -18,6 +19,11 @@ Future<void> main() async {
   final secrets = await SecureSecretStore.load();
   // Before runApp, so it handles "back" before the app's navigators do.
   WidgetsBinding.instance.addObserver(lockBackGuard);
+
+  if (ServerProfilesNotifier.hasDemo(prefs)) {
+    // If it fails, the demo shows as an unreachable server.
+    await DemoServer.instance.start().catchError((Object _) {});
+  }
 
   registerAppLicenses();
   runApp(ProviderScope(

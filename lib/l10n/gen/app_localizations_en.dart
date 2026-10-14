@@ -640,11 +640,11 @@ class AppLocalizationsEn extends AppLocalizations {
       'For a server with a password: the API key (Stash → Settings → Security), or sign in below.';
 
   @override
-  String get orSignIn => 'Or sign in';
+  String get signInWithPassword => 'Sign in with username and password';
 
   @override
-  String get orSignInHint =>
-      'With the username and password of your Stash server. Casting to a TV needs the API key.';
+  String get signInWithPasswordHint =>
+      'Instead of an API key. Casting to a TV needs the API key.';
 
   @override
   String get username => 'Username';
@@ -657,6 +657,16 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get connect => 'Connect';
+
+  @override
+  String get tryDemo => 'Try the demo';
+
+  @override
+  String get tryDemoHint =>
+      'No Stash server at hand? Explore the app with sample videos from Big Buck Bunny, the open movie by the Blender Foundation (CC BY 3.0).';
+
+  @override
+  String get demoServerName => 'Demo';
 
   @override
   String removeServerTitle(String name) {
