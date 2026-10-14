@@ -1,30 +1,79 @@
 name: Release
 
-# Pushing a tag like v1.2.0 (matching `version:` in pubspec.yaml) builds
-# signed Android packages and publishes them as a GitHub release (14.3):
-# APKs per ABI, a universal APK, an AAB, a universal APK without Google Cast
-# (`-foss`, the F-Droid variant from tool/fdroid_prepare.sh, same key), an
-# unsigned IPA for AltStore/SideStore and SHA256SUMS. Obtainium and
-# IzzyOnDroid pick the APKs up from there; afterwards altstore.yml updates
-# the AltStore source. Tags with a "-" (v1.2.0-beta.1) become pre-releases.
+# Every push to main (the merged release pull request from develop) is a
+# release (14.3): signed APKs per ABI, a universal APK, an AAB, a universal
+# APK without Google Cast (`-foss`, the F-Droid variant from
+# tool/fdroid_prepare.sh, same key), an unsigned IPA for AltStore/SideStore
+# and SHA256SUMS as a GitHub release, plus a TestFlight upload
+# (testflight.yml). Obtainium and IzzyOnDroid pick the APKs up from there;
+# afterwards altstore.yml updates the AltStore source. Betas become
+# pre-releases.
+#
+# The pipeline sets the version: tool/release/next_version.py counts on from
+# the highest tag, steered by the pull request's labels (release:stable,
+# release:patch/minor/major, release:beta), and the release creates the tag
+# vX.Y.Z. The workflow's run number is the build number (versionCode).
+# `version:` in pubspec.yaml is only for local builds.
 #
 # Signing secrets: ANDROID_KEYSTORE_BASE64 (the upload keystore, base64),
 # ANDROID_KEYSTORE_PASSWORD, ANDROID_KEY_ALIAS, ANDROID_KEY_PASSWORD.
 
 on:
   push:
-    tags: ['v*']
+    branches: [main]
+
+# One release at a time, none cancelled halfway.
+concurrency:
+  group: release
+  cancel-in-progress: false
 
 permissions:
   contents: write
+  pull-requests: read
+  actions: read
 
 env:
   FLUTTER_VERSION: 3.47.6
 
 jobs:
+  version:
+    name: Version
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+      tag: v${{ steps.version.outputs.version }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+          fetch-tags: true
+      - name: Next version
+        id: version
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          # A re-run keeps the version the first attempt tagged.
+          tagged=$(git tag --points-at HEAD --list 'v*' | head -1)
+          if [ -n "$tagged" ]; then
+            version=${tagged#v}
+          else
+            # The highest version, 1.2.0 above 1.2.0-beta.1.
+            latest=$(git -c versionsort.suffix=- tag --list 'v*' --sort=-v:refname | head -1)
+            labels=$(gh api "repos/$GITHUB_REPOSITORY/commits/$GITHUB_SHA/pulls" \
+              --jq '[.[] | select(.merged_at != null) | .labels[].name] | unique | .[]')
+            echo "Latest tag: ${latest:-none}; labels: $(echo $labels)"
+            version=$(python3 tool/release/next_version.py "$latest" $labels)
+          fi
+          echo "Version: $version (build ${{ github.run_number }})"
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+
   android:
     name: Signed Android packages
+    needs: version
     runs-on: ubuntu-latest
+    env:
+      VERSION: ${{ needs.version.outputs.version }}
+      TAG: ${{ needs.version.outputs.tag }}
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-java@v6
@@ -36,14 +85,6 @@ jobs:
           flutter-version: ${{ env.FLUTTER_VERSION }}
           channel: stable
           cache: true
-
-      - name: Version matches the tag
-        run: |
-          version=$(sed -n 's/^version: *\([^+]*\).*/\1/p' pubspec.yaml)
-          if [ "v$version" != "$GITHUB_REF_NAME" ]; then
-            echo "::error::pubspec.yaml has version $version, but the tag is $GITHUB_REF_NAME."
-            exit 1
-          fi
 
       - name: Signing key
         env:
@@ -70,19 +111,20 @@ jobs:
       # (per-ABI APKs add 1000 × the ABI's number on top).
       - name: Build
         run: |
-          flutter build apk --release --split-per-abi --build-number ${{ github.run_number }}
-          flutter build apk --release --build-number ${{ github.run_number }}
-          flutter build appbundle --release --build-number ${{ github.run_number }}
+          build=(--build-name "$VERSION" --build-number ${{ github.run_number }})
+          flutter build apk --release --split-per-abi "${build[@]}"
+          flutter build apk --release "${build[@]}"
+          flutter build appbundle --release "${build[@]}"
 
       - name: Collect packages
         run: |
           mkdir dist
           out=build/app/outputs
           for abi in arm64-v8a armeabi-v7a x86_64; do
-            cp "$out/flutter-apk/app-$abi-release.apk" "dist/stashtube-$GITHUB_REF_NAME-$abi.apk"
+            cp "$out/flutter-apk/app-$abi-release.apk" "dist/stashtube-$TAG-$abi.apk"
           done
-          cp "$out/flutter-apk/app-release.apk" "dist/stashtube-$GITHUB_REF_NAME-universal.apk"
-          cp "$out/bundle/release/app-release.aab" "dist/stashtube-$GITHUB_REF_NAME.aab"
+          cp "$out/flutter-apk/app-release.apk" "dist/stashtube-$TAG-universal.apk"
+          cp "$out/bundle/release/app-release.aab" "dist/stashtube-$TAG.aab"
 
       # The same app without Google Cast (Play Services), signed with the same
       # key and versionCode as the universal APK, so the two replace each
@@ -91,8 +133,8 @@ jobs:
         run: |
           tool/fdroid_prepare.sh
           git checkout android/app/build.gradle.kts
-          flutter build apk --release --build-number ${{ github.run_number }}
-          cp build/app/outputs/flutter-apk/app-release.apk "dist/stashtube-$GITHUB_REF_NAME-foss.apk"
+          flutter build apk --release --build-name "$VERSION" --build-number ${{ github.run_number }}
+          cp build/app/outputs/flutter-apk/app-release.apk "dist/stashtube-$TAG-foss.apk"
 
       - uses: actions/upload-artifact@v7
         with:
@@ -102,7 +144,11 @@ jobs:
 
   ios:
     name: Unsigned IPA (AltStore)
+    needs: version
     runs-on: macos-latest
+    env:
+      VERSION: ${{ needs.version.outputs.version }}
+      TAG: ${{ needs.version.outputs.tag }}
     steps:
       - uses: actions/checkout@v7
       - uses: subosito/flutter-action@v2
@@ -120,11 +166,10 @@ jobs:
       # tool/altstore/make_source.py.
       - name: Build
         run: |
-          version=$(sed -n 's/^version: *\([^+-]*\).*/\1/p' pubspec.yaml)
-          flutter build ios --release --no-codesign --build-name "$version" --build-number ${{ github.run_number }}
+          flutter build ios --release --no-codesign --build-name "${VERSION%%-*}" --build-number ${{ github.run_number }}
           mkdir -p ipa/Payload dist
           cp -R build/ios/iphoneos/Runner.app ipa/Payload/
-          (cd ipa && zip -qry "../dist/stashtube-$GITHUB_REF_NAME-${{ github.run_number }}.ipa" Payload)
+          (cd ipa && zip -qry "../dist/stashtube-$TAG-${{ github.run_number }}.ipa" Payload)
 
       - uses: actions/upload-artifact@v7
         with:
@@ -134,8 +179,10 @@ jobs:
 
   publish:
     name: GitHub release
-    needs: [android, ios]
+    needs: [version, android, ios]
     runs-on: ubuntu-latest
+    env:
+      TAG: ${{ needs.version.outputs.tag }}
     steps:
       - uses: actions/checkout@v7
       - uses: actions/download-artifact@v8
@@ -143,18 +190,31 @@ jobs:
           path: dist
           merge-multiple: true
 
+      # Creates the tag on the released commit.
       - name: Publish release
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           (cd dist && sha256sum * > SHA256SUMS)
           flags=()
-          if [[ "$GITHUB_REF_NAME" == *-* ]]; then flags+=(--prerelease); fi
-          gh release create "$GITHUB_REF_NAME" dist/* \
-            --title "StashTube $GITHUB_REF_NAME" --generate-notes --verify-tag "${flags[@]}"
+          if [[ "$TAG" == *-* ]]; then flags+=(--prerelease); fi
+          gh release create "$TAG" dist/* --target "$GITHUB_SHA" \
+            --title "StashTube $TAG" --generate-notes "${flags[@]}"
 
-  # A release made with the workflow token doesn't trigger other workflows,
-  # so the AltStore source is updated from here.
+  # Tags and releases made with the workflow token don't trigger other
+  # workflows, so TestFlight and the AltStore source run from here.
+  testflight:
+    name: TestFlight
+    needs: version
+    permissions:
+      contents: read
+      actions: read
+    uses: ./.github/workflows/testflight.yml
+    with:
+      version: ${{ needs.version.outputs.version }}
+      build-number: ${{ github.run_number }}
+    secrets: inherit
+
   altstore:
     name: AltStore source
     needs: publish

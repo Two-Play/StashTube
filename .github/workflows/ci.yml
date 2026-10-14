@@ -1,11 +1,13 @@
 name: CI
 
-# Pull requests run through `pull_request` only; `push` is limited to the
-# long-lived branches (develop collects the work, main has the releases), so
-# a commit in a PR doesn't run everything twice.
+# Pull requests run through `pull_request` only, and `push` only for develop,
+# where the work comes together, so a commit doesn't run everything twice.
+# main only receives develop through a release pull request: develop's push
+# already checked that code, so the pull request from develop to main skips
+# the checks, and the merge into main runs release.yml instead.
 on:
   push:
-    branches: [main, develop]
+    branches: [develop]
   pull_request:
   workflow_dispatch:
 
@@ -21,6 +23,8 @@ env:
 jobs:
   analyze-test:
     name: Analyze and test
+    # The builds need this job, so they are skipped with it.
+    if: github.event_name != 'pull_request' || github.head_ref != 'develop' || github.base_ref != 'main'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
@@ -46,6 +50,8 @@ jobs:
       # dart analyze, not flutter analyze: only it runs riverpod_lint.
       - run: dart analyze
       - run: flutter test
+      # The release's version numbering (tool/release/next_version.py).
+      - run: python3 -m unittest discover -s tool/release
 
   build-android:
     name: Build Android
