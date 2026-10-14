@@ -65,6 +65,12 @@ void registerAppLicenses() {
         'and linked dynamically. Source code: ${library.source}\n\n${texts.join('\n\n')}',
       );
     }
+    yield const LicenseEntryWithLineBreaks(
+      ['Big Buck Bunny'],
+      'The demo\'s videos and pictures are shortened, cropped and re-encoded clips and stills from '
+      'Big Buck Bunny: (c) copyright 2008, Blender Foundation, www.bigbuckbunny.org. Licensed under the '
+      'Creative Commons Attribution 3.0 license, https://creativecommons.org/licenses/by/3.0/',
+    );
   });
 }
 
