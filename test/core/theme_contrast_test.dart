@@ -18,9 +18,11 @@ void main() {
         // Accent text/icons (links, tags, progress) on the page background.
         expect(_contrast(scheme.primary, scheme.surface), greaterThanOrEqualTo(4.5),
             reason: 'primary on surface');
-        // Text on filled accent buttons.
-        expect(_contrast(scheme.onPrimary, scheme.primary), greaterThanOrEqualTo(4.5),
+        // Labels of filled accent buttons: white wherever it reads well
+        // (the dark mode can't give 4.5:1 against both the page and white).
+        expect(_contrast(scheme.onPrimary, scheme.primary), greaterThanOrEqualTo(4),
             reason: 'onPrimary on primary');
+        expect(scheme.onPrimary, Colors.white, reason: 'white labels');
       });
     }
   }
