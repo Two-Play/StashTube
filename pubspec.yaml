@@ -99,6 +99,14 @@ flutter:
     - assets/icons/
     # License texts for the about page (registerAppLicenses).
     - assets/licenses/
+    # The built-in demo (DemoServer; tool/demo/make_demo_assets.sh).
+    - assets/demo/
+    - assets/demo/scenes/
+    - assets/demo/covers/
+    - assets/demo/previews/
+    - assets/demo/sprites/
+    - assets/demo/images/
+    - assets/demo/portraits/
     - LICENSE
     #- images/a_dot_ham.jpeg
 

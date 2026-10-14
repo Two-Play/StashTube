@@ -659,6 +659,16 @@ class AppLocalizationsEn extends AppLocalizations {
   String get connect => 'Connect';
 
   @override
+  String get tryDemo => 'Try the demo';
+
+  @override
+  String get tryDemoHint =>
+      'No Stash server at hand? Explore the app with sample videos from Big Buck Bunny, the open movie by the Blender Foundation (CC BY 3.0).';
+
+  @override
+  String get demoServerName => 'Demo';
+
+  @override
   String removeServerTitle(String name) {
     return 'Remove \"$name\"?';
   }

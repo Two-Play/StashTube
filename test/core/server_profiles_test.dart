@@ -43,6 +43,15 @@ void main() {
     expect(prefs.getString('server_profiles'), isNotNull);
   });
 
+  test('tells main() whether the demo is saved', () async {
+    final c = await containerWith({});
+    expect(ServerProfilesNotifier.hasDemo(prefs), isFalse);
+    await c.read(serverProfilesProvider.notifier).add(const ServerConfig(baseUrl: 'http://nas:9999'));
+    expect(ServerProfilesNotifier.hasDemo(prefs), isFalse);
+    await c.read(serverProfilesProvider.notifier).add(const ServerConfig(baseUrl: ServerConfig.demoUrl), name: 'Demo');
+    expect(ServerProfilesNotifier.hasDemo(prefs), isTrue);
+  });
+
   test('add, switch, rename, remove', () async {
     final c = await containerWith({});
     final servers = c.read(serverProfilesProvider.notifier);

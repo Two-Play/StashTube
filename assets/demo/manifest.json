@@ -1,0 +1,134 @@
+{
+ "clips": {
+  "a-butterfly-appears": {
+   "audio_codec": "aac",
+   "bit_rate": 115368,
+   "duration": 19.0,
+   "frame_rate": 24.0,
+   "height": 270,
+   "size": 274001,
+   "video_codec": "h264",
+   "width": 480
+  },
+  "morning-sky": {
+   "audio_codec": "aac",
+   "bit_rate": 84003,
+   "duration": 10.0,
+   "frame_rate": 24.0,
+   "height": 270,
+   "size": 105004,
+   "video_codec": "h264",
+   "width": 480
+  },
+  "opening-titles": {
+   "audio_codec": "aac",
+   "bit_rate": 102347,
+   "duration": 11.0,
+   "frame_rate": 24.0,
+   "height": 270,
+   "size": 140728,
+   "video_codec": "h264",
+   "width": 480
+  },
+  "rise-and-shine": {
+   "audio_codec": "aac",
+   "bit_rate": 101342,
+   "duration": 14.0,
+   "frame_rate": 24.0,
+   "height": 270,
+   "size": 177349,
+   "video_codec": "h264",
+   "width": 480
+  },
+  "riverside": {
+   "audio_codec": "aac",
+   "bit_rate": 119560,
+   "duration": 6.5,
+   "frame_rate": 24.0,
+   "height": 270,
+   "size": 97143,
+   "video_codec": "h264",
+   "width": 480
+  },
+  "short-bird": {
+   "audio_codec": "aac",
+   "bit_rate": 116164,
+   "duration": 6.0,
+   "frame_rate": 24.0,
+   "height": 480,
+   "size": 87123,
+   "video_codec": "h264",
+   "width": 270
+  },
+  "short-butterfly": {
+   "audio_codec": "aac",
+   "bit_rate": 127038,
+   "duration": 10.0,
+   "frame_rate": 24.0,
+   "height": 480,
+   "size": 158798,
+   "video_codec": "h264",
+   "width": 270
+  },
+  "short-stretch": {
+   "audio_codec": "aac",
+   "bit_rate": 115513,
+   "duration": 8.0,
+   "frame_rate": 24.0,
+   "height": 480,
+   "size": 115513,
+   "video_codec": "h264",
+   "width": 270
+  },
+  "short-wake-up": {
+   "audio_codec": "aac",
+   "bit_rate": 73304,
+   "duration": 9.0,
+   "frame_rate": 24.0,
+   "height": 480,
+   "size": 82467,
+   "video_codec": "h264",
+   "width": 270
+  },
+  "sunny-side": {
+   "audio_codec": "aac",
+   "bit_rate": 100532,
+   "duration": 14.0,
+   "frame_rate": 24.0,
+   "height": 270,
+   "size": 175932,
+   "video_codec": "h264",
+   "width": 480
+  },
+  "the-burrow": {
+   "audio_codec": "aac",
+   "bit_rate": 97600,
+   "duration": 18.0,
+   "frame_rate": 24.0,
+   "height": 270,
+   "size": 219601,
+   "video_codec": "h264",
+   "width": 480
+  },
+  "the-early-bird": {
+   "audio_codec": "aac",
+   "bit_rate": 90184,
+   "duration": 8.0,
+   "frame_rate": 24.0,
+   "height": 270,
+   "size": 90184,
+   "video_codec": "h264",
+   "width": 480
+  }
+ },
+ "images": [
+  "still-01",
+  "still-02",
+  "still-03",
+  "still-04",
+  "still-05",
+  "still-06",
+  "still-07",
+  "still-08"
+ ]
+}

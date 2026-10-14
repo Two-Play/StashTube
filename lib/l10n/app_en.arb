@@ -346,6 +346,9 @@
   "password": "Password",
   "loginIncomplete": "Enter username and password.",
   "connect": "Connect",
+  "tryDemo": "Try the demo",
+  "tryDemoHint": "No Stash server at hand? Explore the app with sample videos from Big Buck Bunny, the open movie by the Blender Foundation (CC BY 3.0).",
+  "demoServerName": "Demo",
   "removeServerTitle": "Remove \"{name}\"?",
   "@removeServerTitle": {
     "placeholders": {
