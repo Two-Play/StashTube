@@ -90,7 +90,7 @@ Native code (media_kit's players, picture-in-picture, the lock screen) can't run
 - Keep a pull request to one topic. Describe what changed, how you tested it, and on which devices.
 - CI (analysis, tests, Android and iOS builds) and Codacy must pass before a pull request is merged.
 - Open pull requests against **`develop`**, where all work comes together. `main` only changes with a release.
-- Releases are made by the maintainers: a pull request from `develop` to `main` with the new version, then a tag on `main`.
+- Releases are made by the maintainers by merging a pull request from `develop` into `main` (protected). The pipeline then picks the version (labels like `release:stable` or `release:minor` on the pull request steer it), tags it and publishes the release; `pubspec.yaml` needs no bump.
 
 > [!NOTE]
 > StashTube is licensed under the [AGPL-3.0](LICENSE). By contributing, you agree that your contribution is published under the same license.
