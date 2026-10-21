@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Report a security vulnerability
+    url: https://github.com/Two-Play/StashTube/security/advisories/new
+    about: Please report security problems privately, not as an issue.
+  - name: Problem with the Stash server
+    url: https://github.com/stashapp/stash/issues
+    about: Bugs in Stash itself or its web UI belong to the Stash project.

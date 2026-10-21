@@ -1,0 +1,62 @@
+name: Feature request
+description: Suggest an idea or an improvement for StashTube.
+labels: [enhancement]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for the idea! Let's talk about it here before anyone spends time on code. The planned work is in [`docs/BACKLOG.md`](https://github.com/Two-Play/StashTube/blob/develop/docs/BACKLOG.md) (German).
+  - type: textarea
+    id: problem
+    attributes:
+      label: What problem would it solve?
+      description: What are you trying to do, and what gets in the way today?
+      placeholder: When I …, I have to …
+    validations:
+      required: true
+  - type: textarea
+    id: solution
+    attributes:
+      label: Your idea
+      description: How should it work? Sketches or screenshots of similar apps are welcome.
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives you considered
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      multiple: true
+      options:
+        - Login / servers
+        - Home / feed
+        - Player
+        - Shorts
+        - Library (scenes, markers, images, galleries, stats)
+        - Search / filters
+        - Performers / studios
+        - Editing
+        - Casting (Chromecast / AirPlay)
+        - Picture-in-picture / background playback
+        - App lock / privacy
+        - Settings / appearance
+        - Other
+  - type: dropdown
+    id: platform
+    attributes:
+      label: Platform
+      options:
+        - Both
+        - Android
+        - iOS
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Before submitting
+      options:
+        - label: I searched the [existing issues](https://github.com/Two-Play/StashTube/issues?q=is%3Aissue) and the backlog, and this hasn't been suggested yet.
+          required: true
+        - label: I'd like to implement this myself (see [`CONTRIBUTING.md`](https://github.com/Two-Play/StashTube/blob/develop/CONTRIBUTING.md)).
