@@ -1,0 +1,119 @@
+name: Bug report
+description: Something in StashTube doesn't work as it should.
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to report a bug!
+
+        > [!IMPORTANT]
+        > Found a security problem? Please don't open an issue; report it privately as described in [`SECURITY.md`](https://github.com/Two-Play/StashTube/blob/develop/SECURITY.md).
+
+        Many features depend on what your Stash server has generated (sprites, previews, markers). If something is missing, check the server's *Tasks → Generate* first.
+  - type: textarea
+    id: description
+    attributes:
+      label: What happened?
+      description: A clear description of the bug.
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. Open …
+        2. Tap …
+        3. See …
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: What did you expect?
+    validations:
+      required: true
+  - type: input
+    id: app-version
+    attributes:
+      label: App version
+      description: "*Settings → About*"
+      placeholder: 1.0.0-beta.4
+    validations:
+      required: true
+  - type: dropdown
+    id: platform
+    attributes:
+      label: Platform
+      options:
+        - Android
+        - iOS
+    validations:
+      required: true
+  - type: input
+    id: os-version
+    attributes:
+      label: OS version and device
+      placeholder: Android 15, Pixel 8 / iOS 26.1, iPhone 16
+    validations:
+      required: true
+  - type: dropdown
+    id: install-source
+    attributes:
+      label: Installed from
+      options:
+        - GitHub release (APK)
+        - GitHub release (FOSS APK, without Google Cast)
+        - TestFlight
+        - AltStore / SideStore
+        - Built myself
+        - Other
+    validations:
+      required: true
+  - type: input
+    id: stash-version
+    attributes:
+      label: Stash version
+      description: "*Settings → Server*"
+      placeholder: v0.31.1
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      description: Where in the app does it happen?
+      multiple: true
+      options:
+        - Login / servers
+        - Home / feed
+        - Player
+        - Shorts
+        - Library (scenes, markers, images, galleries, stats)
+        - Search / filters
+        - Performers / studios
+        - Editing
+        - Casting (Chromecast / AirPlay)
+        - Picture-in-picture / background playback
+        - App lock / privacy
+        - Settings / appearance
+        - Other
+  - type: textarea
+    id: media
+    attributes:
+      label: Screenshots or screen recording
+      description: Drag files here. Please blur anything you don't want to share.
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs
+      description: If you have them (e.g. `adb logcat` or the Xcode console). Remove server addresses and API keys first.
+      render: text
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Before submitting
+      options:
+        - label: I searched the [existing issues](https://github.com/Two-Play/StashTube/issues?q=is%3Aissue) and this hasn't been reported yet.
+          required: true
+        - label: The bug is in StashTube, not in the Stash server or its web UI.
+          required: true
