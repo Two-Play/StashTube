@@ -418,6 +418,7 @@
   "secondsValue": "{seconds} s",
   "markerPreviews": "Marker-Vorschauen abspielen",
   "markerPreviewsSubtitle": "Marker zeigen einen kurzen Clip in Dauerschleife statt eines Standbilds.",
+  "previewsHint": "Vorschauen brauchen Stashs animierte (WebP-)Vorschauen, die Stash standardmäßig nicht erstellt. Erzeuge sie in Stash unter Einstellungen → Aufgaben → Generieren mit „Animierte Bildvorschauen“ und „Animierte Vorschau für Markierungen“.",
   "sectionAbout": "Über",
   "appVersion": "Version",
   "appVersionValue": "{version} (Build {build})",
