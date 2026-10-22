@@ -419,8 +419,10 @@ class DemoLibrary {
       return scene == null ? null : _sceneObject(scene);
     },
     'findSceneMarkers': (Map<String, dynamic> args) {
+      final filter = args['scene_marker_filter'] as Map<String, dynamic>?;
+      final tagIds = ((filter?['tags'] as Map<String, dynamic>?)?['value'] as List?)?.cast<String>();
       final page = _page(
-        _markers,
+        _markers.where((m) => tagIds == null || tagIds.contains(m.tagId)),
         args['filter'],
         text: (m) => '${m.title} ${_scene(m.sceneId)?.title}',
         sortKey: (m, sort) => switch (sort) {
