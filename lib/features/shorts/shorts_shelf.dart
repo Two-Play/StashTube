@@ -2,29 +2,29 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/utils/format.dart';
-import '../../data/models/scene.dart';
 import '../../l10n/l10n.dart';
 import '../../widgets/stash_image.dart';
 import '../shell/nav_bar_config.dart';
 import '../shell/navigation.dart';
+import 'short.dart';
 import 'shorts_feed.dart';
 import 'shorts_page.dart';
 
 /// The short a shelf tile shows: the first of its lane's queue that no
 /// earlier tile shows, and where it is in that queue.
-typedef ShelfPick = ({Scene scene, int index});
+typedef ShelfPick = ({Short short, int index});
 
 /// One pick per lane (null while a lane has none to offer), so the four
 /// tiles never show the same short.
-List<ShelfPick?> shelfPicks(List<List<Scene>> lanes) {
+List<ShelfPick?> shelfPicks(List<List<Short>> lanes) {
   final shown = <String>{};
   return [
     for (final items in lanes)
       () {
-        final index = items.indexWhere((s) => !shown.contains(s.id));
+        final index = items.indexWhere((s) => !shown.contains(s.key));
         if (index < 0) return null;
-        shown.add(items[index].id);
-        return (scene: items[index], index: index);
+        shown.add(items[index].key);
+        return (short: items[index], index: index);
       }(),
   ];
 }
@@ -62,7 +62,7 @@ class ShortsShelf extends ConsumerWidget {
         child: pick == null
             ? const SizedBox.shrink()
             : _ShortTile(
-                scene: pick.scene,
+                short: pick.short,
                 onTap: () => openPage(ref, ShortsPage(source: ShortsSource.lane(lane), initialIndex: pick.index)),
               ),
       );
@@ -107,9 +107,9 @@ class ShortsShelf extends ConsumerWidget {
 }
 
 class _ShortTile extends StatelessWidget {
-  const _ShortTile({required this.scene, required this.onTap});
+  const _ShortTile({required this.short, required this.onTap});
 
-  final Scene scene;
+  final Short short;
   final VoidCallback onTap;
 
   @override
@@ -126,7 +126,10 @@ class _ShortTile extends StatelessWidget {
               child: Stack(
                 fit: StackFit.expand,
                 children: [
-                  StashImage(scene.screenshotUrl, fallbackIcon: Icons.slow_motion_video),
+                  StashImage(
+                    short.marker?.screenshotUrl ?? short.scene.screenshotUrl,
+                    fallbackIcon: Icons.slow_motion_video,
+                  ),
                   const DecoratedBox(
                     decoration: BoxDecoration(
                       gradient: LinearGradient(
@@ -145,14 +148,14 @@ class _ShortTile extends StatelessWidget {
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         Text(
-                          scene.title,
+                          short.title,
                           maxLines: 2,
                           overflow: TextOverflow.ellipsis,
                           style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w600),
                         ),
-                        if (scene.duration > 0)
+                        if (short.duration > 0)
                           Text(
-                            formatDuration(scene.duration),
+                            formatDuration(short.duration),
                             style: const TextStyle(color: Colors.white70, fontSize: 11),
                           ),
                       ],

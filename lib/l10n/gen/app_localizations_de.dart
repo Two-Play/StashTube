@@ -1328,6 +1328,22 @@ class AppLocalizationsDe extends AppLocalizations {
   String get shortsPortraitOnly => 'Nur Hochkant-Videos';
 
   @override
+  String get shortsMarkers => 'Marker';
+
+  @override
+  String get shortsMarkersHint =>
+      'Spielt Szenenmarker als Clips aus dem Originalvideo, in Schleife bis zum Ende des Markers. Mit Tags nur Marker mit einem davon. Länge und Ausrichtung gelten dafür nicht.';
+
+  @override
+  String get shortsMarkersOff => 'Aus';
+
+  @override
+  String get shortsMarkersMixed => 'Mit Videos';
+
+  @override
+  String get shortsMarkersOnly => 'Nur Marker';
+
+  @override
   String get shortsEmpty => 'Keine Shorts gefunden';
 
   @override

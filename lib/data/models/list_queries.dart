@@ -1,5 +1,7 @@
 import 'dart:math';
 
+import 'package:flutter/foundation.dart' show listEquals;
+
 import 'scene_filter.dart';
 
 /// Sort orders offered for scene lists, mapped to Stash `FindFilterType.sort`.
@@ -353,24 +355,40 @@ class GalleryQuery {
   int get hashCode => Object.hash(sort, search, seed);
 }
 
-/// Arguments for the markers page (scene markers of all scenes).
+/// Arguments for the markers page (scene markers of all scenes), and for
+/// the markers in the shorts ([tagIds]).
 class MarkerQuery {
-  MarkerQuery({this.sort = MarkerSort.recentlyAdded, this.search, int? seed})
+  MarkerQuery({this.sort = MarkerSort.recentlyAdded, this.search, this.tagIds = const [], int? seed})
       : seed = seed ?? (sort == MarkerSort.random ? newRandomSeed() : 0);
 
   final MarkerSort sort;
 
   /// Free text (Stash's `q`: the marker's title, its scene's title, ...).
   final String? search;
+
+  /// Markers with at least one of these tags (as primary tag or one of
+  /// their other tags); all markers when empty.
+  final List<String> tagIds;
   final int seed;
 
   String get sortField => sort == MarkerSort.random ? 'random_$seed' : sort.field;
   String get direction => sort == MarkerSort.title ? 'ASC' : 'DESC';
 
-  @override
-  bool operator ==(Object other) =>
-      other is MarkerQuery && other.sort == sort && other.search == search && other.seed == seed;
+  /// Stash's `SceneMarkerFilterType`, or null without criteria.
+  Map<String, dynamic>? toMarkerFilter() => tagIds.isEmpty
+      ? null
+      : {
+          'tags': {'value': tagIds, 'modifier': 'INCLUDES', 'depth': 0},
+        };
 
   @override
-  int get hashCode => Object.hash(sort, search, seed);
+  bool operator ==(Object other) =>
+      other is MarkerQuery &&
+      other.sort == sort &&
+      other.search == search &&
+      other.seed == seed &&
+      listEquals(other.tagIds, tagIds);
+
+  @override
+  int get hashCode => Object.hash(sort, search, seed, Object.hashAll(tagIds));
 }

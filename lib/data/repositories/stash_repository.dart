@@ -189,6 +189,8 @@ class StashRepository implements PlaybackActivityApi {
             sort: query.sortField,
             direction: query.direction,
           ),
+          scene_marker_filter:
+              _input(query.toMarkerFilter(), Input$SceneMarkerFilterType.fromJson, (i) => i.toJson()),
         ),
       ),
     );

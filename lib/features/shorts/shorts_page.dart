@@ -9,7 +9,6 @@ import 'package:media_kit_video/media_kit_video.dart';
 import '../../core/config/haptics.dart';
 import '../../core/config/theme.dart';
 import '../../core/utils/format.dart';
-import '../../data/models/scene.dart';
 import '../../data/repositories/stash_repository.dart';
 import '../../data/repositories/stash_session.dart';
 import '../../l10n/l10n.dart';
@@ -24,6 +23,7 @@ import '../player/scene_edits.dart';
 import '../settings/settings_button.dart';
 import '../security/app_lock.dart';
 import '../shell/navigation.dart';
+import 'short.dart';
 import 'shorts_feed.dart';
 import 'shorts_settings_sheet.dart';
 
@@ -103,7 +103,8 @@ class _ShortsPageState extends ConsumerState<ShortsPage> {
 
   List<Player>? _players;
   List<VideoController>? _controllers;
-  final _slotScene = List<String?>.filled(_poolSize, null);
+  /// The [Short.key] each player has open.
+  final _slotShort = List<String?>.filled(_poolSize, null);
 
   /// Whether the slot's `open` finished. media_kit's `open(play: false)`
   /// pauses only once the file is loaded, so a `play()` sent earlier would
@@ -130,7 +131,7 @@ class _ShortsPageState extends ConsumerState<ShortsPage> {
   bool _handedToPlayer = false;
 
   StreamSubscription<Duration>? _positionSub;
-  String? _watchedScene;
+  String? _watchedShort;
   final _counted = <String>{};
 
   @override
@@ -173,16 +174,17 @@ class _ShortsPageState extends ConsumerState<ShortsPage> {
     });
   }
 
-  void _openFullVideo(Scene scene) {
+  /// The whole scene in the main player; a marker's from the marker on.
+  void _openFullVideo(Short short) {
     setState(() => _handedToPlayer = true);
     _active.set(false);
-    ref.read(nowPlayingProvider.notifier).play(scene);
+    ref.read(nowPlayingProvider.notifier).play(short.scene, at: short.marker?.seconds);
   }
 
   int _slot(int index) => index % _poolSize;
 
   /// Opens the current short and its neighbours in the pool's players.
-  void _sync(List<Scene> items) {
+  void _sync(List<Short> items) {
     if (items.isEmpty) return;
     final players = _players ??= [
       for (var i = 0; i < _poolSize; i++) Player()..setPlaylistMode(PlaylistMode.single),
@@ -192,18 +194,22 @@ class _ShortsPageState extends ConsumerState<ShortsPage> {
     var reassigned = false;
     for (var i = _index - 1; i <= _index + 1; i++) {
       if (i < 0 || i >= items.length) continue;
-      final scene = items[i];
+      final short = items[i];
       final slot = _slot(i);
-      if (_slotScene[slot] == scene.id) continue;
-      _slotScene[slot] = scene.id;
+      if (_slotShort[slot] == short.key) continue;
+      _slotShort[slot] = short.key;
       _slotReady[slot] = false;
       reassigned = true;
       final player = players[slot];
       unawaited(player.setVolume(_muted ? 0 : 100));
+      _setLoop(player, short);
       player
-          .open(Media(scene.streamUrl!, httpHeaders: ref.read(authHeadersProvider)), play: false)
+          .open(
+            Media(short.scene.streamUrl!, httpHeaders: ref.read(authHeadersProvider), start: short.start),
+            play: false,
+          )
           .then((_) {
-        if (!mounted || _slotScene[slot] != scene.id) return;
+        if (!mounted || _slotShort[slot] != short.key) return;
         _slotReady[slot] = true;
         _applyPlayback();
       }, onError: (Object _) {});
@@ -211,6 +217,16 @@ class _ShortsPageState extends ConsumerState<ShortsPage> {
     if (reassigned) setState(() {});
     if (_index < items.length) _watchPosition(items[_index]);
     _applyPlayback();
+  }
+
+  /// A marker loops between its start and end (mpv's A-B loop, kept across
+  /// files, so a whole video clears it); a whole video loops as a file.
+  static void _setLoop(Player player, Short short) {
+    final platform = player.platform;
+    if (platform is! NativePlayer) return;
+    String point(Duration? at) => at == null ? 'no' : (at.inMilliseconds / 1000).toStringAsFixed(3);
+    unawaited(platform.setProperty('ab-loop-a', point(short.start)));
+    unawaited(platform.setProperty('ab-loop-b', point(short.end)));
   }
 
   /// Plays the current short if it may play; pauses all others.
@@ -229,7 +245,7 @@ class _ShortsPageState extends ConsumerState<ShortsPage> {
     }
   }
 
-  void _onPageChanged(int index, List<Scene> items) {
+  void _onPageChanged(int index, List<Short> items) {
     Haptics.selection();
     setState(() {
       _index = index;
@@ -237,20 +253,23 @@ class _ShortsPageState extends ConsumerState<ShortsPage> {
     });
     // Start the short from the beginning when coming back to it.
     final slot = _slot(index);
-    if (_slotReady[slot]) _players?[slot].seek(Duration.zero);
+    if (_slotReady[slot]) _players?[slot].seek(items[index].start ?? Duration.zero);
     _sync(items);
     final feed = ref.read(_feed);
     if (index >= feed.items.length - 5) ref.read(_feed.notifier).loadMore();
   }
 
-  /// Counts a play once the short was watched halfway (at most 15 s).
-  void _watchPosition(Scene scene) {
-    if (_watchedScene == scene.id) return;
-    _watchedScene = scene.id;
+  /// Counts a play of its scene once the short was watched halfway (at
+  /// most 15 s).
+  void _watchPosition(Short short) {
+    if (_watchedShort == short.key) return;
+    _watchedShort = short.key;
     _positionSub?.cancel();
+    final scene = short.scene;
     final player = _players?[_slot(_index)];
     if (player == null || _counted.contains(scene.id)) return;
-    final threshold = Duration(milliseconds: (scene.duration * 500).round().clamp(1000, 15000));
+    final start = short.start ?? Duration.zero;
+    final threshold = start + Duration(milliseconds: (short.duration * 500).round().clamp(1000, 15000));
     _positionSub = player.stream.position.listen((position) {
       if (position < threshold || !_counted.add(scene.id)) return;
       _positionSub?.cancel();
@@ -295,9 +314,9 @@ class _ShortsPageState extends ConsumerState<ShortsPage> {
   }
 
   void _resetFeed() {
-    _slotScene.fillRange(0, _poolSize, null);
+    _slotShort.fillRange(0, _poolSize, null);
     _slotReady.fillRange(0, _poolSize, false);
-    _watchedScene = null;
+    _watchedShort = null;
     _index = 0;
     if (_pageController.hasClients) _pageController.jumpToPage(0);
   }
@@ -359,10 +378,10 @@ class _ShortsPageState extends ConsumerState<ShortsPage> {
                     onPageChanged: (i) => _onPageChanged(i, items),
                     itemBuilder: (_, i) {
                       final slot = _slot(i);
-                      final controller = _slotScene[slot] == items[i].id ? (_controllers?[slot]) : null;
+                      final controller = _slotShort[slot] == items[i].key ? (_controllers?[slot]) : null;
                       return _ShortView(
-                        key: ValueKey(items[i].id),
-                        scene: items[i],
+                        key: ValueKey(items[i].key),
+                        short: items[i],
                         controller: controller,
                         paused: i == _index && _paused,
                         fullscreen: _fullscreen,
@@ -504,7 +523,7 @@ const _shadow = [Shadow(blurRadius: 6, color: Colors.black54)];
 class _ShortView extends ConsumerStatefulWidget {
   const _ShortView({
     super.key,
-    required this.scene,
+    required this.short,
     required this.controller,
     required this.paused,
     required this.fullscreen,
@@ -512,7 +531,7 @@ class _ShortView extends ConsumerStatefulWidget {
     required this.onFullVideo,
   });
 
-  final Scene scene;
+  final Short short;
   final VideoController? controller;
   final bool paused;
 
@@ -589,9 +608,9 @@ class _ShortViewState extends ConsumerState<_ShortView> {
 
   void _rate(int stars) {
     Haptics.selection();
-    final current = effectiveStars(ref, widget.scene);
+    final current = effectiveStars(ref, widget.short.scene);
     // Tapping the current rating again removes it.
-    ref.read(sceneEditsProvider.notifier).rate(widget.scene, stars == current ? 0 : stars).catchError(_showError);
+    ref.read(sceneEditsProvider.notifier).rate(widget.short.scene, stars == current ? 0 : stars).catchError(_showError);
     setState(() => _rating = false);
   }
 
@@ -601,12 +620,12 @@ class _ShortViewState extends ConsumerState<_ShortView> {
     final messenger = ScaffoldMessenger.of(context);
     final notifier = ref.read(sceneEditsProvider.notifier);
     try {
-      final count = await notifier.addO(widget.scene);
+      final count = await notifier.addO(widget.short.scene);
       messenger.showSnackBar(SnackBar(
         content: Text(l.oCountValue(count)),
         // With an action, snack bars would stay until tapped.
         persist: false,
-        action: SnackBarAction(label: l.undo, onPressed: () => notifier.removeO(widget.scene).catchError(_showError)),
+        action: SnackBarAction(label: l.undo, onPressed: () => notifier.removeO(widget.short.scene).catchError(_showError)),
       ));
     } catch (e) {
       if (mounted) _showError(e);
@@ -616,7 +635,9 @@ class _ShortViewState extends ConsumerState<_ShortView> {
   @override
   Widget build(BuildContext context) {
     final l = context.l10n;
-    final scene = widget.scene;
+    final short = widget.short;
+    final scene = short.scene;
+    final marker = short.marker;
     final width = scene.width;
     final height = scene.height;
     // Fill the screen with portrait videos; show wide ones whole.
@@ -624,7 +645,12 @@ class _ShortViewState extends ConsumerState<_ShortView> {
     final saved = ref.watch(watchLaterProvider.select((ids) => ids.contains(scene.id)));
     final stars = effectiveStars(ref, scene);
     final oCount = effectiveOCounter(ref, scene);
-    final tags = effectiveTags(ref, scene);
+    // A marker's own tag first.
+    final tags = [
+      if (marker != null) marker.tag,
+      ...effectiveTags(ref, scene).where((t) => t.id != marker?.tag.id),
+    ];
+    final screenshot = marker?.screenshotUrl ?? scene.screenshotUrl;
     final performer = scene.performers.firstOrNull;
     final studio = scene.studio;
     final controller = widget.controller;
@@ -635,7 +661,7 @@ class _ShortViewState extends ConsumerState<_ShortView> {
     return Stack(
       fit: StackFit.expand,
       children: [
-        if (scene.screenshotUrl != null) StashImage(scene.screenshotUrl!, fit: fit),
+        if (screenshot != null) StashImage(screenshot, fit: fit),
         if (controller != null)
           Video(controller: controller, fit: fit, fill: Colors.transparent, controls: _noControls),
         // Hold for double speed, like TikTok.
@@ -702,12 +728,30 @@ class _ShortViewState extends ConsumerState<_ShortView> {
                   ],
                 ),
                 const SizedBox(height: 4),
-                Text(
-                  scene.title,
+                Text.rich(
+                  TextSpan(children: [
+                    if (marker != null)
+                      const WidgetSpan(
+                        alignment: PlaceholderAlignment.middle,
+                        child: Padding(
+                          padding: EdgeInsets.only(right: 4),
+                          child: Icon(Icons.bookmark, color: Colors.white, size: 16, shadows: _shadow),
+                        ),
+                      ),
+                    TextSpan(text: short.title),
+                  ]),
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                   style: const TextStyle(color: Colors.white, fontSize: 15, shadows: _shadow),
                 ),
+                // A marker's scene, which "full video" opens.
+                if (marker != null)
+                  Text(
+                    scene.title,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(color: Colors.white70, fontSize: 13, shadows: _shadow),
+                  ),
                 if (tags.isNotEmpty) ...[
                   const SizedBox(height: 4),
                   Wrap(
@@ -721,7 +765,7 @@ class _ShortViewState extends ConsumerState<_ShortView> {
                 Text(
                   [
                     l.playsCount(scene.playCount),
-                    if (scene.duration > 0) formatDuration(scene.duration),
+                    if (short.duration > 0) formatDuration(short.duration),
                   ].join(' • '),
                   style: const TextStyle(color: Colors.white70, fontSize: 12, shadows: _shadow),
                 ),

@@ -91,3 +91,11 @@ extension ShortsLengthLabel on ShortsLength {
         ShortsLength.any => l.durationAny,
       };
 }
+
+extension ShortsMarkersLabel on ShortsMarkers {
+  String label(AppLocalizations l) => switch (this) {
+        ShortsMarkers.off => l.shortsMarkersOff,
+        ShortsMarkers.mixed => l.shortsMarkersMixed,
+        ShortsMarkers.only => l.shortsMarkersOnly,
+      };
+}

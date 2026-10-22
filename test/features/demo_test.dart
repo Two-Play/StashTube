@@ -136,6 +136,12 @@ void main() {
 
     expect((await repo.findMarkers(MarkerQuery())).totalCount, 5);
     expect((await repo.findMarkers(MarkerQuery(search: 'butterfly'))).items.single.title, 'A visitor');
+    final markers = (await repo.findMarkers(MarkerQuery())).items;
+    final tagId = markers.first.tag.id;
+    expect((await repo.findMarkers(MarkerQuery(tagIds: [tagId]))).items.map((m) => m.id), [
+      for (final m in markers)
+        if (m.tag.id == tagId) m.id,
+    ]);
 
     final performers = await repo.findPerformers(PerformerQuery(sort: PerformerSort.mostScenes));
     expect(performers.items.first.name, 'Big Buck Bunny');
