@@ -1322,6 +1322,22 @@ class AppLocalizationsEn extends AppLocalizations {
   String get shortsPortraitOnly => 'Portrait videos only';
 
   @override
+  String get shortsMarkers => 'Markers';
+
+  @override
+  String get shortsMarkersHint =>
+      'Plays scene markers as clips from the original video, looping until the marker ends. With tags, only markers with one of them. Length and orientation don\'t apply.';
+
+  @override
+  String get shortsMarkersOff => 'Off';
+
+  @override
+  String get shortsMarkersMixed => 'With videos';
+
+  @override
+  String get shortsMarkersOnly => 'Only markers';
+
+  @override
   String get shortsEmpty => 'No shorts found';
 
   @override

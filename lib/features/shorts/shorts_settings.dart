@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/config/server_config.dart';
+import '../../data/models/list_queries.dart';
 import '../../data/models/scene_filter.dart';
 import '../../data/models/tag.dart';
 
@@ -19,8 +20,22 @@ enum ShortsLength {
   final int? maxSeconds;
 }
 
+/// Whether the shorts feed also plays scene markers (#42).
+enum ShortsMarkers {
+  /// Only short videos.
+  off,
+
+  /// Short videos and markers, taking turns.
+  mixed,
+
+  /// Only markers.
+  only,
+}
+
 /// What the shorts feed shows: short (by default portrait) videos, with the
-/// chosen [tags] shown more often, or exclusively with [onlyTags].
+/// chosen [tags] shown more often, or exclusively with [onlyTags]; and,
+/// following [markers], scene markers with one of the [tags] (all markers
+/// without tags).
 @immutable
 class ShortsSettings {
   const ShortsSettings({
@@ -28,12 +43,14 @@ class ShortsSettings {
     this.onlyTags = false,
     this.length = ShortsLength.threeMinutes,
     this.portraitOnly = true,
+    this.markers = ShortsMarkers.off,
   });
 
   final List<Tag> tags;
   final bool onlyTags;
   final ShortsLength length;
   final bool portraitOnly;
+  final ShortsMarkers markers;
 
   /// Short videos, without the tag preference.
   SceneFilter get baseFilter => SceneFilter(portraitOnly: portraitOnly, maxSeconds: length.maxSeconds);
@@ -46,12 +63,28 @@ class ShortsSettings {
   /// Whether the feed also mixes in videos without the tags.
   bool get mixesOthers => tags.isEmpty || !onlyTags;
 
-  ShortsSettings copyWith({List<Tag>? tags, bool? onlyTags, ShortsLength? length, bool? portraitOnly}) =>
+  /// Whether the feed shows whole videos (not only markers).
+  bool get showsVideos => markers != ShortsMarkers.only;
+
+  /// The markers in the feed, or null when it shows none. Length and
+  /// orientation don't apply: markers are short clips of any scene.
+  MarkerQuery? get markerQuery => markers == ShortsMarkers.off
+      ? null
+      : MarkerQuery(sort: MarkerSort.random, tagIds: [for (final t in tags) t.id]);
+
+  ShortsSettings copyWith({
+    List<Tag>? tags,
+    bool? onlyTags,
+    ShortsLength? length,
+    bool? portraitOnly,
+    ShortsMarkers? markers,
+  }) =>
       ShortsSettings(
         tags: tags ?? this.tags,
         onlyTags: onlyTags ?? this.onlyTags,
         length: length ?? this.length,
         portraitOnly: portraitOnly ?? this.portraitOnly,
+        markers: markers ?? this.markers,
       );
 
   Map<String, dynamic> toJson() => {
@@ -59,6 +92,7 @@ class ShortsSettings {
         'onlyTags': onlyTags,
         'length': length.name,
         'portraitOnly': portraitOnly,
+        'markers': markers.name,
       };
 
   /// Falls back to the defaults for anything missing or unreadable.
@@ -74,6 +108,7 @@ class ShortsSettings {
       onlyTags: json['onlyTags'] as bool? ?? defaults.onlyTags,
       length: ShortsLength.values.asNameMap()[json['length']] ?? defaults.length,
       portraitOnly: json['portraitOnly'] as bool? ?? defaults.portraitOnly,
+      markers: ShortsMarkers.values.asNameMap()[json['markers']] ?? defaults.markers,
     );
   }
 
@@ -83,10 +118,12 @@ class ShortsSettings {
       listEquals([for (final t in tags) t.id], [for (final t in other.tags) t.id]) &&
       other.onlyTags == onlyTags &&
       other.length == length &&
-      other.portraitOnly == portraitOnly;
+      other.portraitOnly == portraitOnly &&
+      other.markers == markers;
 
   @override
-  int get hashCode => Object.hash(Object.hashAll([for (final t in tags) t.id]), onlyTags, length, portraitOnly);
+  int get hashCode =>
+      Object.hash(Object.hashAll([for (final t in tags) t.id]), onlyTags, length, portraitOnly, markers);
 }
 
 /// Stored per server, as tag ids belong to one server.
