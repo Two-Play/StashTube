@@ -12,6 +12,7 @@ import 'package:stash_app_mobile/data/repositories/stash_repository.dart';
 import 'package:stash_app_mobile/features/auth/server_avatar.dart';
 import 'package:stash_app_mobile/features/home/home_page.dart';
 import 'package:stash_app_mobile/features/server_tasks/server_tasks_page.dart';
+import 'package:stash_app_mobile/features/shorts/short.dart';
 import 'package:stash_app_mobile/features/shorts/shorts_feed.dart';
 import 'package:stash_app_mobile/features/shorts/shorts_shelf.dart';
 
@@ -127,10 +128,10 @@ void main() {
   });
 
   test('more tiles than lanes take further shorts from the lanes in turn', () {
-    Scene short(String id) => Scene(id: id, title: id);
+    Short short(String id) => Short.video(Scene(id: id, title: id));
     final lane = [short('a'), short('b'), short('c')];
     final picks = shelfPicks([lane, lane], tiles: 4);
-    expect([for (final p in picks) p?.scene.id], ['a', 'b', 'c', null]);
+    expect([for (final p in picks) p?.short.key], ['a', 'b', 'c', null]);
     expect([for (final p in picks) p?.lane], [0, 1, 0, null]);
     expect(picks[2]?.index, 2);
   });
@@ -180,14 +181,14 @@ void main() {
   });
 
   test('shelf tiles skip shorts an earlier tile shows', () {
-    Scene short(String id) => Scene(id: id, title: id);
+    Short short(String id) => Short.video(Scene(id: id, title: id));
     final picks = shelfPicks([
       [short('a'), short('b')],
       [short('a'), short('c')],
       [short('a'), short('c')],
       [],
     ]);
-    expect([for (final p in picks) p?.scene.id], ['a', 'c', null, null]);
+    expect([for (final p in picks) p?.short.key], ['a', 'c', null, null]);
     expect(picks[1]?.index, 1, reason: 'opens its queue where the tile\'s short is');
   });
 

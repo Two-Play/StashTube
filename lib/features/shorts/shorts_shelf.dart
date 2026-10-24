@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/config/theme.dart';
 
 import '../../core/utils/format.dart';
-import '../../data/models/scene.dart';
 import '../../l10n/l10n.dart';
 import '../../widgets/scene_card.dart';
 import '../../widgets/skeleton.dart';
@@ -11,17 +10,18 @@ import '../../widgets/sliver_columns.dart';
 import '../../widgets/stash_image.dart';
 import '../shell/nav_bar_config.dart';
 import '../shell/navigation.dart';
+import 'short.dart';
 import 'shorts_feed.dart';
 import 'shorts_page.dart';
 
 /// The short a shelf tile shows: the first of its lane's queue that no
 /// earlier tile shows, where it is in that queue, and the lane.
-typedef ShelfPick = ({Scene scene, int index, int lane});
+typedef ShelfPick = ({Short short, int index, int lane});
 
 /// One pick per tile (null while its lane has none to offer), so the tiles
 /// never show the same short. Tile `i` takes from lane `i % lanes.length`,
 /// further down the queue each round; [tiles] defaults to one per lane.
-List<ShelfPick?> shelfPicks(List<List<Scene>> lanes, {int? tiles}) {
+List<ShelfPick?> shelfPicks(List<List<Short>> lanes, {int? tiles}) {
   final shown = <String>{};
   final from = List.filled(lanes.length, 0);
   return [
@@ -29,11 +29,11 @@ List<ShelfPick?> shelfPicks(List<List<Scene>> lanes, {int? tiles}) {
       () {
         final lane = tile % lanes.length;
         final items = lanes[lane];
-        final index = items.indexWhere((s) => !shown.contains(s.id), from[lane]);
+        final index = items.indexWhere((s) => !shown.contains(s.key), from[lane]);
         if (index < 0) return null;
-        shown.add(items[index].id);
+        shown.add(items[index].key);
         from[lane] = index + 1;
-        return (scene: items[index], index: index, lane: lane);
+        return (short: items[index], index: index, lane: lane);
       }(),
   ];
 }
@@ -125,7 +125,7 @@ class ShortsShelf extends ConsumerWidget {
                   return SizedBox(
                     width: tileWidth,
                     child: _ShortTile(
-                      scene: pick.scene,
+                      short: pick.short,
                       onTap: () => openPage(
                         ref,
                         ShortsPage(source: ShortsSource.lane(pick.lane), initialIndex: pick.index),
@@ -145,9 +145,9 @@ class ShortsShelf extends ConsumerWidget {
 Widget _tileSkeleton(BuildContext context) => const SkeletonBox();
 
 class _ShortTile extends StatelessWidget {
-  const _ShortTile({required this.scene, required this.onTap});
+  const _ShortTile({required this.short, required this.onTap});
 
-  final Scene scene;
+  final Short short;
   final VoidCallback onTap;
 
   @override
@@ -158,14 +158,17 @@ class _ShortTile extends StatelessWidget {
       child: Material(
         color: Colors.black,
         child: TileSemantics(
-          label: [scene.title, if (scene.duration > 0) spokenDuration(context.l10n, scene.duration)].join(', '),
+          label: [short.title, if (short.duration > 0) spokenDuration(context.l10n, short.duration)].join(', '),
           child: InkWell(
             onTap: onTap,
             child: ExcludeSemantics(
               child: Stack(
                 fit: StackFit.expand,
                 children: [
-                  StashImage(scene.screenshotUrl, fallbackIcon: Icons.slow_motion_video),
+                  StashImage(
+                    short.marker?.screenshotUrl ?? short.scene.screenshotUrl,
+                    fallbackIcon: Icons.slow_motion_video,
+                  ),
                   DecoratedBox(
                     decoration: BoxDecoration(
                       gradient: LinearGradient(
@@ -184,7 +187,7 @@ class _ShortTile extends StatelessWidget {
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         Text(
-                          scene.title,
+                          short.title,
                           maxLines: 2,
                           overflow: TextOverflow.ellipsis,
                           style: const TextStyle(
@@ -193,9 +196,9 @@ class _ShortTile extends StatelessWidget {
                             fontWeight: FontWeight.w600,
                           ),
                         ),
-                        if (scene.duration > 0)
+                        if (short.duration > 0)
                           Text(
-                            formatDuration(scene.duration),
+                            formatDuration(short.duration),
                             style: const TextStyle(color: Colors.white70, fontSize: AppTextSize.overlayCaption),
                           ),
                       ],

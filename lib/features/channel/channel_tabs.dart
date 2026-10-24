@@ -424,7 +424,8 @@ class _ChannelShortsGridState extends ConsumerState<ChannelShortsGrid> {
             gridDelegate: _gridDelegate,
             delegate: SliverChildBuilderDelegate(
               (_, i) => ChannelShortTile(
-                scene: items[i],
+                // A channel's feed has only whole videos, no markers.
+                scene: items[i].scene,
                 onTap: () => openPage(ref, ShortsPage(source: widget.source, initialIndex: i)),
               ),
               childCount: items.length,

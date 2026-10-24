@@ -4,9 +4,9 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../data/models/list_queries.dart';
-import '../../data/models/scene.dart';
 import '../../data/models/scene_filter.dart';
 import '../../data/repositories/stash_repository.dart';
+import 'short.dart';
 import 'shorts_settings.dart';
 
 /// Interleaves two shuffled sources: [preferredRun] videos with the chosen
@@ -23,8 +23,8 @@ class ShortsMixer {
   final bool hasOthers;
   final int preferredRun;
 
-  final _preferred = Queue<Scene>();
-  final _others = Queue<Scene>();
+  final _preferred = Queue<Short>();
+  final _others = Queue<Short>();
   final _seen = <String>{};
   int _taken = 0;
 
@@ -37,31 +37,31 @@ class ShortsMixer {
 
   bool get isExhausted => preferredDone && othersDone && _preferred.isEmpty && _others.isEmpty;
 
-  void addPreferred(Iterable<Scene> scenes) => _preferred.addAll(scenes);
+  void addPreferred(Iterable<Short> shorts) => _preferred.addAll(shorts);
 
-  void addOthers(Iterable<Scene> scenes) => _others.addAll(scenes);
+  void addOthers(Iterable<Short> shorts) => _others.addAll(shorts);
 
   /// Up to [count] new videos. Stops early when the source whose turn it is
   /// is empty but not done, so the pattern keeps up after the next load.
-  List<Scene> take(int count) {
-    final result = <Scene>[];
+  List<Short> take(int count) {
+    final result = <Short>[];
     while (result.length < count) {
       final preferredTurn = _taken % (preferredRun + 1) < preferredRun;
       final first = preferredTurn ? _preferred : _others;
       final firstDone = preferredTurn ? preferredDone : othersDone;
       final second = preferredTurn ? _others : _preferred;
-      final scene = _next(first) ?? (firstDone ? _next(second) : null);
-      if (scene == null) break;
-      result.add(scene);
+      final short = _next(first) ?? (firstDone ? _next(second) : null);
+      if (short == null) break;
+      result.add(short);
       _taken++;
     }
     return result;
   }
 
-  Scene? _next(Queue<Scene> queue) {
+  Short? _next(Queue<Short> queue) {
     while (queue.isNotEmpty) {
-      final scene = queue.removeFirst();
-      if (_seen.add(scene.id)) return scene;
+      final short = queue.removeFirst();
+      if (_seen.add(short.key)) return short;
     }
     return null;
   }
@@ -71,12 +71,12 @@ class ShortsMixer {
 class ShortsFeedState {
   const ShortsFeedState({this.items = const [], this.isLoading = false, this.error, this.hasMore = true});
 
-  final List<Scene> items;
+  final List<Short> items;
   final bool isLoading;
   final Object? error;
   final bool hasMore;
 
-  ShortsFeedState copyWith({List<Scene>? items, bool? isLoading, Object? error, bool? hasMore}) => ShortsFeedState(
+  ShortsFeedState copyWith({List<Short>? items, bool? isLoading, Object? error, bool? hasMore}) => ShortsFeedState(
         items: items ?? this.items,
         isLoading: isLoading ?? this.isLoading,
         error: error,
@@ -141,8 +141,9 @@ class ShortsSource {
 
 /// Endless, shuffled feed of shorts built from [shortsSettingsProvider]:
 /// the length and orientation always apply, the preferred tags only to the
-/// mixed feed. Rebuilding (settings change, server switch, [refresh])
-/// reshuffles.
+/// mixed feed. Following [ShortsSettings.markers] the mixed feed also plays
+/// scene markers, taking turns with the videos. Rebuilding (settings change,
+/// server switch, [refresh]) reshuffles.
 class ShortsFeedNotifier extends Notifier<ShortsFeedState> {
   ShortsFeedNotifier(this.source);
 
@@ -156,6 +157,14 @@ class ShortsFeedNotifier extends Notifier<ShortsFeedState> {
   int _preferredPage = 0;
   int _othersPage = 0;
 
+  late MarkerQuery? _markerQuery;
+  final _markers = Queue<Short>();
+  bool _markersDone = true;
+  int _markersPage = 0;
+
+  /// Whether the next short is a video (else a marker), while both last.
+  bool _videoTurn = true;
+
   /// Bumped on every build, so loads of a previous build are dropped.
   int _generation = 0;
   bool _loading = false;
@@ -168,14 +177,22 @@ class ShortsFeedNotifier extends Notifier<ShortsFeedState> {
     if (channelQuery != null) {
       _preferredQuery = null;
       _othersQuery = channelQuery;
+      _markerQuery = null;
     } else {
       final tagFilter = settings.tagFilter;
-      _preferredQuery = tagFilter == null ? null : SceneQuery(sort: SceneSort.random, filter: tagFilter);
-      _othersQuery = settings.mixesOthers ? SceneQuery(sort: SceneSort.random, filter: settings.baseFilter) : null;
+      final videos = settings.showsVideos;
+      _preferredQuery = !videos || tagFilter == null ? null : SceneQuery(sort: SceneSort.random, filter: tagFilter);
+      _othersQuery =
+          videos && settings.mixesOthers ? SceneQuery(sort: SceneSort.random, filter: settings.baseFilter) : null;
+      _markerQuery = settings.markerQuery;
     }
     _mixer = ShortsMixer(hasPreferred: _preferredQuery != null, hasOthers: _othersQuery != null);
     _preferredPage = 0;
     _othersPage = 0;
+    _markers.clear();
+    _markersDone = _markerQuery == null;
+    _markersPage = 0;
+    _videoTurn = true;
     _loading = false;
     final generation = ++_generation;
     Future.microtask(() {
@@ -186,31 +203,53 @@ class ShortsFeedNotifier extends Notifier<ShortsFeedState> {
 
   void refresh() => ref.invalidateSelf();
 
+  bool get _needsMarkers => !_markersDone && _markers.length < 2;
+
+  bool get _isExhausted => _mixer.isExhausted && _markersDone && _markers.isEmpty;
+
   Future<void> loadMore() async {
     final generation = _generation;
     if (_loading || !state.hasMore) return;
     _loading = true;
     state = state.copyWith(isLoading: true);
     try {
-      final added = <Scene>[];
-      // Load until a page is filled or both sources are done.
-      while (added.length < _pageSize && !_mixer.isExhausted) {
+      final added = <Short>[];
+      // Load until a page is filled or all sources are done.
+      while (added.length < _pageSize && !_isExhausted) {
         await Future.wait([
           if (_mixer.needsPreferred) _load(preferred: true),
           if (_mixer.needsOthers) _load(preferred: false),
+          if (_needsMarkers) _loadMarkers(),
         ]);
         if (!ref.mounted || generation != _generation) return;
-        final taken = _mixer.take(_pageSize - added.length);
-        if (taken.isEmpty && !_mixer.needsPreferred && !_mixer.needsOthers) break;
+        final taken = _take(_pageSize - added.length);
+        if (taken.isEmpty && !_mixer.needsPreferred && !_mixer.needsOthers && !_needsMarkers) break;
         added.addAll(taken);
       }
-      state = ShortsFeedState(items: [...state.items, ...added], hasMore: !_mixer.isExhausted);
+      state = ShortsFeedState(items: [...state.items, ...added], hasMore: !_isExhausted);
     } catch (e) {
       if (!ref.mounted || generation != _generation) return;
       state = state.copyWith(isLoading: false, error: e);
     } finally {
       if (generation == _generation) _loading = false;
     }
+  }
+
+  /// Up to [count] shorts, videos and markers taking turns. Stops early when
+  /// the source whose turn it is waits for its next page.
+  List<Short> _take(int count) {
+    final result = <Short>[];
+    while (result.length < count) {
+      final videosLeft = !_mixer.isExhausted;
+      final markersLeft = !_markersDone || _markers.isNotEmpty;
+      if (!videosLeft && !markersLeft) break;
+      final videoTurn = videosLeft && (_videoTurn || !markersLeft);
+      final short = videoTurn ? _mixer.take(1).firstOrNull : (_markers.isEmpty ? null : _markers.removeFirst());
+      if (short == null) break;
+      result.add(short);
+      _videoTurn = !videoTurn;
+    }
+    return result;
   }
 
   Future<void> _load({required bool preferred}) async {
@@ -226,7 +265,7 @@ class ShortsFeedNotifier extends Notifier<ShortsFeedState> {
     } else {
       _othersPage = page;
     }
-    final playable = result.items.where((s) => s.streamUrl != null);
+    final playable = [for (final s in result.items) if (s.streamUrl != null) Short.video(s)];
     final done = result.items.isEmpty || page * _pageSize >= result.totalCount;
     if (preferred) {
       _mixer.addPreferred(playable);
@@ -235,6 +274,16 @@ class ShortsFeedNotifier extends Notifier<ShortsFeedState> {
       _mixer.addOthers(playable);
       _mixer.othersDone = done;
     }
+  }
+
+  Future<void> _loadMarkers() async {
+    final generation = _generation;
+    final page = _markersPage + 1;
+    final result = await ref.read(stashRepositoryProvider).findMarkers(_markerQuery!, page: page, perPage: _pageSize);
+    if (!ref.mounted || generation != _generation) return;
+    _markersPage = page;
+    _markers.addAll([for (final m in result.items) if (m.scene.streamUrl != null) Short.marker(m)]);
+    _markersDone = result.items.isEmpty || page * _pageSize >= result.totalCount;
   }
 }
 

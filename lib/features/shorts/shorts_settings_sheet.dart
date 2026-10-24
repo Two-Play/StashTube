@@ -137,6 +137,21 @@ class _ShortsSettingsSheetState extends ConsumerState<ShortsSettingsSheet> {
                     value: _settings.portraitOnly,
                     onChanged: withHaptic((v) => setState(() => _settings = _settings.copyWith(portraitOnly: v))),
                   ),
+                  section(l.shortsMarkers),
+                  Text(l.shortsMarkersHint, style: theme.textTheme.bodySmall),
+                  const SizedBox(height: 8),
+                  Wrap(
+                    spacing: 6,
+                    runSpacing: 6,
+                    children: [
+                      for (final markers in ShortsMarkers.values)
+                        ChoiceChip(
+                          label: Text(markers.label(l)),
+                          selected: _settings.markers == markers,
+                          onSelected: (_) => setState(() => _settings = _settings.copyWith(markers: markers)),
+                        ),
+                    ],
+                  ),
                   const SizedBox(height: 16),
                 ],
               ),
