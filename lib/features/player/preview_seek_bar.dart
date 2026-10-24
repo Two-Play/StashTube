@@ -13,7 +13,13 @@ import '../../data/models/scene_details.dart';
 import '../../data/models/scrub_thumbnails.dart';
 import '../../data/providers.dart';
 import '../../data/repositories/stash_session.dart';
+import '../../l10n/l10n.dart';
+import '../../widgets/scene_card.dart';
 import 'player_providers.dart';
+
+/// A part of the video the seek bar covers instead of the whole, e.g. a
+/// marker short's clip.
+typedef SeekWindow = ({Duration start, Duration end});
 
 /// Seek bar that shows a preview frame above the finger while scrubbing
 /// (from Stash's sprite thumbnails, if generated) plus the target time and
@@ -24,6 +30,11 @@ import 'player_providers.dart';
 ///
 /// The thumbnails load lazily: the WebVTT once the bar is [visible] or
 /// touched, then the sprite is precached so the first scrub shows frames.
+///
+/// With a [window] the bar covers only that part of the video: its ends are
+/// the window's, times read relative to its start, seeking stays inside it
+/// and markers outside it aren't drawn. The preview frame is still the one
+/// at the absolute time.
 class PreviewSeekBar extends ConsumerStatefulWidget {
   const PreviewSeekBar({
     super.key,
@@ -33,9 +44,13 @@ class PreviewSeekBar extends ConsumerStatefulWidget {
     this.onInteractionStart,
     this.onInteractionEnd,
     this.remote,
+    this.window,
   });
 
   final String sceneId;
+
+  /// The part of the video the bar covers; null for the whole video.
+  final SeekWindow? window;
 
   /// While casting: the TV's playback, shown and seeked instead of the
   /// [player]'s.
@@ -138,7 +153,42 @@ class _PreviewSeekBarState extends ConsumerState<PreviewSeekBar> {
 
   double get _totalMs => (widget.remote?.duration ?? _duration).inMilliseconds.toDouble();
 
-  double _fractionOf(Duration d) => _totalMs <= 0 ? 0 : (d.inMilliseconds / _totalMs).clamp(0.0, 1.0);
+  /// Where the bar starts, in milliseconds of the video.
+  double get _startMs => (widget.window?.start.inMilliseconds ?? 0).toDouble();
+
+  /// Where the bar ends: the window's end (within the video, once its
+  /// length is known), else the video's length.
+  double get _endMs {
+    final window = widget.window;
+    if (window == null) return _totalMs;
+    final end = window.end.inMilliseconds.toDouble();
+    return _totalMs > 0 && end > _totalMs ? _totalMs : end;
+  }
+
+  /// The length the bar covers.
+  double get _spanMs => _endMs - _startMs;
+
+  double _fractionOf(Duration d) => _spanMs <= 0 ? 0 : ((d.inMilliseconds - _startMs) / _spanMs).clamp(0.0, 1.0);
+
+  /// The video's time at [fraction] of the bar, inside the window.
+  Duration _timeAt(double fraction) =>
+      Duration(milliseconds: (_startMs + fraction.clamp(0.0, 1.0) * _spanMs).round());
+
+  void _seek(Duration target) {
+    final remote = widget.remote;
+    remote == null ? _player.seek(target) : remote.seek(target);
+  }
+
+  /// For screen readers: a step back or forward, kept inside the window.
+  void _step(Duration by) {
+    final position = widget.remote?.position ?? _position;
+    final min = Duration(milliseconds: _startMs.round());
+    final max = Duration(milliseconds: _endMs.round());
+    final target = position + by;
+    _seek(target < min ? min : (target > max ? max : target));
+  }
+
+  static const _semanticsStep = Duration(seconds: 10);
 
   void _update(double dx) {
     if (_drag == null) widget.onInteractionStart?.call();
@@ -156,11 +206,7 @@ class _PreviewSeekBarState extends ConsumerState<PreviewSeekBar> {
   /// Seeks to the dragged position and ends the interaction.
   void _end() {
     final drag = _drag;
-    if (drag != null && _totalMs > 0) {
-      final target = Duration(milliseconds: (drag * _totalMs).round());
-      final remote = widget.remote;
-      remote == null ? _player.seek(target) : remote.seek(target);
-    }
+    if (drag != null && _spanMs > 0) _seek(_timeAt(drag));
     _reset();
   }
 
@@ -188,15 +234,25 @@ class _PreviewSeekBarState extends ConsumerState<PreviewSeekBar> {
     }
     // Like the thumbnails, only once the bar is shown or touched.
     final details = _loadThumbnails ? ref.watch(sceneDetailsProvider(widget.sceneId)).value : null;
-    final markers = details?.markers ?? const <SceneMarker>[];
-    double fraction(double seconds) => (seconds * 1000 / _totalMs).clamp(0.0, 1.0);
+    // With a window, only the markers inside it (ranges cut to it), and not
+    // the one the window starts at: that is the clip itself.
+    final windowed = widget.window != null;
+    final startSeconds = _startMs / 1000;
+    final endSeconds = _endMs / 1000;
+    final markers = [
+      for (final m in details?.markers ?? const <SceneMarker>[])
+        if (!windowed ||
+            (m.seconds != startSeconds && m.seconds < endSeconds && (m.endSeconds ?? m.seconds) >= startSeconds))
+          m,
+    ];
+    double fraction(double seconds) => ((seconds * 1000 - _startMs) / _spanMs).clamp(0.0, 1.0);
     final points = [
-      if (_totalMs > 0)
+      if (_spanMs > 0)
         for (final m in markers)
           if (!m.isRange) fraction(m.seconds),
     ];
     final ranges = [
-      if (_totalMs > 0)
+      if (_spanMs > 0)
         for (final m in markers)
           if (m.endSeconds case final end?) (fraction(m.seconds), fraction(end)),
     ];
@@ -210,31 +266,51 @@ class _PreviewSeekBarState extends ConsumerState<PreviewSeekBar> {
         child: LayoutBuilder(
           builder: (context, constraints) {
             _barWidth = constraints.maxWidth;
-            return GestureDetector(
-              behavior: HitTestBehavior.opaque,
-              onHorizontalDragStart: (d) => _update(d.localPosition.dx),
-              onHorizontalDragUpdate: (d) => _update(d.localPosition.dx),
-              onHorizontalDragEnd: (_) => _end(),
-              onHorizontalDragCancel: _reset,
-              onTapDown: (d) => _update(d.localPosition.dx),
-              onTapUp: (_) => _end(),
-              // A drag winning over the tap cancels it: don't seek here, the
-              // drag continues and seeks on release.
-              onTapCancel: _reset,
-              // Explicit full width: in a Column (loose constraints) a
-              // childless CustomPaint would otherwise shrink to zero width.
-              child: SizedBox(
-                height: 28,
-                width: double.infinity,
-                child: CustomPaint(
-                  painter: SeekBarPainter(
-                    played: played,
-                    buffered: remote == null ? _fractionOf(_buffer) : 0,
-                    dragging: _drag != null,
-                    playedColor: colors.primary,
-                    rangeColor: colors.tertiary,
-                    chapters: points,
-                    ranges: ranges,
+            final l = context.l10n;
+            final position = remote?.position ?? _position;
+            final span = _spanMs;
+            // Relative to the window, like the bar.
+            String? spoken(double offsetMs) => span <= 0
+                ? null
+                : l.seekBarValue(
+                    spokenDuration(l, (position.inMilliseconds - _startMs + offsetMs).clamp(0.0, span) / 1000),
+                    spokenDuration(l, span / 1000),
+                  );
+            final step = _semanticsStep.inMilliseconds.toDouble();
+            return Semantics(
+              slider: true,
+              label: l.seekBar,
+              value: spoken(0),
+              increasedValue: spoken(step),
+              decreasedValue: spoken(-step),
+              onIncrease: span <= 0 ? null : () => _step(_semanticsStep),
+              onDecrease: span <= 0 ? null : () => _step(-_semanticsStep),
+              child: GestureDetector(
+                behavior: HitTestBehavior.opaque,
+                onHorizontalDragStart: (d) => _update(d.localPosition.dx),
+                onHorizontalDragUpdate: (d) => _update(d.localPosition.dx),
+                onHorizontalDragEnd: (_) => _end(),
+                onHorizontalDragCancel: _reset,
+                onTapDown: (d) => _update(d.localPosition.dx),
+                onTapUp: (_) => _end(),
+                // A drag winning over the tap cancels it: don't seek here, the
+                // drag continues and seeks on release.
+                onTapCancel: _reset,
+                // Explicit full width: in a Column (loose constraints) a
+                // childless CustomPaint would otherwise shrink to zero width.
+                child: SizedBox(
+                  height: 28,
+                  width: double.infinity,
+                  child: CustomPaint(
+                    painter: SeekBarPainter(
+                      played: played,
+                      buffered: remote == null ? _fractionOf(_buffer) : 0,
+                      dragging: _drag != null,
+                      playedColor: colors.primary,
+                      rangeColor: colors.tertiary,
+                      chapters: points,
+                      ranges: ranges,
+                    ),
                   ),
                 ),
               ),
@@ -247,7 +323,10 @@ class _PreviewSeekBarState extends ConsumerState<PreviewSeekBar> {
 
   Widget _buildPreview(ScrubThumbnails? thumbs, Map<String, String> headers, SceneDetails? details) {
     final drag = _drag ?? 0;
-    final seconds = drag * _totalMs / 1000;
+    // The frame and chapter at the video's time; the label relative to the
+    // window, like the bar.
+    final seconds = _timeAt(drag).inMilliseconds / 1000;
+    final label = seconds - _startMs / 1000;
     final cue = thumbs?.cueAt(seconds);
     final chapter = details?.markerAt(seconds)?.title;
     final previewHeight = cue == null ? 0.0 : _previewWidth * cue.height / cue.width;
@@ -291,7 +370,7 @@ class _PreviewSeekBarState extends ConsumerState<PreviewSeekBar> {
                   child: Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                     child: Text(
-                      chapter == null ? formatDuration(seconds) : '${formatDuration(seconds)} • $chapter',
+                      chapter == null ? formatDuration(label) : '${formatDuration(label)} • $chapter',
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600, fontSize: AppTextSize.overlayBody),

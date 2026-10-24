@@ -1,16 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../core/config/theme.dart';
 
-import '../../core/utils/format.dart';
 import '../../l10n/l10n.dart';
-import '../../widgets/scene_card.dart';
 import '../../widgets/skeleton.dart';
 import '../../widgets/sliver_columns.dart';
-import '../../widgets/stash_image.dart';
 import '../shell/nav_bar_config.dart';
 import '../shell/navigation.dart';
 import 'short.dart';
+import 'short_tile.dart';
 import 'shorts_feed.dart';
 import 'shorts_page.dart';
 
@@ -124,7 +121,7 @@ class ShortsShelf extends ConsumerWidget {
                   final pick = picks[i];
                   return SizedBox(
                     width: tileWidth,
-                    child: _ShortTile(
+                    child: ShortTile(
                       short: pick.short,
                       onTap: () => openPage(
                         ref,
@@ -143,73 +140,3 @@ class ShortsShelf extends ConsumerWidget {
 }
 
 Widget _tileSkeleton(BuildContext context) => const SkeletonBox();
-
-class _ShortTile extends StatelessWidget {
-  const _ShortTile({required this.short, required this.onTap});
-
-  final Short short;
-  final VoidCallback onTap;
-
-  @override
-  // 9:16 (sized by the row); the screenshot is cropped to fill it.
-  Widget build(BuildContext context) => SizedBox.expand(
-    child: ClipRRect(
-      borderRadius: AppRadius.thumbnailBorder,
-      child: Material(
-        color: Colors.black,
-        child: TileSemantics(
-          label: [short.title, if (short.duration > 0) spokenDuration(context.l10n, short.duration)].join(', '),
-          child: InkWell(
-            onTap: onTap,
-            child: ExcludeSemantics(
-              child: Stack(
-                fit: StackFit.expand,
-                children: [
-                  StashImage(
-                    short.marker?.screenshotUrl ?? short.scene.screenshotUrl,
-                    fallbackIcon: Icons.slow_motion_video,
-                  ),
-                  DecoratedBox(
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        begin: Alignment.bottomCenter,
-                        end: Alignment.center,
-                        colors: [AppColors.of(context).videoScrim, Colors.transparent],
-                      ),
-                    ),
-                  ),
-                  Positioned(
-                    left: 6,
-                    right: 6,
-                    bottom: 6,
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(
-                          short.title,
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: AppTextSize.overlayLabel,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                        if (short.duration > 0)
-                          Text(
-                            formatDuration(short.duration),
-                            style: const TextStyle(color: Colors.white70, fontSize: AppTextSize.overlayCaption),
-                          ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ),
-      ),
-    ),
-  );
-}

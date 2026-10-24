@@ -1030,6 +1030,14 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get seekBar => 'Seek bar';
+
+  @override
+  String seekBarValue(String position, String duration) {
+    return '$position of $duration';
+  }
+
+  @override
   String get pause => 'Pause';
 
   @override
@@ -1838,6 +1846,11 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get shortsMarkersOnly => 'Only markers';
+
+  @override
+  String shortMarkerSemantics(String title) {
+    return 'Marker: $title';
+  }
 
   @override
   String get shortsEmpty => 'No shorts found';

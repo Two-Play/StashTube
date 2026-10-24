@@ -17,6 +17,7 @@ import '../../widgets/scene_card.dart';
 import '../../widgets/stash_image.dart';
 import '../../widgets/status_views.dart';
 import '../library/watch_later.dart';
+import '../player/player_controls.dart';
 import '../player/player_providers.dart';
 import '../player/preview_seek_bar.dart';
 import '../player/scene_edits.dart';
@@ -53,6 +54,12 @@ class _FastPageScrollPhysics extends PageScrollPhysics {
   @override
   SpringDescription get spring => const SpringDescription(mass: 0.5, stiffness: 500, damping: 32);
 }
+
+/// "Full video": the whole scene in the main player. A marker short opens
+/// it at the marker's start, a ranged marker too (like tapping its
+/// chapter), not at the scene's resume point; a whole video resumes.
+void playFullVideo(WidgetRef ref, Short short) =>
+    ref.read(nowPlayingProvider.notifier).play(short.scene, at: short.marker?.seconds);
 
 /// Whether the app's main player is playing.
 final _mainPlayingProvider = StreamProvider.autoDispose<bool>((ref) => ref.watch(playerProvider).stream.playing);
@@ -131,6 +138,7 @@ class _ShortsPageState extends ConsumerState<ShortsPage> {
   bool _handedToPlayer = false;
 
   StreamSubscription<Duration>? _positionSub;
+  StreamSubscription<Duration>? _windowSub;
   String? _watchedShort;
   final _counted = <String>{};
 
@@ -157,6 +165,7 @@ class _ShortsPageState extends ConsumerState<ShortsPage> {
     _miniplayerHeight.removeListener(_onMiniplayerHeight);
     _lifecycle.dispose();
     _positionSub?.cancel();
+    _windowSub?.cancel();
     _pageController.dispose();
     for (final player in _players ?? const <Player>[]) {
       player.dispose();
@@ -174,11 +183,10 @@ class _ShortsPageState extends ConsumerState<ShortsPage> {
     });
   }
 
-  /// The whole scene in the main player; a marker's from the marker on.
   void _openFullVideo(Short short) {
     setState(() => _handedToPlayer = true);
     _active.set(false);
-    ref.read(nowPlayingProvider.notifier).play(short.scene, at: short.marker?.seconds);
+    playFullVideo(ref, short);
   }
 
   int _slot(int index) => index % _poolSize;
@@ -259,11 +267,33 @@ class _ShortsPageState extends ConsumerState<ShortsPage> {
     if (index >= feed.items.length - 5) ref.read(_feed.notifier).loadMore();
   }
 
+  /// Keeps the current marker short inside its clip: the seek bar can't
+  /// leave it and the A-B loop holds, but mpv may still end up outside.
+  void _guardWindow(Short short, Player player, int slot) {
+    _windowSub?.cancel();
+    _windowSub = null;
+    if (!short.isMarker) return;
+    var seeking = false;
+    _windowSub = player.stream.position.listen((position) {
+      // Not before the file is open: until then mpv reports 0.
+      if (!_slotReady[slot] || _slotShort[slot] != short.key) return;
+      final target = short.correctionFor(position);
+      if (target == null) {
+        seeking = false;
+      } else if (!seeking) {
+        seeking = true;
+        unawaited(player.seek(target));
+      }
+    });
+  }
+
   /// Counts a play of its scene once the short was watched halfway (at
   /// most 15 s).
   void _watchPosition(Short short) {
     if (_watchedShort == short.key) return;
     _watchedShort = short.key;
+    final current = _players?[_slot(_index)];
+    if (current != null) _guardWindow(short, current, _slot(_index));
     _positionSub?.cancel();
     final scene = short.scene;
     final player = _players?[_slot(_index)];
@@ -765,7 +795,11 @@ class _ShortViewState extends ConsumerState<_ShortView> {
                 Text(
                   [
                     l.playsCount(scene.playCount),
-                    if (short.duration > 0) formatDuration(short.duration),
+                    // A ranged marker with its place in the scene.
+                    if (marker?.endSeconds case final end?)
+                      markerTimeLabel(l, marker!.seconds, end, withLength: true)
+                    else if (short.duration > 0)
+                      formatDuration(short.duration),
                   ].join(' • '),
                   style: const TextStyle(color: Colors.white70, fontSize: AppTextSize.overlayLabel, shadows: _shadow),
                 ),
@@ -856,6 +890,8 @@ class _ShortViewState extends ConsumerState<_ShortView> {
                     child: PreviewSeekBar(
                       sceneId: scene.id,
                       player: controller.player,
+                      // A marker's bar covers only its clip.
+                      window: short.isMarker ? (start: short.start!, end: short.end!) : null,
                       visible: false,
                       onInteractionStart: () {
                         _scrubbing = true;
