@@ -104,6 +104,8 @@ class _FileDetails extends StatelessWidget {
     ];
     final theme = Theme.of(context);
     final muted = theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurfaceVariant);
+    // Wider with large text, but the values keep most of the row.
+    final labelWidth = MediaQuery.textScalerOf(context).scale(96).clamp(96.0, 150.0);
 
     return Padding(
       padding: const EdgeInsets.only(top: 8),
@@ -116,7 +118,7 @@ class _FileDetails extends StatelessWidget {
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  SizedBox(width: 96, child: Text(label, style: muted)),
+                  SizedBox(width: labelWidth, child: Text(label, style: muted)),
                   Expanded(child: SelectableText(value, style: theme.textTheme.bodySmall)),
                 ],
               ),

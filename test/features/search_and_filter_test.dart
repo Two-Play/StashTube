@@ -19,6 +19,7 @@ import 'package:stash_app_mobile/features/search/search_page.dart';
 import 'package:stash_app_mobile/widgets/scene_feed.dart';
 import 'package:stash_app_mobile/widgets/scene_filter_sheet.dart';
 
+import '../fixtures.dart';
 import '../helpers.dart';
 
 class FakeRepository implements StashRepository {
@@ -27,11 +28,12 @@ class FakeRepository implements StashRepository {
   final galleryQueries = <GalleryQuery>[];
   final studioQueries = <StudioQuery>[];
   List<SavedFilter> saved = const [];
+  List<Scene> scenes = const [];
 
   @override
   Future<PageResult<Scene>> findScenes(SceneQuery query, {int page = 1, int perPage = 24}) async {
     sceneQueries.add(query);
-    return const PageResult(items: [], totalCount: 0);
+    return PageResult(items: scenes, totalCount: scenes.length);
   }
 
   @override
@@ -166,6 +168,7 @@ void main() {
     });
 
     testWidgets('scene results keep their sort when the term changes', (tester) async {
+      repo.scenes = [sceneFrom()];
       final c = container();
       await tester.pumpWidget(UncontrolledProviderScope(container: c, child: const MaterialApp(home: SearchPage())));
       await tester.pumpAndSettle();

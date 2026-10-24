@@ -287,48 +287,59 @@ class ChapterList extends ConsumerWidget {
           padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
           child: Text(context.l10n.chapters, style: theme.textTheme.titleSmall),
         ),
-        SizedBox(
-          height: 64,
-          child: StreamBuilder<Duration>(
-            stream: player.stream.position,
-            initialData: player.state.position,
-            builder: (context, snapshot) {
-              final current = details.markerAt(snapshot.data!.inMilliseconds / 1000);
-              return ListView.separated(
-                scrollDirection: Axis.horizontal,
-                padding: const EdgeInsets.symmetric(horizontal: 12),
-                itemCount: details.markers.length,
-                separatorBuilder: (_, _) => const SizedBox(width: 8),
-                itemBuilder: (_, i) {
-                  final marker = details.markers[i];
-                  final active = identical(marker, current);
-                  return Material(
-                    color: active ? theme.colorScheme.primaryContainer : theme.colorScheme.surfaceContainerHighest,
-                    borderRadius: BorderRadius.circular(10),
-                    child: InkWell(
-                      borderRadius: BorderRadius.circular(10),
-                      onTap: () => ref.read(nowPlayingProvider.notifier).seekTo(marker.seconds),
-                      child: Container(
-                        width: 140,
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Text(
-                              formatDuration(marker.seconds),
-                              style: theme.textTheme.labelSmall?.copyWith(color: theme.colorScheme.primary),
+        // Tiles as tall as their text, so large text isn't cut off; wider too.
+        StreamBuilder<Duration>(
+          stream: player.stream.position,
+          initialData: player.state.position,
+          builder: (context, snapshot) {
+            final current = details.markerAt(snapshot.data!.inMilliseconds / 1000);
+            final tileWidth = MediaQuery.textScalerOf(context).scale(140).clamp(140.0, 240.0);
+            return SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              padding: const EdgeInsets.symmetric(horizontal: 12),
+              child: IntrinsicHeight(
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    for (final (i, marker) in details.markers.indexed) ...[
+                      if (i > 0) const SizedBox(width: 8),
+                      Material(
+                        color: identical(marker, current)
+                            ? theme.colorScheme.primaryContainer
+                            : theme.colorScheme.surfaceContainerHighest,
+                        borderRadius: BorderRadius.circular(10),
+                        child: InkWell(
+                          borderRadius: BorderRadius.circular(10),
+                          onTap: () => ref.read(nowPlayingProvider.notifier).seekTo(marker.seconds),
+                          child: Container(
+                            width: tileWidth,
+                            constraints: const BoxConstraints(minHeight: 64),
+                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Text(
+                                  formatDuration(marker.seconds),
+                                  style: theme.textTheme.labelSmall?.copyWith(color: theme.colorScheme.primary),
+                                ),
+                                Text(
+                                  marker.title,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: theme.textTheme.bodyMedium,
+                                ),
+                              ],
                             ),
-                            Text(marker.title, maxLines: 1, overflow: TextOverflow.ellipsis, style: theme.textTheme.bodyMedium),
-                          ],
+                          ),
                         ),
                       ),
-                    ),
-                  );
-                },
-              );
-            },
-          ),
+                    ],
+                  ],
+                ),
+              ),
+            );
+          },
         ),
       ],
     );

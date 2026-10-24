@@ -17,10 +17,13 @@ class ChipBar<T> extends StatelessWidget {
   final String Function(T) labelOf;
   final ValueChanged<T> onSelected;
 
+  /// The bar's fixed height.
+  static const double height = 48;
+
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      height: 48,
+      height: height,
       child: ListView.separated(
         scrollDirection: Axis.horizontal,
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),

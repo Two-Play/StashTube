@@ -9,11 +9,21 @@ import '../../widgets/app_logo.dart';
 import '../demo/demo_server.dart';
 import '../settings/theme_welcome.dart';
 
-/// Connects the app to a Stash server (URL, optional name, and an API key
-/// or a username and password, 2.7).
+/// Checks that a config reaches a working Stash server (see [findServer]);
+/// replaceable in tests.
+final serverVerifierProvider = Provider<Future<void> Function(ServerConfig)>(
+  (ref) => StashRepository.verifyServer,
+);
+
+/// How the credentials step signs in.
+enum _AuthMethod { apiKey, password }
+
+/// Connects the app to a Stash server in two steps (ONB-1): the address
+/// first, and only when the server asks for it (401/403) an API key or a
+/// username and password (2.7), with an optional name.
 /// Lists saved servers to pick from (2.6). Pushed from the settings with
 /// [addServer] to save another server, or with [edit] to change a saved
-/// one (2.7).
+/// one (2.7), which shows address and sign-in together.
 class LoginPage extends ConsumerStatefulWidget {
   const LoginPage({super.key, this.addServer = false, this.edit});
 
@@ -36,9 +46,18 @@ class _LoginPageState extends ConsumerState<LoginPage> {
   bool _connecting = false;
   bool _obscureKey = true;
   bool _obscurePassword = true;
-  /// Whether the username and password fields are expanded and used.
-  bool _useLogin = false;
+  _AuthMethod _method = _AuthMethod.apiKey;
+
+  /// The addresses that asked for a login: set, the credentials step shows.
+  List<String>? _authUrls;
+
+  /// The address the user already agreed to reach over plain HTTP.
+  String? _insecureConfirmed;
   String? _error;
+
+  bool get _editing => widget.edit != null;
+
+  bool get _credentialsStep => _authUrls != null;
 
   @override
   void initState() {
@@ -50,7 +69,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
       _apiKeyController.text = edit.apiKey ?? '';
       _usernameController.text = edit.username ?? '';
       _passwordController.text = edit.password ?? '';
-      _useLogin = edit.username != null;
+      if (edit.username != null && (edit.apiKey ?? '').isEmpty) _method = _AuthMethod.password;
     }
   }
 
@@ -64,72 +83,108 @@ class _LoginPageState extends ConsumerState<LoginPage> {
     super.dispose();
   }
 
-  Future<void> _connect() async {
-    if (!_formKey.currentState!.validate()) return;
-    final apiKey = _apiKeyController.text.trim();
-    // Collapsed, the sign-in fields don't count (they keep their text).
-    final username = _useLogin ? _usernameController.text.trim() : '';
-    final password = _useLogin ? _passwordController.text : '';
-    ServerConfig configFor(String url) => ServerConfig(
-          baseUrl: url,
-          apiKey: apiKey.isEmpty ? null : apiKey,
-          username: username.isEmpty ? null : username,
-          password: password.isEmpty ? null : password,
-        );
-
-    final candidates = ServerConfig.candidateUrls(_urlController.text).map(configFor).toList();
-    if (candidates.isNotEmpty && candidates.first.isUnencryptedOverInternet && !await _confirmUnencrypted(candidates.first)) {
-      return;
-    }
-    if (!mounted) return;
-
-    setState(() {
-      _connecting = true;
-      _error = null;
-    });
-    try {
-      final config = await findServer(candidates);
-      final servers = ref.read(serverProfilesProvider.notifier);
-      final edit = widget.edit;
-      if (edit != null) {
-        await servers.update(edit.id, config, name: _nameController.text);
-      } else {
-        // The first login asks for a theme once the shell is there.
-        if (ref.read(serverProfilesProvider).profiles.isEmpty) {
-          await ref.read(themeWelcomeProvider.notifier).request();
-        }
-        // Activating the server swaps the app to its shell (see StashApp).
-        await servers.add(config, name: _nameController.text);
-      }
-      if (mounted && widget._pushed) Navigator.of(context).pop();
-    } catch (e) {
-      Haptics.error();
-      if (mounted) setState(() => _error = errorText(context.l10n, e));
-    } finally {
-      if (mounted) setState(() => _connecting = false);
-    }
+  /// Plain HTTP over the internet: asks once per address.
+  Future<bool> _allowUnencrypted(ServerConfig config) async {
+    if (!config.isUnencryptedOverInternet || _insecureConfirmed == config.baseUrl) return true;
+    final ok = await _confirmUnencrypted(config);
+    if (ok) _insecureConfirmed = config.baseUrl;
+    return ok;
   }
 
-  /// Opens the built-in demo (sample library, no server needed).
-  Future<void> _tryDemo() async {
+  /// Step 1: tries the address without credentials. A server without a
+  /// login is saved right away; one that asks for it opens step 2.
+  Future<void> _connect() async {
+    if (!_formKey.currentState!.validate()) return;
+    final urls = ServerConfig.candidateUrls(_urlController.text);
+    final candidates = [for (final url in urls) ServerConfig(baseUrl: url)];
+    if (candidates.isNotEmpty && !await _allowUnencrypted(candidates.first)) return;
+    if (!mounted) return;
+
+    await _run(() async {
+      try {
+        await _save(await findServer(candidates, verify: ref.read(serverVerifierProvider)));
+      } on StashApiException catch (e) {
+        if (e.kind != StashErrorKind.unauthorized) rethrow;
+        if (mounted) setState(() => _authUrls = urls);
+      }
+    });
+  }
+
+  /// Step 2 (and saving an edited server): connects with the credentials.
+  Future<void> _signIn() async {
+    if (!_formKey.currentState!.validate()) return;
+    final apiKey = _apiKeyController.text.trim();
+    final username = _usernameController.text.trim();
+    final password = _passwordController.text;
+    final useKey = _method == _AuthMethod.apiKey;
+    ServerConfig configFor(String url) => ServerConfig(
+          baseUrl: url,
+          apiKey: useKey && apiKey.isNotEmpty ? apiKey : null,
+          username: !useKey && username.isNotEmpty ? username : null,
+          password: !useKey && password.isNotEmpty ? password : null,
+        );
+
+    final urls = _editing ? ServerConfig.candidateUrls(_urlController.text) : _authUrls!;
+    final candidates = urls.map(configFor).toList();
+    if (candidates.isNotEmpty && !await _allowUnencrypted(candidates.first)) return;
+    if (!mounted) return;
+
+    await _run(() async => _save(await findServer(candidates, verify: ref.read(serverVerifierProvider))));
+  }
+
+  /// Runs [action] with the progress indicator, showing its error.
+  Future<void> _run(Future<void> Function() action) async {
     final l = context.l10n;
     setState(() {
       _connecting = true;
       _error = null;
     });
     try {
-      await DemoServer.instance.start();
-      final servers = ref.read(serverProfilesProvider.notifier);
-      if (ref.read(serverProfilesProvider).profiles.isEmpty) {
-        await ref.read(themeWelcomeProvider.notifier).request();
-      }
-      await servers.add(const ServerConfig(baseUrl: ServerConfig.demoUrl), name: l.demoServerName);
+      await action();
     } catch (e) {
       Haptics.error();
       if (mounted) setState(() => _error = errorText(l, e));
     } finally {
       if (mounted) setState(() => _connecting = false);
     }
+  }
+
+  Future<void> _save(ServerConfig config) async {
+    final servers = ref.read(serverProfilesProvider.notifier);
+    final edit = widget.edit;
+    if (edit != null) {
+      await servers.update(edit.id, config, name: _nameController.text);
+    } else {
+      // The first login asks for a theme once the shell is there.
+      if (ref.read(serverProfilesProvider).profiles.isEmpty) {
+        await ref.read(themeWelcomeProvider.notifier).request();
+      }
+      // Activating the server swaps the app to its shell (see StashApp).
+      await servers.add(config, name: _nameController.text);
+    }
+    if (mounted && widget._pushed) Navigator.of(context).pop();
+  }
+
+  /// Back from the credentials step to the address.
+  void _changeAddress() {
+    Haptics.selection();
+    setState(() {
+      _authUrls = null;
+      _error = null;
+    });
+  }
+
+  /// Opens the built-in demo (sample library, no server needed).
+  Future<void> _tryDemo() async {
+    final l = context.l10n;
+    await _run(() async {
+      await DemoServer.instance.start();
+      final servers = ref.read(serverProfilesProvider.notifier);
+      if (ref.read(serverProfilesProvider).profiles.isEmpty) {
+        await ref.read(themeWelcomeProvider.notifier).request();
+      }
+      await servers.add(const ServerConfig(baseUrl: ServerConfig.demoUrl), name: l.demoServerName);
+    });
   }
 
   /// Plain HTTP over the internet sends the API key or password in the
@@ -152,186 +207,303 @@ class _LoginPageState extends ConsumerState<LoginPage> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final editing = widget.edit != null;
-    final saved = widget._pushed ? const <ServerProfile>[] : ref.watch(serverProfilesProvider).profiles;
-    return Scaffold(
-      appBar: widget._pushed
-          ? AppBar(title: Text(editing ? context.l10n.editServer : context.l10n.addServer))
-          : null,
-      body: SafeArea(
-        child: Center(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 24),
-            child: Form(
-              key: _formKey,
-              child: AutofillGroup(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    if (!widget._pushed) ...[
-                      const Center(child: AppLogo(size: 72, background: AppLogo.tile)),
-                      const SizedBox(height: 12),
-                      Text(context.l10n.connectToStash, textAlign: TextAlign.center, style: theme.textTheme.headlineSmall),
-                    ],
-                    const SizedBox(height: 8),
-                    if (!editing)
-                      Text(
-                        context.l10n.loginIntro,
-                        textAlign: TextAlign.center,
-                        style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.onSurfaceVariant),
-                      ),
-                    if (saved.isNotEmpty) ...[
-                      const SizedBox(height: 24),
-                      Text(context.l10n.savedServers, style: theme.textTheme.titleSmall),
-                      for (final server in saved)
-                        Card(
-                          margin: const EdgeInsets.only(top: 8),
-                          child: ListTile(
-                            leading: const Icon(Icons.dns_outlined),
-                            title: Text(server.name, maxLines: 1, overflow: TextOverflow.ellipsis),
-                            subtitle: Text(server.baseUrl, maxLines: 1, overflow: TextOverflow.ellipsis),
-                            trailing: const Icon(Icons.chevron_right),
-                            onTap: () => ref.read(serverProfilesProvider.notifier).activate(server.id),
-                          ),
-                        ),
-                      const SizedBox(height: 16),
-                      Text(context.l10n.orAddAnotherServer, style: theme.textTheme.titleSmall),
-                    ],
-                    const SizedBox(height: 32),
-                    TextFormField(
-                      controller: _nameController,
-                      textInputAction: TextInputAction.next,
-                      decoration: InputDecoration(
-                        border: const OutlineInputBorder(),
-                        labelText: context.l10n.nameOptional,
-                        hintText: context.l10n.nameHint,
-                        prefixIcon: const Icon(Icons.label_outline),
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    TextFormField(
-                      controller: _urlController,
-                      keyboardType: TextInputType.url,
-                      autocorrect: false,
-                      autofillHints: const [AutofillHints.url],
-                      textInputAction: TextInputAction.next,
-                      decoration: InputDecoration(
-                        border: const OutlineInputBorder(),
-                        labelText: context.l10n.serverUrl,
-                        prefixIcon: const Icon(Icons.dns_outlined),
-                      ),
-                      validator: (v) => ServerConfig.normalizeUrl(v ?? '') == null ? context.l10n.serverUrlInvalid : null,
-                    ),
-                    const SizedBox(height: 16),
-                    TextFormField(
-                      controller: _apiKeyController,
-                      obscureText: _obscureKey,
-                      autocorrect: false,
-                      enableSuggestions: false,
-                      textInputAction: _useLogin ? TextInputAction.next : TextInputAction.done,
-                      onFieldSubmitted: (_) {
-                        if (!_useLogin) _connect();
-                      },
-                      decoration: InputDecoration(
-                        border: const OutlineInputBorder(),
-                        labelText: context.l10n.apiKeyOptional,
-                        helperText: context.l10n.apiKeyHelper,
-                        helperMaxLines: 2,
-                        prefixIcon: const Icon(Icons.key_outlined),
-                        suffixIcon: IconButton(
-                          icon: Icon(_obscureKey ? Icons.visibility : Icons.visibility_off),
-                          onPressed: () => setState(() => _obscureKey = !_obscureKey),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    ExpansionTile(
-                      initiallyExpanded: _useLogin,
-                      onExpansionChanged: (expanded) {
-                        Haptics.selection();
-                        setState(() => _useLogin = expanded);
-                      },
-                      shape: const Border(),
-                      collapsedShape: const Border(),
-                      tilePadding: EdgeInsets.zero,
-                      childrenPadding: const EdgeInsets.only(top: 8),
-                      leading: const Icon(Icons.login),
-                      title: Text(context.l10n.signInWithPassword, style: theme.textTheme.titleSmall),
-                      subtitle: Text(
-                        context.l10n.signInWithPasswordHint,
-                        style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurfaceVariant),
-                      ),
-                      children: [
-                        TextFormField(
-                          controller: _usernameController,
-                          autocorrect: false,
-                          enableSuggestions: false,
-                          autofillHints: const [AutofillHints.username],
-                          textInputAction: TextInputAction.next,
-                          decoration: InputDecoration(
-                            border: const OutlineInputBorder(),
-                            labelText: context.l10n.username,
-                            prefixIcon: const Icon(Icons.person_outline),
-                          ),
-                          validator: (v) => (v ?? '').trim().isEmpty != _passwordController.text.isEmpty
-                              ? context.l10n.loginIncomplete
-                              : null,
-                        ),
-                        const SizedBox(height: 16),
-                        TextFormField(
-                          controller: _passwordController,
-                          obscureText: _obscurePassword,
-                          autocorrect: false,
-                          enableSuggestions: false,
-                          autofillHints: const [AutofillHints.password],
-                          textInputAction: TextInputAction.done,
-                          onFieldSubmitted: (_) => _connect(),
-                          decoration: InputDecoration(
-                            border: const OutlineInputBorder(),
-                            labelText: context.l10n.password,
-                            prefixIcon: const Icon(Icons.lock_outline),
-                            suffixIcon: IconButton(
-                              icon: Icon(_obscurePassword ? Icons.visibility : Icons.visibility_off),
-                              onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
+    return PopScope(
+      // Back from the credentials step returns to the address.
+      canPop: !_credentialsStep,
+      onPopInvokedWithResult: (didPop, _) {
+        if (!didPop && _credentialsStep) _changeAddress();
+      },
+      child: Scaffold(
+        appBar: widget._pushed
+            ? AppBar(title: Text(_editing ? context.l10n.editServer : context.l10n.addServer))
+            : null,
+        body: SafeArea(
+          child: Center(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 24),
+              child: Form(
+                key: _formKey,
+                child: AutofillGroup(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      if (!widget._pushed) ...[
+                        const Center(child: AppLogo(size: 72, background: AppLogo.tile)),
+                        const SizedBox(height: 12),
+                        Text(context.l10n.connectToStash, textAlign: TextAlign.center, style: theme.textTheme.headlineSmall),
+                      ],
+                      AnimatedSize(
+                        duration: const Duration(milliseconds: 250),
+                        curve: Curves.easeOutCubic,
+                        alignment: Alignment.topCenter,
+                        child: AnimatedSwitcher(
+                          duration: const Duration(milliseconds: 250),
+                          transitionBuilder: (child, animation) => FadeTransition(
+                            opacity: animation,
+                            child: SlideTransition(
+                              position: Tween(
+                                begin: Offset(child.key == const ValueKey('credentials') ? 0.15 : -0.15, 0),
+                                end: Offset.zero,
+                              ).animate(animation),
+                              child: child,
                             ),
                           ),
+                          layoutBuilder: (current, previous) => Stack(
+                            alignment: Alignment.topCenter,
+                            children: [...previous, ?current],
+                          ),
+                          child: _editing
+                              ? KeyedSubtree(key: const ValueKey('edit'), child: _credentials(theme))
+                              : _credentialsStep
+                                  ? KeyedSubtree(key: const ValueKey('credentials'), child: _credentials(theme))
+                                  : KeyedSubtree(key: const ValueKey('address'), child: _address(theme)),
                         ),
-                      ],
-                    ),
-                    if (_error != null) ...[
-                      const SizedBox(height: 16),
-                      Text(_error!, style: TextStyle(color: theme.colorScheme.error)),
-                    ],
-                    const SizedBox(height: 24),
-                    FilledButton(
-                      onPressed: _connecting ? null : _connect,
-                      style: FilledButton.styleFrom(minimumSize: const Size.fromHeight(48)),
-                      child: _connecting
-                          ? const SizedBox.square(dimension: 20, child: CircularProgressIndicator(strokeWidth: 2))
-                          : Text(editing ? context.l10n.save : context.l10n.connect),
-                    ),
-                    if (!widget._pushed) ...[
-                      const SizedBox(height: 32),
-                      OutlinedButton.icon(
-                        onPressed: _connecting ? null : _tryDemo,
-                        style: OutlinedButton.styleFrom(minimumSize: const Size.fromHeight(48)),
-                        icon: const Icon(Icons.play_circle_outline),
-                        label: Text(context.l10n.tryDemo),
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        context.l10n.tryDemoHint,
-                        textAlign: TextAlign.center,
-                        style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurfaceVariant),
                       ),
                     ],
-                  ],
+                  ),
                 ),
               ),
             ),
           ),
         ),
       ),
+    );
+  }
+
+  Widget _urlField({bool autofocus = false, required VoidCallback onSubmitted}) => TextFormField(
+        controller: _urlController,
+        keyboardType: TextInputType.url,
+        autocorrect: false,
+        autofocus: autofocus,
+        autofillHints: const [AutofillHints.url],
+        textInputAction: _editing ? TextInputAction.next : TextInputAction.go,
+        onFieldSubmitted: _editing ? null : (_) => onSubmitted(),
+        decoration: InputDecoration(
+          border: const OutlineInputBorder(),
+          labelText: context.l10n.serverUrl,
+          prefixIcon: const Icon(Icons.dns_outlined),
+        ),
+        validator: (v) => ServerConfig.normalizeUrl(v ?? '') == null ? context.l10n.serverUrlInvalid : null,
+      );
+
+  Widget _errorAndButton(ThemeData theme, {required String label, required VoidCallback onPressed}) => Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          if (_error != null) ...[
+            const SizedBox(height: 16),
+            Text(_error!, style: TextStyle(color: theme.colorScheme.error)),
+          ],
+          const SizedBox(height: 24),
+          FilledButton(
+            onPressed: _connecting ? null : onPressed,
+            style: FilledButton.styleFrom(minimumSize: const Size.fromHeight(48)),
+            child: _connecting
+                ? const SizedBox.square(dimension: 20, child: CircularProgressIndicator(strokeWidth: 2))
+                : Text(label),
+          ),
+        ],
+      );
+
+  /// Step 1: the address, saved servers and the demo.
+  Widget _address(ThemeData theme) {
+    final saved = widget._pushed ? const <ServerProfile>[] : ref.watch(serverProfilesProvider).profiles;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        const SizedBox(height: 8),
+        Text(
+          context.l10n.loginIntro,
+          textAlign: TextAlign.center,
+          style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+        ),
+        if (saved.isNotEmpty) ...[
+          const SizedBox(height: 24),
+          Text(context.l10n.savedServers, style: theme.textTheme.titleSmall),
+          for (final server in saved)
+            Card(
+              margin: const EdgeInsets.only(top: 8),
+              child: ListTile(
+                leading: const Icon(Icons.dns_outlined),
+                title: Text(server.name, maxLines: 1, overflow: TextOverflow.ellipsis),
+                subtitle: Text(server.baseUrl, maxLines: 1, overflow: TextOverflow.ellipsis),
+                trailing: const Icon(Icons.chevron_right),
+                onTap: () => ref.read(serverProfilesProvider.notifier).activate(server.id),
+              ),
+            ),
+          const SizedBox(height: 16),
+          Text(context.l10n.orAddAnotherServer, style: theme.textTheme.titleSmall),
+        ],
+        const SizedBox(height: 32),
+        _urlField(onSubmitted: _connect),
+        _errorAndButton(theme, label: context.l10n.connect, onPressed: _connect),
+        if (!widget._pushed) ...[
+          const SizedBox(height: 32),
+          OutlinedButton.icon(
+            onPressed: _connecting ? null : _tryDemo,
+            style: OutlinedButton.styleFrom(minimumSize: const Size.fromHeight(48)),
+            icon: const Icon(Icons.play_circle_outline),
+            label: Text(context.l10n.tryDemo),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            context.l10n.tryDemoHint,
+            textAlign: TextAlign.center,
+            style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+          ),
+        ],
+      ],
+    );
+  }
+
+  /// Step 2, or the whole form when editing a saved server: API key or
+  /// username and password, and the optional name.
+  Widget _credentials(ThemeData theme) {
+    final l = context.l10n;
+    final useKey = _method == _AuthMethod.apiKey;
+    final urls = _authUrls;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        const SizedBox(height: 16),
+        if (_editing)
+          _urlField(onSubmitted: _signIn)
+        else ...[
+          Row(
+            children: [
+              IconButton(
+                onPressed: _connecting ? null : _changeAddress,
+                tooltip: l.changeServerAddress,
+                icon: const BackButtonIcon(),
+              ),
+              const SizedBox(width: 4),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(l.loginAuthTitle, style: theme.textTheme.titleMedium),
+                    if (urls != null && urls.isNotEmpty)
+                      Text(
+                        Uri.parse(urls.first).host,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+                      ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Text(
+            l.loginAuthIntro,
+            style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+          ),
+        ],
+        const SizedBox(height: 24),
+        SegmentedButton<_AuthMethod>(
+          segments: [
+            ButtonSegment(value: _AuthMethod.apiKey, icon: const Icon(Icons.key_outlined), label: Text(l.apiKey)),
+            ButtonSegment(
+              value: _AuthMethod.password,
+              icon: const Icon(Icons.person_outline),
+              label: Text(l.loginMethodPassword),
+            ),
+          ],
+          selected: {_method},
+          onSelectionChanged: _connecting
+              ? null
+              : (selected) {
+                  Haptics.selection();
+                  setState(() {
+                    _method = selected.first;
+                    _error = null;
+                  });
+                },
+        ),
+        const SizedBox(height: 16),
+        AnimatedSize(
+          duration: const Duration(milliseconds: 200),
+          curve: Curves.easeOutCubic,
+          alignment: Alignment.topCenter,
+          child: useKey
+              ? TextFormField(
+                  key: const ValueKey('apiKey'),
+                  controller: _apiKeyController,
+                  autofocus: !_editing,
+                  obscureText: _obscureKey,
+                  autocorrect: false,
+                  enableSuggestions: false,
+                  textInputAction: TextInputAction.next,
+                  decoration: InputDecoration(
+                    border: const OutlineInputBorder(),
+                    labelText: _editing ? l.apiKeyOptional : l.apiKey,
+                    helperText: l.apiKeyWhere,
+                    helperMaxLines: 3,
+                    prefixIcon: const Icon(Icons.key_outlined),
+                    suffixIcon: IconButton(
+                      icon: Icon(_obscureKey ? Icons.visibility : Icons.visibility_off),
+                      onPressed: () => setState(() => _obscureKey = !_obscureKey),
+                    ),
+                  ),
+                  // Editing, an empty key means a server without a login.
+                  validator: (v) => !_editing && (v ?? '').trim().isEmpty ? l.apiKeyRequired : null,
+                )
+              : Column(
+                  key: const ValueKey('password'),
+                  children: [
+                    TextFormField(
+                      controller: _usernameController,
+                      autofocus: !_editing,
+                      autocorrect: false,
+                      enableSuggestions: false,
+                      autofillHints: const [AutofillHints.username],
+                      textInputAction: TextInputAction.next,
+                      decoration: InputDecoration(
+                        border: const OutlineInputBorder(),
+                        labelText: l.username,
+                        prefixIcon: const Icon(Icons.person_outline),
+                      ),
+                      validator: (v) => (v ?? '').trim().isEmpty || _passwordController.text.isEmpty
+                          ? l.loginIncomplete
+                          : null,
+                    ),
+                    const SizedBox(height: 16),
+                    TextFormField(
+                      controller: _passwordController,
+                      obscureText: _obscurePassword,
+                      autocorrect: false,
+                      enableSuggestions: false,
+                      autofillHints: const [AutofillHints.password],
+                      textInputAction: TextInputAction.next,
+                      decoration: InputDecoration(
+                        border: const OutlineInputBorder(),
+                        labelText: l.password,
+                        helperText: l.signInWithPasswordHint,
+                        helperMaxLines: 2,
+                        prefixIcon: const Icon(Icons.lock_outline),
+                        suffixIcon: IconButton(
+                          icon: Icon(_obscurePassword ? Icons.visibility : Icons.visibility_off),
+                          onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+        ),
+        const SizedBox(height: 16),
+        TextFormField(
+          controller: _nameController,
+          textInputAction: TextInputAction.done,
+          onFieldSubmitted: (_) => _signIn(),
+          decoration: InputDecoration(
+            border: const OutlineInputBorder(),
+            labelText: l.nameOptional,
+            hintText: l.nameHint,
+            prefixIcon: const Icon(Icons.label_outline),
+          ),
+        ),
+        _errorAndButton(theme, label: _editing ? l.save : l.signIn, onPressed: _signIn),
+      ],
     );
   }
 }

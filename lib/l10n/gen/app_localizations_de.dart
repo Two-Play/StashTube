@@ -214,6 +214,9 @@ class AppLocalizationsDe extends AppLocalizations {
   String get emptyDefault => 'Hier ist noch nichts';
 
   @override
+  String get loading => 'Wird geladen';
+
+  @override
   String get loadMoreFailed =>
       'Weitere konnten nicht geladen werden – zum Wiederholen tippen';
 
@@ -337,6 +340,16 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get scenesEmpty => 'Keine Szenen gefunden';
+
+  @override
+  String get homeEmptyTitle => 'Deine Bibliothek ist noch leer';
+
+  @override
+  String get homeEmptyHint =>
+      'Stash muss deine Medienordner erst scannen, bevor hier Szenen erscheinen. Starte einen Scan in den Server-Aufgaben.';
+
+  @override
+  String get openServerTasks => 'Server-Aufgaben öffnen';
 
   @override
   String savedFilterUnsupported(String name, String criteria) {
@@ -706,13 +719,6 @@ class AppLocalizationsDe extends AppLocalizations {
   String get apiKeyOptional => 'API-Schlüssel (optional)';
 
   @override
-  String get apiKeyHelper =>
-      'Für einen Server mit Passwort: der API-Schlüssel (Stash → Settings → Security) oder unten anmelden.';
-
-  @override
-  String get signInWithPassword => 'Mit Benutzername und Passwort anmelden';
-
-  @override
   String get signInWithPasswordHint =>
       'Statt mit API-Schlüssel. Zum Streamen auf einen Fernseher braucht es den API-Schlüssel.';
 
@@ -724,6 +730,29 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get loginIncomplete => 'Benutzername und Passwort eingeben.';
+
+  @override
+  String get apiKeyRequired => 'API-Schlüssel eingeben.';
+
+  @override
+  String get loginAuthTitle => 'Dieser Server verlangt eine Anmeldung';
+
+  @override
+  String get loginAuthIntro =>
+      'Melde dich mit einem API-Schlüssel oder mit deinem Stash-Benutzernamen und Passwort an.';
+
+  @override
+  String get loginMethodPassword => 'Benutzername & Passwort';
+
+  @override
+  String get apiKeyWhere =>
+      'Du findest ihn in Stash unter Settings → Security → API Key.';
+
+  @override
+  String get signIn => 'Anmelden';
+
+  @override
+  String get changeServerAddress => 'Adresse ändern';
 
   @override
   String get connect => 'Verbinden';
@@ -810,6 +839,12 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get play => 'Abspielen';
+
+  @override
+  String get previousScene => 'Vorherige Szene';
+
+  @override
+  String get nextScene => 'Nächste Szene';
 
   @override
   String get navBarTitle => 'Navigationsleiste';
@@ -931,6 +966,11 @@ class AppLocalizationsDe extends AppLocalizations {
       'Gilt, wenn eine Szene sie anbietet, sonst die nächstniedrigere. Kleinere Videos laufen als Originaldatei. Ändert sich auch über HD im Player.';
 
   @override
+  String qualitySummary(String quality) {
+    return 'Qualität: $quality';
+  }
+
+  @override
   String get sectionPrivacy => 'Privatsphäre & Sicherheit';
 
   @override
@@ -955,6 +995,12 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get appLockSubtitle => 'Beim Öffnen der App nach einer PIN fragen';
+
+  @override
+  String get appLockOnSummary => 'App-Sperre an';
+
+  @override
+  String get appLockOffSummary => 'App-Sperre aus';
 
   @override
   String get unlockBiometric => 'Mit Face ID / Fingerabdruck entsperren';
@@ -1041,6 +1087,16 @@ class AppLocalizationsDe extends AppLocalizations {
   String get upNext => 'Als Nächstes';
 
   @override
+  String queuePosition(int position, int count) {
+    return '$position / $count';
+  }
+
+  @override
+  String queuePositionSemantics(int position, int count) {
+    return 'Szene $position von $count';
+  }
+
+  @override
   String get addTags => 'Tags hinzufügen';
 
   @override
@@ -1067,6 +1123,21 @@ class AppLocalizationsDe extends AppLocalizations {
       locale: localeName,
       other: 'Mit $count Sternen bewerten',
       one: 'Mit 1 Stern bewerten',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get ratingLabel => 'Bewertung';
+
+  @override
+  String ratingValue(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count von 5 Sternen',
+      one: '1 von 5 Sternen',
+      zero: 'Keine Bewertung',
     );
     return '$_temp0';
   }
@@ -1289,6 +1360,14 @@ class AppLocalizationsDe extends AppLocalizations {
   }
 
   @override
+  String get connectionLostTitle => 'Server nicht erreichbar';
+
+  @override
+  String connectionLostBody(String server) {
+    return '$server antwortet nicht. Bist du außerhalb deines Heimnetzes?';
+  }
+
+  @override
   String get errorUnauthorized =>
       'Nicht berechtigt – prüfe API-Schlüssel oder Login.';
 
@@ -1423,6 +1502,9 @@ class AppLocalizationsDe extends AppLocalizations {
   String get sectionSceneCards => 'Videokarten';
 
   @override
+  String get sectionPreviewsCards => 'Vorschauen & Karten';
+
+  @override
   String get cardChannel => 'Kanal auf den Karten';
 
   @override
@@ -1505,6 +1587,28 @@ class AppLocalizationsDe extends AppLocalizations {
   String searchNoResults(String term) {
     return 'Nichts gefunden zu „$term“';
   }
+
+  @override
+  String searchSubmitIn(String scope, String term) {
+    String _temp0 = intl.Intl.selectLogic(scope, {
+      'images': 'Bilder nach „$term“ durchsuchen',
+      'galleries': 'Galerien nach „$term“ durchsuchen',
+      'performers': 'Performer nach „$term“ durchsuchen',
+      'studios': 'Studios nach „$term“ durchsuchen',
+      'other': 'Szenen nach „$term“ durchsuchen',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String get searchOtherAreas => 'In anderen Bereichen suchen';
+
+  @override
+  String get searchClearFilters => 'Filter zurücksetzen';
+
+  @override
+  String get searchFiltersActiveHint =>
+      'Aktive Filter blenden womöglich Treffer aus.';
 
   @override
   String get pictureInPicture => 'Bild-in-Bild';
@@ -1590,6 +1694,9 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get feedPreviews => 'Vorschauen in Listen abspielen';
+
+  @override
+  String get previewsOffSummary => 'Vorschauen aus';
 
   @override
   String get feedPreviewsSubtitle =>

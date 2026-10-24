@@ -214,6 +214,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get emptyDefault => 'Nothing here yet';
 
   @override
+  String get loading => 'Loading';
+
+  @override
   String get loadMoreFailed => 'Couldn\'t load more – tap to retry';
 
   @override
@@ -335,6 +338,16 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get scenesEmpty => 'No scenes found';
+
+  @override
+  String get homeEmptyTitle => 'Your library is still empty';
+
+  @override
+  String get homeEmptyHint =>
+      'Stash has to scan your media folders before scenes show up here. Start a scan in the server tasks.';
+
+  @override
+  String get openServerTasks => 'Open server tasks';
 
   @override
   String savedFilterUnsupported(String name, String criteria) {
@@ -703,13 +716,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get apiKeyOptional => 'API key (optional)';
 
   @override
-  String get apiKeyHelper =>
-      'For a server with a password: the API key (Stash → Settings → Security), or sign in below.';
-
-  @override
-  String get signInWithPassword => 'Sign in with username and password';
-
-  @override
   String get signInWithPasswordHint =>
       'Instead of an API key. Casting to a TV needs the API key.';
 
@@ -721,6 +727,29 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get loginIncomplete => 'Enter username and password.';
+
+  @override
+  String get apiKeyRequired => 'Enter the API key.';
+
+  @override
+  String get loginAuthTitle => 'This server needs a login';
+
+  @override
+  String get loginAuthIntro =>
+      'Sign in with an API key or with your Stash username and password.';
+
+  @override
+  String get loginMethodPassword => 'Username & password';
+
+  @override
+  String get apiKeyWhere =>
+      'You find it in Stash under Settings → Security → API key.';
+
+  @override
+  String get signIn => 'Sign in';
+
+  @override
+  String get changeServerAddress => 'Change address';
 
   @override
   String get connect => 'Connect';
@@ -807,6 +836,12 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get play => 'Play';
+
+  @override
+  String get previousScene => 'Previous scene';
+
+  @override
+  String get nextScene => 'Next scene';
 
   @override
   String get navBarTitle => 'Navigation bar';
@@ -928,6 +963,11 @@ class AppLocalizationsEn extends AppLocalizations {
       'Used when a scene offers it, otherwise the next lower one. Smaller videos play their original file. Also changes with HD in the player.';
 
   @override
+  String qualitySummary(String quality) {
+    return 'Quality: $quality';
+  }
+
+  @override
   String get sectionPrivacy => 'Privacy & security';
 
   @override
@@ -952,6 +992,12 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get appLockSubtitle => 'Ask for a PIN when opening the app';
+
+  @override
+  String get appLockOnSummary => 'App lock on';
+
+  @override
+  String get appLockOffSummary => 'App lock off';
 
   @override
   String get unlockBiometric => 'Unlock with Face ID / fingerprint';
@@ -1038,6 +1084,16 @@ class AppLocalizationsEn extends AppLocalizations {
   String get upNext => 'Up next';
 
   @override
+  String queuePosition(int position, int count) {
+    return '$position / $count';
+  }
+
+  @override
+  String queuePositionSemantics(int position, int count) {
+    return 'Scene $position of $count';
+  }
+
+  @override
   String get addTags => 'Add tags';
 
   @override
@@ -1064,6 +1120,21 @@ class AppLocalizationsEn extends AppLocalizations {
       locale: localeName,
       other: 'Rate $count stars',
       one: 'Rate 1 star',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get ratingLabel => 'Rating';
+
+  @override
+  String ratingValue(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count of 5 stars',
+      one: '1 of 5 stars',
+      zero: 'No rating',
     );
     return '$_temp0';
   }
@@ -1284,6 +1355,14 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get connectionLostTitle => 'Server not reachable';
+
+  @override
+  String connectionLostBody(String server) {
+    return '$server doesn\'t answer. Are you outside your home network?';
+  }
+
+  @override
   String get errorUnauthorized =>
       'Not authorized – check the API key or login.';
 
@@ -1417,6 +1496,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get sectionSceneCards => 'Video cards';
 
   @override
+  String get sectionPreviewsCards => 'Previews & cards';
+
+  @override
   String get cardChannel => 'Channel on cards';
 
   @override
@@ -1501,6 +1583,27 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String searchSubmitIn(String scope, String term) {
+    String _temp0 = intl.Intl.selectLogic(scope, {
+      'images': 'Search images for \"$term\"',
+      'galleries': 'Search galleries for \"$term\"',
+      'performers': 'Search performers for \"$term\"',
+      'studios': 'Search studios for \"$term\"',
+      'other': 'Search scenes for \"$term\"',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String get searchOtherAreas => 'Search other areas';
+
+  @override
+  String get searchClearFilters => 'Clear filters';
+
+  @override
+  String get searchFiltersActiveHint => 'Active filters may hide results.';
+
+  @override
   String get pictureInPicture => 'Picture-in-picture';
 
   @override
@@ -1582,6 +1685,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get feedPreviews => 'Play previews in lists';
+
+  @override
+  String get previewsOffSummary => 'Previews off';
 
   @override
   String get feedPreviewsSubtitle =>

@@ -351,27 +351,30 @@ class _StashVideoControlsState extends ConsumerState<StashVideoControls> {
                       ),
                       Expanded(
                         child: Center(
-                          child: StreamBuilder<bool>(
-                            stream: player.stream.buffering,
-                            initialData: player.state.buffering,
-                            builder: (_, buffering) => buffering.data == true
-                                ? const SizedBox.square(
-                                    dimension: 48,
-                                    child: CircularProgressIndicator(color: Colors.white),
-                                  )
-                                : StreamBuilder<bool>(
-                                    stream: player.stream.playing,
-                                    initialData: player.state.playing,
-                                    builder: (_, playing) => IconButton(
-                                      iconSize: 56,
-                                      tooltip: playing.data == true ? context.l10n.pause : context.l10n.play,
-                                      icon: PlayPauseIcon(playing: playing.data == true),
-                                      onPressed: () => _act(() {
-                                        Haptics.light();
-                                        player.playOrPause();
-                                      }),
+                          child: _QueueButtons(
+                            act: _act,
+                            child: StreamBuilder<bool>(
+                              stream: player.stream.buffering,
+                              initialData: player.state.buffering,
+                              builder: (_, buffering) => buffering.data == true
+                                  ? const SizedBox.square(
+                                      dimension: 48,
+                                      child: CircularProgressIndicator(color: Colors.white),
+                                    )
+                                  : StreamBuilder<bool>(
+                                      stream: player.stream.playing,
+                                      initialData: player.state.playing,
+                                      builder: (_, playing) => IconButton(
+                                        iconSize: 56,
+                                        tooltip: playing.data == true ? context.l10n.pause : context.l10n.play,
+                                        icon: PlayPauseIcon(playing: playing.data == true),
+                                        onPressed: () => _act(() {
+                                          Haptics.light();
+                                          player.playOrPause();
+                                        }),
+                                      ),
                                     ),
-                                  ),
+                            ),
                           ),
                         ),
                       ),
@@ -428,6 +431,55 @@ class _StashVideoControlsState extends ConsumerState<StashVideoControls> {
             ),
         ],
       ),
+    );
+  }
+}
+
+/// Previous/next around [child] (play/pause) while a queue plays (9.3,
+/// 9.4); just [child] otherwise. Disabled at the queue's ends.
+class _QueueButtons extends ConsumerWidget {
+  const _QueueButtons({required this.act, required this.child});
+
+  final void Function(VoidCallback action) act;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final queue = ref.watch(playQueueProvider);
+    if (queue == null) return child;
+    final l = context.l10n;
+    final notifier = ref.read(nowPlayingProvider.notifier);
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        IconButton(
+          iconSize: 36,
+          disabledColor: Colors.white38,
+          tooltip: l.previousScene,
+          icon: const Icon(Icons.skip_previous_rounded),
+          onPressed: queue.hasPrevious
+              ? () => act(() {
+                    Haptics.light();
+                    notifier.playPrevious();
+                  })
+              : null,
+        ),
+        const SizedBox(width: 16),
+        child,
+        const SizedBox(width: 16),
+        IconButton(
+          iconSize: 36,
+          disabledColor: Colors.white38,
+          tooltip: l.nextScene,
+          icon: const Icon(Icons.skip_next_rounded),
+          onPressed: queue.hasNext
+              ? () => act(() {
+                    Haptics.light();
+                    notifier.playNext();
+                  })
+              : null,
+        ),
+      ],
     );
   }
 }

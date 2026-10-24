@@ -29,7 +29,6 @@ class SceneActions extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final stars = effectiveStars(ref, scene);
     final oCount = effectiveOCounter(ref, scene);
-    final colors = Theme.of(context).colorScheme;
     final l = context.l10n;
 
     void showError(Object e) =>
@@ -40,21 +39,12 @@ class SceneActions extends ConsumerWidget {
       children: [
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 8),
-          child: Row(
-            children: [
-              for (var i = 1; i <= 5; i++)
-                IconButton(
-                  visualDensity: VisualDensity.compact,
-                  tooltip: i == stars ? l.removeRating : l.rateStars(i),
-                  icon: Icon(i <= stars ? Icons.star_rounded : Icons.star_outline_rounded,
-                      color: i <= stars ? AppColors.of(context).rating : colors.onSurfaceVariant),
-                  onPressed: () {
-                    Haptics.selection();
-                    // Tapping the current rating again removes it.
-                    ref.read(sceneEditsProvider.notifier).rate(scene, i == stars ? 0 : i).catchError(showError);
-                  },
-                ),
-            ],
+          child: _RatingStars(
+            stars: stars,
+            onRate: (value) {
+              Haptics.selection();
+              ref.read(sceneEditsProvider.notifier).rate(scene, value).catchError(showError);
+            },
           ),
         ),
         SingleChildScrollView(
@@ -113,6 +103,50 @@ class SceneActions extends ConsumerWidget {
           ),
         ),
       ],
+    );
+  }
+}
+
+/// Five stars for sighted users to tap (tapping the current rating removes
+/// it), and one adjustable element for screen readers: "Rating, 4 of 5
+/// stars", swiped up or down like a slider (A11Y-2).
+class _RatingStars extends StatelessWidget {
+  const _RatingStars({required this.stars, required this.onRate});
+
+  final int stars;
+  final ValueChanged<int> onRate;
+
+  @override
+  Widget build(BuildContext context) {
+    final l = context.l10n;
+    final colors = Theme.of(context).colorScheme;
+    final rating = AppColors.of(context).rating;
+    return Semantics(
+      container: true,
+      slider: true,
+      label: l.ratingLabel,
+      value: l.ratingValue(stars),
+      increasedValue: stars < 5 ? l.ratingValue(stars + 1) : null,
+      decreasedValue: stars > 0 ? l.ratingValue(stars - 1) : null,
+      onIncrease: stars < 5 ? () => onRate(stars + 1) : null,
+      onDecrease: stars > 0 ? () => onRate(stars - 1) : null,
+      child: ExcludeSemantics(
+        child: Row(
+          children: [
+            // Full 48 dp targets: five fit in 256 dp, so even 320 dp wide
+            // screens have room.
+            for (var i = 1; i <= 5; i++)
+              IconButton(
+                tooltip: i == stars ? l.removeRating : l.rateStars(i),
+                icon: Icon(
+                  i <= stars ? Icons.star_rounded : Icons.star_outline_rounded,
+                  color: i <= stars ? rating : colors.onSurfaceVariant,
+                ),
+                onPressed: () => onRate(i == stars ? 0 : i),
+              ),
+          ],
+        ),
+      ),
     );
   }
 }
