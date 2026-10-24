@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart' show TargetPlatform, defaultTargetPlatform;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:graphql_flutter/graphql_flutter.dart';
 import 'package:http/http.dart' as http;
@@ -11,6 +12,7 @@ import '../../core/api/documents/refs.graphql.dart';
 import '../../core/api/documents/scenes.graphql.dart';
 import '../../core/api/documents/studios.graphql.dart';
 import '../../core/api/documents/system.graphql.dart';
+import '../../core/api/documents/watch_stats.graphql.dart';
 import '../../core/api/documents/tags.graphql.dart';
 import '../../core/api/documents/tasks.graphql.dart';
 import '../../core/api/stash_schema.graphql.dart';
@@ -35,6 +37,7 @@ import '../models/server_task.dart';
 import '../models/stats.dart';
 import '../models/studio.dart';
 import '../models/tag.dart';
+import '../models/watch_history.dart';
 import 'stash_session.dart';
 
 /// What went wrong, so the UI can show the error in the user's language
@@ -48,6 +51,10 @@ enum StashErrorKind {
   notReady,
   notFound,
   notSaved,
+
+  /// iOS refused the connection into the local network: the user denied
+  /// StashTube's "Local Network" permission.
+  localNetworkDenied,
 }
 
 class StashApiException implements Exception {
@@ -65,6 +72,51 @@ class StashApiException implements Exception {
 
   @override
   String toString() => message;
+}
+
+/// The exception for a server that couldn't be reached because of [cause];
+/// [host] is the server's host when known (else read from the error text).
+/// On iOS a denied "Local Network" permission makes connections into the
+/// LAN fail like an unreachable host; that gets its own
+/// [StashErrorKind.localNetworkDenied], so the user learns what to switch on.
+StashApiException unreachableException(Object cause, {String? host, String prefix = 'Could not reach the server: '}) =>
+    StashApiException(
+      '$prefix$cause',
+      isNetworkError: true,
+      kind: isLocalNetworkDenied('$cause', host: host) ? StashErrorKind.localNetworkDenied : StashErrorKind.unreachable,
+      detail: '$cause',
+    );
+
+/// Whether [error] (a network error's text) looks like iOS blocking the
+/// connection to [host] for lack of the local network permission: a host in
+/// the LAN (not loopback, not a VPN address such as Tailscale's) and
+/// "No route to host" (errno 65) or "Local network prohibited".
+bool isLocalNetworkDenied(String error, {String? host, TargetPlatform? platform}) {
+  if ((platform ?? defaultTargetPlatform) != TargetPlatform.iOS) return false;
+  final h = (host ?? _hostIn(error))?.toLowerCase();
+  if (h == null || !ServerConfig.isLocalHost(h) || _isLoopbackOrVpn(h)) return false;
+  return RegExp(r'errno\s*=\s*65\b|no route to host|local network prohibited', caseSensitive: false).hasMatch(error);
+}
+
+/// The host in a socket or client error's text (`uri=http://host:9999/…`
+/// or `address = host`).
+String? _hostIn(String error) {
+  final uri = RegExp(r'uri=(\S+)').firstMatch(error);
+  if (uri != null) {
+    final host = Uri.tryParse(uri.group(1)!.replaceAll(RegExp(r'[,)]+$'), ''))?.host;
+    if (host != null && host.isNotEmpty) return host;
+  }
+  return RegExp(r'address = ([^\s,]+)').firstMatch(error)?.group(1);
+}
+
+bool _isLoopbackOrVpn(String host) {
+  if (host == 'localhost' || host.endsWith('.localhost') || host.endsWith('.ts.net')) return true;
+  try {
+    final ip = Uri.parseIPv4Address(host);
+    return ip[0] == 127 || (ip[0] == 100 && ip[1] >= 64 && ip[1] <= 127);
+  } on FormatException {
+    return host == '::1' || host == '[::1]';
+  }
 }
 
 /// Retry policy for failed providers (Riverpod 3 retries by default, up to
@@ -88,6 +140,9 @@ GraphQLClient createGraphQLClient(ServerConfig config, {http.Client? httpClient,
       cache: GraphQLCache(),
       defaultPolicies: DefaultPolicies(query: Policies(fetch: FetchPolicy.networkOnly)),
     );
+
+/// A scene's place in a group: the group and the scene's position in it.
+typedef SceneGroupEntry = ({String groupId, int? sceneIndex});
 
 /// All access to the Stash GraphQL API goes through this class.
 class StashRepository implements PlaybackActivityApi {
@@ -390,6 +445,64 @@ class StashRepository implements PlaybackActivityApi {
     return Group.fromFields(group, synopsis: group.synopsis);
   }
 
+  /// The groups [sceneId] is in, with its position in each (PL-1).
+  Future<List<SceneGroupEntry>> sceneGroups(String sceneId) async {
+    final data = await _query(Options$Query$SceneGroups(variables: Variables$Query$SceneGroups(id: sceneId)));
+    final scene = data.findScene;
+    if (scene == null) throw const StashApiException('Scene not found.', kind: StashErrorKind.notFound);
+    return [for (final g in scene.groups) (groupId: g.group.id, sceneIndex: g.scene_index)];
+  }
+
+  /// Puts [sceneId] into exactly [groups]; returns them as saved.
+  Future<List<SceneGroupEntry>> setSceneGroups(String sceneId, List<SceneGroupEntry> groups) async {
+    final data = await _mutate(
+      Options$Mutation$SceneSetGroups(
+        variables: Variables$Mutation$SceneSetGroups(
+          id: sceneId,
+          groups: [for (final g in groups) Input$SceneGroupInput(group_id: g.groupId, scene_index: g.sceneIndex)],
+        ),
+      ),
+    );
+    final scene = data.sceneUpdate ?? _notSaved();
+    return [for (final g in scene.groups) (groupId: g.group.id, sceneIndex: g.scene_index)];
+  }
+
+  /// The position after the group's last scene (1 for an empty group).
+  Future<int> nextGroupIndex(String groupId) async {
+    final data = await _query(
+      Options$Query$LastGroupScene(variables: Variables$Query$LastGroupScene(group_id: groupId)),
+    );
+    final last = data.findScenes.scenes.firstOrNull;
+    final index = last?.groups.where((g) => g.group.id == groupId).firstOrNull?.scene_index;
+    return (index ?? 0) + 1;
+  }
+
+  /// Appends [sceneId] to the group, keeping the scene's other groups.
+  /// Reads the scene's groups fresh, so a stale list can't drop any.
+  Future<void> addSceneToGroup(String sceneId, String groupId) async {
+    final current = await sceneGroups(sceneId);
+    if (current.any((g) => g.groupId == groupId)) return;
+    final index = await nextGroupIndex(groupId);
+    await setSceneGroups(sceneId, [...current, (groupId: groupId, sceneIndex: index)]);
+  }
+
+  /// Removes [sceneId] from the group, keeping its other groups.
+  Future<void> removeSceneFromGroup(String sceneId, String groupId) async {
+    final current = await sceneGroups(sceneId);
+    if (!current.any((g) => g.groupId == groupId)) return;
+    await setSceneGroups(sceneId, [
+      for (final g in current)
+        if (g.groupId != groupId) g,
+    ]);
+  }
+
+  Future<Group> createGroup(String name) async {
+    final data = await _mutate(Options$Mutation$GroupCreate(variables: Variables$Mutation$GroupCreate(name: name)));
+    final group = data.groupCreate;
+    if (group == null) throw const StashApiException('Group was not created.', kind: StashErrorKind.notSaved);
+    return Group.fromFields(group);
+  }
+
   Future<LibraryStats> libraryStats() async => LibraryStats.fromGraphql((await _query(Options$Query$Stats())).stats);
 
   /// Null when the server doesn't support activity stats (older Stash).
@@ -401,6 +514,43 @@ class StashRepository implements PlaybackActivityApi {
       return null;
     }
   }
+  /// When played scenes were played, from [since] on; null when the server
+  /// has no play history (older Stash). Reads played scenes most recently
+  /// played first, page by page, and stops at the first page without a
+  /// play since [since] or after [PlayHistory.maxScenes] scenes.
+  Future<PlayHistory?> playHistory({required DateTime since}) async {
+    const perPage = 250;
+    final plays = <DateTime>[];
+    try {
+      for (var page = 1; ; page++) {
+        final data = await _query(
+          Options$Query$PlayHistory(
+            variables: Variables$Query$PlayHistory(
+              filter: _findFilter(page: page, perPage: perPage, sort: 'last_played_at', direction: 'DESC'),
+            ),
+          ),
+        );
+        final result = data.findScenes;
+        var recent = false;
+        for (final scene in result.scenes) {
+          for (final time in scene.play_history) {
+            final played = DateTime.tryParse(time)?.toLocal();
+            if (played == null || played.isBefore(since)) continue;
+            plays.add(played);
+            recent = true;
+          }
+        }
+        final read = page * perPage;
+        if (result.scenes.isEmpty || read >= result.count || !recent) break;
+        if (read >= PlayHistory.maxScenes) return PlayHistory(plays, truncated: true);
+      }
+    } on StashApiException catch (e) {
+      if (e.isNetworkError) rethrow;
+      return null;
+    }
+    return PlayHistory(plays);
+  }
+
 
   Future<SceneDetails> findSceneDetails(String sceneId) async {
     final data = await _query(Options$Query$FindSceneDetails(variables: Variables$Query$FindSceneDetails(id: sceneId)));
@@ -572,6 +722,25 @@ class StashRepository implements PlaybackActivityApi {
     ),
   );
 
+  /// Whether the studio is a favorite; null when the server has no studio
+  /// favorites (Stash before 0.25) or doesn't know the studio.
+  Future<bool?> studioFavorite(String studioId) async {
+    try {
+      final data =
+          await _query(Options$Query$StudioFavorite(variables: Variables$Query$StudioFavorite(id: studioId)));
+      return data.findStudio?.favorite;
+    } on StashApiException catch (e) {
+      if (e.isNetworkError) rethrow;
+      return null;
+    }
+  }
+
+  Future<void> setStudioFavorite(String studioId, bool favorite) => _mutate(
+    Options$Mutation$StudioSetFavorite(
+      variables: Variables$Mutation$StudioSetFavorite(id: studioId, favorite: favorite),
+    ),
+  );
+
   Future<List<ServerJob>> jobQueue() async => [
     for (final job in (await _query(Options$Query$JobQueue())).jobQueue ?? const <Fragment$JobFields>[])
       ServerJob.fromFields(job),
@@ -705,12 +874,18 @@ class StashRepository implements PlaybackActivityApi {
     }
   }
 
+  /// The server's host, for telling a blocked local network apart.
+  String? get _host => switch (_client.link) {
+        HttpLink(:final uri) => uri.host,
+        _ => null,
+      };
+
   Future<T> _send<T>(Future<QueryResult<T>> Function() request) async {
     final QueryResult<T> result;
     try {
       result = await request();
     } catch (e) {
-      throw StashApiException('$e', isNetworkError: true, kind: StashErrorKind.unreachable, detail: '$e');
+      throw unreachableException(e, host: _host, prefix: '');
     }
 
     final exception = result.exception;
@@ -742,13 +917,7 @@ class StashRepository implements PlaybackActivityApi {
         );
       }
       if (link != null) {
-        final cause = link.originalException ?? link;
-        throw StashApiException(
-          'Could not reach the server: $cause',
-          isNetworkError: true,
-          kind: StashErrorKind.unreachable,
-          detail: '$cause',
-        );
+        throw unreachableException(link.originalException ?? link, host: _host);
       }
       throw StashApiException(exception.graphqlErrors.map((e) => e.message).join('\n'));
     }

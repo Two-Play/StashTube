@@ -196,9 +196,8 @@ class _ImageGridViewState extends ConsumerState<ImageGridView> {
               itemBuilder: (context, image) => GestureDetector(
                 onTap: () {
                   final items = ref.read(provider).current?.items ?? const [];
-                  Navigator.of(context, rootNavigator: true).push(MaterialPageRoute<void>(
-                    builder: (_) => ImageViewerPage(query: _query, initialIndex: items.indexOf(image)),
-                  ));
+                  Navigator.of(context, rootNavigator: true)
+                      .push(ImageViewerPage.route(query: _query, initialIndex: items.indexOf(image)));
                 },
                 child: Semantics(
                   label: image.title,

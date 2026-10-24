@@ -418,4 +418,71 @@ void main() {
       expect(find.text('Clear filters'), findsNothing);
     });
   });
+
+  group('hardware keyboard', () {
+    bool highlighted(String text) => find
+        .byWidgetPredicate((w) => w is Semantics && w.properties.label == 'Search for $text' && w.properties.selected == true)
+        .evaluate()
+        .isNotEmpty;
+
+    bool fieldFocused(WidgetTester tester) => tester.widget<EditableText>(find.byType(EditableText)).focusNode.hasFocus;
+
+    testWidgets('arrow keys move through the completions, Enter searches the picked one', (tester) async {
+      await pumpSearch(tester);
+      await tester.tap(find.byType(TextField));
+      await typeOnly(tester, 'an');
+      final rows = _rows();
+      expect(rows.length, greaterThan(2));
+      expect(rows.where(highlighted), isEmpty);
+
+      await tester.sendKeyEvent(LogicalKeyboardKey.arrowDown);
+      await tester.pump();
+      expect(rows.where(highlighted), [rows[0]]);
+      await tester.sendKeyEvent(LogicalKeyboardKey.arrowDown);
+      await tester.pump();
+      expect(rows.where(highlighted), [rows[1]]);
+      expect(fieldFocused(tester), isTrue, reason: 'typing goes on in the field');
+      expect(field(tester).text, 'an', reason: 'the field keeps the typed text');
+
+      await tester.sendKeyEvent(LogicalKeyboardKey.enter);
+      await tester.pumpAndSettle();
+      expect(field(tester).text, rows[1]);
+      expect(resultTerm(tester), rows[1]);
+      expect(_rows(), isEmpty, reason: 'the completions closed');
+    });
+
+    testWidgets('up from the field picks the last row; past the ends back to the field', (tester) async {
+      await pumpSearch(tester);
+      await tester.tap(find.byType(TextField));
+      await typeOnly(tester, 'an');
+      final rows = _rows();
+
+      await tester.sendKeyEvent(LogicalKeyboardKey.arrowUp);
+      await tester.pump();
+      expect(rows.where(highlighted), [rows.last]);
+      await tester.sendKeyEvent(LogicalKeyboardKey.arrowDown);
+      await tester.pump();
+      expect(rows.where(highlighted), isEmpty);
+
+      // Typing drops the pick; Enter then searches the typed text.
+      await tester.sendKeyEvent(LogicalKeyboardKey.arrowDown);
+      await typeOnly(tester, 'ann');
+      expect(_rows().where(highlighted), isEmpty);
+      await tester.testTextInput.receiveAction(TextInputAction.search);
+      await tester.pumpAndSettle();
+      expect(resultTerm(tester), 'ann');
+    });
+
+    testWidgets("the keyboard's search action also takes the picked row", (tester) async {
+      await pumpSearch(tester);
+      await tester.tap(find.byType(TextField));
+      await typeOnly(tester, 'an');
+      final rows = _rows();
+      await tester.sendKeyEvent(LogicalKeyboardKey.arrowDown);
+      await tester.pump();
+      await tester.testTextInput.receiveAction(TextInputAction.search);
+      await tester.pumpAndSettle();
+      expect(resultTerm(tester), rows[0]);
+    });
+  });
 }

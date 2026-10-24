@@ -13,6 +13,7 @@ import '../../data/providers.dart';
 import '../../data/repositories/stash_repository.dart';
 import '../edit/edit_common.dart';
 import '../edit/edit_pages.dart';
+import '../library/add_to_group.dart';
 import '../library/watch_later.dart';
 import '../tags/tag_editor.dart';
 import 'file_info.dart';
@@ -384,6 +385,11 @@ class _SceneMoreSheet extends ConsumerWidget {
             leading: Icon(tags.isEmpty ? Icons.add : Icons.sell_outlined),
             title: Text(tags.isEmpty ? l.addTags : l.editTags),
             onTap: () => then((below) => showSceneTagEditor(below, scene, tags)),
+          ),
+          ListTile(
+            leading: const Icon(Icons.playlist_add),
+            title: Text(l.addToGroup),
+            onTap: () => then((below) => showAddToGroupSheet(below, scene)),
           ),
           if (files.isNotEmpty)
             ListTile(

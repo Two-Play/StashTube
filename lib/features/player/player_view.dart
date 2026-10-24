@@ -14,6 +14,7 @@ import '../../widgets/scene_feed.dart';
 import '../../widgets/stash_image.dart';
 import '../shell/navigation.dart';
 import '../cast/cast_providers.dart';
+import '../performers/favorite_button.dart';
 import 'drag_to_minimize.dart';
 import 'player_controls.dart';
 import 'player_providers.dart';
@@ -527,14 +528,20 @@ class _SceneInfo extends ConsumerWidget {
           ListTile(
             leading: ChannelAvatar(name: studio.name, imageUrl: studio.imageUrl),
             title: Text(studio.name, maxLines: 1, overflow: TextOverflow.ellipsis, style: theme.textTheme.titleSmall),
-            trailing: const Icon(Icons.chevron_right),
+            trailing: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [StudioChannelFavorite(studioId: studio.id), const Icon(Icons.chevron_right)],
+            ),
             onTap: () => openStudio(ref, studio.id),
           )
         else if (performer != null)
           ListTile(
             leading: ChannelAvatar(name: performer.name, imageUrl: performer.imageUrl),
             title: Text(performer.name, maxLines: 1, overflow: TextOverflow.ellipsis, style: theme.textTheme.titleSmall),
-            trailing: const Icon(Icons.chevron_right),
+            trailing: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [PerformerChannelFavorite(performer: performer), const Icon(Icons.chevron_right)],
+            ),
             onTap: () => openPerformer(ref, performer.id),
           ),
         SceneActions(scene: scene),
@@ -559,7 +566,7 @@ class _SceneInfo extends ConsumerWidget {
           padding: const EdgeInsets.only(top: AppSpacing.xs),
           child: SceneTagsRow(scene: scene),
         ),
-        if (details != null && details.markers.isNotEmpty) ChapterList(details: details),
+        if (details != null && details.markers.isNotEmpty) ChapterList(sceneId: scene.id, details: details),
         const SizedBox(height: AppSpacing.s),
       ],
     );

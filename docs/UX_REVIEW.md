@@ -186,6 +186,21 @@ Alle Quick Wins sind auf `feature/ux-review` umgesetzt (Phase 2, Schritt 1).
 | CH-2 | Kanalseiten mit Tabs | ✅ (Tabs nur antippen, nicht wischen; Links werden kopiert) |
 | NAV-4 | Adaptive Navigation für Tablets | ✅ (Rail ab 600 dp, erweiterte Rail ab 1240 dp) |
 
+### Restliche Befunde und Ideen
+
+| ID | Änderung | Status |
+|---|---|---|
+| STATE-2 | Fehleransicht mit Icon, Überschrift, Erklärung und „Details“ | ✅ |
+| ONB-2 | Eigene Meldung, wenn iOS das lokale Netzwerk verweigert | ✅ |
+| PERF-1 | Vorschauen optional nur im WLAN | ✅ |
+| CTRL-2 | Einmalige Gesten-Tipps, in den Einstellungen erneut zeigbar | ✅ |
+| CTRL-3 | Touch-Sperre im Vollbild | ✅ |
+| PL-1 | Zu Gruppe hinzufügen, neue Gruppe | ✅ |
+| SUB-1 | Abos: Favoriten-Avatare und ihr Feed (optionaler Tab, „Du“, Home) | ✅ |
+| NOTIF-1 | „N neu seit deinem letzten Besuch“, Meldung bei fertigen Server-Aufgaben (nur in der App) | ✅ |
+| – | Kapitel mit Vorschaubildern, Favorit in der Kanalzeile, „In Stash öffnen“, Würfel, Seh-Diagramm, Wischen zwischen Kanal-Tabs, Bild nach unten wischen zum Schließen, Pfeiltasten in der Suche, Links öffnen | ✅ |
+| – | Sleep-Timer, Offline-Downloads, System-Benachrichtigungen | offen |
+
 ### New Feature Ideas
 
 - **SUB-1** Abo-Feed mit Avatarreihe und „neu“-Punkten.

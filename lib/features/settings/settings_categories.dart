@@ -12,6 +12,7 @@ import '../../l10n/l10n.dart';
 import '../../widgets/animated_previews.dart';
 import '../auth/server_switcher.dart';
 import '../pip/pip.dart';
+import '../player/gesture_hints.dart';
 import '../player/lock_screen.dart';
 import '../player/player_providers.dart';
 import '../security/app_icon.dart';
@@ -290,6 +291,17 @@ class PlaybackSettingsPage extends ConsumerWidget {
     children: [
       _QualityTile(preferred: ref.watch(preferredStreamProvider)),
       const _PlaybackModeTiles(),
+      // CTRL-2: disabled until the tips were dismissed again.
+      ListTile(
+        leading: const Icon(Icons.touch_app_outlined),
+        title: Text(context.l10n.showGestureTipsAgain),
+        subtitle: Text(context.l10n.showGestureTipsAgainSubtitle),
+        enabled: ref.watch(gestureTipsSeenProvider),
+        onTap: () {
+          Haptics.light();
+          ref.read(gestureTipsSeenProvider.notifier).reset();
+        },
+      ),
     ],
   );
 }
@@ -363,6 +375,13 @@ class PreviewSettingsPage extends ConsumerWidget {
           subtitle: Text(l.markerPreviewsSubtitle),
           value: ref.watch(markerPreviewsProvider),
           onChanged: withHaptic((v) => ref.read(markerPreviewsProvider.notifier).set(v)),
+        ),
+        SwitchListTile(
+          secondary: const Icon(Icons.wifi),
+          title: Text(l.previewsWifiOnly),
+          subtitle: Text(l.previewsWifiOnlySubtitle),
+          value: ref.watch(previewsWifiOnlyProvider),
+          onChanged: withHaptic((v) => ref.read(previewsWifiOnlyProvider.notifier).set(v)),
         ),
         // Stash creates only MP4 previews by default; the app plays the
         // WebP ones, which need no video player per tile.

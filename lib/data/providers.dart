@@ -23,6 +23,7 @@ import 'models/scrub_thumbnails.dart';
 import 'models/stats.dart';
 import 'models/studio.dart';
 import 'models/tag.dart';
+import 'models/watch_history.dart';
 import 'repositories/stash_repository.dart';
 
 class SceneListNotifier extends PagedNotifier<Scene, SceneQuery> {
@@ -142,6 +143,15 @@ final activityStatsProvider = FutureProvider.autoDispose<ActivityStats?>(
   (ref) => ref.watch(stashRepositoryProvider).activityStats(),
 );
 
+/// Plays of the last [PlayHistory.windowDays] days for the stats' watch
+/// chart; null on servers without play history, which hide the chart.
+final playHistoryProvider = FutureProvider.autoDispose<PlayHistory?>((ref) {
+  final now = DateTime.now();
+  return ref
+      .watch(stashRepositoryProvider)
+      .playHistory(since: DateTime(now.year, now.month, now.day - PlayHistory.windowDays));
+});
+
 /// Seek preview thumbnails of a scene, or null when there are none. Only
 /// read once the user is about to seek (`PreviewSeekBar`), as the WebVTT
 /// can be large for long scenes.
@@ -218,4 +228,9 @@ final groupListProvider =
 
 final groupProvider = FutureProvider.autoDispose.family<Group, String>(
   (ref, id) => ref.watch(stashRepositoryProvider).findGroup(id),
+);
+
+/// The ids of the groups a scene is in ("Add to group", PL-1).
+final sceneGroupIdsProvider = FutureProvider.autoDispose.family<Set<String>, String>(
+  (ref, sceneId) async => {for (final g in await ref.watch(stashRepositoryProvider).sceneGroups(sceneId)) g.groupId},
 );

@@ -1,0 +1,12 @@
+# The play history of played scenes, most recently played first, for the
+# stats' watch chart (16.3). play_history is only on newer Stash versions,
+# so this is a separate query: older servers just don't show the chart.
+query PlayHistory($filter: FindFilterType) {
+  findScenes(filter: $filter, scene_filter: { play_count: { value: 0, modifier: GREATER_THAN } }) {
+    count
+    scenes {
+      id
+      play_history
+    }
+  }
+}

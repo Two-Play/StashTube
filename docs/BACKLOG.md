@@ -208,4 +208,4 @@ Eine wartbare Basis, damit Features unabhängig voneinander wachsen können.
 |---|---|---|---|---|
 | 16.1 | Als Nutzer möchte ich Statistiken zu meiner Bibliothek sehen. | Tab „Library“ → „Stats“: Szenen (Anzahl, Größe, Gesamtdauer), Bilder, Galerien, Performer, Studios, Tags, Speicher, Durchschnitt pro Szene. | Next | ✅ |
 | 16.2 | Als Nutzer möchte ich meine Seh-Statistik sehen. | Aufrufe, Sehzeit, gesehene Szenen, O-Count; wird bei älteren Stash-Versionen ohne diese Felder ausgeblendet. | Next | ✅ |
-| 16.3 | Als Nutzer möchte ich Verläufe sehen (z. B. Sehzeit pro Woche). | Diagramm aus dem Wiedergabeverlauf. | Later | ⬜ |
+| 16.3 | Als Nutzer möchte ich Verläufe sehen (z. B. Sehzeit pro Woche). | Diagramm aus dem Wiedergabeverlauf. Umgesetzt: Statistik → Balken mit Wiedergaben pro Woche (12) oder Tag (30), Summe und Durchschnitt, Tooltip pro Balken; Stash speichert die Dauer nur pro Szene, daher Wiedergaben statt Sehzeit; bei älteren Stash-Versionen ohne `play_history` ausgeblendet. | Later | ✅ |

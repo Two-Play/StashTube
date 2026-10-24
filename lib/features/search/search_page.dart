@@ -90,6 +90,11 @@ class _SearchPageState extends ConsumerState<SearchPage> {
 
   static const _suggestDelay = Duration(milliseconds: 150);
 
+  /// The completion row picked with the arrow keys (hardware keyboards), or
+  /// -1; Enter searches it. The field keeps the focus meanwhile.
+  int _highlight = -1;
+  final _completionsKey = GlobalKey<_CompletionsState>();
+
   @override
   void initState() {
     super.initState();
@@ -125,12 +130,14 @@ class _SearchPageState extends ConsumerState<SearchPage> {
   /// typed text.
   void _dismissSuggestions({bool search = false}) {
     _suggestDebounce?.cancel();
+    _highlight = -1;
     if (_suggest) setState(() => _suggest = false);
     if (search && _controller.text.trim() != _term) _search(_controller.text);
   }
 
   void _onChanged(String value) {
     _suggestDebounce?.cancel();
+    _highlight = -1;
     if (value.trim().isEmpty) {
       setState(() {
         _suggest = false;
@@ -147,6 +154,12 @@ class _SearchPageState extends ConsumerState<SearchPage> {
   }
 
   void _submit(String value) {
+    // Enter with a row picked by the arrow keys searches that row.
+    final picked = _highlightedText;
+    if (picked != null) {
+      _pick(picked);
+      return;
+    }
     _suggestDebounce?.cancel();
     setState(() => _suggest = false);
     _search(value, submitted: true);
@@ -154,6 +167,7 @@ class _SearchPageState extends ConsumerState<SearchPage> {
 
   /// Searches for a picked completion or recent search.
   void _pick(String term) {
+    _highlight = -1;
     _setText(term);
     _submit(term);
     _focus.unfocus();
@@ -210,9 +224,36 @@ class _SearchPageState extends ConsumerState<SearchPage> {
     }
   }
 
+  /// The completion row highlighted with the arrow keys, if still shown.
+  String? get _highlightedText {
+    if (!_suggest || _highlight < 0) return null;
+    final rows = _completionsKey.currentState?.rowTexts ?? const <String>[];
+    return _highlight < rows.length ? rows[_highlight] : null;
+  }
+
   KeyEventResult _onKey(FocusNode node, KeyEvent event) {
-    if (_suggest && event is KeyDownEvent && event.logicalKey == LogicalKeyboardKey.escape) {
+    if (!_suggest || event is KeyUpEvent) return KeyEventResult.ignored;
+    final key = event.logicalKey;
+    if (key == LogicalKeyboardKey.escape && event is KeyDownEvent) {
       _dismissSuggestions(search: true);
+      return KeyEventResult.handled;
+    }
+    if (key == LogicalKeyboardKey.arrowDown || key == LogicalKeyboardKey.arrowUp) {
+      final count = _completionsKey.currentState?.rowTexts.length ?? 0;
+      if (count == 0) return KeyEventResult.ignored;
+      // From the field (-1) down to the first row or up to the last; past
+      // either end back to the field.
+      final current = _highlight < count ? _highlight : -1;
+      final next = key == LogicalKeyboardKey.arrowDown
+          ? (current + 1 >= count ? -1 : current + 1)
+          : (current <= -1 ? count - 1 : current - 1);
+      setState(() => _highlight = next);
+      return KeyEventResult.handled;
+    }
+    if ((key == LogicalKeyboardKey.enter || key == LogicalKeyboardKey.numpadEnter) && event is KeyDownEvent) {
+      final picked = _highlightedText;
+      if (picked == null) return KeyEventResult.ignored;
+      _pick(picked);
       return KeyEventResult.handled;
     }
     return KeyEventResult.ignored;
@@ -326,6 +367,8 @@ class _SearchPageState extends ConsumerState<SearchPage> {
                     Align(
                       alignment: Alignment.topCenter,
                       child: _Completions(
+                        key: _completionsKey,
+                        highlighted: _highlight,
                         typed: typed,
                         term: _suggestTerm,
                         scope: _scope,
@@ -420,6 +463,8 @@ class _SearchPageState extends ConsumerState<SearchPage> {
 /// lists stay, filtered to what still completes [typed] (no flicker).
 class _Completions extends ConsumerStatefulWidget {
   const _Completions({
+    super.key,
+    this.highlighted = -1,
     required this.typed,
     required this.term,
     required this.scope,
@@ -436,6 +481,9 @@ class _Completions extends ConsumerStatefulWidget {
   final ValueChanged<String> onFill;
   final ValueChanged<Completion> onOpen;
 
+  /// The row picked with the arrow keys, or -1.
+  final int highlighted;
+
   static const _limit = 8;
   static const _historyLimit = 3;
   static const _goToLimit = 5;
@@ -446,6 +494,9 @@ class _Completions extends ConsumerStatefulWidget {
 
 class _CompletionsState extends ConsumerState<_Completions> {
   List<Completion> _lastPool = const [];
+
+  /// The texts of the rows as last built, for the arrow keys.
+  List<String> rowTexts = const [];
 
   /// The completions in [value], null while it loads; a failed list adds
   /// none.
@@ -495,6 +546,8 @@ class _CompletionsState extends ConsumerState<_Completions> {
       exclude: [for (final h in history) h.text],
     );
     final goTo = rankCompletions(typed, pool.where((c) => c.isEntity), limit: _Completions._goToLimit, perKind: 3);
+    final rows = [...history, ...library];
+    rowTexts = [for (final c in rows) c.text];
     if (history.isEmpty && library.isEmpty && goTo.isEmpty) return const SizedBox.shrink();
 
     return Material(
@@ -504,9 +557,10 @@ class _CompletionsState extends ConsumerState<_Completions> {
         shrinkWrap: true,
         padding: const EdgeInsets.symmetric(vertical: 4),
         children: [
-          for (final c in [...history, ...library])
+          for (final (i, c) in rows.indexed)
             _CompletionRow(
               completion: c,
+              highlighted: i == widget.highlighted,
               typed: typed,
               onSearch: () => widget.onSearch(c.text),
               onFill: () => widget.onFill(c.text),
@@ -555,9 +609,13 @@ class _CompletionRow extends StatelessWidget {
     required this.onSearch,
     required this.onFill,
     this.onRemove,
+    this.highlighted = false,
   });
 
   final Completion completion;
+
+  /// Picked with the arrow keys: Enter searches it.
+  final bool highlighted;
   final String typed;
   final VoidCallback onSearch;
   final VoidCallback onFill;
@@ -577,11 +635,12 @@ class _CompletionRow extends StatelessWidget {
     final theme = Theme.of(context);
     final text = completion.text;
     final muted = theme.colorScheme.onSurfaceVariant;
-    return Row(
+    final row = Row(
       children: [
         Expanded(
           child: Semantics(
             button: true,
+            selected: highlighted,
             label: l.searchFor(text),
             excludeSemantics: true,
             child: InkWell(
@@ -635,6 +694,7 @@ class _CompletionRow extends StatelessWidget {
         ),
       ],
     );
+    return highlighted ? Material(color: theme.colorScheme.secondaryContainer, child: row) : row;
   }
 }
 

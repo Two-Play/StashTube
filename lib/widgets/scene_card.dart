@@ -9,6 +9,7 @@ import '../core/utils/format.dart';
 import '../data/models/scene.dart';
 import '../features/edit/edit_common.dart';
 import '../features/edit/edit_pages.dart';
+import '../features/library/add_to_group.dart';
 import '../features/library/watch_later.dart';
 import '../features/player/player_providers.dart';
 import '../features/player/scene_edits.dart';
@@ -434,6 +435,11 @@ void showSceneMenu(BuildContext context, WidgetRef ref, Scene scene) => showModa
                 onTap: () => go(() => ref.read(watchLaterProvider.notifier).toggle(scene.id)),
               );
             },
+          ),
+          ListTile(
+            leading: const Icon(Icons.playlist_add),
+            title: Text(context.l10n.addToGroup),
+            onTap: () => go(() => showAddToGroupSheet(context, scene)),
           ),
           ListTile(
             leading: const Icon(Icons.edit_outlined),

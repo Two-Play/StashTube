@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../data/repositories/stash_repository.dart';
 import '../l10n/l10n.dart';
 
 /// Shown when a list has no entries: a symbol for what is missing in a soft
@@ -69,34 +70,90 @@ class EmptyView extends StatelessWidget {
   }
 }
 
-class ErrorView extends StatelessWidget {
+/// A failed load (STATE-2): an icon for the kind of error, a short headline,
+/// one plain sentence about what to do, "Retry", and the technical message
+/// behind "Details" (selectable, for bug reports). Snack bars use
+/// [errorText] instead.
+class ErrorView extends StatefulWidget {
   const ErrorView({super.key, required this.error, this.onRetry});
 
   final Object error;
   final VoidCallback? onRetry;
 
+  /// The symbol for [error]: offline, a lock for access, else an error.
+  static IconData iconFor(Object error) => switch (error) {
+        StashApiException(kind: StashErrorKind.unreachable) => Icons.cloud_off,
+        StashApiException(kind: StashErrorKind.localNetworkDenied) => Icons.wifi_off,
+        StashApiException(kind: StashErrorKind.unauthorized || StashErrorKind.invalidCredentials) =>
+          Icons.lock_outline,
+        StashApiException(kind: StashErrorKind.notFound) => Icons.search_off,
+        _ => Icons.error_outline,
+      };
+
+  @override
+  State<ErrorView> createState() => _ErrorViewState();
+}
+
+class _ErrorViewState extends State<ErrorView> {
+  bool _showDetails = false;
+
+  @override
+  void didUpdateWidget(ErrorView oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.error != widget.error) _showDetails = false;
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final colors = theme.colorScheme;
+    final l = context.l10n;
+    final error = widget.error;
+    final explanation = errorExplanation(l, error);
+    final details = errorDetails(error);
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 48),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(Icons.cloud_off, size: 56, color: theme.colorScheme.error),
-          const SizedBox(height: 16),
-          Text(context.l10n.errorTitle, style: theme.textTheme.titleMedium),
-          const SizedBox(height: 8),
-          Text(
-            errorText(context.l10n, error),
-            style: theme.textTheme.bodySmall,
-            textAlign: TextAlign.center,
-            maxLines: 6,
-            overflow: TextOverflow.ellipsis,
+          Container(
+            width: 96,
+            height: 96,
+            decoration: BoxDecoration(shape: BoxShape.circle, color: colors.errorContainer.withValues(alpha: 0.6)),
+            child: Icon(ErrorView.iconFor(error), size: 44, color: colors.onErrorContainer),
           ),
-          if (onRetry != null) ...[
-            const SizedBox(height: 16),
-            FilledButton.tonal(onPressed: onRetry, child: Text(context.l10n.retry)),
+          const SizedBox(height: 20),
+          Text(
+            errorHeadline(l, error),
+            textAlign: TextAlign.center,
+            style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            explanation,
+            textAlign: TextAlign.center,
+            style: theme.textTheme.bodyMedium?.copyWith(color: colors.onSurfaceVariant),
+          ),
+          if (widget.onRetry != null) ...[
+            const SizedBox(height: 20),
+            FilledButton.tonalIcon(onPressed: widget.onRetry, icon: const Icon(Icons.refresh), label: Text(l.retry)),
+          ],
+          if (details != null && details != explanation) ...[
+            const SizedBox(height: 4),
+            TextButton(
+              onPressed: () => setState(() => _showDetails = !_showDetails),
+              child: Text(_showDetails ? l.errorHideDetails : l.errorShowDetails),
+            ),
+            if (_showDetails)
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: colors.surfaceContainerHighest,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: SelectableText(details, style: theme.textTheme.bodySmall?.copyWith(fontFamily: 'monospace')),
+              ),
           ],
         ],
       ),

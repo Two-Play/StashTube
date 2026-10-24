@@ -34,3 +34,13 @@ query StudioMediaCounts($id: ID!) {
 mutation StudioEdit($input: StudioUpdateInput!) {
   studioUpdate(input: $input) { ...StudioDetails }
 }
+
+# Stash 0.25 and later; queried separately so older versions only lose the
+# studio's favorite button.
+query StudioFavorite($id: ID!) {
+  findStudio(id: $id) { id favorite }
+}
+
+mutation StudioSetFavorite($id: ID!, $favorite: Boolean!) {
+  studioUpdate(input: { id: $id, favorite: $favorite }) { id favorite }
+}

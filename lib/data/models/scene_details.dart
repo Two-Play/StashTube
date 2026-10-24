@@ -67,16 +67,21 @@ SceneStream? pickPreferredStream(List<SceneStream> streams, String preferred) {
 
 /// A scene marker, shown as a chapter.
 class SceneMarker {
-  const SceneMarker({required this.id, required this.title, required this.seconds});
+  const SceneMarker({required this.id, required this.title, required this.seconds, this.screenshotUrl});
 
   final String id;
   final String title;
   final double seconds;
 
+  /// Stash's still of the marker (generated with the marker previews); the
+  /// URL is set even when the file is missing, then it fails to load.
+  final String? screenshotUrl;
+
   factory SceneMarker.fromFields(Fragment$MarkerFields m) => SceneMarker(
         id: m.id,
         title: nonEmpty(m.title) ?? nonEmpty(m.primary_tag.name) ?? 'Marker',
         seconds: m.seconds,
+        screenshotUrl: nonEmpty(m.screenshot),
       );
 }
 

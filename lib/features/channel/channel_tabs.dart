@@ -2,12 +2,14 @@ import 'dart:async';
 import 'dart:math' as math;
 
 import 'package:flutter/foundation.dart';
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/config/haptics.dart';
 import '../../core/config/theme.dart';
+import '../../core/utils/external_links.dart';
 import '../../core/utils/format.dart';
 import '../../data/models/gallery.dart';
 import '../../data/models/list_queries.dart';
@@ -61,6 +63,12 @@ typedef ChannelTabBuilder = Widget Function(BuildContext context, ChannelTab tab
 /// header once it has collapsed. Tabs are built when first shown and kept
 /// afterwards. Only the shown tab's header is the [ChannelTitleAnchor] of
 /// the surrounding [ChannelScaffold].
+///
+/// A horizontal swipe over a tab switches to the next or previous one: the
+/// tab follows the finger a little and the new one slides in. Horizontal
+/// scrollables inside a tab (shelves, chip bars, the tab bar) win their own
+/// drags in the gesture arena, as they are hit first, and drags from the
+/// screen's leading edge are left to the system's back gesture.
 class ChannelTabsView extends StatefulWidget {
   const ChannelTabsView({super.key, required this.tabs, required this.header, required this.builder})
       : assert(tabs.length > 0);
@@ -85,11 +93,86 @@ class _ChannelTabsViewState extends State<ChannelTabsView> with TickerProviderSt
   final _pendingOffsets = <ChannelTab, double>{};
   final _headerKeys = {for (final tab in ChannelTab.values) tab: GlobalKey(debugLabel: 'channel header ${tab.name}')};
 
+  /// The swipe's horizontal offset of the shown tab, in logical pixels.
+  late final AnimationController _swipe = AnimationController.unbounded(vsync: this);
+  double _dragDistance = 0;
+
+  /// How far the tab follows the finger, and how far a new one slides in.
+  static const _swipeShift = 56.0;
+
+  /// A drag at least this long, or a fling, switches the tab.
+  static const _switchDistance = 72.0;
+
+  /// Drags starting this close to the leading edge are the back gesture's.
+  static const _edgeWidth = 24.0;
+
   @override
   void initState() {
     super.initState();
     _visited.add(_current);
     _controller = _newController(0);
+  }
+
+  bool _startsAwayFromEdge(Offset globalPosition) {
+    final box = context.findRenderObject();
+    if (box is! RenderBox || !box.hasSize) return true;
+    final local = box.globalToLocal(globalPosition);
+    return Directionality.of(context) == TextDirection.ltr
+        ? local.dx > _edgeWidth
+        : local.dx < box.size.width - _edgeWidth;
+  }
+
+  void _onSwipeStart(DragStartDetails details) {
+    _swipe.stop();
+    _dragDistance = 0;
+  }
+
+  void _onSwipeUpdate(DragUpdateDetails details) {
+    _dragDistance += details.primaryDelta ?? 0;
+    // The tab follows the finger with resistance, less so at either end.
+    final step = _neighbour(_dragDistance) == null ? 0.15 : 0.4;
+    _swipe.value = (_dragDistance * step).clamp(-_swipeShift, _swipeShift);
+  }
+
+  void _onSwipeEnd(DragEndDetails details) {
+    final velocity = details.primaryVelocity ?? 0;
+    final flung = velocity.abs() > kMinFlingVelocity * 4;
+    // A fling decides by its direction, a slow drag by its distance.
+    final direction = flung ? velocity : (_dragDistance.abs() >= _switchDistance ? _dragDistance : 0.0);
+    final next = direction == 0 ? null : _neighbour(direction);
+    _dragDistance = 0;
+    final animate = !MediaQuery.disableAnimationsOf(context);
+    if (next == null) {
+      animate
+          ? _swipe.animateTo(0, duration: const Duration(milliseconds: 200), curve: Curves.easeOutCubic)
+          : _swipe.value = 0;
+      return;
+    }
+    Haptics.selection();
+    final index = widget.tabs.indexOf(next);
+    if (animate) {
+      _controller.animateTo(index);
+      // The new tab comes in from the side the finger moved away from.
+      _swipe.value = direction < 0 ? _swipeShift : -_swipeShift;
+      _swipe.animateTo(0, duration: const Duration(milliseconds: 220), curve: Curves.easeOutCubic);
+    } else {
+      _controller.index = index;
+      _swipe.value = 0;
+    }
+  }
+
+  void _onSwipeCancel() {
+    _dragDistance = 0;
+    _swipe.value = 0;
+  }
+
+  /// The tab a swipe in [direction] (negative: towards the end) leads to.
+  ChannelTab? _neighbour(double direction) {
+    if (direction == 0) return null;
+    final rtl = Directionality.of(context) == TextDirection.rtl;
+    final forward = (direction < 0) != rtl;
+    final index = widget.tabs.indexOf(_current) + (forward ? 1 : -1);
+    return index >= 0 && index < widget.tabs.length ? widget.tabs[index] : null;
   }
 
   TabController _newController(int index) =>
@@ -111,6 +194,7 @@ class _ChannelTabsViewState extends State<ChannelTabsView> with TickerProviderSt
 
   @override
   void dispose() {
+    _swipe.dispose();
     _controller
       ..removeListener(_onTabChanged)
       ..dispose();
@@ -184,7 +268,7 @@ class _ChannelTabsViewState extends State<ChannelTabsView> with TickerProviderSt
       tabAlignment: TabAlignment.start,
       tabs: [for (final tab in widget.tabs) Tab(height: tabHeight, text: tab.label(context))],
     );
-    return IndexedStack(
+    final stack = IndexedStack(
       index: widget.tabs.indexOf(_current),
       sizing: StackFit.expand,
       children: [
@@ -210,7 +294,43 @@ class _ChannelTabsViewState extends State<ChannelTabsView> with TickerProviderSt
             SizedBox.shrink(key: ValueKey(tab)),
       ],
     );
+    if (widget.tabs.length < 2) return stack;
+    return RawGestureDetector(
+      gestures: {
+        _TabSwipeRecognizer: GestureRecognizerFactoryWithHandlers<_TabSwipeRecognizer>(
+          () => _TabSwipeRecognizer(debugOwner: this, allowStart: _startsAwayFromEdge),
+          (recognizer) => recognizer
+            ..allowStart = _startsAwayFromEdge
+            ..onStart = _onSwipeStart
+            ..onUpdate = _onSwipeUpdate
+            ..onEnd = _onSwipeEnd
+            ..onCancel = _onSwipeCancel,
+        ),
+      },
+      child: AnimatedBuilder(
+        animation: _swipe,
+        builder: (context, child) {
+          final shift = _swipe.value;
+          if (shift == 0) return child!;
+          return Opacity(
+            opacity: 1 - (shift.abs() / _swipeShift) * 0.35,
+            child: Transform.translate(offset: Offset(shift, 0), child: child),
+          );
+        },
+        child: stack,
+      ),
+    );
   }
+}
+
+/// A horizontal drag that may only start where [allowStart] says.
+class _TabSwipeRecognizer extends HorizontalDragGestureRecognizer {
+  _TabSwipeRecognizer({super.debugOwner, required this.allowStart});
+
+  bool Function(Offset globalPosition) allowStart;
+
+  @override
+  bool isPointerAllowed(PointerEvent event) => super.isPointerAllowed(event) && allowStart(event.position);
 }
 
 class _TabBarDelegate extends SliverPersistentHeaderDelegate {
@@ -567,7 +687,8 @@ class ChannelAboutText extends StatelessWidget {
   }
 }
 
-/// The channel's links; tapping one copies it (the app opens no browser).
+/// The channel's links: tapping one opens it in the browser, a long press
+/// copies it.
 class ChannelLinks extends StatelessWidget {
   const ChannelLinks({super.key, required this.label, required this.urls});
 
@@ -587,24 +708,26 @@ class ChannelLinks extends StatelessWidget {
         ),
         for (final url in urls)
           Semantics(
-            onTapHint: l.copyLink,
+            onTapHint: l.openLink,
+            onLongPressHint: l.copyLink,
             child: ListTile(
-            leading: const Icon(Icons.link),
-            title: Text(
-              url,
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-              style: TextStyle(color: theme.colorScheme.primary),
-            ),
-            trailing: Icon(Icons.copy, size: 20, color: theme.colorScheme.onSurfaceVariant),
-            onTap: () async {
-              await Clipboard.setData(ClipboardData(text: url));
-              Haptics.light();
-              if (!context.mounted) return;
-              ScaffoldMessenger.of(context)
-                ..hideCurrentSnackBar()
-                ..showSnackBar(SnackBar(content: Text(l.linkCopied)));
-            },
+              leading: const Icon(Icons.link),
+              title: Text(
+                url,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(color: theme.colorScheme.primary),
+              ),
+              trailing: Icon(Icons.open_in_new, size: 20, color: theme.colorScheme.onSurfaceVariant),
+              onTap: () => openExternalUrl(context, url),
+              onLongPress: () async {
+                await Clipboard.setData(ClipboardData(text: url));
+                Haptics.light();
+                if (!context.mounted) return;
+                ScaffoldMessenger.of(context)
+                  ..hideCurrentSnackBar()
+                  ..showSnackBar(SnackBar(content: Text(l.linkCopied)));
+              },
             ),
           ),
       ],

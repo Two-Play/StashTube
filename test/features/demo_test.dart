@@ -127,6 +127,10 @@ void main() {
     expect((await titles(SceneQuery(groupId: '1', sort: SceneSort.groupOrder))).first, 'Morning Sky');
     expect(await titles(SceneQuery(filter: const SceneFilter(minStars: 5))), hasLength(4));
     expect(await titles(SceneQuery(filter: const SceneFilter(resolution: ResolutionFilter.hd))), isEmpty);
+    // "New since your last visit": scenes are added 12 hours apart.
+    final now = DateTime.now();
+    expect(await titles(SceneQuery(createdAfter: now.add(const Duration(minutes: 1)))), isEmpty);
+    expect(await titles(SceneQuery(createdAfter: now.subtract(const Duration(hours: 25)))), hasLength(2));
     final tags = (await repo.findTags(const TagQuery())).items;
     final wildlife = tags.firstWhere((t) => t.name == 'Wildlife');
     final comedy = tags.firstWhere((t) => t.name == 'Comedy');
@@ -144,6 +148,7 @@ void main() {
     final details = await repo.findSceneDetails('8');
     expect(details.streams.single.isDirect, isTrue);
     expect(details.markers.single.title, 'A visitor');
+    expect(details.markers.single.screenshotUrl, isNotNull, reason: 'chapter thumbnails');
     expect(details.files.single.duration, greaterThan(10));
     final thumbs = await repo.scrubThumbnails(details);
     expect(thumbs!.cues, hasLength(details.files.single.duration!.ceil()));
@@ -214,6 +219,13 @@ void main() {
     expect(stats.sceneCount, 12);
     final activity = await repo.activityStats();
     expect(activity!.scenesPlayed, 3);
+
+    // The watch chart's play history (16.3): every seeded play, newest within days.
+    final now = DateTime.now();
+    final history = await repo.playHistory(since: now.subtract(const Duration(days: 90)));
+    expect(history!.plays, hasLength(19));
+    expect(history.truncated, isFalse);
+    expect(history.plays.any((p) => now.difference(p).inHours < 24), isTrue);
   });
 
   test('channel tabs: profile, counts and media by performer or studio (CH-2)', () async {
@@ -265,6 +277,9 @@ void main() {
     expect((await repo.findPerformers(PerformerQuery(sort: PerformerSort.favorites))).items, hasLength(2));
     expect((await repo.updatePerformer('3', {'details': 'Pink'})).details, 'Pink');
     expect((await repo.updateStudio('3', {'name': 'Shorts'})).name, 'Shorts');
+    expect(await repo.studioFavorite('3'), isFalse);
+    await repo.setStudioFavorite('3', true);
+    expect(await repo.studioFavorite('3'), isTrue);
     expect((await repo.updateTag(tag.id, {'description': 'Sky'})).description, 'Sky');
     expect((await repo.updateGallery('1', {'title': 'Frames'})).title, 'Frames');
 
@@ -273,6 +288,30 @@ void main() {
     final played = await repo.findScenesByIds(['2']);
     expect(played.single.playCount, 1);
     expect(played.single.resumeTime, 3);
+  });
+
+  test('add to group and new groups (PL-1)', () async {
+    // Scene 1 is the film's first scene, in group 1.
+    final before = await repo.sceneGroups('1');
+    expect(before.map((g) => g.groupId), ['1']);
+    final filmCount = (await repo.findGroup('1')).sceneCount;
+
+    final group = await repo.createGroup('Favorites');
+    expect(group.name, 'Favorites');
+    expect((await repo.findGroups(const GroupQuery(search: 'fav'))).items.single.id, group.id);
+    expect(await repo.nextGroupIndex(group.id), 1);
+
+    await repo.addSceneToGroup('1', group.id);
+    await repo.addSceneToGroup('2', group.id);
+    expect(await repo.nextGroupIndex(group.id), 3);
+    expect((await repo.sceneGroups('1')).map((g) => g.groupId), ['1', group.id]);
+    expect((await repo.findGroup(group.id)).sceneCount, 2);
+    final inOrder = await repo.findScenes(SceneQuery(groupId: group.id, sort: SceneSort.groupOrder));
+    expect(inOrder.items.map((s) => s.id), ['1', '2']);
+
+    await repo.removeSceneFromGroup('1', '1');
+    expect((await repo.sceneGroups('1')).map((g) => g.groupId), [group.id]);
+    expect((await repo.findGroup('1')).sceneCount, filmCount - 1);
   });
 
   test('media with byte ranges, for the player', () async {

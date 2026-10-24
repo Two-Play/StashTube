@@ -23,6 +23,9 @@ enum AppTab {
   library(Icons.video_library_outlined, Icons.video_library),
   performers(Icons.people_outline, Icons.people),
   studios(Icons.subscriptions_outlined, Icons.subscriptions),
+
+  /// The favorite performers and their newest scenes (SUB-1).
+  subscriptions(Icons.favorite_border, Icons.favorite),
   tags(Icons.sell_outlined, Icons.sell),
   scenes(Icons.movie_outlined, Icons.movie, LibrarySection.scenes),
   history(Icons.history, Icons.history, LibrarySection.history),
@@ -52,6 +55,7 @@ enum AppTab {
         shorts => l.tabShorts,
         performers => l.tabPerformers,
         studios => l.tabStudios,
+        subscriptions => l.tabSubscriptions,
         library => l.tabLibrary,
         watchLater => l.tabWatchLater,
         tags => l.tabTags,

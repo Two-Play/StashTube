@@ -76,6 +76,10 @@ enum GallerySort {
 
 int newRandomSeed() => Random().nextInt(1 << 30);
 
+/// [time] as Stash's timestamp criteria take it: RFC 3339 in UTC, whole
+/// seconds.
+String stashTimestamp(DateTime time) => '${time.toUtc().toIso8601String().split('.').first.replaceAll('Z', '')}Z';
+
 /// Arguments for a paginated scene list. Used as a provider family key, so it
 /// implements value equality.
 class SceneQuery {
@@ -91,6 +95,7 @@ class SceneQuery {
     this.filter = SceneFilter.none,
     this.groupId,
     this.playedOnly = false,
+    this.createdAfter,
     int? seed,
   }) : seed = seed ?? (sort == SceneSort.random ? newRandomSeed() : 0);
 
@@ -125,6 +130,10 @@ class SceneQuery {
   /// Only scenes that were played at least once (history).
   final bool playedOnly;
 
+  /// Only scenes added to Stash after this time ("new since your last
+  /// visit", NOTIF-1).
+  final DateTime? createdAfter;
+
   /// Seed for [SceneSort.random] so that pages are stable while scrolling.
   /// Always 0 for other sorts, so equal queries map to the same provider.
   final int seed;
@@ -149,6 +158,7 @@ class SceneQuery {
       if (favoritePerformersOnly) 'performer_favorite': true,
       if (groupId != null) 'groups': {'value': [groupId], 'modifier': 'INCLUDES'},
       if (playedOnly) 'play_count': {'value': 0, 'modifier': 'GREATER_THAN'},
+      if (createdAfter case final after?) 'created_at': {'value': stashTimestamp(after), 'modifier': 'GREATER_THAN'},
     };
     return criteria.isEmpty ? null : criteria;
   }
@@ -165,6 +175,7 @@ class SceneQuery {
         filter: filter ?? this.filter,
         groupId: groupId,
         playedOnly: playedOnly,
+        createdAfter: createdAfter,
         // Picking a sort again (e.g. "Shuffle") starts a fresh shuffle.
         seed: sort == null ? seed : null,
       );
@@ -183,6 +194,7 @@ class SceneQuery {
       other.filter == filter &&
       other.groupId == groupId &&
       other.playedOnly == playedOnly &&
+      other.createdAfter == createdAfter &&
       other.seed == seed;
 
   @override
@@ -198,6 +210,7 @@ class SceneQuery {
         filter,
         groupId,
         playedOnly,
+        createdAfter,
         seed,
       );
 }
