@@ -3,6 +3,7 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:stash_app_mobile/data/models/scene.dart';
+import 'package:stash_app_mobile/data/models/scene_details.dart';
 import 'package:stash_app_mobile/data/providers.dart';
 import 'package:stash_app_mobile/data/repositories/stash_session.dart';
 import 'package:stash_app_mobile/features/player/player_providers.dart';
@@ -14,13 +15,44 @@ import 'package:stash_app_mobile/widgets/hold_detector.dart';
 import '../helpers.dart';
 import 'fake_player.dart';
 
+/// A playback error that is there from the start; [retry] only reports.
+class _FakeError extends PlaybackErrorNotifier {
+  _FakeError(this.initial, this.onRetry);
+
+  final PlaybackError? initial;
+  final VoidCallback onRetry;
+
+  @override
+  PlaybackError? build() => initial;
+
+  void fail(PlaybackError error) => state = error;
+
+  @override
+  void retry() {
+    onRetry();
+    state = null;
+  }
+}
+
 void main() {
   late FakePlayer player;
+  late _FakeError errors;
   var fullscreenToggles = 0;
+  var qualityTaps = 0;
+  var retries = 0;
 
-  Future<void> pump(WidgetTester tester, {bool playing = true}) async {
+  Future<void> pump(
+    WidgetTester tester, {
+    bool playing = true,
+    bool fullscreen = false,
+    PlaybackError? error,
+    List<SceneStream> streams = const [],
+  }) async {
     player = FakePlayer(playing: playing, position: const Duration(seconds: 30));
+    retries = 0;
+    errors = _FakeError(error, () => retries++);
     fullscreenToggles = 0;
+    qualityTaps = 0;
     await tester.pumpWidget(ProviderScope(
       overrides: [
         // The queue buttons watch the (per-server) play queue.
@@ -28,6 +60,8 @@ void main() {
         playerProvider.overrideWithValue(player),
         scrubThumbnailsProvider('1').overrideWith((ref) async => null),
         authHeadersProvider.overrideWithValue(const {}),
+        playbackErrorProvider.overrideWith(() => errors),
+        sceneDetailsProvider('1').overrideWith((ref) async => SceneDetails(streams: streams)),
       ],
       child: MaterialApp(
         home: Scaffold(
@@ -36,10 +70,10 @@ void main() {
               width: 400,
               height: 225,
               child: StashVideoControls(
-                fullscreen: false,
+                fullscreen: fullscreen,
                 onToggleFullscreen: () => fullscreenToggles++,
                 scene: const Scene(id: '1', title: 'A'),
-                onQuality: () {},
+                onQuality: () => qualityTaps++,
               ),
             ),
           ),
@@ -170,5 +204,55 @@ void main() {
     await b.up();
     await tester.pumpAndSettle();
     expect(container.read(videoZoomProvider).scale, closeTo(2, 0.01));
+  });
+
+  group('playback error', () {
+    const error = PlaybackError('Failed to open', position: Duration(seconds: 12));
+    const streams = [
+      SceneStream(url: 'http://s/scene/1/stream', label: 'Direct stream'),
+      SceneStream(url: 'http://s/scene/1/stream.m3u8?resolution=STANDARD', label: 'HLS 480p'),
+    ];
+
+    testWidgets('shows in fullscreen with retry and other quality', (tester) async {
+      await pump(tester, fullscreen: true, error: error, streams: streams);
+      await tester.pump();
+      expect(find.text("Couldn't play this video"), findsOneWidget);
+      expect(find.text('Failed to open'), findsOneWidget);
+      expect(find.byTooltip('Pause'), findsNothing, reason: 'the error takes the middle');
+
+      await tester.tap(find.text('Other quality'));
+      expect(qualityTaps, 1);
+      await tester.tap(find.text('Retry'));
+      await tester.pump();
+      expect(retries, 1);
+      expect(find.text("Couldn't play this video"), findsNothing);
+      expect(find.byTooltip('Pause'), findsOneWidget, reason: 'play/pause is back');
+    });
+
+    testWidgets('"Other quality" only with several streams', (tester) async {
+      await pump(tester, fullscreen: true, error: error, streams: streams.take(1).toList());
+      await tester.pump();
+      expect(find.text('Retry'), findsOneWidget);
+      expect(find.text('Other quality'), findsNothing);
+    });
+
+    testWidgets('an error brings the controls up and keeps them there', (tester) async {
+      await pump(tester, fullscreen: true);
+      expect(controlsVisible(tester), isFalse);
+      expect(find.text('Retry'), findsNothing);
+
+      errors.fail(error);
+      await tester.pump();
+      expect(find.text('Retry'), findsOneWidget);
+      expect(controlsVisible(tester), isTrue);
+      await tester.pump(const Duration(seconds: 10));
+      expect(controlsVisible(tester), isTrue, reason: 'no auto-hide while the error shows');
+      await tester.tap(find.byTooltip('Exit fullscreen'));
+      expect(fullscreenToggles, 1, reason: 'the controls stay usable');
+
+      await tester.tap(find.text('Retry'));
+      await tester.pump(const Duration(seconds: 4));
+      expect(controlsVisible(tester), isFalse, reason: 'auto-hide is back after the error');
+    });
   });
 }

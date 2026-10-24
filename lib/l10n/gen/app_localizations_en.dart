@@ -688,6 +688,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get addServer => 'Add server';
 
   @override
+  String get addServerTitle => 'Add a server';
+
+  @override
   String get connectToStash => 'Connect to Stash';
 
   @override
@@ -733,6 +736,11 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get loginAuthTitle => 'This server needs a login';
+
+  @override
+  String loginAuthServer(String name, String host) {
+    return '$name · $host';
+  }
 
   @override
   String get loginAuthIntro =>
@@ -1583,16 +1591,25 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String searchSubmitIn(String scope, String term) {
-    String _temp0 = intl.Intl.selectLogic(scope, {
-      'images': 'Search images for \"$term\"',
-      'galleries': 'Search galleries for \"$term\"',
-      'performers': 'Search performers for \"$term\"',
-      'studios': 'Search studios for \"$term\"',
-      'other': 'Search scenes for \"$term\"',
-    });
-    return '$_temp0';
+  String searchFor(String text) {
+    return 'Search for $text';
   }
+
+  @override
+  String get searchFillIn => 'Fill in';
+
+  @override
+  String searchFillInText(String text) {
+    return 'Fill in $text';
+  }
+
+  @override
+  String searchRemoveFromHistory(String text) {
+    return 'Remove $text from recent searches';
+  }
+
+  @override
+  String get searchGoTo => 'Go to';
 
   @override
   String get searchOtherAreas => 'Search other areas';

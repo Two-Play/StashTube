@@ -6,6 +6,7 @@ import 'package:stash_app_mobile/core/config/secret_store.dart';
 import 'package:stash_app_mobile/core/config/server_config.dart';
 import 'package:stash_app_mobile/data/repositories/stash_repository.dart';
 import 'package:stash_app_mobile/features/auth/login_page.dart';
+import 'package:stash_app_mobile/widgets/app_logo.dart';
 
 /// The two-step login (ONB-1): the address first, credentials only when
 /// the server asks for them.
@@ -15,7 +16,7 @@ void main() {
 
   /// A server at `nas:9999`; with [needsAuth] it accepts only the API key
   /// `key` or the login `me`/`secret`.
-  Future<ProviderContainer> pumpLogin(WidgetTester tester, {required bool needsAuth}) async {
+  Future<ProviderContainer> pumpLogin(WidgetTester tester, {required bool needsAuth, bool addServer = false}) async {
     tried = [];
     Future<void> verify(ServerConfig config) async {
       tried.add(config);
@@ -37,7 +38,7 @@ void main() {
       ]);
     });
     addTearDown(c!.dispose);
-    await tester.pumpWidget(UncontrolledProviderScope(container: c, child: const MaterialApp(home: LoginPage())));
+    await tester.pumpWidget(UncontrolledProviderScope(container: c, child: MaterialApp(home: LoginPage(addServer: addServer))));
     return c;
   }
 
@@ -47,16 +48,21 @@ void main() {
     await tester.pumpAndSettle();
   }
 
-  Future<void> connect(WidgetTester tester) async {
+  Future<void> connect(WidgetTester tester, {String? name}) async {
     await tester.enterText(find.widgetWithText(TextFormField, 'Server URL'), 'nas');
+    if (name != null) await tester.enterText(find.widgetWithText(TextFormField, 'Name (optional)'), name);
     await tapText(tester, 'Connect');
   }
 
-  testWidgets('step 1 shows only the address; a server without a login is saved right away', (tester) async {
+  testWidgets('step 1 shows only address and name; a server without a login is saved right away', (tester) async {
     final c = await pumpLogin(tester, needsAuth: false);
+    expect(find.byType(AppLogo), findsOneWidget);
+    expect(find.text('Connect to Stash'), findsOneWidget);
+    expect(find.textContaining('Enter the address of your Stash server'), findsOneWidget);
     expect(find.widgetWithText(TextFormField, 'Server URL'), findsOneWidget);
+    expect(find.widgetWithText(TextFormField, 'Name (optional)'), findsOneWidget);
     expect(find.text('Try the demo'), findsOneWidget);
-    expect(find.byType(TextFormField), findsOneWidget, reason: 'no name, key or login fields yet');
+    expect(find.byType(TextFormField), findsNWidgets(2), reason: 'no key or login fields yet');
 
     await connect(tester);
     final active = c.read(serverProfilesProvider).active!;
@@ -66,12 +72,33 @@ void main() {
     expect(tried.first, const ServerConfig(baseUrl: 'http://nas:9999'));
   });
 
+  testWidgets('the name from step 1 is saved for a server without a login', (tester) async {
+    final c = await pumpLogin(tester, needsAuth: false);
+    await connect(tester, name: 'Home');
+    final active = c.read(serverProfilesProvider).active!;
+    expect(active.baseUrl, 'http://nas:9999');
+    expect(active.name, 'Home');
+  });
+
+  testWidgets('adding a server shows the logo, a heading and the intro', (tester) async {
+    final c = await pumpLogin(tester, needsAuth: false, addServer: true);
+    expect(find.byType(AppLogo), findsOneWidget);
+    expect(find.text('Add a server'), findsOneWidget);
+    expect(find.textContaining('Enter the address of your Stash server'), findsOneWidget);
+    expect(find.widgetWithText(TextFormField, 'Name (optional)'), findsOneWidget);
+    expect(find.text('Try the demo'), findsNothing);
+
+    await connect(tester, name: 'NAS');
+    expect(c.read(serverProfilesProvider).active!.name, 'NAS');
+  });
+
   testWidgets('a server that asks for a login opens step 2; signs in with the API key', (tester) async {
     final c = await pumpLogin(tester, needsAuth: true);
-    await connect(tester);
+    await connect(tester, name: 'Home');
     expect(c.read(serverProfilesProvider).profiles, isEmpty);
     expect(find.text('This server needs a login'), findsOneWidget);
-    expect(find.text('nas'), findsOneWidget, reason: 'the host being signed in to');
+    expect(find.text('Home · nas'), findsOneWidget, reason: 'the server being signed in to');
+    expect(find.widgetWithText(TextFormField, 'Name (optional)'), findsNothing, reason: 'asked in step 1');
     expect(find.byWidgetPredicate((w) => w is SegmentedButton), findsOneWidget);
     expect(find.textContaining('Settings → Security'), findsOneWidget);
     expect(find.text('Try the demo'), findsNothing);
@@ -85,7 +112,6 @@ void main() {
     expect(c.read(serverProfilesProvider).profiles, isEmpty);
 
     await tester.enterText(find.widgetWithText(TextFormField, 'API key'), 'key');
-    await tester.enterText(find.widgetWithText(TextFormField, 'Name (optional)'), 'Home');
     await tapText(tester, 'Sign in');
     final active = c.read(serverProfilesProvider).active!;
     expect(active.apiKey, 'key');
@@ -96,6 +122,7 @@ void main() {
   testWidgets('step 2 signs in with username and password', (tester) async {
     final c = await pumpLogin(tester, needsAuth: true);
     await connect(tester);
+    expect(find.text('nas'), findsOneWidget, reason: 'without a name, the host');
     await tapText(tester, 'Username & password');
     expect(find.widgetWithText(TextFormField, 'API key'), findsNothing);
 

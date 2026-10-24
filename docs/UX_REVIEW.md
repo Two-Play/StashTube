@@ -151,7 +151,7 @@ Alle Quick Wins sind auf `feature/ux-review` umgesetzt (Phase 2, Schritt 1).
 | ID | Änderung | Status |
 |---|---|---|
 | CTRL-1 | Tooltips/Labels für Miniplayer-Play/Pause | ✅ |
-| WATCH-1a | Snackbar bei Cast-Fehlern; Fehler-Overlay bei `player.stream.error` mit Retry und „Andere Qualität“ (nach 2 s ohne Fortschritt) | ✅ (Overlay noch nicht im Vollbild) |
+| WATCH-1a | Snackbar bei Cast-Fehlern; Fehler-Overlay bei `player.stream.error` mit Retry und „Andere Qualität“ (nach 2 s ohne Fortschritt) | ✅ |
 | A11Y-1 | Ein Screenreader-Knoten je Kachel (Szenen, Regal, Marker, Galerien, Shorts, Performer) | ✅ |
 | CH-1 | Kanalname nur einmal (Titel blendet beim Scrollen ein) | ✅ |
 | HOME-4 | Initiale statt Personen-Icon bei fehlendem Bild | ✅ |
@@ -168,12 +168,12 @@ Alle Quick Wins sind auf `feature/ux-review` umgesetzt (Phase 2, Schritt 1).
 | HOME-1 | Shorts als horizontale Reihe, sticky Sortier-/Filter-Chips | ✅ |
 | HOME-2 | Skeleton-Komponenten für Karten, Tiles, Regale, Up next | ✅ |
 | HOME-3 | Geführter Leerzustand für neue Server | ✅ |
-| WATCH-4 / A11Y-3 | Feste Höhen entfernen, Trefferflächen ≥ 48 dp, Textskalierungs-Tests | ✅ (`text_scale_test.dart`: Home, Suche, Bibliothek, Performer, Einstellungen, Login bei 1,0/1,5/2,0×; nur Englisch) |
+| WATCH-4 / A11Y-3 | Feste Höhen entfernen, Trefferflächen ≥ 48 dp, Textskalierungs-Tests | ✅ (`text_scale_test.dart`: Home, Suche, Bibliothek, Performer, Einstellungen, Login bei 1,0/1,5/2,0×, Englisch und Deutsch, auch 320 dp) |
 | A11Y-2 | Bewertung als ein zugängliches Element | ✅ |
-| CTRL-4 | Queue-Navigation in den Controls | ✅ (Sperrbildschirm nur „weiter“) |
-| SEARCH-1/2 | Typeahead, Auswege bei leeren Treffern | ✅ (Filter-Button der Suche in der App-Bar) |
+| CTRL-4 | Queue-Navigation in den Controls | ✅ (auch Sperrbildschirm und Benachrichtigung) |
+| SEARCH-1/2 | Echtes Autocomplete (Vervollständigungen, ↖ übernehmen), Auswege bei leeren Treffern | ✅ (Filter-Button der Suche in der App-Bar) |
 | SET-1 | Einstellungen in Kategorien | ✅ |
-| ONB-1 | Zweistufiger Login | ✅ |
+| ONB-1 | Zweistufiger Login; Name schon im ersten Schritt, Logo und Einleitung auch bei „Server hinzufügen“ | ✅ |
 | STATE-1 | Globales Verbindungsbanner; Listen behalten bei Netzwerkfehlern ihren Inhalt | ✅ |
 | DS-1 / DS-2 | Komponentenregeln und Tokens | ✅ (`design_tokens.dart`, `AppColors`, zentrale Komponenten-Themes) |
 

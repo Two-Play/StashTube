@@ -9,6 +9,7 @@ import '../../core/config/haptics.dart';
 import '../../core/config/theme.dart';
 import '../../core/utils/format.dart';
 import '../../data/models/scene.dart';
+import '../../data/providers.dart';
 import '../../widgets/hold_detector.dart';
 import '../../widgets/play_pause_icon.dart';
 import '../cast/cast_providers.dart';
@@ -32,6 +33,10 @@ import '../../l10n/l10n.dart';
 /// * top: collapse (outside fullscreen), [topActions], speed, quality
 /// * center: play/pause or a buffering spinner
 /// * bottom: time, fullscreen toggle, [PreviewSeekBar]
+/// * after a playback error ([playbackErrorProvider]): a message with
+///   "Retry" and "Other quality" in place of play/pause; the controls show
+///   and don't hide by themselves while it is there. Here rather than in
+///   the panel, so it also shows in media_kit's fullscreen route.
 class StashVideoControls extends ConsumerStatefulWidget {
   const StashVideoControls({
     super.key,
@@ -121,6 +126,22 @@ class _StashVideoControlsState extends ConsumerState<StashVideoControls> {
     }
   }
 
+  @override
+  void initState() {
+    super.initState();
+    // A playback error brings the controls up and keeps them there, so the
+    // top bar (collapse, quality, leaving fullscreen) stays reachable.
+    ref.listenManual(playbackErrorProvider, (_, error) {
+      if (!mounted) return;
+      if (error != null) {
+        _hideTimer?.cancel();
+        setState(() => _visible = true);
+      } else {
+        _scheduleHide();
+      }
+    });
+  }
+
   /// The player being held at 2×, kept for [dispose] (no `ref` there).
   Player? _heldPlayer;
 
@@ -149,11 +170,11 @@ class _StashVideoControlsState extends ConsumerState<StashVideoControls> {
     setState(() => _visible = false);
   }
 
-  /// (Re)starts the auto-hide countdown; never hides during interaction or
-  /// while paused.
+  /// (Re)starts the auto-hide countdown; never hides during interaction,
+  /// while paused or while a playback error shows.
   void _scheduleHide() {
     _hideTimer?.cancel();
-    if (_interacting || !ref.read(playerProvider).state.playing) return;
+    if (_interacting || !ref.read(playerProvider).state.playing || ref.read(playbackErrorProvider) != null) return;
     _hideTimer = Timer(widget.hideAfter, () {
       if (mounted && !_interacting) setState(() => _visible = false);
     });
@@ -238,6 +259,7 @@ class _StashVideoControlsState extends ConsumerState<StashVideoControls> {
     // While casting, the video plays on the TV: show remote controls instead.
     final casting = ref.watch(castConnectionProvider).value;
     if (casting != null) return CastingControls(connection: casting, showMinimize: !fullscreen);
+    final error = ref.watch(playbackErrorProvider);
 
     // Layers: gestures at the bottom, a purely visual scrim, buttons on top.
     // Buttons must not sit inside the double-tap detector, or every button
@@ -352,29 +374,33 @@ class _StashVideoControlsState extends ConsumerState<StashVideoControls> {
                       ),
                       Expanded(
                         child: Center(
-                          child: _QueueButtons(
-                            act: _act,
-                            child: StreamBuilder<bool>(
-                              stream: player.stream.buffering,
-                              initialData: player.state.buffering,
-                              builder: (_, buffering) => buffering.data == true
-                                  ? const SizedBox.square(
-                                      dimension: 48,
-                                      child: CircularProgressIndicator(color: Colors.white),
-                                    )
-                                  : StreamBuilder<bool>(
-                                      stream: player.stream.playing,
-                                      initialData: player.state.playing,
-                                      builder: (_, playing) => IconButton(
-                                        iconSize: 56,
-                                        tooltip: playing.data == true ? context.l10n.pause : context.l10n.play,
-                                        icon: PlayPauseIcon(playing: playing.data == true),
-                                        onPressed: () => _act(() {
-                                          Haptics.light();
-                                          player.playOrPause();
-                                        }),
+                          // The error's buttons take the middle while it shows.
+                          child: Visibility(
+                            visible: error == null,
+                            child: _QueueButtons(
+                              act: _act,
+                              child: StreamBuilder<bool>(
+                                stream: player.stream.buffering,
+                                initialData: player.state.buffering,
+                                builder: (_, buffering) => buffering.data == true
+                                    ? const SizedBox.square(
+                                        dimension: 48,
+                                        child: CircularProgressIndicator(color: Colors.white),
+                                      )
+                                    : StreamBuilder<bool>(
+                                        stream: player.stream.playing,
+                                        initialData: player.state.playing,
+                                        builder: (_, playing) => IconButton(
+                                          iconSize: 56,
+                                          tooltip: playing.data == true ? context.l10n.pause : context.l10n.play,
+                                          icon: PlayPauseIcon(playing: playing.data == true),
+                                          onPressed: () => _act(() {
+                                            Haptics.light();
+                                            player.playOrPause();
+                                          }),
+                                        ),
                                       ),
-                                    ),
+                              ),
                             ),
                           ),
                         ),
@@ -414,6 +440,8 @@ class _StashVideoControlsState extends ConsumerState<StashVideoControls> {
               ),
             ),
           ),
+          // Always there (empty without an error), so the tree stays the same.
+          _PlaybackErrorOverlay(error: error, sceneId: widget.scene.id, onQuality: widget.onQuality),
           if (_pinching)
             IgnorePointer(
               child: Align(
@@ -432,6 +460,93 @@ class _StashVideoControlsState extends ConsumerState<StashVideoControls> {
             ),
         ],
       ),
+    );
+  }
+}
+
+/// Over the video after a playback error: a short message, "Retry" and, if
+/// the scene has other streams, "Other quality". Empty without [error];
+/// taps outside its buttons reach the controls below.
+class _PlaybackErrorOverlay extends ConsumerWidget {
+  const _PlaybackErrorOverlay({required this.error, required this.sceneId, required this.onQuality});
+
+  final PlaybackError? error;
+  final String sceneId;
+  final VoidCallback onQuality;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final error = this.error;
+    if (error == null) return const SizedBox.shrink();
+    final l = context.l10n;
+    final theme = Theme.of(context);
+    final streams = ref.watch(sceneDetailsProvider(sceneId)).value?.streams ?? const [];
+    const onVideo = Colors.white;
+
+    return Stack(
+      fit: StackFit.expand,
+      children: [
+        const IgnorePointer(child: ColoredBox(color: Colors.black54)),
+        // Scaled down rather than overflowing a small video at large text
+        // sizes. No scroll view: it would take the taps around the buttons.
+        LayoutBuilder(
+          builder: (context, constraints) => FittedBox(
+            fit: BoxFit.scaleDown,
+            child: SizedBox(
+              width: constraints.maxWidth,
+              child: Padding(
+                padding: const EdgeInsets.all(AppSpacing.l),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(Icons.error_outline, color: onVideo, size: 32),
+                    const SizedBox(height: AppSpacing.s),
+                    Semantics(
+                      liveRegion: true,
+                      child: Text(
+                        l.playbackFailed,
+                        textAlign: TextAlign.center,
+                        style: theme.textTheme.titleSmall?.copyWith(color: onVideo),
+                      ),
+                    ),
+                    Text(
+                      error.message,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: theme.textTheme.bodySmall?.copyWith(color: Colors.white70),
+                    ),
+                    const SizedBox(height: AppSpacing.s),
+                    Wrap(
+                      alignment: WrapAlignment.center,
+                      spacing: AppSpacing.s,
+                      children: [
+                        FilledButton.icon(
+                          icon: const Icon(Icons.refresh),
+                          label: Text(l.retry),
+                          onPressed: () {
+                            Haptics.light();
+                            ref.read(playbackErrorProvider.notifier).retry();
+                          },
+                        ),
+                        if (streams.length > 1)
+                          OutlinedButton.icon(
+                            style: OutlinedButton.styleFrom(
+                              foregroundColor: onVideo,
+                              side: const BorderSide(color: Colors.white70),
+                            ),
+                            icon: const Icon(Icons.hd_outlined),
+                            label: Text(l.otherQuality),
+                            onPressed: onQuality,
+                          ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+      ],
     );
   }
 }

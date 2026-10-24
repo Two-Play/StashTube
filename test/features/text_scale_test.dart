@@ -122,17 +122,38 @@ class _Repo implements StashRepository {
   dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
 }
 
-/// Overflows already reported but not fixed yet, matched against the
-/// widget that overflowed. Remove an entry once it is fixed, so the test
-/// guards it again.
-/// Overflows that are known and not fixed yet (none at the moment); a
-/// pattern matches the error's text.
-final _knownOverflows = <RegExp>[];
+/// Overflows already reported but not fixed yet; a pattern matches the
+/// error's text. Remove an entry once it is fixed, so the test guards it
+/// again.
+// Overflows that are known and not fixed yet (none at the moment); each
+// applies to the cases [when] accepts.
+final _knownOverflows = <({RegExp pattern, bool Function(_Case) when})>[];
+
+/// One screen the pages are checked on.
+class _Case {
+  const _Case(this.size, this.scale, this.locale);
+
+  final Size size;
+  final double scale;
+  final String locale;
+
+  @override
+  String toString() => '${size.width.toInt()}x${size.height.toInt()}, ${scale}x text, $locale';
+}
 
 /// A11Y-3: the main pages at 100 %, 150 % and 200 % text on a 360×780
-/// phone, without overflow.
+/// phone and at 100 % and 200 % on a narrow 320×640 one, in English and
+/// German (longer labels), without overflow.
 void main() {
-  const scales = [1.0, 1.5, 2.0];
+  const screens = [
+    (Size(360, 780), [1.0, 1.5, 2.0]),
+    (Size(320, 640), [1.0, 2.0]),
+  ];
+  final cases = [
+    for (final (size, scales) in screens)
+      for (final scale in scales)
+        for (final locale in ['en', 'de']) _Case(size, scale, locale),
+  ];
 
   Future<SharedPreferences> prefsWith(WidgetTester tester, Map<String, Object> values) async =>
       (await tester.runAsync(() async {
@@ -143,11 +164,11 @@ void main() {
   Future<ProviderContainer> pumpPage(
     WidgetTester tester,
     Widget page, {
-    required double scale,
+    required _Case at,
     List<Override> overrides = const [],
     bool server = true,
   }) async {
-    tester.view.physicalSize = const Size(360, 780);
+    tester.view.physicalSize = at.size;
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.reset);
     final prefs = await prefsWith(tester, {});
@@ -170,11 +191,11 @@ void main() {
       child: MaterialApp(
         navigatorKey: navigatorKey,
         theme: AppTheme.light(stashTubeBlue),
-        locale: const Locale('en'),
+        locale: Locale(at.locale),
         localizationsDelegates: AppLocalizations.localizationsDelegates,
         supportedLocales: AppLocalizations.supportedLocales,
         builder: (context, child) => MediaQuery(
-          data: MediaQuery.of(context).copyWith(textScaler: TextScaler.linear(scale)),
+          data: MediaQuery.of(context).copyWith(textScaler: TextScaler.linear(at.scale)),
           child: child!,
         ),
         home: page,
@@ -201,76 +222,90 @@ void main() {
     });
   }
 
-  void expectNoOverflow(WidgetTester tester, String what) {
-    final found = [...errors.where((e) => !_knownOverflows.any((known) => known.hasMatch(e.toString())))];
+  void expectNoOverflow(_Case at, String what) {
+    bool known(FlutterErrorDetails e) =>
+        _knownOverflows.any((k) => k.when(at) && k.pattern.hasMatch(e.toString()));
+    final found = [...errors.where((e) => !known(e))];
     errors.clear();
     expect(found, isEmpty, reason: '$what:\n${found.map((e) => e.toString()).join('\n')}');
   }
 
-  for (final scale in scales) {
-    group('at ${scale}x text', () {
+  for (final at in cases) {
+    final l = lookupAppLocalizations(Locale(at.locale));
+    group('$at', () {
       testScaled('home', (tester) async {
-        await pumpPage(tester, const HomePage(), scale: scale);
+        await pumpPage(tester, const HomePage(), at: at);
         expect(find.textContaining('A scene title'), findsWidgets);
-        expectNoOverflow(tester, 'home');
+        expectNoOverflow(at, 'home');
         await tester.drag(find.byType(CustomScrollView).first, const Offset(0, -1500));
         await settle(tester);
-        expectNoOverflow(tester, 'home, scrolled');
+        expectNoOverflow(at, 'home, scrolled');
       });
 
       testScaled('search: discover and results', (tester) async {
-        await pumpPage(tester, const SearchPage(autofocus: false), scale: scale);
-        expectNoOverflow(tester, 'search discover');
+        await pumpPage(tester, const SearchPage(autofocus: false), at: at);
+        expectNoOverflow(at, 'search discover');
 
         await tester.enterText(find.byType(TextField), 'scene');
         await tester.testTextInput.receiveAction(TextInputAction.search);
         await settle(tester);
-        expect(find.textContaining('A scene title'), findsWidgets);
-        expectNoOverflow(tester, 'search results');
+        // Offstage too: on a small screen the performers come first and the
+        // scenes start below the fold.
+        expect(find.textContaining('A scene title', skipOffstage: false), findsWidgets);
+        expectNoOverflow(at, 'search results');
 
         await tester.enterText(find.byType(TextField), 'zebra');
         await tester.testTextInput.receiveAction(TextInputAction.search);
         await settle(tester);
-        expectNoOverflow(tester, 'search results for another term');
+        expectNoOverflow(at, 'search results for another term');
       });
 
       testScaled('library', (tester) async {
-        await pumpPage(tester, const LibraryPage(), scale: scale);
+        await pumpPage(tester, const LibraryPage(), at: at);
         expect(find.byType(TabBar), findsOneWidget);
         expect(find.textContaining('A scene title'), findsWidgets);
-        expectNoOverflow(tester, 'library');
+        expectNoOverflow(at, 'library');
       });
 
       testScaled('performer channel', (tester) async {
-        await pumpPage(tester, const PerformerPage(performerId: 'p1'), scale: scale);
+        await pumpPage(tester, const PerformerPage(performerId: 'p1'), at: at);
         expect(find.text('Performer with a long name'), findsWidgets);
-        expectNoOverflow(tester, 'performer');
+        expectNoOverflow(at, 'performer');
         await tester.drag(find.byType(CustomScrollView).first, const Offset(0, -800));
         await settle(tester);
-        expectNoOverflow(tester, 'performer, scrolled');
+        expectNoOverflow(at, 'performer, scrolled');
       });
 
       testScaled('settings and its pages', (tester) async {
         await pumpPage(
           tester,
           Scaffold(appBar: AppBar(actions: const [SettingsButton()])),
-          scale: scale,
+          at: at,
           overrides: [biometricAuthProvider.overrideWithValue(FakeBiometrics())],
         );
         await tester.tap(find.byType(SettingsButton));
         await settle(tester);
-        expectNoOverflow(tester, 'settings');
+        expectNoOverflow(at, 'settings');
 
-        for (final category in ['Server', 'Appearance', 'Playback', 'Previews & cards', 'Privacy & security', 'About']) {
+        for (final category in [
+          l.sectionServer,
+          l.sectionAppearance,
+          l.sectionPlayback,
+          l.sectionPreviewsCards,
+          l.sectionPrivacy,
+          l.sectionAbout,
+        ]) {
           await tester.ensureVisible(find.text(category));
           await settle(tester);
           await tester.tap(find.text(category));
           await settle(tester);
-          expectNoOverflow(tester, 'settings: $category');
+          expectNoOverflow(at, 'settings: $category');
           await tester.drag(find.byType(Scrollable).last, const Offset(0, -1500));
           await settle(tester);
-          expectNoOverflow(tester, 'settings: $category, scrolled');
-          await tester.pageBack();
+          expectNoOverflow(at, 'settings: $category, scrolled');
+          // pageBack looks for the English tooltip only.
+          final back = MaterialLocalizations.of(tester.element(find.byType(Scaffold).last)).backButtonTooltip;
+          await tester.tap(find.byTooltip(back).last);
           await settle(tester);
         }
       });
@@ -286,22 +321,22 @@ void main() {
         await pumpPage(
           tester,
           const LoginPage(),
-          scale: scale,
+          at: at,
           server: false,
           overrides: [
             secretStoreProvider.overrideWithValue(MemorySecretStore()),
             serverVerifierProvider.overrideWithValue(verify),
           ],
         );
-        expectNoOverflow(tester, 'login step 1');
+        expectNoOverflow(at, 'login step 1');
 
-        await tester.enterText(find.widgetWithText(TextFormField, 'Server URL'), 'nas');
-        await tester.ensureVisible(find.text('Connect'));
-        await tester.tap(find.text('Connect'));
+        await tester.enterText(find.widgetWithText(TextFormField, l.serverUrl), 'nas');
+        await tester.ensureVisible(find.text(l.connect));
+        await tester.tap(find.text(l.connect));
         await settle(tester);
         expect(find.byType(TextFormField), findsWidgets);
-        expect(find.widgetWithText(TextFormField, 'Server URL'), findsNothing, reason: 'step 2 is shown');
-        expectNoOverflow(tester, 'login step 2');
+        expect(find.widgetWithText(TextFormField, l.serverUrl), findsNothing, reason: 'step 2 is shown');
+        expectNoOverflow(at, 'login step 2');
       });
     });
   }
