@@ -223,6 +223,12 @@ class SettingsPage extends ConsumerWidget {
             value: ref.watch(markerPreviewsProvider),
             onChanged: withHaptic((v) => ref.read(markerPreviewsProvider.notifier).set(v)),
           ),
+          // Stash creates only MP4 previews by default; the app plays the
+          // WebP ones, which need no video player per tile.
+          ListTile(
+            leading: const Icon(Icons.info_outline),
+            subtitle: Text(l.previewsHint),
+          ),
           ListTile(
             leading: const Icon(Icons.fact_check_outlined),
             title: Text(l.previewsOnServer),

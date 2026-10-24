@@ -1525,6 +1525,10 @@ class AppLocalizationsEn extends AppLocalizations {
       'Markers loop a short clip instead of a still frame.';
 
   @override
+  String get previewsHint =>
+      'Previews need Stash\'s animated (WebP) previews, which it doesn\'t create by default. Generate them in Stash under Settings → Tasks → Generate with \"Animated image previews\" and \"Marker animated image previews\".';
+
+  @override
   String get sectionAbout => 'About';
 
   @override

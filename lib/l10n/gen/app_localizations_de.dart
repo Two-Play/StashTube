@@ -1533,6 +1533,10 @@ class AppLocalizationsDe extends AppLocalizations {
       'Marker zeigen einen kurzen Clip in Dauerschleife statt eines Standbilds.';
 
   @override
+  String get previewsHint =>
+      'Vorschauen brauchen Stashs animierte (WebP-)Vorschauen, die Stash standardmäßig nicht erstellt. Erzeuge sie in Stash unter Einstellungen → Aufgaben → Generieren mit „Animierte Bildvorschauen“ und „Animierte Vorschau für Markierungen“.';
+
+  @override
   String get sectionAbout => 'Über';
 
   @override

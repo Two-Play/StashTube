@@ -2606,6 +2606,12 @@ abstract class AppLocalizations {
   /// **'Markers loop a short clip instead of a still frame.'**
   String get markerPreviewsSubtitle;
 
+  /// No description provided for @previewsHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Previews need Stash\'s animated (WebP) previews, which it doesn\'t create by default. Generate them in Stash under Settings → Tasks → Generate with \"Animated image previews\" and \"Marker animated image previews\".'**
+  String get previewsHint;
+
   /// No description provided for @sectionAbout.
   ///
   /// In en, this message translates to:
