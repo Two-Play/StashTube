@@ -802,6 +802,7 @@
   },
   "markerPreviews": "Play marker previews",
   "markerPreviewsSubtitle": "Markers loop a short clip instead of a still frame.",
+  "previewsHint": "Previews need Stash's animated (WebP) previews, which it doesn't create by default. Generate them in Stash under Settings → Tasks → Generate with \"Animated image previews\" and \"Marker animated image previews\".",
   "sectionAbout": "About",
   "appVersion": "Version",
   "appVersionValue": "{version} (build {build})",
