@@ -756,7 +756,8 @@ class _ShortViewState extends ConsumerState<_ShortView> {
                       onTap: () => setState(() => _rating = !_rating),
                       child: Icon(
                         stars == 0 ? Icons.star_outline_rounded : Icons.star_rounded,
-                        color: stars == 0 ? Colors.white : Colors.amber,
+                        // Over the video: the dark mode's rating color.
+                        color: stars == 0 ? Colors.white : AppColors.forBrightness(Brightness.dark).rating,
                         size: 36,
                         shadows: _shadow,
                       ),
@@ -893,7 +894,7 @@ class _StarPicker extends StatelessWidget {
                 tooltip: i == stars ? l.removeRating : l.rateStars(i),
                 icon: Icon(
                   i <= stars ? Icons.star_rounded : Icons.star_outline_rounded,
-                  color: i <= stars ? Colors.amber : Colors.white,
+                  color: i <= stars ? AppColors.forBrightness(Brightness.dark).rating : Colors.white,
                 ),
                 onPressed: () => onRate(i),
               ),

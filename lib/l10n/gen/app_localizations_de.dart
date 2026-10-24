@@ -265,6 +265,63 @@ class AppLocalizationsDe extends AppLocalizations {
   String get sceneMenuPlay => 'Abspielen';
 
   @override
+  String get sceneMoreOptions => 'Weitere Optionen';
+
+  @override
+  String durationHours(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count Stunden',
+      one: '1 Stunde',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String durationMinutes(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count Minuten',
+      one: '1 Minute',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String durationSeconds(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count Sekunden',
+      one: '1 Sekunde',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String starsCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count Sterne',
+      one: '1 Stern',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String watchedPercent(int percent) {
+    return '$percent % gesehen';
+  }
+
+  @override
+  String markerAt(String time) {
+    return 'Marker bei $time';
+  }
+
+  @override
   String get watchLaterRemove => 'Aus „Später ansehen“ entfernen';
 
   @override
@@ -324,6 +381,12 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get retry => 'Erneut versuchen';
+
+  @override
+  String get playbackFailed => 'Video konnte nicht abgespielt werden';
+
+  @override
+  String get otherQuality => 'Andere Qualität';
 
   @override
   String get sortRecentlyAdded => 'Neu hinzugefügt';
@@ -475,6 +538,10 @@ class AppLocalizationsDe extends AppLocalizations {
   @override
   String get watchLaterEmptyHint =>
       'Tippe bei einer Szene auf „Später“, um sie danach anzusehen.';
+
+  @override
+  String get watchLaterDeviceOnly =>
+      'Nur auf diesem Gerät gespeichert, nicht auf dem Server.';
 
   @override
   String favoriteUpdateFailed(String error) {
@@ -722,6 +789,11 @@ class AppLocalizationsDe extends AppLocalizations {
   @override
   String castConnectFailed(String device, String error) {
     return 'Verbindung zu $device fehlgeschlagen: $error';
+  }
+
+  @override
+  String castPlayFailed(String device, String error) {
+    return 'Wiedergabe auf $device fehlgeschlagen: $error';
   }
 
   @override
@@ -1005,6 +1077,16 @@ class AppLocalizationsDe extends AppLocalizations {
   @override
   String oCountValue(int count) {
     return 'O-Zähler: $count';
+  }
+
+  @override
+  String oCounterLabel(int count) {
+    return 'O · $count';
+  }
+
+  @override
+  String oCounterSemantics(int count) {
+    return 'O-Zähler $count, eins hinzufügen';
   }
 
   @override

@@ -21,10 +21,18 @@ class WatchLaterTab extends ConsumerWidget {
       _ when scenes.isReloading => const LoadingView(),
       AsyncError(:final error) => ErrorView(error: error, onRetry: () => ref.invalidate(watchLaterScenesProvider)),
       AsyncValue(:final value?) when value.isEmpty => Center(
-          child: EmptyView(
-            message: context.l10n.watchLaterEmpty,
-            icon: Icons.watch_later_outlined,
-            hint: context.l10n.watchLaterEmptyHint,
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                EmptyView(
+                  message: context.l10n.watchLaterEmpty,
+                  icon: Icons.watch_later_outlined,
+                  hint: context.l10n.watchLaterEmptyHint,
+                ),
+                const _DeviceOnlyNote(),
+              ],
+            ),
           ),
         ),
       AsyncValue(:final value?) => CustomScrollView(
@@ -51,6 +59,7 @@ class WatchLaterTab extends ConsumerWidget {
               columnWidth: 480,
               itemBuilder: (context, i) => _item(context, ref, value, i),
             ),
+            const SliverToBoxAdapter(child: _DeviceOnlyNote()),
           ],
         ),
       _ => const LoadingView(),
@@ -78,3 +87,31 @@ class WatchLaterTab extends ConsumerWidget {
   }
 }
 
+/// The list is stored per server on this device only (PL-2): a second
+/// device shows its own list.
+class _DeviceOnlyNote extends StatelessWidget {
+  const _DeviceOnlyNote();
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final color = theme.colorScheme.onSurfaceVariant;
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(Icons.smartphone_outlined, size: 16, color: color),
+          const SizedBox(width: 6),
+          Flexible(
+            child: Text(
+              context.l10n.watchLaterDeviceOnly,
+              textAlign: TextAlign.center,
+              style: theme.textTheme.bodySmall?.copyWith(color: color),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}

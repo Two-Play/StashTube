@@ -146,6 +146,55 @@
   "pagingPages": "Pages",
   "channelUnknown": "Unknown",
   "sceneMenuPlay": "Play",
+  "sceneMoreOptions": "More options",
+  "durationHours": "{count, plural, =1{1 hour} other{{count} hours}}",
+  "@durationHours": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "durationMinutes": "{count, plural, =1{1 minute} other{{count} minutes}}",
+  "@durationMinutes": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "durationSeconds": "{count, plural, =1{1 second} other{{count} seconds}}",
+  "@durationSeconds": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "starsCount": "{count, plural, =1{1 star} other{{count} stars}}",
+  "@starsCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "watchedPercent": "{percent}% watched",
+  "@watchedPercent": {
+    "placeholders": {
+      "percent": {
+        "type": "int"
+      }
+    }
+  },
+  "markerAt": "Marker at {time}",
+  "@markerAt": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
   "watchLaterRemove": "Remove from Watch later",
   "watchLaterSave": "Save to Watch later",
   "editDetails": "Edit details",
@@ -182,6 +231,8 @@
   "apply": "Apply",
   "errorTitle": "Something went wrong",
   "retry": "Retry",
+  "playbackFailed": "Couldn't play this video",
+  "otherQuality": "Other quality",
   "sortRecentlyAdded": "Recently added",
   "sortNewest": "Newest",
   "sortShuffle": "Shuffle",
@@ -242,6 +293,7 @@
   "statsOCount": "O-count",
   "watchLaterEmpty": "Nothing saved yet",
   "watchLaterEmptyHint": "Tap \"Later\" on a scene to watch it afterwards.",
+  "watchLaterDeviceOnly": "Saved on this device only, not on the server.",
   "favoriteUpdateFailed": "Couldn't update favorite: {error}",
   "@favoriteUpdateFailed": {
     "placeholders": {
@@ -379,6 +431,17 @@
   "castSearchingHint": "Chromecast and the phone must be on the same Wi-Fi.",
   "castConnectFailed": "Couldn't connect to {device}: {error}",
   "@castConnectFailed": {
+    "placeholders": {
+      "device": {
+        "type": "String"
+      },
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "castPlayFailed": "Couldn't play on {device}: {error}",
+  "@castPlayFailed": {
     "placeholders": {
       "device": {
         "type": "String"
@@ -541,6 +604,22 @@
   "addO": "Add O",
   "oCountValue": "O-count: {count}",
   "@oCountValue": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "oCounterLabel": "O · {count}",
+  "@oCounterLabel": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "oCounterSemantics": "O-counter {count}, add one",
+  "@oCounterSemantics": {
     "placeholders": {
       "count": {
         "type": "int"

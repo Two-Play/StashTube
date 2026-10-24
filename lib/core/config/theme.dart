@@ -88,6 +88,33 @@ class AccentColorNotifier extends Notifier<Color> {
 
 final accentColorProvider = NotifierProvider<AccentColorNotifier, Color>(AccentColorNotifier.new);
 
+/// App colors outside the [ColorScheme], registered in [AppTheme]. Read
+/// them with `AppColors.of(context)`.
+@immutable
+class AppColors extends ThemeExtension<AppColors> {
+  const AppColors({required this.rating});
+
+  /// Filled rating stars on the page background: amber, darkened in light
+  /// mode until it reaches 3:1 against the surface (WCAG non-text contrast).
+  final Color rating;
+
+  static AppColors of(BuildContext context) =>
+      Theme.of(context).extension<AppColors>() ?? AppColors.forBrightness(Theme.of(context).brightness);
+
+  static AppColors forBrightness(Brightness brightness) => AppColors(
+        rating: brightness == Brightness.dark
+            ? Colors.amber.shade600
+            : ensureContrast(Colors.amber.shade600, AppTheme.surfaceFor(brightness), minimum: 3),
+      );
+
+  @override
+  AppColors copyWith({Color? rating}) => AppColors(rating: rating ?? this.rating);
+
+  @override
+  AppColors lerp(AppColors? other, double t) =>
+      other == null ? this : AppColors(rating: Color.lerp(rating, other.rating, t)!);
+}
+
 /// YouTube-like look: neutral surfaces with a user-selectable accent
 /// (StashTube's blue by default).
 abstract final class AppTheme {
@@ -135,6 +162,7 @@ abstract final class AppTheme {
 
     return ThemeData(
       colorScheme: scheme,
+      extensions: [AppColors.forBrightness(brightness)],
       scaffoldBackgroundColor: scheme.surface,
       appBarTheme: AppBarTheme(
         backgroundColor: scheme.surface,

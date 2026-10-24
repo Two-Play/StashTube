@@ -7,6 +7,7 @@ import '../../data/models/list_queries.dart';
 import '../../data/providers.dart';
 import '../../widgets/chip_bar.dart';
 import '../../widgets/paged_sliver.dart';
+import '../../widgets/scene_card.dart';
 import '../../widgets/stash_image.dart';
 import '../shell/navigation.dart';
 import 'gallery_page.dart';
@@ -116,56 +117,67 @@ class GalleryTile extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
-    return InkWell(
-      borderRadius: BorderRadius.circular(12),
-      onTap: () => openPage(ref, GalleryPage(galleryId: gallery.id)),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Expanded(
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(12),
-              child: Stack(
-                fit: StackFit.expand,
-                children: [
-                  StashImage(gallery.coverUrl, fallbackIcon: Icons.photo_library_outlined),
-                  Positioned(
-                    right: 6,
-                    bottom: 6,
-                    child: DecoratedBox(
-                      decoration: BoxDecoration(color: Colors.black.withValues(alpha: 0.75), borderRadius: BorderRadius.circular(4)),
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            const Icon(Icons.photo_library_outlined, color: Colors.white, size: 14),
-                            const SizedBox(width: 4),
-                            Text(
-                              formatNumber(gallery.imageCount),
-                              style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w500),
+    final l = context.l10n;
+    final meta = [gallery.studio?.name ?? l.unknownStudio, if (gallery.date != null) formatDate(gallery.date!)];
+    return TileSemantics(
+      label: [gallery.title, l.imagesCount(gallery.imageCount), ...meta].join(', '),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(12),
+        onTap: () => openPage(ref, GalleryPage(galleryId: gallery.id)),
+        child: ExcludeSemantics(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(12),
+                  child: Stack(
+                    fit: StackFit.expand,
+                    children: [
+                      StashImage(gallery.coverUrl, fallbackIcon: Icons.photo_library_outlined),
+                      Positioned(
+                        right: 6,
+                        bottom: 6,
+                        child: DecoratedBox(
+                          decoration: BoxDecoration(
+                            color: Colors.black.withValues(alpha: 0.75),
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                const Icon(Icons.photo_library_outlined, color: Colors.white, size: 14),
+                                const SizedBox(width: 4),
+                                Text(
+                                  formatNumber(gallery.imageCount),
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                              ],
                             ),
-                          ],
+                          ),
                         ),
                       ),
-                    ),
+                    ],
                   ),
-                ],
+                ),
               ),
-            ),
+              const SizedBox(height: 6),
+              Text(gallery.title, maxLines: 1, overflow: TextOverflow.ellipsis, style: theme.textTheme.titleSmall),
+              Text(
+                meta.join(' • '),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+              ),
+            ],
           ),
-          const SizedBox(height: 6),
-          Text(gallery.title, maxLines: 1, overflow: TextOverflow.ellipsis, style: theme.textTheme.titleSmall),
-          Text(
-            [
-              gallery.studio?.name ?? context.l10n.unknownStudio,
-              if (gallery.date != null) formatDate(gallery.date!),
-            ].join(' • '),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurfaceVariant),
-          ),
-        ],
+        ),
       ),
     );
   }

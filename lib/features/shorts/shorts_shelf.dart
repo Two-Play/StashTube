@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/utils/format.dart';
 import '../../data/models/scene.dart';
 import '../../l10n/l10n.dart';
+import '../../widgets/scene_card.dart';
 import '../../widgets/stash_image.dart';
 import '../shell/nav_bar_config.dart';
 import '../shell/navigation.dart';
@@ -116,13 +117,16 @@ class _ShortTile extends StatelessWidget {
   // Portrait, but shorter than 9:16 so the 2×2 grid fits on screen; the
   // screenshot is cropped to fill it.
   Widget build(BuildContext context) => AspectRatio(
-        aspectRatio: 3 / 4,
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(8),
-          child: Material(
-            color: Colors.black,
-            child: InkWell(
-              onTap: onTap,
+    aspectRatio: 3 / 4,
+    child: ClipRRect(
+      borderRadius: BorderRadius.circular(8),
+      child: Material(
+        color: Colors.black,
+        child: TileSemantics(
+          label: [scene.title, if (scene.duration > 0) spokenDuration(context.l10n, scene.duration)].join(', '),
+          child: InkWell(
+            onTap: onTap,
+            child: ExcludeSemantics(
               child: Stack(
                 fit: StackFit.expand,
                 children: [
@@ -163,5 +167,7 @@ class _ShortTile extends StatelessWidget {
             ),
           ),
         ),
-      );
+      ),
+    ),
+  );
 }

@@ -27,4 +27,13 @@ void main() {
     }
   }
 
+  for (final brightness in Brightness.values) {
+    test('rating stars in $brightness mode stand out from the surface', () {
+      final theme = brightness == Brightness.light ? AppTheme.light(stashTubeBlue) : AppTheme.dark(stashTubeBlue);
+      final rating = theme.extension<AppColors>()!.rating;
+      // Non-text contrast (WCAG 1.4.11): icons need 3:1.
+      expect(_contrast(rating, theme.colorScheme.surface), greaterThanOrEqualTo(3));
+      if (brightness == Brightness.dark) expect(rating, Colors.amber.shade600);
+    });
+  }
 }
