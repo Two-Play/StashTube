@@ -1,3 +1,4 @@
+import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -69,10 +70,50 @@ class FeedPreviewDelayNotifier extends Notifier<Duration> {
 
 final feedPreviewDelayProvider = NotifierProvider<FeedPreviewDelayNotifier, Duration>(FeedPreviewDelayNotifier.new);
 
-/// Whether the previews of [setting] play here: switched on, and no
-/// reduced motion.
+/// Previews (lists and markers) only on Wi-Fi or ethernet (PERF-1); off by
+/// default, so they play on mobile data too, as before.
+class PreviewsWifiOnlyNotifier extends Notifier<bool> {
+  static const _key = 'previews_wifi_only';
+
+  @override
+  bool build() {
+    try {
+      return ref.watch(sharedPreferencesProvider).getBool(_key) ?? false;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  Future<void> set(bool value) async {
+    state = value;
+    await ref.read(sharedPreferencesProvider).setBool(_key, value);
+  }
+}
+
+final previewsWifiOnlyProvider = NotifierProvider<PreviewsWifiOnlyNotifier, bool>(PreviewsWifiOnlyNotifier.new);
+
+/// The device's network connections (connectivity_plus): the current ones
+/// first, then every change. Overridden in tests.
+final connectivityProvider = StreamProvider<List<ConnectivityResult>>((ref) async* {
+  final connectivity = Connectivity();
+  yield await connectivity.checkConnectivity();
+  yield* connectivity.onConnectivityChanged;
+});
+
+/// Whether the device is on Wi-Fi or ethernet, i.e. not (only) on mobile
+/// data; false until the connection is known.
+final unmeteredConnectionProvider = Provider<bool>((ref) {
+  final connections = ref.watch(connectivityProvider).value ?? const [];
+  return connections.any((c) => c == ConnectivityResult.wifi || c == ConnectivityResult.ethernet);
+});
+
+/// Whether the previews of [setting] play here: switched on, no reduced
+/// motion, and on Wi-Fi when they are limited to it. The connection is only
+/// watched with that limit on.
 bool previewsPlay(BuildContext context, WidgetRef ref, NotifierProvider<Notifier<bool>, bool> setting) =>
-    ref.watch(setting) && !MediaQuery.disableAnimationsOf(context);
+    ref.watch(setting) &&
+    !MediaQuery.disableAnimationsOf(context) &&
+    (!ref.watch(previewsWifiOnlyProvider) || ref.watch(unmeteredConnectionProvider));
 
 /// What the lists' previews play: Stash's animated WebP (light, but Stash
 /// only creates them when asked) or its MP4 preview (created by default,

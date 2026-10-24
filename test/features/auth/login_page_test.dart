@@ -16,11 +16,19 @@ void main() {
 
   /// A server at `nas:9999`; with [needsAuth] it accepts only the API key
   /// `key` or the login `me`/`secret`.
-  Future<ProviderContainer> pumpLogin(WidgetTester tester, {required bool needsAuth, bool addServer = false}) async {
+  Future<ProviderContainer> pumpLogin(
+    WidgetTester tester, {
+    required bool needsAuth,
+    bool addServer = false,
+    bool localNetworkDenied = false,
+  }) async {
     tried = [];
     Future<void> verify(ServerConfig config) async {
       tried.add(config);
-      if (config.baseUrl != 'http://nas:9999') {
+      if (localNetworkDenied && config.baseUrl == 'http://nas') {
+        throw const StashApiException('No route to host', isNetworkError: true, kind: StashErrorKind.localNetworkDenied);
+      }
+      if (config.baseUrl != 'http://nas:9999' || localNetworkDenied) {
         throw const StashApiException('unreachable', isNetworkError: true, kind: StashErrorKind.unreachable);
       }
       if (!needsAuth) return;
@@ -147,5 +155,13 @@ void main() {
     expect(find.text('This server needs a login'), findsNothing);
     expect(find.widgetWithText(TextFormField, 'nas'), findsOneWidget, reason: 'the address stays');
     expect(find.text('Connect'), findsOneWidget);
+  });
+
+  testWidgets('a blocked local network (iOS) says where to allow it', (tester) async {
+    final c = await pumpLogin(tester, needsAuth: false, localNetworkDenied: true);
+    await connect(tester);
+    expect(find.textContaining('Settings → Privacy & Security → Local Network → StashTube'), findsOneWidget,
+        reason: 'preferred over the other address just being unreachable');
+    expect(c.read(serverProfilesProvider).profiles, isEmpty);
   });
 }

@@ -8,11 +8,16 @@ import 'package:media_kit/media_kit.dart';
 import 'package:media_kit_video/media_kit_video.dart';
 import 'package:sensors_plus/sensors_plus.dart';
 
+import '../../core/config/theme.dart';
 import '../../core/utils/format.dart';
 import '../../data/models/scene.dart';
 import '../../data/models/scene_details.dart';
+import '../../data/models/scrub_thumbnails.dart';
 import '../../data/providers.dart';
+import '../../data/repositories/stash_session.dart';
+import '../../widgets/stash_image.dart';
 import 'player_providers.dart';
+import 'preview_seek_bar.dart';
 import 'video_controls.dart';
 import '../../l10n/l10n.dart';
 
@@ -270,15 +275,29 @@ class _QualitySheet extends ConsumerWidget {
 
 /// Horizontal list of chapters; tapping one seeks there. Highlights the
 /// chapter currently playing.
+///
+/// Each chapter shows the marker's screenshot with its time as a badge and
+/// the title below. Markers without a screenshot use the scene's sprite
+/// frame at that time; when there are no images at all, the chapters are
+/// plain text tiles.
 class ChapterList extends ConsumerWidget {
-  const ChapterList({super.key, required this.details});
+  const ChapterList({super.key, required this.sceneId, required this.details});
 
+  final String sceneId;
   final SceneDetails details;
+
+  /// Width of a chapter's thumbnail at normal text size: compact enough that
+  /// "Up next" still starts within the first screen.
+  static const thumbnailWidth = 120.0;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final player = ref.watch(playerProvider);
+    // The sprite (and its WebVTT) only for markers without a screenshot.
+    final needsSprite = details.vttUrl != null && details.markers.any((m) => m.screenshotUrl == null);
+    final thumbs = needsSprite ? ref.watch(scrubThumbnailsProvider(sceneId)).value : null;
+    final withImages = thumbs != null || details.markers.any((m) => m.screenshotUrl != null);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -287,13 +306,40 @@ class ChapterList extends ConsumerWidget {
           padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
           child: Text(context.l10n.chapters, style: theme.textTheme.titleSmall),
         ),
-        // Tiles as tall as their text, so large text isn't cut off; wider too.
         StreamBuilder<Duration>(
           stream: player.stream.position,
           initialData: player.state.position,
           builder: (context, snapshot) {
             final current = details.markerAt(snapshot.data!.inMilliseconds / 1000);
-            final tileWidth = MediaQuery.textScalerOf(context).scale(140).clamp(140.0, 240.0);
+            final scaler = MediaQuery.textScalerOf(context);
+            void seek(SceneMarker marker) => ref.read(nowPlayingProvider.notifier).seekTo(marker.seconds);
+
+            if (withImages) {
+              // Wider with large text, so titles keep a few words per line.
+              final width = scaler.scale(thumbnailWidth).clamp(thumbnailWidth, 200.0);
+              return SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                padding: const EdgeInsets.symmetric(horizontal: 12),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    for (final (i, marker) in details.markers.indexed) ...[
+                      if (i > 0) const SizedBox(width: 4),
+                      _ChapterThumbnailTile(
+                        marker: marker,
+                        width: width,
+                        current: identical(marker, current),
+                        sprite: thumbs,
+                        onTap: () => seek(marker),
+                      ),
+                    ],
+                  ],
+                ),
+              );
+            }
+
+            // Tiles as tall as their text, so large text isn't cut off; wider too.
+            final tileWidth = scaler.scale(140).clamp(140.0, 240.0);
             return SingleChildScrollView(
               scrollDirection: Axis.horizontal,
               padding: const EdgeInsets.symmetric(horizontal: 12),
@@ -310,7 +356,7 @@ class ChapterList extends ConsumerWidget {
                         borderRadius: BorderRadius.circular(10),
                         child: InkWell(
                           borderRadius: BorderRadius.circular(10),
-                          onTap: () => ref.read(nowPlayingProvider.notifier).seekTo(marker.seconds),
+                          onTap: () => seek(marker),
                           child: Container(
                             width: tileWidth,
                             constraints: const BoxConstraints(minHeight: 64),
@@ -342,6 +388,121 @@ class ChapterList extends ConsumerWidget {
           },
         ),
       ],
+    );
+  }
+}
+
+/// A chapter with its picture (16:9, time badge) and a two-line title; the
+/// current one sits on the accent's container color with a bold title.
+class _ChapterThumbnailTile extends ConsumerWidget {
+  const _ChapterThumbnailTile({
+    required this.marker,
+    required this.width,
+    required this.current,
+    required this.sprite,
+    required this.onTap,
+  });
+
+  final SceneMarker marker;
+  final double width;
+  final bool current;
+  final ScrubThumbnails? sprite;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final theme = Theme.of(context);
+    final colors = theme.colorScheme;
+    final badge = AppColors.of(context);
+    final height = width * 9 / 16;
+
+    // The sprite frame stands in while the screenshot loads, if it fails
+    // (not generated) and when there is none.
+    final sprite = this.sprite;
+    final cue = sprite?.cueAt(marker.seconds);
+    final Widget standIn = sprite != null && cue != null
+        ? ColoredBox(
+            color: Colors.black,
+            child: Center(
+              child: SpriteFrame(
+                spriteUrl: sprite.spriteUrl,
+                cue: cue,
+                width: width,
+                height: width * cue.height / cue.width,
+                headers: ref.watch(authHeadersProvider),
+              ),
+            ),
+          )
+        : ColoredBox(
+            color: colors.surfaceContainerHighest,
+            child: Center(child: Icon(Icons.bookmark_outline, color: colors.onSurfaceVariant)),
+          );
+
+    return Semantics(
+      button: true,
+      selected: current,
+      child: Material(
+        color: current ? colors.primaryContainer : Colors.transparent,
+        borderRadius: AppRadius.cardBorder,
+        child: InkWell(
+          borderRadius: AppRadius.cardBorder,
+          onTap: onTap,
+          child: Padding(
+            padding: const EdgeInsets.all(AppSpacing.xs),
+            child: SizedBox(
+              width: width,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  ClipRRect(
+                    borderRadius: AppRadius.thumbnailBorder,
+                    child: SizedBox(
+                      width: width,
+                      height: height,
+                      child: Stack(
+                        fit: StackFit.expand,
+                        children: [
+                          if (marker.screenshotUrl case final url?)
+                            StashImage(url, width: width, height: height, standIn: standIn)
+                          else
+                            standIn,
+                          Positioned(
+                            right: AppSpacing.xs,
+                            bottom: AppSpacing.xs,
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xs, vertical: 1),
+                              decoration:
+                                  BoxDecoration(color: badge.badgeBackground, borderRadius: AppRadius.badgeBorder),
+                              child: Text(
+                                formatDuration(marker.seconds),
+                                style: TextStyle(
+                                  color: badge.onBadge,
+                                  fontSize: AppTextSize.overlayLabel,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: AppSpacing.xs),
+                  Text(
+                    marker.title,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: current ? colors.onPrimaryContainer : colors.onSurface,
+                      fontWeight: current ? FontWeight.w600 : null,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
     );
   }
 }

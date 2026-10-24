@@ -42,6 +42,7 @@ class YouPage extends ConsumerWidget {
     AppTab.groups,
     AppTab.markers,
     AppTab.stats,
+    AppTab.subscriptions,
     AppTab.performers,
     AppTab.studios,
     AppTab.tags,
@@ -102,6 +103,7 @@ class YouPage extends ConsumerWidget {
             SliverList.list(
               children: [
                 tile(AppTab.stats, title: l.libraryStats),
+                tile(AppTab.subscriptions),
                 tile(AppTab.performers),
                 tile(AppTab.studios),
                 tile(AppTab.tags),

@@ -109,6 +109,7 @@
   "tabHome": "Home",
   "tabPerformers": "Performers",
   "tabStudios": "Studios",
+  "tabSubscriptions": "Subscriptions",
   "tabLibrary": "Library",
   "tabWatchLater": "Later",
   "tabTags": "Tags",
@@ -278,6 +279,44 @@
     }
   },
   "groupNoScenes": "This group has no scenes",
+  "addToGroup": "Add to group…",
+  "addToGroupTitle": "Add to group",
+  "searchGroups": "Search groups",
+  "groupsNoMatch": "No groups match",
+  "newGroup": "New group",
+  "groupName": "Group name",
+  "addedToGroup": "Added to {group}",
+  "@addedToGroup": {
+    "placeholders": {
+      "group": {
+        "type": "String"
+      }
+    }
+  },
+  "removedFromGroup": "Removed from {group}",
+  "@removedFromGroup": {
+    "placeholders": {
+      "group": {
+        "type": "String"
+      }
+    }
+  },
+  "groupUpdateFailed": "Couldn't change the group: {error}",
+  "@groupUpdateFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "groupCreateFailed": "Couldn't create the group: {error}",
+  "@groupCreateFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
   "playAll": "Play all",
   "imagesEmpty": "No images yet",
   "statsLibrary": "Library",
@@ -295,6 +334,83 @@
   "statsWatchTime": "Watch time",
   "statsScenesWatched": "Scenes watched",
   "statsOCount": "O-count",
+  "statsWatchHistory": "Watch history",
+  "statsChartWeeks": "12 weeks",
+  "statsChartDays": "30 days",
+  "statsPlaysPerWeek": "Plays per week",
+  "statsPlaysPerDay": "Plays per day",
+  "statsChartTotal": "Total",
+  "statsChartAverage": "Average",
+  "statsAveragePerWeek": "{average} per week",
+  "@statsAveragePerWeek": {
+    "placeholders": {
+      "average": {
+        "type": "String"
+      }
+    }
+  },
+  "statsAveragePerDay": "{average} per day",
+  "@statsAveragePerDay": {
+    "placeholders": {
+      "average": {
+        "type": "String"
+      }
+    }
+  },
+  "statsChartSummaryWeek": "{count, plural, =1{1 play this week, {average} on average} other{{count} plays this week, {average} on average}}",
+  "@statsChartSummaryWeek": {
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "format": "decimalPattern"
+      },
+      "average": {
+        "type": "String"
+      }
+    }
+  },
+  "statsChartSummaryDay": "{count, plural, =1{1 play today, {average} on average} other{{count} plays today, {average} on average}}",
+  "@statsChartSummaryDay": {
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "format": "decimalPattern"
+      },
+      "average": {
+        "type": "String"
+      }
+    }
+  },
+  "statsChartWeekOf": "Week of {date}",
+  "@statsChartWeekOf": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "statsChartBar": "{period}: {plays}",
+  "@statsChartBar": {
+    "placeholders": {
+      "period": {
+        "type": "String"
+      },
+      "plays": {
+        "type": "String"
+      }
+    }
+  },
+  "statsChartEmpty": "No plays in this period",
+  "statsChartPlaysNote": "Stash keeps the watch time per scene, not per play, so the chart counts plays.",
+  "statsChartTruncated": "Based on the {count} most recently played scenes.",
+  "@statsChartTruncated": {
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "format": "decimalPattern"
+      }
+    }
+  },
   "watchLaterEmpty": "Nothing saved yet",
   "watchLaterEmptyHint": "Tap \"Later\" on a scene to watch it afterwards.",
   "watchLaterDeviceOnly": "Saved on this device only, not on the server.",
@@ -369,6 +485,28 @@
   "search": "Search",
   "continueWatching": "Continue watching",
   "newFromFavorites": "New from favorites",
+  "subscriptionsEmpty": "No subscriptions yet",
+  "subscriptionsEmptyHint": "Mark performers as favorites to see their newest scenes here.",
+  "performerHasNewScenes": "{name}, new scenes",
+  "@performerHasNewScenes": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "newSinceLastVisit": "{count, plural, =1{1 new video since your last visit} other{{count} new videos since your last visit}}",
+  "@newSinceLastVisit": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "newSinceLastVisitTitle": "New since your last visit",
+  "newSinceLastVisitEmpty": "Nothing new since your last visit",
+  "randomScene": "Play a random scene",
+  "randomSceneNone": "There are no scenes to pick from",
   "searchHint": "Search Stash",
   "searchNoScenes": "No scenes match \"{term}\"",
   "@searchNoScenes": {
@@ -836,6 +974,27 @@
   },
   "errorNotFound": "Not found.",
   "errorNotSaved": "Nothing was saved.",
+  "errorLocalNetworkDenied": "StashTube can't reach your local network. Allow it in Settings → Privacy & Security → Local Network → StashTube.",
+  "@errorLocalNetworkDenied": {
+    "description": "iOS blocked the connection to a server in the home network because the Local Network permission is off."
+  },
+  "errorLocalNetworkTitle": "No access to the local network",
+  "errorUnreachableTitle": "Can't reach the server",
+  "errorUnreachableHint": "Check that the server is running and that you're in its network or connected to your VPN.",
+  "errorUnauthorizedTitle": "Access denied",
+  "errorUnauthorizedHint": "The server didn't accept the API key or login. Check them in the server settings.",
+  "errorInvalidCredentialsTitle": "Sign-in failed",
+  "errorNotReadyTitle": "Server not ready",
+  "errorNotReadyHint": "The server is running but not set up yet. Finish its setup in Stash's web interface.",
+  "errorNotFoundTitle": "Not found",
+  "errorNotFoundHint": "It may have been deleted or moved on the server.",
+  "errorServerHint": "The server reported an error. The details may help.",
+  "errorUnexpectedHint": "Something unexpected happened. Try again, or look at the details.",
+  "errorShowDetails": "Details",
+  "@errorShowDetails": {
+    "description": "Button under an error that shows its technical message."
+  },
+  "errorHideDetails": "Hide details",
   "navBarCount": "{count} of {max} tabs chosen",
   "@navBarCount": {
     "placeholders": {
@@ -925,6 +1084,25 @@
   "unmute": "Unmute",
   "moreActions": "More",
   "fastForward2x": "2× speed",
+  "gestureTipsTitle": "Player gestures",
+  "gestureTipDoubleTap": "Double-tap left or right: ±{seconds} s",
+  "@gestureTipDoubleTap": {
+    "placeholders": {
+      "seconds": {
+        "type": "int"
+      }
+    }
+  },
+  "gestureTipHold": "Hold: 2× speed",
+  "gestureTipPinch": "Pinch: zoom",
+  "gestureTipSwipeDown": "Swipe down: minimize",
+  "gestureTipsDone": "Got it",
+  "showGestureTipsAgain": "Show gesture tips again",
+  "showGestureTipsAgainSubtitle": "The next time the player's controls appear",
+  "lockTouch": "Lock screen",
+  "touchLocked": "Screen locked",
+  "holdToUnlock": "Hold to unlock",
+  "unlockTouch": "Unlock",
   "unknownStudio": "Unknown studio",
   "unknownPerformer": "Unknown performer",
   "playbackSpeed": "Playback speed",
@@ -1018,6 +1196,19 @@
   "channelLinks": "Links",
   "copyLink": "Copy link",
   "linkCopied": "Link copied",
+  "openLink": "Open link",
+  "openLinkFailed": "Couldn't open {url}",
+  "@openLinkFailed": {
+    "placeholders": {
+      "url": {
+        "type": "String"
+      }
+    }
+  },
+  "openInStash": "Open in Stash",
+  "@openInStash": {
+    "description": "Opens the scene in the Stash web interface in the browser."
+  },
   "fieldAliases": "Also known as",
   "fieldDeathDate": "Died",
   "fieldCountry": "Country",
@@ -1081,6 +1272,8 @@
   },
   "markerPreviews": "Play marker previews",
   "markerPreviewsSubtitle": "Markers loop a short clip instead of a still frame.",
+  "previewsWifiOnly": "Only on Wi-Fi",
+  "previewsWifiOnlySubtitle": "No previews play on mobile data.",
   "previewsHint": "Previews need Stash's animated (WebP) previews, which it doesn't create by default. Generate them in Stash under Settings → Tasks → Generate with \"Animated image previews\" and \"Marker animated image previews\".",
   "sectionAbout": "About",
   "appVersion": "Version",
@@ -1152,6 +1345,22 @@
   "taskScanGenerates": "Also create for new files",
   "startTask": "Start",
   "taskStarted": "Task started on the server",
+  "taskFinishedNamed": "Finished: {task}",
+  "@taskFinishedNamed": {
+    "placeholders": {
+      "task": {
+        "type": "String"
+      }
+    }
+  },
+  "taskFailedNamed": "Failed: {task}",
+  "@taskFailedNamed": {
+    "placeholders": {
+      "task": {
+        "type": "String"
+      }
+    }
+  },
   "sectionJobs": "Running tasks",
   "noJobs": "No tasks running",
   "stopJob": "Stop task",

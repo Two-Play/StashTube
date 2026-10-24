@@ -40,7 +40,10 @@ void main() {
 
   testWidgets('README screenshots', (tester) async {
     // English, whatever the simulator's language (the app's language setting).
-    await (await SharedPreferences.getInstance()).setString('locale', 'en');
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('locale', 'en');
+    // The player's one-time gesture tips would cover its controls.
+    await prefs.setBool('gesture_tips_seen', true);
     await app.main();
     await run(tester, 3);
 

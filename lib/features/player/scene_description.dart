@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/config/design_tokens.dart';
+import '../../core/config/server_config.dart';
+import '../../core/utils/external_links.dart';
 import '../../core/utils/format.dart';
 import '../../data/models/scene.dart';
 import '../../data/providers.dart';
@@ -52,6 +54,7 @@ class SceneDescriptionSheet extends ConsumerWidget {
     final tags = effectiveTags(ref, scene);
     final meta = sceneMetaText(l, scene);
     final description = scene.details?.trim() ?? '';
+    final server = ref.watch(serverConfigProvider);
 
     // Closes the sheet, then runs [action] with a context that outlives it.
     void then(void Function(BuildContext below) action) {
@@ -116,13 +119,24 @@ class SceneDescriptionSheet extends ConsumerWidget {
           ],
           Padding(
             padding: const EdgeInsets.fromLTRB(AppSpacing.l, AppSpacing.l, AppSpacing.l, 0),
-            child: Align(
-              alignment: Alignment.centerLeft,
-              child: FilledButton.tonalIcon(
-                icon: const Icon(Icons.edit_outlined),
-                label: Text(l.editScene),
-                onPressed: () => then((below) => openEditor(below, ref, SceneEditPage(scene: scene))),
-              ),
+            child: Wrap(
+              spacing: AppSpacing.s,
+              runSpacing: AppSpacing.s,
+              children: [
+                FilledButton.tonalIcon(
+                  icon: const Icon(Icons.edit_outlined),
+                  label: Text(l.editScene),
+                  onPressed: () => then((below) => openEditor(below, ref, SceneEditPage(scene: scene))),
+                ),
+                // The scene in Stash's web interface (not for the demo, which
+                // has none); the browser signs in itself, no API key.
+                if (server != null && server.baseUrl != ServerConfig.demoUrl)
+                  OutlinedButton.icon(
+                    icon: const Icon(Icons.open_in_new),
+                    label: Text(l.openInStash),
+                    onPressed: () => openExternalUrl(context, stashSceneWebUrl(server.baseUrl, scene.id)),
+                  ),
+              ],
             ),
           ),
         ],

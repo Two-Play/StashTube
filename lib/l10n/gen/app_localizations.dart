@@ -260,6 +260,12 @@ abstract class AppLocalizations {
   /// **'Studios'**
   String get tabStudios;
 
+  /// No description provided for @tabSubscriptions.
+  ///
+  /// In en, this message translates to:
+  /// **'Subscriptions'**
+  String get tabSubscriptions;
+
   /// No description provided for @tabLibrary.
   ///
   /// In en, this message translates to:
@@ -728,6 +734,66 @@ abstract class AppLocalizations {
   /// **'This group has no scenes'**
   String get groupNoScenes;
 
+  /// No description provided for @addToGroup.
+  ///
+  /// In en, this message translates to:
+  /// **'Add to group…'**
+  String get addToGroup;
+
+  /// No description provided for @addToGroupTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Add to group'**
+  String get addToGroupTitle;
+
+  /// No description provided for @searchGroups.
+  ///
+  /// In en, this message translates to:
+  /// **'Search groups'**
+  String get searchGroups;
+
+  /// No description provided for @groupsNoMatch.
+  ///
+  /// In en, this message translates to:
+  /// **'No groups match'**
+  String get groupsNoMatch;
+
+  /// No description provided for @newGroup.
+  ///
+  /// In en, this message translates to:
+  /// **'New group'**
+  String get newGroup;
+
+  /// No description provided for @groupName.
+  ///
+  /// In en, this message translates to:
+  /// **'Group name'**
+  String get groupName;
+
+  /// No description provided for @addedToGroup.
+  ///
+  /// In en, this message translates to:
+  /// **'Added to {group}'**
+  String addedToGroup(String group);
+
+  /// No description provided for @removedFromGroup.
+  ///
+  /// In en, this message translates to:
+  /// **'Removed from {group}'**
+  String removedFromGroup(String group);
+
+  /// No description provided for @groupUpdateFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t change the group: {error}'**
+  String groupUpdateFailed(String error);
+
+  /// No description provided for @groupCreateFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t create the group: {error}'**
+  String groupCreateFailed(String error);
+
   /// No description provided for @playAll.
   ///
   /// In en, this message translates to:
@@ -829,6 +895,102 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'O-count'**
   String get statsOCount;
+
+  /// No description provided for @statsWatchHistory.
+  ///
+  /// In en, this message translates to:
+  /// **'Watch history'**
+  String get statsWatchHistory;
+
+  /// No description provided for @statsChartWeeks.
+  ///
+  /// In en, this message translates to:
+  /// **'12 weeks'**
+  String get statsChartWeeks;
+
+  /// No description provided for @statsChartDays.
+  ///
+  /// In en, this message translates to:
+  /// **'30 days'**
+  String get statsChartDays;
+
+  /// No description provided for @statsPlaysPerWeek.
+  ///
+  /// In en, this message translates to:
+  /// **'Plays per week'**
+  String get statsPlaysPerWeek;
+
+  /// No description provided for @statsPlaysPerDay.
+  ///
+  /// In en, this message translates to:
+  /// **'Plays per day'**
+  String get statsPlaysPerDay;
+
+  /// No description provided for @statsChartTotal.
+  ///
+  /// In en, this message translates to:
+  /// **'Total'**
+  String get statsChartTotal;
+
+  /// No description provided for @statsChartAverage.
+  ///
+  /// In en, this message translates to:
+  /// **'Average'**
+  String get statsChartAverage;
+
+  /// No description provided for @statsAveragePerWeek.
+  ///
+  /// In en, this message translates to:
+  /// **'{average} per week'**
+  String statsAveragePerWeek(String average);
+
+  /// No description provided for @statsAveragePerDay.
+  ///
+  /// In en, this message translates to:
+  /// **'{average} per day'**
+  String statsAveragePerDay(String average);
+
+  /// No description provided for @statsChartSummaryWeek.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 play this week, {average} on average} other{{count} plays this week, {average} on average}}'**
+  String statsChartSummaryWeek(int count, String average);
+
+  /// No description provided for @statsChartSummaryDay.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 play today, {average} on average} other{{count} plays today, {average} on average}}'**
+  String statsChartSummaryDay(int count, String average);
+
+  /// No description provided for @statsChartWeekOf.
+  ///
+  /// In en, this message translates to:
+  /// **'Week of {date}'**
+  String statsChartWeekOf(String date);
+
+  /// No description provided for @statsChartBar.
+  ///
+  /// In en, this message translates to:
+  /// **'{period}: {plays}'**
+  String statsChartBar(String period, String plays);
+
+  /// No description provided for @statsChartEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No plays in this period'**
+  String get statsChartEmpty;
+
+  /// No description provided for @statsChartPlaysNote.
+  ///
+  /// In en, this message translates to:
+  /// **'Stash keeps the watch time per scene, not per play, so the chart counts plays.'**
+  String get statsChartPlaysNote;
+
+  /// No description provided for @statsChartTruncated.
+  ///
+  /// In en, this message translates to:
+  /// **'Based on the {count} most recently played scenes.'**
+  String statsChartTruncated(int count);
 
   /// No description provided for @watchLaterEmpty.
   ///
@@ -1021,6 +1183,54 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'New from favorites'**
   String get newFromFavorites;
+
+  /// No description provided for @subscriptionsEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No subscriptions yet'**
+  String get subscriptionsEmpty;
+
+  /// No description provided for @subscriptionsEmptyHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Mark performers as favorites to see their newest scenes here.'**
+  String get subscriptionsEmptyHint;
+
+  /// No description provided for @performerHasNewScenes.
+  ///
+  /// In en, this message translates to:
+  /// **'{name}, new scenes'**
+  String performerHasNewScenes(String name);
+
+  /// No description provided for @newSinceLastVisit.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 new video since your last visit} other{{count} new videos since your last visit}}'**
+  String newSinceLastVisit(int count);
+
+  /// No description provided for @newSinceLastVisitTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'New since your last visit'**
+  String get newSinceLastVisitTitle;
+
+  /// No description provided for @newSinceLastVisitEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing new since your last visit'**
+  String get newSinceLastVisitEmpty;
+
+  /// No description provided for @randomScene.
+  ///
+  /// In en, this message translates to:
+  /// **'Play a random scene'**
+  String get randomScene;
+
+  /// No description provided for @randomSceneNone.
+  ///
+  /// In en, this message translates to:
+  /// **'There are no scenes to pick from'**
+  String get randomSceneNone;
 
   /// No description provided for @searchHint.
   ///
@@ -2366,6 +2576,96 @@ abstract class AppLocalizations {
   /// **'Nothing was saved.'**
   String get errorNotSaved;
 
+  /// iOS blocked the connection to a server in the home network because the Local Network permission is off.
+  ///
+  /// In en, this message translates to:
+  /// **'StashTube can\'t reach your local network. Allow it in Settings → Privacy & Security → Local Network → StashTube.'**
+  String get errorLocalNetworkDenied;
+
+  /// No description provided for @errorLocalNetworkTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'No access to the local network'**
+  String get errorLocalNetworkTitle;
+
+  /// No description provided for @errorUnreachableTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Can\'t reach the server'**
+  String get errorUnreachableTitle;
+
+  /// No description provided for @errorUnreachableHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Check that the server is running and that you\'re in its network or connected to your VPN.'**
+  String get errorUnreachableHint;
+
+  /// No description provided for @errorUnauthorizedTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Access denied'**
+  String get errorUnauthorizedTitle;
+
+  /// No description provided for @errorUnauthorizedHint.
+  ///
+  /// In en, this message translates to:
+  /// **'The server didn\'t accept the API key or login. Check them in the server settings.'**
+  String get errorUnauthorizedHint;
+
+  /// No description provided for @errorInvalidCredentialsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign-in failed'**
+  String get errorInvalidCredentialsTitle;
+
+  /// No description provided for @errorNotReadyTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Server not ready'**
+  String get errorNotReadyTitle;
+
+  /// No description provided for @errorNotReadyHint.
+  ///
+  /// In en, this message translates to:
+  /// **'The server is running but not set up yet. Finish its setup in Stash\'s web interface.'**
+  String get errorNotReadyHint;
+
+  /// No description provided for @errorNotFoundTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Not found'**
+  String get errorNotFoundTitle;
+
+  /// No description provided for @errorNotFoundHint.
+  ///
+  /// In en, this message translates to:
+  /// **'It may have been deleted or moved on the server.'**
+  String get errorNotFoundHint;
+
+  /// No description provided for @errorServerHint.
+  ///
+  /// In en, this message translates to:
+  /// **'The server reported an error. The details may help.'**
+  String get errorServerHint;
+
+  /// No description provided for @errorUnexpectedHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Something unexpected happened. Try again, or look at the details.'**
+  String get errorUnexpectedHint;
+
+  /// Button under an error that shows its technical message.
+  ///
+  /// In en, this message translates to:
+  /// **'Details'**
+  String get errorShowDetails;
+
+  /// No description provided for @errorHideDetails.
+  ///
+  /// In en, this message translates to:
+  /// **'Hide details'**
+  String get errorHideDetails;
+
   /// No description provided for @navBarCount.
   ///
   /// In en, this message translates to:
@@ -2678,6 +2978,78 @@ abstract class AppLocalizations {
   /// **'2× speed'**
   String get fastForward2x;
 
+  /// No description provided for @gestureTipsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Player gestures'**
+  String get gestureTipsTitle;
+
+  /// No description provided for @gestureTipDoubleTap.
+  ///
+  /// In en, this message translates to:
+  /// **'Double-tap left or right: ±{seconds} s'**
+  String gestureTipDoubleTap(int seconds);
+
+  /// No description provided for @gestureTipHold.
+  ///
+  /// In en, this message translates to:
+  /// **'Hold: 2× speed'**
+  String get gestureTipHold;
+
+  /// No description provided for @gestureTipPinch.
+  ///
+  /// In en, this message translates to:
+  /// **'Pinch: zoom'**
+  String get gestureTipPinch;
+
+  /// No description provided for @gestureTipSwipeDown.
+  ///
+  /// In en, this message translates to:
+  /// **'Swipe down: minimize'**
+  String get gestureTipSwipeDown;
+
+  /// No description provided for @gestureTipsDone.
+  ///
+  /// In en, this message translates to:
+  /// **'Got it'**
+  String get gestureTipsDone;
+
+  /// No description provided for @showGestureTipsAgain.
+  ///
+  /// In en, this message translates to:
+  /// **'Show gesture tips again'**
+  String get showGestureTipsAgain;
+
+  /// No description provided for @showGestureTipsAgainSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'The next time the player\'s controls appear'**
+  String get showGestureTipsAgainSubtitle;
+
+  /// No description provided for @lockTouch.
+  ///
+  /// In en, this message translates to:
+  /// **'Lock screen'**
+  String get lockTouch;
+
+  /// No description provided for @touchLocked.
+  ///
+  /// In en, this message translates to:
+  /// **'Screen locked'**
+  String get touchLocked;
+
+  /// No description provided for @holdToUnlock.
+  ///
+  /// In en, this message translates to:
+  /// **'Hold to unlock'**
+  String get holdToUnlock;
+
+  /// No description provided for @unlockTouch.
+  ///
+  /// In en, this message translates to:
+  /// **'Unlock'**
+  String get unlockTouch;
+
   /// No description provided for @unknownStudio.
   ///
   /// In en, this message translates to:
@@ -2918,6 +3290,24 @@ abstract class AppLocalizations {
   /// **'Link copied'**
   String get linkCopied;
 
+  /// No description provided for @openLink.
+  ///
+  /// In en, this message translates to:
+  /// **'Open link'**
+  String get openLink;
+
+  /// No description provided for @openLinkFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t open {url}'**
+  String openLinkFailed(String url);
+
+  /// Opens the scene in the Stash web interface in the browser.
+  ///
+  /// In en, this message translates to:
+  /// **'Open in Stash'**
+  String get openInStash;
+
   /// No description provided for @fieldAliases.
   ///
   /// In en, this message translates to:
@@ -3121,6 +3511,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Markers loop a short clip instead of a still frame.'**
   String get markerPreviewsSubtitle;
+
+  /// No description provided for @previewsWifiOnly.
+  ///
+  /// In en, this message translates to:
+  /// **'Only on Wi-Fi'**
+  String get previewsWifiOnly;
+
+  /// No description provided for @previewsWifiOnlySubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'No previews play on mobile data.'**
+  String get previewsWifiOnlySubtitle;
 
   /// No description provided for @previewsHint.
   ///
@@ -3343,6 +3745,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Task started on the server'**
   String get taskStarted;
+
+  /// No description provided for @taskFinishedNamed.
+  ///
+  /// In en, this message translates to:
+  /// **'Finished: {task}'**
+  String taskFinishedNamed(String task);
+
+  /// No description provided for @taskFailedNamed.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed: {task}'**
+  String taskFailedNamed(String task);
 
   /// No description provided for @sectionJobs.
   ///

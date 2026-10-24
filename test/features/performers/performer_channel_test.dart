@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:stash_app_mobile/core/config/server_config.dart';
+import 'package:stash_app_mobile/core/utils/external_links.dart';
 import 'package:stash_app_mobile/data/models/gallery.dart';
 import 'package:stash_app_mobile/data/models/image_item.dart';
 import 'package:stash_app_mobile/data/models/list_queries.dart';
@@ -295,7 +296,17 @@ void main() {
     addTearDown(() => tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(SystemChannels.platform, null));
     final scrollable = find.byType(Scrollable).first;
     await tester.scrollUntilVisible(find.text('https://example.com/alice'), 100, scrollable: scrollable);
+    // A tap opens the link in the browser, a long press copies it.
+    final opened = <Uri>[];
+    urlOpener = (uri) async {
+      opened.add(uri);
+      return true;
+    };
+    addTearDown(() => urlOpener = (uri) async => false);
     await tester.tap(find.text('https://example.com/alice'));
+    await tester.pump();
+    expect(opened, [Uri.parse('https://example.com/alice')]);
+    await tester.longPress(find.text('https://example.com/alice'));
     await tester.pump();
     expect(find.text('Link copied'), findsOneWidget);
     expect(copied, 'https://example.com/alice');

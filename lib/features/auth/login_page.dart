@@ -529,7 +529,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
 /// default port) that answers as a Stash server. All are tried, since
 /// something else may answer on one of them (e.g. a proxy). If none works,
 /// the error of one that reached a server (e.g. a wrong API key) is shown
-/// rather than failing to connect; [verify] is replaceable for tests.
+/// rather than failing to connect, or else a blocked local network; [verify] is replaceable for tests.
 Future<ServerConfig> findServer(
   List<ServerConfig> candidates, {
   Future<void> Function(ServerConfig) verify = StashRepository.verifyServer,
@@ -544,9 +544,14 @@ Future<ServerConfig> findServer(
     }
   }
   if (errors.isEmpty) throw StateError('No address to try');
+  // Then a blocked local network (iOS), which says what to do about it.
+  bool kind(Object e, bool Function(StashApiException) test) => e is StashApiException && test(e);
   final (error, stack) = errors.firstWhere(
-    (e) => e.$1 is StashApiException && !(e.$1 as StashApiException).isNetworkError,
-    orElse: () => errors.first,
+    (e) => kind(e.$1, (e) => !e.isNetworkError),
+    orElse: () => errors.firstWhere(
+      (e) => kind(e.$1, (e) => e.kind == StashErrorKind.localNetworkDenied),
+      orElse: () => errors.first,
+    ),
   );
   Error.throwWithStackTrace(error, stack);
 }

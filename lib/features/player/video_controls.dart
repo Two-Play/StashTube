@@ -15,9 +15,11 @@ import '../../widgets/play_pause_icon.dart';
 import '../cast/cast_providers.dart';
 import '../cast/cast_ui.dart';
 import '../pip/pip.dart';
+import 'gesture_hints.dart';
 import 'player_controls.dart' show fullscreenByRotation, playerVideoKey;
 import 'player_providers.dart';
 import 'preview_seek_bar.dart';
+import 'touch_lock.dart';
 import 'video_zoom.dart';
 import '../../l10n/l10n.dart';
 
@@ -32,7 +34,12 @@ import '../../l10n/l10n.dart';
 ///   stays until zoomed out or another scene starts
 /// * top: collapse (outside fullscreen), [topActions], speed, quality
 /// * center: play/pause or a buffering spinner
-/// * bottom: time, fullscreen toggle, [PreviewSeekBar]
+/// * bottom: time, touch lock (fullscreen), fullscreen toggle,
+///   [PreviewSeekBar]
+/// * the first time they show: [GestureTipsOverlay] (CTRL-2), once per
+///   install ([gestureTipsSeenProvider])
+/// * touch lock in fullscreen ([TouchLockLayer], CTRL-3): every touch is
+///   ignored until the lock icon is held; leaving fullscreen unlocks
 /// * after a playback error ([playbackErrorProvider]): a message with
 ///   "Retry" and "Other quality" in place of play/pause; the controls show
 ///   and don't hide by themselves while it is there. Here rather than in
@@ -81,6 +88,12 @@ class _StashVideoControlsState extends ConsumerState<StashVideoControls> {
 
   bool get _pinching => _pinchStartZoom != null;
 
+  /// The gesture tips cover the video (CTRL-2).
+  bool _tipsShowing = false;
+
+  /// Touch lock in fullscreen (CTRL-3).
+  bool _locked = false;
+
   Offset get _focal {
     final points = _pointers.values.take(2).toList();
     return (points[0] + points[1]) / 2;
@@ -92,6 +105,8 @@ class _StashVideoControlsState extends ConsumerState<StashVideoControls> {
   }
 
   void _onPointerDown(PointerDownEvent e) {
+    // The lock and the tips take the touches; no pinch underneath.
+    if (_locked || _tipsShowing) return;
     _pointers[e.pointer] = e.localPosition;
     if (_pointers.length == 2) {
       _endHold();
@@ -135,7 +150,12 @@ class _StashVideoControlsState extends ConsumerState<StashVideoControls> {
       if (!mounted) return;
       if (error != null) {
         _hideTimer?.cancel();
-        setState(() => _visible = true);
+        // "Retry" and the top bar must be reachable: no lock, no tips.
+        setState(() {
+          _visible = true;
+          _locked = false;
+          _tipsShowing = false;
+        });
       } else {
         _scheduleHide();
       }
@@ -161,8 +181,40 @@ class _StashVideoControlsState extends ConsumerState<StashVideoControls> {
   }
 
   void _show() {
+    // The first time: the gesture tips instead of the controls, but not over
+    // a playback error.
+    if (!ref.read(gestureTipsSeenProvider) && ref.read(playbackErrorProvider) == null) {
+      _hideTimer?.cancel();
+      setState(() => _tipsShowing = true);
+      return;
+    }
     setState(() => _visible = true);
     _scheduleHide();
+  }
+
+  void _dismissTips() {
+    setState(() => _tipsShowing = false);
+    unawaited(ref.read(gestureTipsSeenProvider.notifier).dismiss());
+    _show();
+  }
+
+  void _lock() {
+    Haptics.medium();
+    _endHold();
+    _pointers.clear();
+    _hideTimer?.cancel();
+    setState(() {
+      _locked = true;
+      _visible = false;
+      _pinchStartZoom = null;
+    });
+  }
+
+  void _unlock() {
+    if (!_locked) return;
+    Haptics.heavy();
+    setState(() => _locked = false);
+    _show();
   }
 
   void _hide() {
@@ -235,6 +287,14 @@ class _StashVideoControlsState extends ConsumerState<StashVideoControls> {
     setState(() => _rateBeforeHold = null);
     _heldPlayer = null;
     ref.read(playerProvider).setRate(rate);
+  }
+
+  @override
+  void didUpdateWidget(StashVideoControls oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // Leaving fullscreen unlocks (media_kit's fullscreen route usually has
+    // its own controls, which go away with it).
+    if (!widget.fullscreen && _locked) _locked = false;
   }
 
   @override
@@ -325,7 +385,7 @@ class _StashVideoControlsState extends ConsumerState<StashVideoControls> {
             ),
           ),
           IgnorePointer(
-            ignoring: !_visible,
+            ignoring: !_visible || _locked,
             child: AnimatedOpacity(
               opacity: _visible ? 1 : 0,
               duration: const Duration(milliseconds: 200),
@@ -411,6 +471,12 @@ class _StashVideoControlsState extends ConsumerState<StashVideoControls> {
                           children: [
                             IgnorePointer(child: _TimeLabel(player: player)),
                             const Spacer(),
+                            if (fullscreen)
+                              IconButton(
+                                tooltip: context.l10n.lockTouch,
+                                icon: const Icon(Icons.lock_outline),
+                                onPressed: _lock,
+                              ),
                             IconButton(
                               tooltip: fullscreen ? context.l10n.exitFullscreen : context.l10n.fullscreen,
                               icon: Icon(fullscreen ? Icons.fullscreen_exit : Icons.fullscreen),
@@ -442,6 +508,10 @@ class _StashVideoControlsState extends ConsumerState<StashVideoControls> {
           ),
           // Always there (empty without an error), so the tree stays the same.
           _PlaybackErrorOverlay(error: error, sceneId: widget.scene.id, onQuality: widget.onQuality),
+          if (_tipsShowing)
+            GestureTipsOverlay(seekSeconds: StashVideoControls.seekStep.inSeconds, onDismiss: _dismissTips),
+          // Always there (empty while unlocked), above the gestures and buttons.
+          TouchLockLayer(locked: _locked && fullscreen, onUnlock: _unlock),
           if (_pinching)
             IgnorePointer(
               child: Align(

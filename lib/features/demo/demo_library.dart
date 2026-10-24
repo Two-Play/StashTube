@@ -166,15 +166,21 @@ class DemoLibrary {
       );
     }
 
-    // Some watch history: (scene, resume position, plays, hours ago).
-    for (final (id, resume, plays, hoursAgo) in [('6', 5.0, 2, 3), ('3', 0.0, 1, 26), ('8', 8.0, 1, 50)]) {
+    // Some watch history: (scene, resume position, plays as hours ago, the
+    // last play first), spread over the stats' watch chart (12 weeks).
+    for (final (id, resume, hoursAgo) in [
+      ('6', 5.0, [3, 30, 75, 200, 340, 510, 700, 900, 1300]),
+      ('3', 0.0, [26, 120, 260, 610, 1100, 1800]),
+      ('8', 8.0, [50, 170, 420, 800]),
+    ]) {
       final scene = _scene(id);
       if (scene == null) continue;
       scene
         ..resumeTime = resume
-        ..playCount = plays
-        ..playDuration = plays * scene.clip.duration
-        ..lastPlayedAt = _now.subtract(Duration(hours: hoursAgo));
+        ..playHistory = [for (final h in hoursAgo.reversed) _now.subtract(Duration(hours: h))]
+        ..playCount = hoursAgo.length
+        ..playDuration = hoursAgo.length * scene.clip.duration
+        ..lastPlayedAt = _now.subtract(Duration(hours: hoursAgo.first));
     }
 
     // scene, seconds, title, tag
@@ -198,6 +204,7 @@ class DemoLibrary {
         'Big Buck Bunny: The Opening',
         studioId: '2',
         cover: 'rise-and-shine',
+        date: _filmDate,
         synopsis: 'The opening of the film, scene by scene.',
       ),
     );
@@ -255,6 +262,7 @@ class DemoLibrary {
     'image_path': null,
     'url': s.url,
     'details': s.details,
+    'favorite': s.favorite,
     'scene_count': (Map<String, dynamic> _) => _scenes.where((sc) => sc.studioId == s.id).length,
     'image_count': (Map<String, dynamic> args) =>
         _images.where((i) => _inStudio(i.studioId, s.id, deep: args['depth'] == -1)).length,
@@ -314,6 +322,7 @@ class DemoLibrary {
       'created_at': s.createdAt.toUtc().toIso8601String(),
       'rating100': s.rating100,
       'play_count': s.playCount,
+      'play_history': [for (final t in s.playHistory) t.toUtc().toIso8601String()],
       'o_counter': s.oCounter,
       'resume_time': s.resumeTime,
       'organized': s.organized,
@@ -354,6 +363,11 @@ class DemoLibrary {
       'tags': (Map<String, dynamic> _) => [
         for (final id in s.tagIds) ..._tags.where((t) => t.id == id).map(_tagObject),
       ],
+      'groups': (Map<String, dynamic> _) => [
+        for (final MapEntry(key: id, value: index) in s.groups.entries)
+          for (final g in _groups.where((g) => g.id == id))
+            {'__typename': 'SceneGroup', 'group': _groupObject(g), 'scene_index': index},
+      ],
       'scene_markers': (Map<String, dynamic> _) =>
           (_markers.where((m) => m.sceneId == s.id).toList()..sort((a, b) => a.seconds.compareTo(b.seconds)))
               .map(_markerObject)
@@ -376,17 +390,26 @@ class DemoLibrary {
     };
   }
 
-  /// The film's scenes, in order (the demo has one group).
-  Iterable<_Scene> _groupScenes(_Group g) =>
-      _scenes.where((s) => s.groupIndex != null).toList()..sort((a, b) => a.groupIndex!.compareTo(b.groupIndex!));
+  /// The group's scenes, in order (scenes without a position last).
+  Iterable<_Scene> _groupScenes(_Group g) {
+    final scenes = _scenes.where((s) => s.groups.containsKey(g.id)).toList();
+    final indexed = scenes.indexed.toList()
+      ..sort((a, b) {
+        final (ia, ib) = (a.$2.groups[g.id], b.$2.groups[g.id]);
+        if (ia == null || ib == null) return ia == ib ? a.$1.compareTo(b.$1) : (ia == null ? 1 : -1);
+        final c = ia.compareTo(ib);
+        return c != 0 ? c : a.$1.compareTo(b.$1);
+      });
+    return indexed.map((e) => e.$2);
+  }
 
   Map<String, Object?> _groupObject(_Group g) => {
     '__typename': 'Group',
     'id': g.id,
     'name': g.name,
-    'date': _filmDate,
+    'date': g.date,
     'duration': _groupScenes(g).fold<double>(0, (sum, s) => sum + s.clip.duration).round(),
-    'front_image_path': _media('covers/${g.cover}.jpg'),
+    'front_image_path': g.cover == null ? null : _media('covers/${g.cover}.jpg'),
     'synopsis': g.synopsis,
     'scene_count': (Map<String, dynamic> _) => _groupScenes(g).length,
     'studio': (Map<String, dynamic> _) => _studios.where((s) => s.id == g.studioId).map(_studioObject).firstOrNull,
@@ -462,7 +485,14 @@ class DemoLibrary {
       final ids = (args['ids'] as List?)?.map((e) => '$e').toSet();
       final filter = args['scene_filter'] as Map<String, dynamic>?;
       final matching = _scenes.where((s) => (ids == null || ids.contains(s.id)) && _sceneMatches(s, filter));
-      final page = _page(matching, args['filter'], text: (s) => '${s.title} ${s.details}', sortKey: _sceneSortKey);
+      // Group order is the position in the filtered group.
+      final groupId = ((filter?['groups'] as Map?)?['value'] as List?)?.firstOrNull?.toString();
+      final page = _page(
+        matching,
+        args['filter'],
+        text: (s) => '${s.title} ${s.details}',
+        sortKey: (s, sort) => _sceneSortKey(s, sort, groupId),
+      );
       return {
         '__typename': 'FindScenesResultType',
         'count': page.count,
@@ -656,13 +686,13 @@ class DemoLibrary {
     'object_filter': objectFilter,
   };
 
-  static Object? _sceneSortKey(_Scene s, String sort) => switch (sort) {
+  static Object? _sceneSortKey(_Scene s, String sort, [String? groupId]) => switch (sort) {
     'date' => s.date,
     'rating' => s.rating100 ?? 0,
     'play_count' => s.playCount,
     'last_played_at' => s.lastPlayedAt?.millisecondsSinceEpoch ?? 0,
     'title' => s.title.toLowerCase(),
-    'group_scene_number' => s.groupIndex ?? 0,
+    'group_scene_number' => (groupId == null ? s.groups.values.nonNulls.firstOrNull : s.groups[groupId]) ?? 0,
     'duration' => s.clip.duration,
     _ => s.createdAt,
   };
@@ -687,12 +717,13 @@ class DemoLibrary {
         _ids(f['tags'], s.tagIds) &&
         _ids(f['performers'], s.performerIds) &&
         _ids(studios, studioIds) &&
-        _ids(f['groups'], [if (s.groupIndex != null) '1']) &&
+        _ids(f['groups'], s.groups.keys.toList()) &&
         _number(f['rating100'], s.rating100) &&
         _number(f['duration'], s.clip.duration) &&
         _number(f['resume_time'], s.resumeTime) &&
         _number(f['play_count'], s.playCount) &&
         _number(f['o_counter'], s.oCounter) &&
+        _timestamp(f['created_at'], s.createdAt) &&
         _resolution(f['resolution'], min(s.clip.width, s.clip.height)) &&
         (orientation == null || (orientation['value'] as List).contains(shape)) &&
         (f['performer_favorite'] != true || _performers.any((p) => p.favorite && s.performerIds.contains(p.id))) &&
@@ -732,6 +763,25 @@ class DemoLibrary {
       'NOT_NULL' => ids.isNotEmpty,
       'EQUALS' => values.length == ids.length && values.every(ids.contains),
       _ => values.isEmpty || values.any(ids.contains),
+    };
+  }
+
+  /// A timestamp criterion (`{value, value2, modifier}`, ISO 8601) against
+  /// [time], to the second like Stash.
+  static bool _timestamp(Object? criterion, DateTime time) {
+    if (criterion is! Map) return true;
+    DateTime? parse(Object? v) => v is String ? DateTime.tryParse(v)?.toUtc() : null;
+    final a = parse(criterion['value']);
+    final b = parse(criterion['value2']);
+    final t = time.toUtc().copyWith(millisecond: 0, microsecond: 0);
+    if (a == null) return true;
+    return switch (criterion['modifier']) {
+      'GREATER_THAN' => t.isAfter(a),
+      'LESS_THAN' => t.isBefore(a),
+      'BETWEEN' => !t.isBefore(a) && (b == null || !t.isAfter(b)),
+      'NOT_BETWEEN' => t.isBefore(a) || (b != null && t.isAfter(b)),
+      'NOT_EQUALS' => t != a,
+      _ => t == a,
     };
   }
 
@@ -843,9 +893,11 @@ class DemoLibrary {
     'sceneAddPlay': (Map<String, dynamic> args) {
       final scene = _scene(args['id']);
       if (scene != null) {
+        final now = DateTime.now();
         scene
           ..playCount += 1
-          ..lastPlayedAt = DateTime.now();
+          ..playHistory.add(now)
+          ..lastPlayedAt = now;
       }
       return _history(scene?.playCount ?? 0);
     },
@@ -872,6 +924,12 @@ class DemoLibrary {
       if (input['performer_ids'] case final List ids) scene.performerIds = [for (final id in ids) '$id'];
       if (input['tag_ids'] case final List ids) scene.tagIds = [for (final id in ids) '$id'];
       if (input['urls'] case final List urls) scene.urls = [for (final u in urls) '$u'];
+      if (input['groups'] case final List groups) {
+        scene.groups = {
+          for (final g in groups.cast<Map<String, dynamic>>())
+            if (_groups.any((group) => group.id == '${g['group_id']}')) '${g['group_id']}': g['scene_index'] as int?,
+        };
+      }
       return _sceneObject(scene);
     },
     'sceneMarkerCreate': (Map<String, dynamic> args) {
@@ -911,7 +969,14 @@ class DemoLibrary {
       if (input.containsKey('url')) s.url = input['url'] as String?;
       if (input.containsKey('details')) s.details = input['details'] as String?;
       if (input.containsKey('parent_id')) s.parentId = input['parent_id'] as String?;
+      if (input['favorite'] case final bool favorite) s.favorite = favorite;
       return _studioObject(s);
+    },
+    'groupCreate': (Map<String, dynamic> args) {
+      final input = args['input'] as Map<String, dynamic>;
+      final group = _Group(_newId(), input['name'] as String, synopsis: input['synopsis'] as String?);
+      _groups.add(group);
+      return _groupObject(group);
     },
     'tagCreate': (Map<String, dynamic> args) {
       final tag = _Tag(_newId(), (args['input'] as Map)['name'] as String);
@@ -955,6 +1020,7 @@ class _Studio {
   String? parentId;
   String? details;
   String? url;
+  bool favorite = false;
 }
 
 class _Performer {
@@ -1013,8 +1079,8 @@ class _Scene {
     required this.tagIds,
     required this.rating100,
     required this.createdAt,
-    this.groupIndex,
-  });
+    int? groupIndex,
+  }) : groups = {'1': ?groupIndex};
 
   final String id;
   final String file;
@@ -1029,14 +1095,17 @@ class _Scene {
   double resumeTime = 0;
   double playDuration = 0;
   DateTime? lastPlayedAt;
+
+  /// When it was played, oldest first.
+  List<DateTime> playHistory = [];
   bool organized = true;
   String? studioId;
   List<String> performerIds;
   List<String> tagIds;
   List<String> urls = const [DemoLibrary._filmUrl];
 
-  /// Position in the group, for the film's scenes.
-  final int? groupIndex;
+  /// Group id to the scene's position in it (the film's scenes are in '1').
+  Map<String, int?> groups;
 }
 
 class _Marker {
@@ -1051,12 +1120,13 @@ class _Marker {
 }
 
 class _Group {
-  _Group(this.id, this.name, {required this.studioId, required this.cover, this.synopsis});
+  _Group(this.id, this.name, {this.studioId, this.cover, this.date, this.synopsis});
 
   final String id;
   final String name;
-  final String studioId;
-  final String cover;
+  final String? studioId;
+  final String? cover;
+  final String? date;
   final String? synopsis;
 }
 

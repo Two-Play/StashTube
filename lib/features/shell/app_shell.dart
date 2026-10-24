@@ -13,8 +13,11 @@ import '../player/player_providers.dart';
 import '../player/player_view.dart';
 import '../shorts/shorts_page.dart';
 import '../search/search_page.dart';
+import '../server_tasks/server_tasks_page.dart';
 import '../settings/theme_welcome.dart';
 import '../studios/studios_page.dart';
+import '../subscriptions/last_visit.dart';
+import '../subscriptions/subscriptions_page.dart';
 import '../tags/tags_page.dart';
 import '../you/you_page.dart';
 import 'nav_bar_config.dart';
@@ -38,6 +41,7 @@ class AppShell extends ConsumerWidget {
         AppTab.shorts => const ShortsPage(),
         AppTab.performers => const PerformersPage(),
         AppTab.studios => const StudiosPage(),
+        AppTab.subscriptions => const SubscriptionsPage(),
         AppTab.library => const LibraryPage(),
         AppTab.tags => const TagsPage(),
         AppTab.search => const SearchPage(autofocus: false),
@@ -90,48 +94,53 @@ class AppShell extends ConsumerWidget {
           SystemNavigator.pop();
         }
       },
-      child: ShellLayout(
-        destinations: [
-          for (final tab in tabs) (icon: tab.icon, selectedIcon: tab.selectedIcon, label: tab.label(context.l10n)),
-        ],
-        selectedIndex: selected,
-        onSelect: (i) => selectTab(tabs[i]),
-        playerHeight: playerHeight,
-        hidePlayer: hidePlayer,
-        hideNavigation: hideNavBar,
-        closing: closing,
-        onClosed: () => ref.read(nowPlayingProvider.notifier).close(),
-        // The connection banner (STATE-1) sits above the tabs, below the
-        // player, which covers it when expanded.
-        content: ConnectionBannerScope(
-          // Only the tabs in the bar; the GlobalKeys keep each navigator's
-          // pages when the tabs are reordered.
-          child: IndexedStack(
-            index: selected,
-            children: [
-              for (final tab in tabs)
-                Navigator(
-                  key: navigatorKeys[tab],
-                  onGenerateRoute: (_) => MaterialPageRoute(
-                    builder: (_) => PrimaryScrollController(
-                      controller: scrollControllers[tab]!,
-                      child: (pageBuilder ?? rootPage)(tab),
-                    ),
-                  ),
-                ),
+      // The end of a visit (NOTIF-1) and finished server tasks.
+      child: LastVisitRecorder(
+        child: JobFinishedListener(
+          child: ShellLayout(
+            destinations: [
+              for (final tab in tabs) (icon: tab.icon, selectedIcon: tab.selectedIcon, label: tab.label(context.l10n)),
             ],
+            selectedIndex: selected,
+            onSelect: (i) => selectTab(tabs[i]),
+            playerHeight: playerHeight,
+            hidePlayer: hidePlayer,
+            hideNavigation: hideNavBar,
+            closing: closing,
+            onClosed: () => ref.read(nowPlayingProvider.notifier).close(),
+            // The connection banner (STATE-1) sits above the tabs, below the
+            // player, which covers it when expanded.
+            content: ConnectionBannerScope(
+              // Only the tabs in the bar; the GlobalKeys keep each navigator's
+              // pages when the tabs are reordered.
+              child: IndexedStack(
+                index: selected,
+                children: [
+                  for (final tab in tabs)
+                    Navigator(
+                      key: navigatorKeys[tab],
+                      onGenerateRoute: (_) => MaterialPageRoute(
+                        builder: (_) => PrimaryScrollController(
+                          controller: scrollControllers[tab]!,
+                          child: (pageBuilder ?? rootPage)(tab),
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+            ),
+            miniplayer: scene == null
+                ? null
+                : Miniplayer(
+                    controller: ref.watch(miniplayerControllerProvider),
+                    valueNotifier: playerHeight,
+                    minHeight: kMiniPlayerHeight,
+                    maxHeight: maxPlayerHeight,
+                    onDismissed: () => ref.read(nowPlayingProvider.notifier).close(),
+                    builder: (height, _) => PlayerPanel(scene: scene, height: height, maxHeight: maxPlayerHeight),
+                  ),
           ),
         ),
-        miniplayer: scene == null
-            ? null
-            : Miniplayer(
-                controller: ref.watch(miniplayerControllerProvider),
-                valueNotifier: playerHeight,
-                minHeight: kMiniPlayerHeight,
-                maxHeight: maxPlayerHeight,
-                onDismissed: () => ref.read(nowPlayingProvider.notifier).close(),
-                builder: (height, _) => PlayerPanel(scene: scene, height: height, maxHeight: maxPlayerHeight),
-              ),
       ),
     );
   }

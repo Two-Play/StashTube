@@ -199,6 +199,9 @@ class AppLocalizationsDe extends AppLocalizations {
   String get tabStudios => 'Studios';
 
   @override
+  String get tabSubscriptions => 'Abos';
+
+  @override
   String get tabLibrary => 'Bibliothek';
 
   @override
@@ -495,6 +498,44 @@ class AppLocalizationsDe extends AppLocalizations {
   String get groupNoScenes => 'Diese Gruppe hat keine Szenen';
 
   @override
+  String get addToGroup => 'Zu Gruppe hinzufügen…';
+
+  @override
+  String get addToGroupTitle => 'Zu Gruppe hinzufügen';
+
+  @override
+  String get searchGroups => 'Gruppen suchen';
+
+  @override
+  String get groupsNoMatch => 'Keine passenden Gruppen';
+
+  @override
+  String get newGroup => 'Neue Gruppe';
+
+  @override
+  String get groupName => 'Name der Gruppe';
+
+  @override
+  String addedToGroup(String group) {
+    return 'Zu „$group“ hinzugefügt';
+  }
+
+  @override
+  String removedFromGroup(String group) {
+    return 'Aus „$group“ entfernt';
+  }
+
+  @override
+  String groupUpdateFailed(String error) {
+    return 'Die Gruppe konnte nicht geändert werden: $error';
+  }
+
+  @override
+  String groupCreateFailed(String error) {
+    return 'Die Gruppe konnte nicht angelegt werden: $error';
+  }
+
+  @override
   String get playAll => 'Alle abspielen';
 
   @override
@@ -544,6 +585,93 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get statsOCount => 'O-Zähler';
+
+  @override
+  String get statsWatchHistory => 'Wiedergabeverlauf';
+
+  @override
+  String get statsChartWeeks => '12 Wochen';
+
+  @override
+  String get statsChartDays => '30 Tage';
+
+  @override
+  String get statsPlaysPerWeek => 'Wiedergaben pro Woche';
+
+  @override
+  String get statsPlaysPerDay => 'Wiedergaben pro Tag';
+
+  @override
+  String get statsChartTotal => 'Gesamt';
+
+  @override
+  String get statsChartAverage => 'Durchschnitt';
+
+  @override
+  String statsAveragePerWeek(String average) {
+    return '$average pro Woche';
+  }
+
+  @override
+  String statsAveragePerDay(String average) {
+    return '$average pro Tag';
+  }
+
+  @override
+  String statsChartSummaryWeek(int count, String average) {
+    final intl.NumberFormat countNumberFormat =
+        intl.NumberFormat.decimalPattern(localeName);
+    final String countString = countNumberFormat.format(count);
+
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$countString Wiedergaben diese Woche, $average im Durchschnitt',
+      one: '1 Wiedergabe diese Woche, $average im Durchschnitt',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String statsChartSummaryDay(int count, String average) {
+    final intl.NumberFormat countNumberFormat =
+        intl.NumberFormat.decimalPattern(localeName);
+    final String countString = countNumberFormat.format(count);
+
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$countString Wiedergaben heute, $average im Durchschnitt',
+      one: '1 Wiedergabe heute, $average im Durchschnitt',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String statsChartWeekOf(String date) {
+    return 'Woche ab $date';
+  }
+
+  @override
+  String statsChartBar(String period, String plays) {
+    return '$period: $plays';
+  }
+
+  @override
+  String get statsChartEmpty => 'Keine Wiedergaben in diesem Zeitraum';
+
+  @override
+  String get statsChartPlaysNote =>
+      'Stash speichert die Wiedergabezeit pro Szene, nicht pro Wiedergabe, daher zählt das Diagramm Wiedergaben.';
+
+  @override
+  String statsChartTruncated(int count) {
+    final intl.NumberFormat countNumberFormat =
+        intl.NumberFormat.decimalPattern(localeName);
+    final String countString = countNumberFormat.format(count);
+
+    return 'Basiert auf den $countString zuletzt angesehenen Szenen.';
+  }
 
   @override
   String get watchLaterEmpty => 'Noch nichts gespeichert';
@@ -655,6 +783,42 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get newFromFavorites => 'Neu von Favoriten';
+
+  @override
+  String get subscriptionsEmpty => 'Noch keine Abos';
+
+  @override
+  String get subscriptionsEmptyHint =>
+      'Markiere Darsteller als Favoriten, um hier ihre neuesten Szenen zu sehen.';
+
+  @override
+  String performerHasNewScenes(String name) {
+    return '$name, neue Szenen';
+  }
+
+  @override
+  String newSinceLastVisit(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count neue Videos seit deinem letzten Besuch',
+      one: '1 neues Video seit deinem letzten Besuch',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get newSinceLastVisitTitle => 'Neu seit deinem letzten Besuch';
+
+  @override
+  String get newSinceLastVisitEmpty =>
+      'Nichts Neues seit deinem letzten Besuch';
+
+  @override
+  String get randomScene => 'Zufällige Szene abspielen';
+
+  @override
+  String get randomSceneNone => 'Es gibt keine Szenen zur Auswahl';
 
   @override
   String get searchHint => 'Stash durchsuchen';
@@ -1434,6 +1598,58 @@ class AppLocalizationsDe extends AppLocalizations {
   String get errorNotSaved => 'Es wurde nichts gespeichert.';
 
   @override
+  String get errorLocalNetworkDenied =>
+      'StashTube kann dein lokales Netzwerk nicht erreichen. Erlaube es unter Einstellungen → Datenschutz & Sicherheit → Lokales Netzwerk → StashTube.';
+
+  @override
+  String get errorLocalNetworkTitle => 'Kein Zugriff aufs lokale Netzwerk';
+
+  @override
+  String get errorUnreachableTitle => 'Server nicht erreichbar';
+
+  @override
+  String get errorUnreachableHint =>
+      'Prüfe, ob der Server läuft und du in seinem Netzwerk oder mit deinem VPN verbunden bist.';
+
+  @override
+  String get errorUnauthorizedTitle => 'Zugriff verweigert';
+
+  @override
+  String get errorUnauthorizedHint =>
+      'Der Server hat API-Schlüssel oder Login nicht angenommen. Prüfe sie in den Servereinstellungen.';
+
+  @override
+  String get errorInvalidCredentialsTitle => 'Anmeldung fehlgeschlagen';
+
+  @override
+  String get errorNotReadyTitle => 'Server nicht bereit';
+
+  @override
+  String get errorNotReadyHint =>
+      'Der Server läuft, ist aber noch nicht eingerichtet. Schließe die Einrichtung in der Weboberfläche von Stash ab.';
+
+  @override
+  String get errorNotFoundTitle => 'Nicht gefunden';
+
+  @override
+  String get errorNotFoundHint =>
+      'Vielleicht wurde es auf dem Server gelöscht oder verschoben.';
+
+  @override
+  String get errorServerHint =>
+      'Der Server hat einen Fehler gemeldet. Die Details helfen vielleicht weiter.';
+
+  @override
+  String get errorUnexpectedHint =>
+      'Etwas Unerwartetes ist passiert. Versuche es erneut oder sieh dir die Details an.';
+
+  @override
+  String get errorShowDetails => 'Details';
+
+  @override
+  String get errorHideDetails => 'Details ausblenden';
+
+  @override
   String navBarCount(int count, int max) {
     return '$count von $max Tabs gewählt';
   }
@@ -1606,6 +1822,45 @@ class AppLocalizationsDe extends AppLocalizations {
   String get fastForward2x => '2× Tempo';
 
   @override
+  String get gestureTipsTitle => 'Gesten im Player';
+
+  @override
+  String gestureTipDoubleTap(int seconds) {
+    return 'Links oder rechts doppeltippen: ±$seconds s';
+  }
+
+  @override
+  String get gestureTipHold => 'Halten: 2× Tempo';
+
+  @override
+  String get gestureTipPinch => 'Mit zwei Fingern spreizen: Zoom';
+
+  @override
+  String get gestureTipSwipeDown => 'Nach unten wischen: minimieren';
+
+  @override
+  String get gestureTipsDone => 'Verstanden';
+
+  @override
+  String get showGestureTipsAgain => 'Gesten-Tipps erneut zeigen';
+
+  @override
+  String get showGestureTipsAgainSubtitle =>
+      'Wenn die Player-Steuerung das nächste Mal erscheint';
+
+  @override
+  String get lockTouch => 'Bildschirm sperren';
+
+  @override
+  String get touchLocked => 'Bildschirm gesperrt';
+
+  @override
+  String get holdToUnlock => 'Zum Entsperren halten';
+
+  @override
+  String get unlockTouch => 'Entsperren';
+
+  @override
   String get unknownStudio => 'Unbekanntes Studio';
 
   @override
@@ -1753,6 +2008,17 @@ class AppLocalizationsDe extends AppLocalizations {
   String get linkCopied => 'Link kopiert';
 
   @override
+  String get openLink => 'Link öffnen';
+
+  @override
+  String openLinkFailed(String url) {
+    return '$url konnte nicht geöffnet werden';
+  }
+
+  @override
+  String get openInStash => 'In Stash öffnen';
+
+  @override
   String get fieldAliases => 'Auch bekannt als';
 
   @override
@@ -1876,6 +2142,13 @@ class AppLocalizationsDe extends AppLocalizations {
   @override
   String get markerPreviewsSubtitle =>
       'Marker zeigen einen kurzen Clip in Dauerschleife statt eines Standbilds.';
+
+  @override
+  String get previewsWifiOnly => 'Nur im WLAN';
+
+  @override
+  String get previewsWifiOnlySubtitle =>
+      'Über mobile Daten spielen keine Vorschauen.';
 
   @override
   String get previewsHint =>
@@ -2004,6 +2277,16 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get taskStarted => 'Aufgabe auf dem Server gestartet';
+
+  @override
+  String taskFinishedNamed(String task) {
+    return 'Fertig: $task';
+  }
+
+  @override
+  String taskFailedNamed(String task) {
+    return 'Fehlgeschlagen: $task';
+  }
 
   @override
   String get sectionJobs => 'Laufende Aufgaben';

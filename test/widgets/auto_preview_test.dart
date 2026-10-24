@@ -1,5 +1,7 @@
+import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_riverpod/misc.dart' show Override;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:stash_app_mobile/core/config/server_config.dart';
@@ -15,9 +17,10 @@ void main() {
     bool previews = true,
     bool firstHasPreview = true,
     Duration delay = FeedPreviewDelayNotifier.standard,
+    List<Override> overrides = const [],
   }) =>
       tester.pumpWidget(ProviderScope(
-        overrides: [...testServer, feedPreviewsProvider.overrideWithBuild((ref, notifier) => previews)],
+        overrides: [...testServer, feedPreviewsProvider.overrideWithBuild((ref, notifier) => previews), ...overrides],
         child: MaterialApp(
           home: Scaffold(
             body: AutoPreviewScope(
@@ -101,5 +104,52 @@ void main() {
     await tester.pump(const Duration(seconds: 3));
     expect(playing(tester), isEmpty);
     expect(find.text('still 0'), findsOneWidget);
+  });
+
+  group('only on Wi-Fi (PERF-1)', () {
+    List<Override> on(List<ConnectivityResult> connections, {bool wifiOnly = true}) => [
+          previewsWifiOnlyProvider.overrideWithBuild((ref, notifier) => wifiOnly),
+          connectivityProvider.overrideWith((ref) => Stream.value(connections)),
+        ];
+
+    testWidgets('no previews on mobile data', (tester) async {
+      await pumpList(tester, overrides: on([ConnectivityResult.mobile]));
+      await tester.pump(const Duration(seconds: 1));
+      expect(playing(tester), isEmpty);
+    });
+
+    for (final connections in [
+      [ConnectivityResult.wifi, ConnectivityResult.vpn],
+      [ConnectivityResult.ethernet],
+    ]) {
+      testWidgets('previews on $connections', (tester) async {
+        await pumpList(tester, overrides: on(connections));
+        await tester.pump(const Duration(seconds: 1));
+        expect(playing(tester), ['http://s/0.webp']);
+      });
+    }
+
+    testWidgets('by default they play on mobile data too, without asking for the connection', (tester) async {
+      var asked = false;
+      await pumpList(tester, overrides: [
+        connectivityProvider.overrideWith((ref) {
+          asked = true;
+          return Stream.value([ConnectivityResult.mobile]);
+        }),
+      ]);
+      await tester.pump(const Duration(seconds: 1));
+      expect(playing(tester), ['http://s/0.webp']);
+      expect(asked, isFalse);
+    });
+
+    test('the setting is stored, off by default', () async {
+      SharedPreferences.setMockInitialValues({});
+      final prefs = await SharedPreferences.getInstance();
+      final c = ProviderContainer(overrides: [sharedPreferencesProvider.overrideWithValue(prefs)]);
+      addTearDown(c.dispose);
+      expect(c.read(previewsWifiOnlyProvider), isFalse);
+      await c.read(previewsWifiOnlyProvider.notifier).set(true);
+      expect(prefs.getBool('previews_wifi_only'), isTrue);
+    });
   });
 }

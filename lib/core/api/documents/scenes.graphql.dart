@@ -929,6 +929,7 @@ class Fragment$MarkerFields {
     required this.id,
     required this.title,
     required this.seconds,
+    required this.screenshot,
     required this.primary_tag,
     this.$__typename = 'SceneMarker',
   });
@@ -937,12 +938,14 @@ class Fragment$MarkerFields {
     final l$id = json['id'];
     final l$title = json['title'];
     final l$seconds = json['seconds'];
+    final l$screenshot = json['screenshot'];
     final l$primary_tag = json['primary_tag'];
     final l$$__typename = json['__typename'];
     return Fragment$MarkerFields(
       id: (l$id as String),
       title: (l$title as String),
       seconds: (l$seconds as num).toDouble(),
+      screenshot: (l$screenshot as String),
       primary_tag: Fragment$MarkerFields$primary_tag.fromJson(
         (l$primary_tag as Map<String, dynamic>),
       ),
@@ -956,6 +959,8 @@ class Fragment$MarkerFields {
 
   final double seconds;
 
+  final String screenshot;
+
   final Fragment$MarkerFields$primary_tag primary_tag;
 
   final String $__typename;
@@ -968,6 +973,8 @@ class Fragment$MarkerFields {
     _resultData['title'] = l$title;
     final l$seconds = seconds;
     _resultData['seconds'] = l$seconds;
+    final l$screenshot = screenshot;
+    _resultData['screenshot'] = l$screenshot;
     final l$primary_tag = primary_tag;
     _resultData['primary_tag'] = l$primary_tag.toJson();
     final l$$__typename = $__typename;
@@ -980,12 +987,14 @@ class Fragment$MarkerFields {
     final l$id = id;
     final l$title = title;
     final l$seconds = seconds;
+    final l$screenshot = screenshot;
     final l$primary_tag = primary_tag;
     final l$$__typename = $__typename;
     return Object.hashAll([
       l$id,
       l$title,
       l$seconds,
+      l$screenshot,
       l$primary_tag,
       l$$__typename,
     ]);
@@ -1012,6 +1021,11 @@ class Fragment$MarkerFields {
     final l$seconds = seconds;
     final lOther$seconds = other.seconds;
     if (l$seconds != lOther$seconds) {
+      return false;
+    }
+    final l$screenshot = screenshot;
+    final lOther$screenshot = other.screenshot;
+    if (l$screenshot != lOther$screenshot) {
       return false;
     }
     final l$primary_tag = primary_tag;
@@ -1052,6 +1066,13 @@ const fragmentDefinitionMarkerFields = FragmentDefinitionNode(
       ),
       FieldNode(
         name: NameNode(value: 'seconds'),
+        alias: null,
+        arguments: [],
+        directives: [],
+        selectionSet: null,
+      ),
+      FieldNode(
+        name: NameNode(value: 'screenshot'),
         alias: null,
         arguments: [],
         directives: [],
