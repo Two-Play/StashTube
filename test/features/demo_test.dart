@@ -158,13 +158,13 @@ void main() {
     expect(thumbs.cues[6].x, 160);
     expect(thumbs.cues[6].y, 90);
 
-    expect((await repo.findMarkers(MarkerQuery())).totalCount, 5);
+    expect((await repo.findMarkers(MarkerQuery())).totalCount, 6);
     expect((await repo.findMarkers(MarkerQuery(search: 'butterfly'))).items.single.title, 'A visitor');
     expect((await repo.findMarkers(MarkerQuery(search: 'butterfly'))).items.single.endSeconds, 15);
     expect(
       [for (final m in (await repo.findMarkers(MarkerQuery(sort: MarkerSort.title))).items) m.endSeconds],
-      [15, null, null, null, 7],
-      reason: 'A visitor, Chirp, Flowers, Something stirs, The big stretch',
+      [15, null, null, 4, null, 7],
+      reason: 'A visitor, Chirp, Flowers, Reaching up, Something stirs, The big stretch',
     );
     // A channel's markers: those in the performer's or studio's scenes.
     Future<Set<String>> sceneIds(SceneQuery query) async =>
@@ -186,7 +186,20 @@ void main() {
       MarkerQuery(studioId: '1', includeSubStudios: true),
       SceneQuery(studioId: '1', includeSubStudios: true),
     );
-    expect(await repo.countMarkers(MarkerQuery(studioId: '1', includeSubStudios: true)), 5);
+    expect(await repo.countMarkers(MarkerQuery(studioId: '1', includeSubStudios: true)), 6);
+
+    // The shorts' "portrait videos only" applies to markers through their scene.
+    final portrait = (await repo.findMarkers(MarkerQuery(portraitOnly: true))).items;
+    expect(portrait.map((m) => m.title), ['Reaching up']);
+    expect(
+      (await repo.findMarkers(MarkerQuery(portraitOnly: true, studioId: '2', includeSubStudios: true))).items,
+      isEmpty,
+      reason: 'merged with the studio in one scene filter',
+    );
+    expect(
+      (await repo.findMarkers(MarkerQuery(portraitOnly: true, studioId: '1', includeSubStudios: true))).items.single.title,
+      'Reaching up',
+    );
 
     // The shorts' markers: those with one of the preferred tags.
     final markers = (await repo.findMarkers(MarkerQuery())).items;

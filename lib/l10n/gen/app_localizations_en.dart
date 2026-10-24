@@ -1829,23 +1829,27 @@ class AppLocalizationsEn extends AppLocalizations {
   String get shortsLengthTenMinutes => 'Up to 10 min';
 
   @override
+  String get shortsMaxLengthHint =>
+      'Only for videos: a marker plays its marked part.';
+
+  @override
   String get shortsPortraitOnly => 'Portrait videos only';
 
   @override
-  String get shortsMarkers => 'Markers';
+  String get shortsContent => 'Content';
 
   @override
-  String get shortsMarkersHint =>
-      'Plays scene markers as clips from the original video, looping until the marker ends. With tags, only markers with one of them. Length and orientation don\'t apply.';
+  String get shortsContentHint =>
+      'Markers play the marked part of a scene as a short.';
 
   @override
-  String get shortsMarkersOff => 'Off';
+  String get shortsContentVideos => 'Videos only';
 
   @override
-  String get shortsMarkersMixed => 'With videos';
+  String get shortsContentMixed => 'Videos & markers';
 
   @override
-  String get shortsMarkersOnly => 'Only markers';
+  String get shortsContentMarkers => 'Markers only';
 
   @override
   String shortMarkerSemantics(String title) {
@@ -1924,6 +1928,27 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get showGestureTipsAgainSubtitle =>
       'The next time the player\'s controls appear';
+
+  @override
+  String get sectionDoubleTapSeek => 'Double-tap to seek';
+
+  @override
+  String get doubleTapSeek => 'Double-tap seeking';
+
+  @override
+  String get doubleTapSeekSubtitle =>
+      'Double-tap the left or right side of the video. Off: a tap shows the controls right away.';
+
+  @override
+  String get seekStep => 'Skip by';
+
+  @override
+  String get seekCumulative => 'Keep tapping to skip further';
+
+  @override
+  String seekSequenceExample(String totals) {
+    return 'In total: $totals s …';
+  }
 
   @override
   String get lockTouch => 'Lock screen';
@@ -2161,6 +2186,15 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get markersEmptyHint => 'Mark a moment in the player with \"Marker\".';
+
+  @override
+  String get markersPlayAsShorts => 'Play as shorts';
+
+  @override
+  String get markerPlayAsShort => 'Play as short';
+
+  @override
+  String get markerMoreOptions => 'Marker options';
 
   @override
   String markersCount(int count) {

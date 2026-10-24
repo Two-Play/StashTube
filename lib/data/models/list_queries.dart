@@ -442,6 +442,7 @@ class MarkerQuery {
     this.studioId,
     this.includeSubStudios = false,
     this.tagIds = const [],
+    this.portraitOnly = false,
     int? seed,
   }) : seed = seed ?? (sort == MarkerSort.random ? newRandomSeed() : 0);
 
@@ -461,6 +462,10 @@ class MarkerQuery {
   /// Markers with at least one of these tags (as primary tag or one of
   /// their other tags); all markers when empty.
   final List<String> tagIds;
+
+  /// Only markers in portrait videos (the scene's `orientation`), like the
+  /// shorts' videos.
+  final bool portraitOnly;
   final int seed;
 
   String get sortField => sort == MarkerSort.random ? 'random_$seed' : sort.field;
@@ -468,11 +473,15 @@ class MarkerQuery {
 
   /// Stash's `SceneMarkerFilterType`, or null without criteria: markers
   /// have their scene's performers; the studio goes through the scene
-  /// (`scene_filter`).
+  /// (`scene_filter`), as does the orientation, in one scene filter.
   Map<String, dynamic>? toMarkerFilter() {
+    final sceneFilter = {
+      ..._channelCriteria(null, studioId, includeSubStudios),
+      if (portraitOnly) 'orientation': {'value': ['PORTRAIT']},
+    };
     final criteria = {
       ..._channelCriteria(performerId, null, false),
-      if (studioId != null) 'scene_filter': _channelCriteria(null, studioId, includeSubStudios),
+      if (sceneFilter.isNotEmpty) 'scene_filter': sceneFilter,
       if (tagIds.isNotEmpty) 'tags': {'value': tagIds, 'modifier': 'INCLUDES', 'depth': 0},
     };
     return criteria.isEmpty ? null : criteria;
@@ -486,6 +495,7 @@ class MarkerQuery {
         studioId: studioId,
         includeSubStudios: includeSubStudios,
         tagIds: tagIds,
+        portraitOnly: portraitOnly,
       );
 
   @override
@@ -496,9 +506,11 @@ class MarkerQuery {
       other.performerId == performerId &&
       other.studioId == studioId &&
       other.includeSubStudios == includeSubStudios &&
+      other.portraitOnly == portraitOnly &&
       other.seed == seed &&
       listEquals(other.tagIds, tagIds);
 
   @override
-  int get hashCode => Object.hash(sort, search, performerId, studioId, includeSubStudios, seed, Object.hashAll(tagIds));
+  int get hashCode =>
+      Object.hash(sort, search, performerId, studioId, includeSubStudios, portraitOnly, seed, Object.hashAll(tagIds));
 }

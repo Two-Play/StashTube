@@ -119,6 +119,8 @@ class _ShortsSettingsSheetState extends ConsumerState<ShortsSettingsSheet> {
                         : (v) => setState(() => _settings = _settings.copyWith(onlyTags: v))),
                   ),
                   section(l.shortsMaxLength),
+                  Text(l.shortsMaxLengthHint, style: theme.textTheme.bodySmall),
+                  const SizedBox(height: 8),
                   Wrap(
                     spacing: 6,
                     runSpacing: 6,
@@ -137,8 +139,8 @@ class _ShortsSettingsSheetState extends ConsumerState<ShortsSettingsSheet> {
                     value: _settings.portraitOnly,
                     onChanged: withHaptic((v) => setState(() => _settings = _settings.copyWith(portraitOnly: v))),
                   ),
-                  section(l.shortsMarkers),
-                  Text(l.shortsMarkersHint, style: theme.textTheme.bodySmall),
+                  section(l.shortsContent),
+                  Text(l.shortsContentHint, style: theme.textTheme.bodySmall),
                   const SizedBox(height: 8),
                   // A mode, not a filter: one segmented choice.
                   SegmentedButton<ShortsMarkers>(

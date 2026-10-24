@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../core/config/theme.dart';
 
+import '../../core/config/haptics.dart';
+import '../../core/config/theme.dart';
+import '../../core/pagination/paging_mode.dart';
 import '../../data/models/list_queries.dart';
 import '../../data/models/marker.dart';
 import '../../data/providers.dart';
@@ -12,6 +14,9 @@ import '../../widgets/scene_card.dart';
 import '../../widgets/stash_image.dart';
 import '../player/player_controls.dart';
 import '../player/player_providers.dart';
+import '../shell/navigation.dart';
+import '../shorts/shorts_feed.dart';
+import '../shorts/shorts_page.dart';
 import '../../l10n/l10n.dart';
 
 /// Scene markers of all scenes (the marked moments), like Stash's markers
@@ -36,6 +41,8 @@ class _MarkersTabState extends State<MarkersTab> with AutomaticKeepAliveClientMi
 
 /// Markers as a grid of [MarkerTile]s with sort chips, paging and
 /// pull-to-refresh: the library's markers and a channel's markers tab.
+/// "Play as shorts" (and a tile's "Play as short") plays exactly these
+/// markers, in this order, in [ShortsPage].
 class MarkerGridView extends ConsumerStatefulWidget {
   const MarkerGridView({super.key, required this.initialQuery, this.headerSlivers = const []});
 
@@ -58,11 +65,30 @@ class _MarkerGridViewState extends ConsumerState<MarkerGridView> {
     if (oldWidget.initialQuery != widget.initialQuery) _query = widget.initialQuery.withSort(_query.sort);
   }
 
+  /// Opens the grid's markers as shorts, at [marker] or the first one.
+  void _playAsShorts(PagedState<Marker> state, [Marker? marker]) {
+    Haptics.light();
+    final index = marker == null ? -1 : state.items.indexOf(marker);
+    final numbered = ref.read(pagingModeProvider) == PagingMode.pages;
+    final start = index < 0
+        ? (startPage: numbered ? state.page : 1, initialIndex: 0)
+        : markerShortsStart(state.items, index, page: numbered ? state.page : null, perPage: state.perPage);
+    openPage(
+      ref,
+      ShortsPage(
+        source: ShortsSource.markers(_query, startPage: start.startPage, title: context.l10n.channelTabMarkers),
+        initialIndex: start.initialIndex,
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final provider = markerListProvider(_query);
     final value = ref.watch(provider);
     final theme = Theme.of(context);
+    final state = value.current;
+    final playAsShort = state == null ? null : (Marker marker) => _playAsShorts(state, marker);
 
     return RefreshIndicator(
       onRefresh: () => refreshFuture(ref, provider.future),
@@ -80,13 +106,25 @@ class _MarkerGridViewState extends ConsumerState<MarkerGridView> {
                 onSelected: (s) => setState(() => _query = _query.withSort(s)),
               ),
             ),
-            if (value.current case final state?)
+            if (state != null)
               SliverToBoxAdapter(
                 child: Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
-                  child: Text(
-                    context.l10n.markersCount(state.totalCount),
-                    style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+                  padding: const EdgeInsets.fromLTRB(16, 0, 8, 4),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          context.l10n.markersCount(state.totalCount),
+                          style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+                        ),
+                      ),
+                      if (state.items.any((m) => m.scene.streamUrl != null))
+                        TextButton.icon(
+                          onPressed: () => _playAsShorts(state),
+                          icon: const Icon(Icons.slow_motion_video),
+                          label: Text(context.l10n.markersPlayAsShorts),
+                        ),
+                    ],
                   ),
                 ),
               ),
@@ -105,7 +143,10 @@ class _MarkerGridViewState extends ConsumerState<MarkerGridView> {
               onRetry: () => ref.invalidate(provider),
               onLoadMore: () => ref.read(provider.notifier).loadMore(retry: true),
               onGoToPage: (page) => ref.read(provider.notifier).goToPage(page),
-              itemBuilder: (_, marker) => MarkerTile(marker: marker),
+              itemBuilder: (_, marker) => MarkerTile(
+                marker: marker,
+                onPlayAsShort: playAsShort == null || marker.scene.streamUrl == null ? null : () => playAsShort(marker),
+              ),
             ),
           ],
         ),
@@ -116,10 +157,48 @@ class _MarkerGridViewState extends ConsumerState<MarkerGridView> {
 
 /// The frame at the marker with its time (a ranged marker's range and
 /// length), the marker's title and below it the scene and the marker's tag.
+///
+/// With [onPlayAsShort] a ⋮ next to the title (and a long press) offers to
+/// play it, or to play it as a short.
 class MarkerTile extends ConsumerWidget {
-  const MarkerTile({super.key, required this.marker});
+  const MarkerTile({super.key, required this.marker, this.onPlayAsShort});
 
   final Marker marker;
+
+  /// Plays the marker (and the grid's further markers) as shorts.
+  final VoidCallback? onPlayAsShort;
+
+  void _play(WidgetRef ref) => ref.read(nowPlayingProvider.notifier).play(marker.scene, at: marker.seconds);
+
+  void _showMenu(BuildContext context, WidgetRef ref) => showModalBottomSheet<void>(
+        context: context,
+        useRootNavigator: true,
+        builder: (sheetContext) {
+          final l = sheetContext.l10n;
+          void go(VoidCallback action) {
+            Navigator.pop(sheetContext);
+            action();
+          }
+
+          return SafeArea(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                ListTile(
+                  leading: const Icon(Icons.play_arrow),
+                  title: Text(l.sceneMenuPlay),
+                  onTap: () => go(() => _play(ref)),
+                ),
+                ListTile(
+                  leading: const Icon(Icons.slow_motion_video),
+                  title: Text(l.markerPlayAsShort),
+                  onTap: () => go(onPlayAsShort!),
+                ),
+              ],
+            ),
+          );
+        },
+      );
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -139,12 +218,19 @@ class MarkerTile extends ConsumerWidget {
       ].join(', '),
       child: InkWell(
         borderRadius: AppRadius.thumbnailBorder,
-        onTap: () => ref.read(nowPlayingProvider.notifier).play(marker.scene, at: marker.seconds),
-        child: ExcludeSemantics(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              ClipRRect(
+        onTap: () => _play(ref),
+        // A shortcut for the ⋮ next to the title.
+        onLongPress: onPlayAsShort == null
+            ? null
+            : () {
+                Haptics.heavy();
+                _showMenu(context, ref);
+              },
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            ExcludeSemantics(
+              child: ClipRRect(
                 borderRadius: AppRadius.thumbnailBorder,
                 child: AspectRatio(
                   aspectRatio: 16 / 9,
@@ -189,12 +275,40 @@ class MarkerTile extends ConsumerWidget {
                   ),
                 ),
               ),
-              const SizedBox(height: 6),
-              Text(marker.title, maxLines: 1, overflow: TextOverflow.ellipsis, style: theme.textTheme.titleSmall),
-              Text(marker.scene.title, maxLines: 1, overflow: TextOverflow.ellipsis, style: muted),
-              if (showTag) Text('#${marker.tag.name}', maxLines: 1, overflow: TextOverflow.ellipsis, style: muted),
-            ],
-          ),
+            ),
+            const SizedBox(height: 6),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(
+                  child: ExcludeSemantics(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          marker.title,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: theme.textTheme.titleSmall,
+                        ),
+                        Text(marker.scene.title, maxLines: 1, overflow: TextOverflow.ellipsis, style: muted),
+                        if (showTag)
+                          Text('#${marker.tag.name}', maxLines: 1, overflow: TextOverflow.ellipsis, style: muted),
+                      ],
+                    ),
+                  ),
+                ),
+                if (onPlayAsShort != null)
+                  IconButton(
+                    tooltip: l.markerMoreOptions,
+                    icon: const Icon(Icons.more_vert, size: 18),
+                    padding: EdgeInsets.zero,
+                    constraints: const BoxConstraints.tightFor(width: 36, height: 48),
+                    onPressed: () => _showMenu(context, ref),
+                  ),
+              ],
+            ),
+          ],
         ),
       ),
     );

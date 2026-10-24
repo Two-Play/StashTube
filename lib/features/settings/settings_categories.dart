@@ -16,6 +16,7 @@ import '../pip/pip.dart';
 import '../player/gesture_hints.dart';
 import '../player/lock_screen.dart';
 import '../player/player_providers.dart';
+import '../player/seek_settings.dart';
 import '../security/app_icon.dart';
 import '../security/app_lock.dart';
 import '../security/app_lock_gate.dart';
@@ -303,8 +304,62 @@ class PlaybackSettingsPage extends ConsumerWidget {
           ref.read(gestureTipsSeenProvider.notifier).reset();
         },
       ),
+      const _SeekSettingsTiles(),
     ],
   );
+}
+
+/// "Double-tap to seek": on/off, the step and whether further taps grow
+/// ([SeekSettings.total]).
+class _SeekSettingsTiles extends ConsumerWidget {
+  const _SeekSettingsTiles();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l = context.l10n;
+    final seek = ref.watch(seekSettingsProvider);
+    final notifier = ref.read(seekSettingsProvider.notifier);
+    final totals = [for (var taps = 1; taps <= 4; taps++) seek.total(taps).inSeconds].join(', ');
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        SettingsSectionTitle(l.sectionDoubleTapSeek),
+        SwitchListTile(
+          secondary: const Icon(Icons.touch_app_outlined),
+          title: Text(l.doubleTapSeek),
+          subtitle: Text(l.doubleTapSeekSubtitle),
+          value: seek.enabled,
+          onChanged: withHaptic(notifier.setEnabled),
+        ),
+        SettingsDropdownTile(
+          leading: const Icon(Icons.fast_forward_outlined),
+          title: Text(l.seekStep),
+          enabled: seek.enabled,
+          dropdown: DropdownButton<Duration>(
+            value: seek.step,
+            underline: const SizedBox.shrink(),
+            items: [
+              for (final step in {...SeekSettings.steps, seek.step})
+                DropdownMenuItem(value: step, child: Text(l.secondsValue(step.inSeconds.toDouble()))),
+            ],
+            onChanged: seek.enabled
+                ? (step) {
+                    if (step != null) notifier.setStep(step);
+                  }
+                : null,
+          ),
+        ),
+        SwitchListTile(
+          secondary: const Icon(Icons.keyboard_double_arrow_right),
+          title: Text(l.seekCumulative),
+          // The totals of the first taps, for the current step and mode.
+          subtitle: Text(l.seekSequenceExample(totals)),
+          value: seek.cumulative,
+          onChanged: seek.enabled ? withHaptic(notifier.setCumulative) : null,
+        ),
+      ],
+    );
+  }
 }
 
 /// Animated previews in lists and markers, and what the scene cards show.

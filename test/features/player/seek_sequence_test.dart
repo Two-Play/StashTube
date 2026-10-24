@@ -10,6 +10,7 @@ import 'package:stash_app_mobile/features/cast/cast_media.dart';
 import 'package:stash_app_mobile/features/cast/cast_providers.dart';
 import 'package:stash_app_mobile/features/cast/cast_service.dart';
 import 'package:stash_app_mobile/features/player/player_providers.dart';
+import 'package:stash_app_mobile/features/player/seek_settings.dart';
 import 'package:stash_app_mobile/features/player/video_controls.dart';
 
 import '../../helpers.dart';
@@ -45,6 +46,16 @@ class _FakeCast implements CastService {
   Future<void> seek(Duration position) async => seeks.add(position);
 }
 
+/// Fixed double-tap settings.
+class _Seek extends SeekSettingsNotifier {
+  _Seek(this.settings);
+
+  final SeekSettings settings;
+
+  @override
+  SeekSettings build() => settings;
+}
+
 void main() {
   late FakePlayer player;
   late _FakeCast cast;
@@ -55,6 +66,7 @@ void main() {
     bool fullscreen = false,
     bool casting = false,
     bool reduceMotion = false,
+    SeekSettings seek = const SeekSettings(),
   }) async {
     player = FakePlayer(playing: true, position: position);
     cast = _FakeCast();
@@ -66,6 +78,7 @@ void main() {
         authHeadersProvider.overrideWithValue(const {}),
         sceneDetailsProvider('1').overrideWith((ref) async => const SceneDetails(streams: [])),
         castServiceProvider.overrideWithValue(cast),
+        seekSettingsProvider.overrideWith(() => _Seek(seek)),
         if (casting) ...[
           castConnectionProvider.overrideWith((ref) => Stream.value(const CastConnection(deviceName: 'TV'))),
           castPlaybackProvider.overrideWith((ref) => Stream.value(CastPlayback(playing: true, position: position))),
@@ -239,6 +252,66 @@ void main() {
     await tap(tester, left(tester));
     expect(seconds(cast.seeks).last, 15);
     await tester.pump(StashVideoControls.seekSequenceWindow);
+  });
+
+  group('settings', () {
+    test('cumulative totals: step, then 2 × step × (taps − 1)', () {
+      List<int> totals(SeekSettings s) => [for (var t = 1; t <= 5; t++) s.total(t).inSeconds];
+      expect(totals(const SeekSettings()), [5, 10, 20, 30, 40], reason: 'the default is the old sequence');
+      expect(totals(const SeekSettings(step: Duration(seconds: 10))), [10, 20, 40, 60, 80]);
+      expect(totals(const SeekSettings(step: Duration(seconds: 15))), [15, 30, 60, 90, 120]);
+      expect(totals(const SeekSettings(step: Duration(seconds: 30))), [30, 60, 120, 180, 240]);
+    });
+
+    test('without cumulative every tap adds one step', () {
+      List<int> totals(SeekSettings s) => [for (var t = 1; t <= 5; t++) s.total(t).inSeconds];
+      expect(totals(const SeekSettings(cumulative: false)), [5, 10, 15, 20, 25]);
+      expect(totals(const SeekSettings(step: Duration(seconds: 10), cumulative: false)), [10, 20, 30, 40, 50]);
+    });
+
+    testWidgets('a 10 s step seeks 10, 20, 40 s', (tester) async {
+      await pump(tester, seek: const SeekSettings(step: Duration(seconds: 10)), position: const Duration(seconds: 10));
+      for (var i = 0; i < 4; i++) {
+        await tap(tester, right(tester));
+      }
+      expect(seconds(player.seeks), [20, 30, 50]);
+      expect(find.text('40 seconds'), findsOneWidget);
+      expect(tester.takeAnnouncements().map((a) => a.message).first, 'Forward 10 seconds');
+      await tester.pump(StashVideoControls.seekSequenceWindow);
+    });
+
+    testWidgets('without cumulative, further taps add one step each', (tester) async {
+      await pump(tester, seek: const SeekSettings(cumulative: false));
+      for (var i = 0; i < 4; i++) {
+        await tap(tester, right(tester));
+      }
+      expect(seconds(player.seeks), [35, 40, 45]);
+      expect(find.text('15 seconds'), findsOneWidget);
+      await tester.pump(StashVideoControls.seekSequenceWindow);
+    });
+
+    testWidgets('with double-tap seeking off, taps only toggle the controls, right away', (tester) async {
+      await pump(tester, seek: const SeekSettings(enabled: false));
+      await tester.tapAt(right(tester));
+      await tester.pump();
+      expect(controlsVisible(tester), isTrue, reason: 'no wait for a second tap');
+      await tester.tapAt(right(tester));
+      await tester.pump();
+      expect(controlsVisible(tester), isFalse);
+      await tester.tapAt(right(tester));
+      await tester.pump();
+      expect(player.seeks, isEmpty);
+      expect(circles(), findsNothing);
+      await tester.pump(const Duration(seconds: 4));
+    });
+
+    testWidgets('with double-tap seeking off, casting has no seek zones', (tester) async {
+      await pump(tester, casting: true, seek: const SeekSettings(enabled: false));
+      for (var i = 0; i < 3; i++) {
+        await tap(tester, right(tester));
+      }
+      expect(cast.seeks, isEmpty);
+    });
   });
 
   testWidgets('no seeking while the touch lock is on', (tester) async {

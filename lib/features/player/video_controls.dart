@@ -21,6 +21,7 @@ import 'gesture_hints.dart';
 import 'player_controls.dart' show fullscreenByRotation, playerVideoKey;
 import 'player_providers.dart';
 import 'preview_seek_bar.dart';
+import 'seek_settings.dart';
 import 'touch_lock.dart';
 import 'video_zoom.dart';
 import '../../l10n/l10n.dart';
@@ -30,10 +31,12 @@ import '../../l10n/l10n.dart';
 /// removed our seek bar mid-drag).
 ///
 /// * tap: show/hide; auto-hide after [hideAfter] while playing
-/// * double tap on the left/right third: seek ∓/± 5 s, and every further
-///   tap on that side within [seekSequenceWindow] skips further, like
-///   YouTube: 5, 10, 20, 30 s … in total ([seekSequenceTotal]); also while
-///   casting, where the TV seeks
+/// * double tap on the left/right third: seek ∓/± the step of
+///   [seekSettingsProvider] (5 s by default), and every further tap on that
+///   side within [seekSequenceWindow] skips further, like YouTube: 5, 10,
+///   20, 30 s … in total ([SeekSettings.total]); also while casting, where
+///   the TV seeks. With double-tap seeking off, a tap toggles the controls
+///   right away instead of waiting for a second one.
 /// * hold: double speed until released
 /// * pinch with two fingers: zoom into the video ([videoZoomProvider]); it
 ///   stays until zoomed out or another scene starts
@@ -70,15 +73,8 @@ class StashVideoControls extends ConsumerStatefulWidget {
   final List<Widget> topActions;
   final Duration hideAfter;
 
-  /// The first jump of a double tap; the gesture tips name it.
-  static const firstSeekStep = Duration(seconds: 5);
-
   /// How long a seek sequence waits for the next tap on its side.
   static const seekSequenceWindow = Duration(milliseconds: 700);
-
-  /// The total jump after [taps] taps of a seek sequence: 5, 10, 20, 30 s …
-  static Duration seekSequenceTotal(int taps) =>
-      taps <= 1 ? firstSeekStep : Duration(seconds: 10 * (taps - 1));
 
   @override
   ConsumerState<StashVideoControls> createState() => _StashVideoControlsState();
@@ -178,10 +174,11 @@ class _StashVideoControlsState extends ConsumerState<StashVideoControls> {
   Player? _heldPlayer;
 
   /// The running seek sequence: -1 = back, 1 = forward, 0 = none. Its
-  /// [_seekTaps] taps jump [StashVideoControls.seekSequenceTotal] from
+  /// [_seekTaps] taps jump [_seekTotal] ([SeekSettings.total]) from
   /// [_seekBase], the position when it started.
   int _seekDirection = 0;
   int _seekTaps = 0;
+  Duration _seekTotal = Duration.zero;
   Duration _seekBase = Duration.zero;
   Duration? _lastSeekTarget;
   Timer? _seekTimer;
@@ -316,7 +313,7 @@ class _StashVideoControlsState extends ConsumerState<StashVideoControls> {
   /// new one there, and a tap in the middle ends it (and toggles the
   /// controls as usual).
   void _onSeekTap(int side, Offset position) {
-    if (_locked || _tipsShowing) return;
+    if (_locked || _tipsShowing || !ref.read(seekSettingsProvider).enabled) return;
     if (_seekDirection != 0) {
       _clearLastTap();
       if (side == 0) {
@@ -359,7 +356,7 @@ class _StashVideoControlsState extends ConsumerState<StashVideoControls> {
   void _extendSeekSequence() {
     final l = context.l10n;
     _seekTaps++;
-    final total = StashVideoControls.seekSequenceTotal(_seekTaps);
+    final total = _seekTotal = ref.read(seekSettingsProvider).total(_seekTaps);
     final casting = _casting;
     final player = ref.read(playerProvider);
     // While casting, the player doesn't know the length: take the scene's.
@@ -402,7 +399,7 @@ class _StashVideoControlsState extends ConsumerState<StashVideoControls> {
             alignment: _seekDirection < 0 ? const Alignment(-0.6, 0) : const Alignment(0.6, 0),
             child: _SeekFeedback(
               forward: _seekDirection > 0,
-              seconds: StashVideoControls.seekSequenceTotal(_seekTaps).inSeconds,
+              seconds: _seekTotal.inSeconds,
               taps: _seekTaps,
             ),
           ),
@@ -478,6 +475,7 @@ class _StashVideoControlsState extends ConsumerState<StashVideoControls> {
   Widget build(BuildContext context) {
     final player = ref.watch(playerProvider);
     final fullscreen = widget.fullscreen;
+    final seek = ref.watch(seekSettingsProvider);
 
     // While casting, the video plays on the TV: show remote controls instead.
     final casting = ref.watch(castConnectionProvider).value;
@@ -486,7 +484,7 @@ class _StashVideoControlsState extends ConsumerState<StashVideoControls> {
         fit: StackFit.expand,
         children: [
           CastingControls(connection: casting, showMinimize: !fullscreen),
-          _castSeekZones(),
+          if (seek.enabled) _castSeekZones(),
           if (_seekDirection != 0) _seekFeedback(),
         ],
       );
@@ -529,7 +527,8 @@ class _StashVideoControlsState extends ConsumerState<StashVideoControls> {
                 },
                 // Seeking is handled by _onSeekTap; this only makes a single
                 // tap wait, so the first tap of a double tap doesn't toggle.
-                onDoubleTap: () {},
+                // Without double-tap seeking, taps toggle right away.
+                onDoubleTap: seek.enabled ? () {} : null,
                 // Claim vertical drags so the miniplayer's own pan doesn't
                 // fight with DragToMinimize, which handles the swipe-down
                 // from raw pointer events.
@@ -691,7 +690,7 @@ class _StashVideoControlsState extends ConsumerState<StashVideoControls> {
           // Always there (empty without an error), so the tree stays the same.
           _PlaybackErrorOverlay(error: error, sceneId: widget.scene.id, onQuality: widget.onQuality),
           if (_tipsShowing)
-            GestureTipsOverlay(seekSeconds: StashVideoControls.firstSeekStep.inSeconds, onDismiss: _dismissTips),
+            GestureTipsOverlay(seekSeconds: seek.enabled ? seek.step.inSeconds : null, onDismiss: _dismissTips),
           // Always there (empty while unlocked), above the gestures and buttons.
           TouchLockLayer(locked: _locked && fullscreen, onUnlock: _unlock),
           if (_pinching)

@@ -3,7 +3,10 @@ import 'dart:collection';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/pagination/paged_notifier.dart';
 import '../../data/models/list_queries.dart';
+import '../../data/models/marker.dart';
+import '../../data/models/page_result.dart';
 import '../../data/models/scene_filter.dart';
 import '../../data/repositories/stash_repository.dart';
 import 'short.dart';
@@ -84,31 +87,48 @@ class ShortsFeedState {
       );
 }
 
-/// Where a shorts feed comes from: the mixed feed of the shorts tab, or one
-/// performer's or studio's short videos (their channel's shorts tab).
+/// Where a shorts feed comes from: the mixed feed of the shorts tab, one
+/// performer's or studio's short videos (their channel's shorts tab), or a
+/// markers grid's markers.
 @immutable
 class ShortsSource {
   const ShortsSource.feed()
       : performerId = null,
         studioId = null,
         title = null,
-        lane = null;
+        lane = null,
+        markers = null,
+        startPage = 1;
 
   const ShortsSource.performer(String this.performerId, {this.title})
       : studioId = null,
-        lane = null;
+        lane = null,
+        markers = null,
+        startPage = 1;
 
   /// A studio's shorts, including its sub-studios'.
   const ShortsSource.studio(String this.studioId, {this.title})
       : performerId = null,
-        lane = null;
+        lane = null,
+        markers = null,
+        startPage = 1;
 
   /// One of the home shelf's queues: mixed like the feed, but shuffled on
   /// its own, so every tile continues differently.
   const ShortsSource.lane(int this.lane)
       : performerId = null,
         studioId = null,
-        title = null;
+        title = null,
+        markers = null,
+        startPage = 1;
+
+  /// Exactly the markers of a markers grid (the library's, a channel's), in
+  /// its order, from its page [startPage] (of [PagedNotifier.pageSize]) on:
+  /// the shorts settings' filters don't apply, the user picked these.
+  const ShortsSource.markers(MarkerQuery this.markers, {this.startPage = 1, this.title})
+      : performerId = null,
+        studioId = null,
+        lane = null;
 
   final String? performerId;
   final String? studioId;
@@ -116,10 +136,16 @@ class ShortsSource {
   /// Which of the home shelf's queues (0–3).
   final int? lane;
 
+  /// The markers grid's query, for [ShortsSource.markers].
+  final MarkerQuery? markers;
+
+  /// The first page of [markers] the feed plays.
+  final int startPage;
+
   /// Shown in the top bar, e.g. the performer's name.
   final String? title;
 
-  bool get isFeed => performerId == null && studioId == null && lane == null;
+  bool get isFeed => performerId == null && studioId == null && lane == null && markers == null;
 
   /// A channel's videos that fit the shorts settings' [filter] (length and
   /// orientation); null for the mixed feeds.
@@ -133,10 +159,34 @@ class ShortsSource {
 
   @override
   bool operator ==(Object other) =>
-      other is ShortsSource && other.performerId == performerId && other.studioId == studioId && other.lane == lane;
+      other is ShortsSource &&
+      other.performerId == performerId &&
+      other.studioId == studioId &&
+      other.lane == lane &&
+      other.markers == markers &&
+      other.startPage == startPage;
 
   @override
-  int get hashCode => Object.hash(performerId, studioId, lane);
+  int get hashCode => Object.hash(performerId, studioId, lane, markers, startPage);
+}
+
+/// Where a tapped marker is in the shorts of [ShortsSource.markers]: the
+/// feed starts at the page holding [index] of the grid's [items] (all pages
+/// loaded so far, or the one page shown with numbered pages, [page]) and
+/// leaves out markers it can't play.
+({int startPage, int initialIndex}) markerShortsStart(
+  List<Marker> items,
+  int index, {
+  int? page,
+  int perPage = PagedNotifier.pageSize,
+}) {
+  final startPage = page ?? index ~/ perPage + 1;
+  final first = page == null ? (startPage - 1) * perPage : 0;
+  var initialIndex = 0;
+  for (var i = first; i < index && i < items.length; i++) {
+    if (items[i].scene.streamUrl != null) initialIndex++;
+  }
+  return (startPage: startPage, initialIndex: initialIndex);
 }
 
 /// Endless, shuffled feed of shorts built from [shortsSettingsProvider]:
@@ -149,7 +199,8 @@ class ShortsFeedNotifier extends Notifier<ShortsFeedState> {
 
   final ShortsSource source;
 
-  static const _pageSize = 24;
+  /// The same as the markers grid's, so [ShortsSource.startPage] matches.
+  static const _pageSize = PagedNotifier.pageSize;
 
   late ShortsMixer _mixer;
   late SceneQuery? _preferredQuery;
@@ -171,10 +222,15 @@ class ShortsFeedNotifier extends Notifier<ShortsFeedState> {
 
   @override
   ShortsFeedState build() {
-    final settings = ref.watch(shortsSettingsProvider);
     ref.watch(stashRepositoryProvider);
+    // A markers grid's markers: no settings apply.
+    final settings = source.markers == null ? ref.watch(shortsSettingsProvider) : const ShortsSettings();
     final channelQuery = source.channelQuery(settings.baseFilter);
-    if (channelQuery != null) {
+    if (source.markers case final markers?) {
+      _preferredQuery = null;
+      _othersQuery = null;
+      _markerQuery = markers;
+    } else if (channelQuery != null) {
       _preferredQuery = null;
       _othersQuery = channelQuery;
       _markerQuery = null;
@@ -191,7 +247,7 @@ class ShortsFeedNotifier extends Notifier<ShortsFeedState> {
     _othersPage = 0;
     _markers.clear();
     _markersDone = _markerQuery == null;
-    _markersPage = 0;
+    _markersPage = source.startPage - 1;
     _videoTurn = true;
     _loading = false;
     final generation = ++_generation;
@@ -279,7 +335,18 @@ class ShortsFeedNotifier extends Notifier<ShortsFeedState> {
   Future<void> _loadMarkers() async {
     final generation = _generation;
     final page = _markersPage + 1;
-    final result = await ref.read(stashRepositoryProvider).findMarkers(_markerQuery!, page: page, perPage: _pageSize);
+    final PageResult<Marker> result;
+    try {
+      result = await ref.read(stashRepositoryProvider).findMarkers(_markerQuery!, page: page, perPage: _pageSize);
+    } on StashApiException catch (e) {
+      // The server rejected the marker query (an older Stash without e.g.
+      // the scene's orientation for markers): the mixed feed goes on with
+      // its videos. Only markers, or no connection: the feed shows the error.
+      if (e.isNetworkError || !(_mixer.hasPreferred || _mixer.hasOthers)) rethrow;
+      if (!ref.mounted || generation != _generation) return;
+      _markersDone = true;
+      return;
+    }
     if (!ref.mounted || generation != _generation) return;
     _markersPage = page;
     _markers.addAll([for (final m in result.items) if (m.scene.streamUrl != null) Short.marker(m)]);

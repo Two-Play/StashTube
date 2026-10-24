@@ -20,15 +20,16 @@ enum ShortsLength {
   final int? maxSeconds;
 }
 
-/// Whether the shorts feed also plays scene markers (#42).
+/// What the shorts feed plays: videos, scene markers (#42) or both (shown
+/// as "Content"). The names are stored, so they stay as they are.
 enum ShortsMarkers {
-  /// Only short videos.
+  /// Only short videos ("Videos only").
   off,
 
-  /// Short videos and markers, taking turns.
+  /// Short videos and markers, taking turns ("Videos & markers").
   mixed,
 
-  /// Only markers.
+  /// Only markers ("Markers only").
   only,
 }
 
@@ -66,11 +67,12 @@ class ShortsSettings {
   /// Whether the feed shows whole videos (not only markers).
   bool get showsVideos => markers != ShortsMarkers.only;
 
-  /// The markers in the feed, or null when it shows none. Length and
-  /// orientation don't apply: markers are short clips of any scene.
+  /// The markers in the feed, or null when it shows none. The orientation
+  /// applies (through the marker's scene); the length doesn't: a marker
+  /// plays only its marked part.
   MarkerQuery? get markerQuery => markers == ShortsMarkers.off
       ? null
-      : MarkerQuery(sort: MarkerSort.random, tagIds: [for (final t in tags) t.id]);
+      : MarkerQuery(sort: MarkerSort.random, tagIds: [for (final t in tags) t.id], portraitOnly: portraitOnly);
 
   ShortsSettings copyWith({
     List<Tag>? tags,

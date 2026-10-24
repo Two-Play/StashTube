@@ -17,6 +17,7 @@ import '../../data/providers.dart';
 import '../../data/repositories/stash_session.dart';
 import '../../widgets/scene_card.dart';
 import '../../widgets/stash_image.dart';
+import '../pip/pip.dart';
 import 'player_providers.dart';
 import 'preview_seek_bar.dart';
 import 'video_controls.dart';
@@ -145,7 +146,9 @@ class _PlayerVideoState extends ConsumerState<PlayerVideo> {
     final orientation = MediaQuery.orientationOf(context);
     final turned = _orientation != null && orientation != _orientation;
     _orientation = orientation;
-    if (turned && orientation == Orientation.landscape) _onTurnedToLandscape();
+    // Android's picture-in-picture window is landscape too: no fullscreen
+    // for it, the phone wasn't turned.
+    if (turned && orientation == Orientation.landscape && !ref.read(pipProvider)) _onTurnedToLandscape();
   }
 
   void _onTurnedToLandscape() {
@@ -174,13 +177,20 @@ class _PlayerVideoState extends ConsumerState<PlayerVideo> {
         return _enterFullscreen(ref.read(playerProvider).state, scene);
       },
       onExitFullscreen: _onExitFullscreen,
-      // The same builder is used by media_kit's fullscreen route.
+      // The same builder is used by media_kit's fullscreen route. Fullscreen
+      // is read from the controls' own place in the tree: VideoState's
+      // isFullscreen()/toggleFullscreen() use the last context media_kit
+      // remembered, which is still the fullscreen route's while that route
+      // goes away (leaving picture-in-picture), and looking up its ancestors
+      // then throws "Looking up a deactivated widget's ancestor is unsafe".
       controls: widget.showControls
-          ? (state) => StashVideoControls(
-                fullscreen: state.isFullscreen(),
-                onToggleFullscreen: state.toggleFullscreen,
-                scene: scene,
-                onQuality: () => showQualitySheet(context, scene.id),
+          ? (state) => Builder(
+                builder: (controlsContext) => StashVideoControls(
+                  fullscreen: isFullscreen(controlsContext),
+                  onToggleFullscreen: () => toggleFullscreen(controlsContext),
+                  scene: scene,
+                  onQuality: () => showQualitySheet(context, scene.id),
+                ),
               )
           : _noControls,
     );

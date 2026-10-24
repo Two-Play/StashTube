@@ -125,6 +125,20 @@ void main() {
     expect(container.read(gestureTipsSeenProvider), isFalse);
     expect(prefs.getBool('gesture_tips_seen'), isFalse);
   });
+
+  testWidgets('the double-tap tip names the configured step', (tester) async {
+    await pump(tester, stored: {'seek_step_seconds': 10});
+    await tapVideo(tester);
+    expect(find.text('Double-tap left or right: 10 s back/forward, keep tapping to skip further'), findsOneWidget);
+  });
+
+  testWidgets('without double-tap seeking there is no double-tap tip', (tester) async {
+    await pump(tester, stored: {'seek_double_tap': false});
+    await tapVideo(tester);
+    expect(find.byType(GestureTipsOverlay), findsOneWidget);
+    expect(find.textContaining('Double-tap'), findsNothing);
+    expect(find.text('Hold: 2× speed'), findsOneWidget);
+  });
 }
 
 void _noop() {}
