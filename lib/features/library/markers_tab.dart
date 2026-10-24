@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../core/config/theme.dart';
 
 import '../../core/utils/format.dart';
 import '../../data/models/list_queries.dart';
@@ -99,6 +100,7 @@ class MarkerTile extends ConsumerWidget {
     final preview = previewsPlay(context, ref, markerPreviewsProvider) ? marker.previewUrl : null;
     final l = context.l10n;
     final showTag = marker.tag.name != marker.title;
+    final badge = AppColors.of(context);
     return TileSemantics(
       label: [
         marker.title,
@@ -107,14 +109,14 @@ class MarkerTile extends ConsumerWidget {
         if (showTag) marker.tag.name,
       ].join(', '),
       child: InkWell(
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: AppRadius.thumbnailBorder,
         onTap: () => ref.read(nowPlayingProvider.notifier).play(marker.scene, at: marker.seconds),
         child: ExcludeSemantics(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               ClipRRect(
-                borderRadius: BorderRadius.circular(8),
+                borderRadius: AppRadius.thumbnailBorder,
                 child: AspectRatio(
                   aspectRatio: 16 / 9,
                   child: Stack(
@@ -131,21 +133,21 @@ class MarkerTile extends ConsumerWidget {
                         bottom: 6,
                         child: DecoratedBox(
                           decoration: BoxDecoration(
-                            color: Colors.black.withValues(alpha: 0.8),
-                            borderRadius: BorderRadius.circular(4),
+                            color: badge.badgeBackground,
+                            borderRadius: AppRadius.badgeBorder,
                           ),
                           child: Padding(
                             padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                             child: Row(
                               mainAxisSize: MainAxisSize.min,
                               children: [
-                                const Icon(Icons.bookmark, color: Colors.white, size: 12),
-                                const SizedBox(width: 4),
+                                Icon(Icons.bookmark, color: badge.onBadge, size: 12),
+                                const SizedBox(width: AppSpacing.xs),
                                 Text(
                                   formatDuration(marker.seconds),
-                                  style: const TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 12,
+                                  style: TextStyle(
+                                    color: badge.onBadge,
+                                    fontSize: AppTextSize.overlayLabel,
                                     fontWeight: FontWeight.w500,
                                   ),
                                 ),

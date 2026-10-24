@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../core/config/haptics.dart';
+import '../core/config/theme.dart';
 import '../data/models/list_queries.dart';
 import '../data/models/scene.dart';
 import '../data/providers.dart';
@@ -23,8 +24,12 @@ class SceneShelf extends ConsumerWidget {
   /// Drop scenes finished during this session (their saved resume time is 0).
   final bool hideFinished;
 
-  static const double _height = 230;
   static const double _cardWidth = 240;
+
+  /// The 16:9 thumbnail plus the text below it, which grows with the text
+  /// size.
+  static double _height(BuildContext context) =>
+      _cardWidth * 9 / 16 + 6 + MediaQuery.textScalerOf(context).scale(89);
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -46,15 +51,22 @@ class SceneShelf extends ConsumerWidget {
           child: Row(
             children: [
               if (icon != null) ...[Icon(icon, size: 20), const SizedBox(width: 8)],
-              Text(title, style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600)),
+              Expanded(
+                child: Text(
+                  title,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
+                ),
+              ),
             ],
           ),
         ),
         if (loading)
-          const ShelfSkeleton(height: _height, itemWidth: _cardWidth)
+          ShelfSkeleton(height: _height(context), itemWidth: _cardWidth)
         else
           SizedBox(
-            height: _height,
+            height: _height(context),
             child: ListView.separated(
               scrollDirection: Axis.horizontal,
               padding: const EdgeInsets.symmetric(horizontal: 12),
@@ -84,7 +96,7 @@ class _ShelfCard extends ConsumerWidget {
       child: TileSemantics(
         label: sceneSemanticsLabel(context, ref, scene),
         child: InkWell(
-          borderRadius: BorderRadius.circular(8),
+          borderRadius: AppRadius.thumbnailBorder,
           onTap: () => ref.read(nowPlayingProvider.notifier).play(scene),
           // A shortcut for the ⋮ next to the title.
           onLongPress: () {
@@ -96,7 +108,7 @@ class _ShelfCard extends ConsumerWidget {
             children: [
               ExcludeSemantics(
                 child: ClipRRect(
-                  borderRadius: BorderRadius.circular(8),
+                  borderRadius: AppRadius.thumbnailBorder,
                   child: SceneThumbnail(scene: scene, compact: true),
                 ),
               ),

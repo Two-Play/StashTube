@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:media_kit/media_kit.dart';
 
 import '../../core/config/haptics.dart';
+import '../../core/config/theme.dart';
 import '../../core/utils/format.dart';
 import '../../data/models/scene.dart';
 import '../../widgets/hold_detector.dart';
@@ -279,14 +280,14 @@ class _StashVideoControlsState extends ConsumerState<StashVideoControls> {
               child: Align(
                 alignment: const Alignment(0, -0.75),
                 child: DecoratedBox(
-                  decoration: BoxDecoration(color: Colors.black54, borderRadius: BorderRadius.circular(16)),
+                  decoration: BoxDecoration(color: AppColors.of(context).videoScrimSoft, borderRadius: AppRadius.pillBorder),
                   child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                    padding: const EdgeInsets.symmetric(horizontal: AppSpacing.m, vertical: AppSpacing.xs),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         const Icon(Icons.fast_forward, color: Colors.white, size: 18),
-                        const SizedBox(width: 4),
+                        const SizedBox(width: AppSpacing.xs),
                         Text(context.l10n.fastForward2x, style: const TextStyle(color: Colors.white)),
                       ],
                     ),
@@ -298,7 +299,7 @@ class _StashVideoControlsState extends ConsumerState<StashVideoControls> {
             child: AnimatedOpacity(
               opacity: _visible ? 1 : 0,
               duration: const Duration(milliseconds: 200),
-              child: const ColoredBox(color: Colors.black38),
+              child: ColoredBox(color: AppColors.of(context).videoDim),
             ),
           ),
           IgnorePointer(
@@ -418,9 +419,9 @@ class _StashVideoControlsState extends ConsumerState<StashVideoControls> {
               child: Align(
                 alignment: const Alignment(0, -0.75),
                 child: DecoratedBox(
-                  decoration: BoxDecoration(color: Colors.black54, borderRadius: BorderRadius.circular(16)),
+                  decoration: BoxDecoration(color: AppColors.of(context).videoScrimSoft, borderRadius: AppRadius.pillBorder),
                   child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                    padding: const EdgeInsets.symmetric(horizontal: AppSpacing.m, vertical: AppSpacing.xs),
                     child: Text(
                       context.l10n.speedValue(double.parse(ref.watch(videoZoomProvider).scale.toStringAsFixed(1))),
                       style: const TextStyle(color: Colors.white),
@@ -464,9 +465,9 @@ class _QueueButtons extends ConsumerWidget {
                   })
               : null,
         ),
-        const SizedBox(width: 16),
+        const SizedBox(width: AppSpacing.l),
         child,
-        const SizedBox(width: 16),
+        const SizedBox(width: AppSpacing.l),
         IconButton(
           iconSize: 36,
           disabledColor: Colors.white38,
@@ -497,7 +498,7 @@ class _TimeLabel extends StatelessWidget {
           final total = player.state.duration.inMilliseconds / 1000;
           return Text(
             '${formatDuration(position.data!.inMilliseconds / 1000)} / ${formatDuration(total)}',
-            style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w500),
+            style: const TextStyle(color: Colors.white, fontSize: AppTextSize.overlayBody, fontWeight: FontWeight.w500),
           );
         },
       );
@@ -510,16 +511,16 @@ class _SeekFeedback extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => DecoratedBox(
-        decoration: const BoxDecoration(color: Colors.black45, shape: BoxShape.circle),
+        decoration: BoxDecoration(color: AppColors.of(context).videoScrimSoft, shape: BoxShape.circle),
         child: Padding(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.all(AppSpacing.l),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               Icon(forward ? Icons.fast_forward : Icons.fast_rewind, color: Colors.white),
               Text(
                 '${StashVideoControls.seekStep.inSeconds} s',
-                style: const TextStyle(color: Colors.white, fontSize: 12),
+                style: const TextStyle(color: Colors.white, fontSize: AppTextSize.overlayLabel),
               ),
             ],
           ),
@@ -535,7 +536,6 @@ const playbackSpeeds = [0.5, 0.75, 1.0, 1.25, 1.5, 1.75, 2.0];
 Future<void> showSpeedSheet(BuildContext context, Player player) => showModalBottomSheet<void>(
       context: context,
       useRootNavigator: true,
-      showDragHandle: true,
       builder: (sheetContext) {
         final l = sheetContext.l10n;
         final current = player.state.rate;

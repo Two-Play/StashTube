@@ -7,6 +7,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:media_kit/media_kit.dart';
 
 import '../../core/config/haptics.dart';
+import '../../core/config/theme.dart';
 import '../../core/utils/format.dart';
 import '../../data/models/scene_details.dart';
 import '../../data/models/scrub_thumbnails.dart';
@@ -272,16 +273,16 @@ class _PreviewSeekBarState extends ConsumerState<PreviewSeekBar> {
                       ),
                     ),
                   ),
-                const SizedBox(height: 4),
+                const SizedBox(height: AppSpacing.xs),
                 DecoratedBox(
-                  decoration: BoxDecoration(color: Colors.black54, borderRadius: BorderRadius.circular(4)),
+                  decoration: BoxDecoration(color: AppColors.of(context).videoScrimSoft, borderRadius: AppRadius.badgeBorder),
                   child: Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                     child: Text(
                       chapter == null ? formatDuration(seconds) : '${formatDuration(seconds)} • $chapter',
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600, fontSize: 13),
+                      style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600, fontSize: AppTextSize.overlayBody),
                     ),
                   ),
                 ),

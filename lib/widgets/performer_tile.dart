@@ -2,6 +2,7 @@ import 'package:country_flags/country_flags.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../core/config/theme.dart';
 import '../data/models/performer.dart';
 import '../features/performers/favorite_button.dart';
 import '../features/shell/navigation.dart';
@@ -22,24 +23,24 @@ class PerformerTile extends ConsumerWidget {
     return TileSemantics(
       label: '${performer.name}, $scenes',
       child: InkWell(
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: AppRadius.cardBorder,
         onTap: () => openPerformer(ref, performer.id),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Expanded(
               child: ClipRRect(
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: AppRadius.cardBorder,
                 child: Stack(
                   fit: StackFit.expand,
                   children: [
                     ExcludeSemantics(child: StashImage(performer.imageUrl, fallbackIcon: Icons.person)),
                     // A button of its own for screen readers.
-                    Positioned(top: 4, left: 4, child: FavoriteIconButton(performer: performer)),
+                    Positioned(top: AppSpacing.xs, left: AppSpacing.xs, child: FavoriteIconButton(performer: performer)),
                     if (performer.country != null)
                       Positioned(
-                        top: 8,
-                        right: 8,
+                        top: AppSpacing.s,
+                        right: AppSpacing.s,
                         child: ExcludeSemantics(child: CountryFlagIcon(code: performer.country!)),
                       ),
                   ],
@@ -78,7 +79,7 @@ class PerformerBubble extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) => TileSemantics(
     label: performer.name,
     child: InkWell(
-      borderRadius: BorderRadius.circular(8),
+      borderRadius: AppRadius.thumbnailBorder,
       onTap: () => openPerformer(ref, performer.id),
       child: ExcludeSemantics(
         child: SizedBox(

@@ -22,18 +22,48 @@ class SettingsButton extends ConsumerWidget {
 
 /// Opens the settings as a sheet over the whole app, closed with its X or
 /// by swiping it down (on Android too). Its sub-pages open inside the sheet.
-Future<void> openSettings(BuildContext context, WidgetRef ref) async {
+///
+/// With [initialPage] that sub-page opens on top, as if picked in the
+/// settings: back leads to the settings, the X or a swipe down closes it.
+Future<void> openSettings(BuildContext context, WidgetRef ref, {Widget? initialPage}) async {
   final open = ref.read(settingsOpenProvider.notifier);
   open.set(true);
   try {
     await showCupertinoSheet<void>(
       context: context,
       useNestedNavigation: true,
-      scrollableBuilder: (_, controller) => SettingsPage(scrollController: controller),
+      scrollableBuilder: (_, controller) {
+        final settings = SettingsPage(scrollController: controller);
+        return initialPage == null ? settings : _PushOnStart(page: initialPage, child: settings);
+      },
     );
   } finally {
     open.set(false);
   }
+}
+
+/// Pushes [page] over [child] once it is shown.
+class _PushOnStart extends StatefulWidget {
+  const _PushOnStart({required this.page, required this.child});
+
+  final Widget page;
+  final Widget child;
+
+  @override
+  State<_PushOnStart> createState() => _PushOnStartState();
+}
+
+class _PushOnStartState extends State<_PushOnStart> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => widget.page));
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) => widget.child;
 }
 
 /// Whether a sheet (the settings, an edit form) covers the app, e.g. so the
