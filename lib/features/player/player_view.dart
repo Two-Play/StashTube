@@ -194,15 +194,9 @@ class _PlayerPanelState extends ConsumerState<PlayerPanel> {
                                   width: t.videoWidth,
                                   child: ColoredBox(
                                     color: Colors.black,
-                                    // The error overlay is always there (empty without an
-                                    // error), so the video keeps its place in the tree.
-                                    child: Stack(
-                                      fit: StackFit.expand,
-                                      children: [
-                                        PlayerVideo(scene: scene, showControls: t.isExpanded),
-                                        _PlaybackErrorOverlay(scene: scene, visible: t.isExpanded),
-                                      ],
-                                    ),
+                                    // A playback error shows inside the controls
+                                    // (StashVideoControls), so also in fullscreen.
+                                    child: PlayerVideo(scene: scene, showControls: t.isExpanded),
                                   ),
                                 ),
                                 // Mini bar info keeps its natural width and is clipped while
@@ -330,83 +324,6 @@ class _MiniInfo extends ConsumerWidget {
           ),
         ],
       ),
-    );
-  }
-}
-
-/// Over the expanded video after a playback error: a short message, "Retry"
-/// and, if the scene has other streams, "Other quality". Empty otherwise;
-/// taps outside its buttons reach the video controls below.
-class _PlaybackErrorOverlay extends ConsumerWidget {
-  const _PlaybackErrorOverlay({required this.scene, required this.visible});
-
-  final Scene scene;
-  final bool visible;
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final error = ref.watch(playbackErrorProvider);
-    if (!visible || error == null || ref.watch(isCastingProvider)) return const SizedBox.shrink();
-    final l = context.l10n;
-    final streams = ref.watch(sceneDetailsProvider(scene.id)).value?.streams ?? const [];
-    const onVideo = Colors.white;
-
-    return Stack(
-      fit: StackFit.expand,
-      children: [
-        const IgnorePointer(child: ColoredBox(color: Colors.black54)),
-        Center(
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Icon(Icons.error_outline, color: onVideo, size: 32),
-                const SizedBox(height: 8),
-                Semantics(
-                  liveRegion: true,
-                  child: Text(
-                    l.playbackFailed,
-                    textAlign: TextAlign.center,
-                    style: Theme.of(context).textTheme.titleSmall?.copyWith(color: onVideo),
-                  ),
-                ),
-                Text(
-                  error.message,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Colors.white70),
-                ),
-                const SizedBox(height: 8),
-                Wrap(
-                  alignment: WrapAlignment.center,
-                  spacing: 8,
-                  children: [
-                    FilledButton.icon(
-                      icon: const Icon(Icons.refresh),
-                      label: Text(l.retry),
-                      onPressed: () {
-                        Haptics.light();
-                        ref.read(playbackErrorProvider.notifier).retry();
-                      },
-                    ),
-                    if (streams.length > 1)
-                      OutlinedButton.icon(
-                        style: OutlinedButton.styleFrom(
-                          foregroundColor: onVideo,
-                          side: const BorderSide(color: Colors.white70),
-                        ),
-                        icon: const Icon(Icons.hd_outlined),
-                        label: Text(l.otherQuality),
-                        onPressed: () => showQualitySheet(context, scene.id),
-                      ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-        ),
-      ],
     );
   }
 }

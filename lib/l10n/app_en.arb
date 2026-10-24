@@ -386,6 +386,7 @@
   "seeAll": "See all",
   "searchIntro": "Search scenes, images, galleries, performers and studios",
   "addServer": "Add server",
+  "addServerTitle": "Add a server",
   "connectToStash": "Connect to Stash",
   "loginIntro": "Enter the address of your Stash server, e.g. 192.168.1.10. Without a port, Stash's default port 9999 is tried too.",
   "savedServers": "Saved servers",
@@ -401,6 +402,18 @@
   "loginIncomplete": "Enter username and password.",
   "apiKeyRequired": "Enter the API key.",
   "loginAuthTitle": "This server needs a login",
+  "loginAuthServer": "{name} · {host}",
+  "@loginAuthServer": {
+    "description": "Under the login step's title: the server's name and host.",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "host": {
+        "type": "String"
+      }
+    }
+  },
   "loginAuthIntro": "Sign in with an API key or with your Stash username and password.",
   "loginMethodPassword": "Username & password",
   "apiKeyWhere": "You find it in Stash under Settings → Security → API key.",
@@ -898,16 +911,38 @@
       }
     }
   },
-  "searchSubmitIn": "{scope, select, images{Search images for \"{term}\"} galleries{Search galleries for \"{term}\"} performers{Search performers for \"{term}\"} studios{Search studios for \"{term}\"} other{Search scenes for \"{term}\"}}",
-  "@searchSubmitIn": {
+  "searchFor": "Search for {text}",
+  "@searchFor": {
+    "description": "Screen reader label of a search completion row.",
     "placeholders": {
-      "scope": {
-        "type": "String"
-      },
-      "term": {
+      "text": {
         "type": "String"
       }
     }
+  },
+  "searchFillIn": "Fill in",
+  "@searchFillIn": {
+    "description": "Tooltip of the arrow that puts a completion into the search field without searching."
+  },
+  "searchFillInText": "Fill in {text}",
+  "@searchFillInText": {
+    "placeholders": {
+      "text": {
+        "type": "String"
+      }
+    }
+  },
+  "searchRemoveFromHistory": "Remove {text} from recent searches",
+  "@searchRemoveFromHistory": {
+    "placeholders": {
+      "text": {
+        "type": "String"
+      }
+    }
+  },
+  "searchGoTo": "Go to",
+  "@searchGoTo": {
+    "description": "Header above performers, tags and studios matching the typed text, which open their pages."
   },
   "searchOtherAreas": "Search other areas",
   "searchClearFilters": "Clear filters",

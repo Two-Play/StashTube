@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../data/models/list_queries.dart';
@@ -20,6 +21,7 @@ import '../library/images_tab.dart';
 import '../shell/navigation.dart';
 import '../studios/studios_page.dart';
 import '../tags/tags_page.dart';
+import 'search_completions.dart';
 import 'search_history.dart';
 import '../../l10n/l10n.dart';
 
@@ -67,7 +69,7 @@ class SearchPage extends ConsumerStatefulWidget {
 class _SearchPageState extends ConsumerState<SearchPage> {
   final _controller = TextEditingController();
   final _focus = FocusNode();
-  Timer? _debounce;
+  Timer? _suggestDebounce;
   Timer? _record;
   String _term = '';
   late var _scope = widget.initialScope;
@@ -76,9 +78,17 @@ class _SearchPageState extends ConsumerState<SearchPage> {
   /// results can offer to clear them (SEARCH-2).
   SceneFilter _sceneFilter = const SceneFilter();
 
-  /// Whether the typeahead suggestions (SEARCH-1) are shown: from typing until
-  /// the term is submitted, a suggestion is picked or the field loses focus.
+  /// Whether the completions (SEARCH-1) are shown: while the field has focus
+  /// and text, until a search runs or the list is dismissed (Escape, a tap
+  /// beside it, leaving the field). Meanwhile the results underneath keep the
+  /// last searched term, so they don't reload while typing.
   bool _suggest = false;
+
+  /// The text the library completions are loaded for: the typed text after a
+  /// short pause, so they follow quickly without a request per keystroke.
+  String _suggestTerm = '';
+
+  static const _suggestDelay = Duration(milliseconds: 150);
 
   @override
   void initState() {
@@ -88,34 +98,93 @@ class _SearchPageState extends ConsumerState<SearchPage> {
 
   @override
   void dispose() {
-    _debounce?.cancel();
+    _suggestDebounce?.cancel();
     _record?.cancel();
     _focus.dispose();
     _controller.dispose();
     super.dispose();
   }
 
+  /// Focusing the field with text in it shows its completions again; leaving
+  /// it hides them, keeping the results (a tap beside the field may land on
+  /// them, so they must not change under the finger).
   void _onFocusChanged() {
-    if (!_focus.hasFocus && _suggest) setState(() => _suggest = false);
+    if (_focus.hasFocus) {
+      if (!_suggest && _controller.text.trim().isNotEmpty) {
+        setState(() {
+          _suggest = true;
+          _suggestTerm = _controller.text.trim();
+        });
+      }
+    } else if (_suggest) {
+      _dismissSuggestions();
+    }
+  }
+
+  /// Hides the completions; with [search] also shows the results of the
+  /// typed text.
+  void _dismissSuggestions({bool search = false}) {
+    _suggestDebounce?.cancel();
+    if (_suggest) setState(() => _suggest = false);
+    if (search && _controller.text.trim() != _term) _search(_controller.text);
   }
 
   void _onChanged(String value) {
-    if (!_suggest) setState(() => _suggest = true);
-    _debounce?.cancel();
-    _debounce = Timer(const Duration(milliseconds: 400), () => _search(value));
+    _suggestDebounce?.cancel();
+    if (value.trim().isEmpty) {
+      setState(() {
+        _suggest = false;
+        _suggestTerm = '';
+      });
+      _search('');
+      return;
+    }
+    // Rebuilds for the highlighted part and the history matches.
+    setState(() => _suggest = true);
+    _suggestDebounce = Timer(_suggestDelay, () {
+      if (mounted) setState(() => _suggestTerm = value.trim());
+    });
   }
 
   void _submit(String value) {
-    _debounce?.cancel();
+    _suggestDebounce?.cancel();
     setState(() => _suggest = false);
     _search(value, submitted: true);
   }
 
-  /// Leaves the search for a suggested performer, tag or studio.
-  void _openSuggestion(void Function(WidgetRef ref, String id) open, String id) {
-    setState(() => _suggest = false);
+  /// Searches for a picked completion or recent search.
+  void _pick(String term) {
+    _setText(term);
+    _submit(term);
     _focus.unfocus();
-    open(ref, id);
+  }
+
+  /// Puts a completion into the field to type on, without searching.
+  void _fillIn(String text) {
+    _setText(text);
+    _focus.requestFocus();
+    _onChanged(text);
+  }
+
+  void _setText(String text) =>
+      _controller.value = TextEditingValue(text: text, selection: TextSelection.collapsed(offset: text.length));
+
+  /// Leaves the search for a suggested performer, tag or studio, with the
+  /// results of the typed text waiting on return.
+  void _open(Completion completion) {
+    _dismissSuggestions(search: true);
+    _focus.unfocus();
+    final id = completion.id!;
+    switch (completion.kind) {
+      case CompletionKind.performer:
+        openPerformer(ref, id);
+      case CompletionKind.tag:
+        openTag(ref, id);
+      case CompletionKind.studio:
+        openStudio(ref, id);
+      case CompletionKind.history || CompletionKind.scene:
+        break;
+    }
   }
 
   Future<void> _openFilters() async {
@@ -141,38 +210,55 @@ class _SearchPageState extends ConsumerState<SearchPage> {
     }
   }
 
-  void _pick(String term) {
-    _controller.text = term;
-    _controller.selection = TextSelection.collapsed(offset: term.length);
-    _debounce?.cancel();
-    _search(term, submitted: true);
+  KeyEventResult _onKey(FocusNode node, KeyEvent event) {
+    if (_suggest && event is KeyDownEvent && event.logicalKey == LogicalKeyboardKey.escape) {
+      _dismissSuggestions(search: true);
+      return KeyEventResult.handled;
+    }
+    return KeyEventResult.ignored;
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    final typed = _controller.text.trim();
+    // Back first closes the completions (and shows the typed text's results).
+    return PopScope(
+      canPop: !_suggest,
+      onPopInvokedWithResult: (didPop, _) {
+        if (didPop) return;
+        _dismissSuggestions(search: true);
+        _focus.unfocus();
+      },
+      child: Scaffold(
       appBar: AppBar(
         // Next to the back button; as a tab root the field keeps the margin.
         titleSpacing: (ModalRoute.of(context)?.canPop ?? false) ? 0 : null,
-        title: TextField(
-          controller: _controller,
-          focusNode: _focus,
-          autofocus: widget.autofocus,
-          textInputAction: TextInputAction.search,
-          onChanged: _onChanged,
-          onSubmitted: _submit,
-          decoration: InputDecoration(
-            hintText: _scope.hint(context.l10n),
-            border: InputBorder.none,
-            suffixIcon: _controller.text.isEmpty
-                ? null
-                : IconButton(
-                    icon: const Icon(Icons.close),
-                    onPressed: () {
-                      _controller.clear();
-                      _search('');
-                    },
-                  ),
+        title: Focus(
+          canRequestFocus: false,
+          skipTraversal: true,
+          onKeyEvent: _onKey,
+          child: TextField(
+            controller: _controller,
+            focusNode: _focus,
+            autofocus: widget.autofocus,
+            textInputAction: TextInputAction.search,
+            onChanged: _onChanged,
+            onSubmitted: _submit,
+            onTapOutside: (_) => _focus.unfocus(),
+            decoration: InputDecoration(
+              hintText: _scope.hint(context.l10n),
+              border: InputBorder.none,
+              suffixIcon: _controller.text.isEmpty
+                  ? null
+                  : IconButton(
+                      icon: const Icon(Icons.close),
+                      onPressed: () {
+                        _controller.clear();
+                        _onChanged('');
+                        _focus.requestFocus();
+                      },
+                    ),
+            ),
           ),
         ),
         bottom: PreferredSize(
@@ -181,7 +267,11 @@ class _SearchPageState extends ConsumerState<SearchPage> {
             values: SearchScope.values,
             selected: _scope,
             labelOf: (s) => s.label(context.l10n),
-            onSelected: (s) => setState(() => _scope = s),
+            onSelected: (s) {
+              setState(() => _scope = s);
+              // The new area shows what is in the field.
+              if (typed != _term) _search(typed);
+            },
           ),
         ),
         actions: [
@@ -200,34 +290,57 @@ class _SearchPageState extends ConsumerState<SearchPage> {
       body: Stack(
         children: [
           Positioned.fill(
-            child: _term.isEmpty
-                ? _Discover(onPick: _pick)
-                // Scrolling the results closes the keyboard and the suggestions.
-                : NotificationListener<ScrollStartNotification>(
-                    onNotification: (n) {
-                      if (n.dragDetails != null) _focus.unfocus();
-                      return false;
-                    },
-                    child: _results(context),
-                  ),
+            // Scrolling closes the keyboard.
+            child: NotificationListener<ScrollStartNotification>(
+              onNotification: (n) {
+                if (n.dragDetails != null) _focus.unfocus();
+                return false;
+              },
+              child: _term.isEmpty ? _Discover(onPick: _pick) : _results(context),
+            ),
           ),
-          if (_suggest && _term.isNotEmpty)
-            Positioned(
-              left: 0,
-              right: 0,
-              top: 0,
-              child: _Suggestions(
-                term: _term,
-                scope: _scope,
-                controller: _controller,
-                onSubmit: () => _submit(_controller.text),
-                onPerformer: (id) => _openSuggestion(openPerformer, id),
-                onTag: (id) => _openSuggestion(openTag, id),
-                onStudio: (id) => _openSuggestion(openStudio, id),
+          if (_suggest && typed.isNotEmpty)
+            Positioned.fill(
+              // Taps here count as taps on the field, so it keeps its focus.
+              child: TextFieldTapRegion(
+                child: Stack(
+                  children: [
+                    // Tapping or dragging beside the list closes it and shows
+                    // the results of the typed text.
+                    Positioned.fill(
+                      child: GestureDetector(
+                        onVerticalDragStart: (_) {
+                          _dismissSuggestions(search: true);
+                          _focus.unfocus();
+                        },
+                        child: ModalBarrier(
+                          color: Theme.of(context).colorScheme.scrim.withValues(alpha: 0.32),
+                          semanticsLabel: MaterialLocalizations.of(context).modalBarrierDismissLabel,
+                          onDismiss: () {
+                            _dismissSuggestions(search: true);
+                            _focus.unfocus();
+                          },
+                        ),
+                      ),
+                    ),
+                    Align(
+                      alignment: Alignment.topCenter,
+                      child: _Completions(
+                        typed: typed,
+                        term: _suggestTerm,
+                        scope: _scope,
+                        onSearch: _pick,
+                        onFill: _fillIn,
+                        onOpen: _open,
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
         ],
       ),
+    ),
     );
   }
 
@@ -297,100 +410,248 @@ class _SearchPageState extends ConsumerState<SearchPage> {
   }
 }
 
-/// Typeahead under the search field (SEARCH-1): a row that submits the term,
-/// then up to three matching performers, tags and studios. Shows only the
-/// lists for [term] (the debounced term), so results of older terms never
-/// appear; their providers are dropped as soon as the term changes.
-class _Suggestions extends ConsumerWidget {
-  const _Suggestions({
+/// Autocomplete under the search field (SEARCH-1): texts to search for, first
+/// matching recent searches, then names and titles from the library, and a
+/// compact row that opens matching performers, tags and studios directly.
+///
+/// The library completions load for [term] (the typed text after a pause)
+/// through the list providers, which are keyed by it, so responses for older
+/// terms never show. Until the new term's lists are in, the last complete
+/// lists stay, filtered to what still completes [typed] (no flicker).
+class _Completions extends ConsumerStatefulWidget {
+  const _Completions({
+    required this.typed,
     required this.term,
     required this.scope,
-    required this.controller,
-    required this.onSubmit,
-    required this.onPerformer,
-    required this.onTag,
-    required this.onStudio,
+    required this.onSearch,
+    required this.onFill,
+    required this.onOpen,
   });
 
+  /// The trimmed text in the field; completions match and highlight it.
+  final String typed;
   final String term;
   final SearchScope scope;
-  final TextEditingController controller;
-  final VoidCallback onSubmit;
-  final ValueChanged<String> onPerformer;
-  final ValueChanged<String> onTag;
-  final ValueChanged<String> onStudio;
+  final ValueChanged<String> onSearch;
+  final ValueChanged<String> onFill;
+  final ValueChanged<Completion> onOpen;
 
-  static const _perKind = 3;
+  static const _limit = 8;
+  static const _historyLimit = 3;
+  static const _goToLimit = 5;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<_Completions> createState() => _CompletionsState();
+}
+
+class _CompletionsState extends ConsumerState<_Completions> {
+  List<Completion> _lastPool = const [];
+
+  /// The completions in [value], null while it loads; a failed list adds
+  /// none.
+  List<Completion>? _load<T>(AsyncValue<PagedState<T>> value, Completion Function(T item) toCompletion) {
+    if (value.hasError) return const [];
+    final state = value.current;
+    return state == null ? null : [for (final item in state.items) toCompletion(item)];
+  }
+
+  /// The library's candidates for [_Completions.term], by kind; from the
+  /// lists that fit the scope.
+  List<Completion> _pool() {
+    final term = widget.term;
+    if (term.isEmpty) return _lastPool;
+    final scope = widget.scope;
+    final parts = <List<Completion>?>[
+      if (scope != SearchScope.studios)
+        _load(
+          ref.watch(performerListProvider(PerformerQuery(search: term))),
+          (p) => Completion(p.name, CompletionKind.performer, id: p.id, imageUrl: p.imageUrl),
+        ),
+      if (scope != SearchScope.performers && scope != SearchScope.studios)
+        _load(ref.watch(tagListProvider(TagQuery(search: term))), (t) => Completion(t.name, CompletionKind.tag, id: t.id)),
+      if (scope != SearchScope.performers)
+        _load(
+          ref.watch(studioListProvider(StudioQuery(search: term))),
+          (s) => Completion(s.name, CompletionKind.studio, id: s.id, imageUrl: s.imageUrl),
+        ),
+      if (scope == SearchScope.scenes)
+        _load(ref.watch(sceneListProvider(SceneQuery(search: term))), (s) => Completion(s.title, CompletionKind.scene)),
+    ];
+    if (parts.every((p) => p != null)) return _lastPool = [for (final p in parts) ...p!];
+    return [..._lastPool, for (final p in parts) ...?p];
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final l = context.l10n;
     final theme = Theme.of(context);
-    List<T> first<T>(AsyncValue<PagedState<T>> value) => (value.current?.items ?? <T>[]).take(_perKind).toList();
-    final performers = first(ref.watch(performerListProvider(PerformerQuery(search: term))));
-    final tags = first(ref.watch(tagListProvider(TagQuery(search: term))));
-    final studios = first(ref.watch(studioListProvider(StudioQuery(search: term))));
+    final typed = widget.typed;
+    final pool = _pool();
+    final history = historyCompletions(ref.watch(searchHistoryProvider), typed, limit: _Completions._historyLimit);
+    final library = rankCompletions(
+      typed,
+      pool,
+      limit: _Completions._limit - history.length,
+      exclude: [for (final h in history) h.text],
+    );
+    final goTo = rankCompletions(typed, pool.where((c) => c.isEntity), limit: _Completions._goToLimit, perKind: 3);
+    if (history.isEmpty && library.isEmpty && goTo.isEmpty) return const SizedBox.shrink();
 
-    Widget header(String text) => Padding(
-          padding: const EdgeInsets.fromLTRB(16, 8, 16, 2),
-          child: Text(text, style: theme.textTheme.labelMedium?.copyWith(color: theme.colorScheme.onSurfaceVariant)),
-        );
-
-    // Taps here count as taps on the field, so it keeps its focus.
-    return TextFieldTapRegion(
-      child: Material(
-        color: theme.colorScheme.surfaceContainer,
-        elevation: 4,
-        child: ConstrainedBox(
-          constraints: BoxConstraints(maxHeight: MediaQuery.sizeOf(context).height * 0.5),
-          child: ListView(
-            shrinkWrap: true,
-            padding: const EdgeInsets.only(bottom: 8),
-            children: [
-              ValueListenableBuilder(
-                valueListenable: controller,
-                builder: (_, value, _) => ListTile(
-                  leading: const Icon(Icons.search),
-                  title: Text(l.searchSubmitIn(scope.name, value.text.trim())),
-                  onTap: onSubmit,
-                ),
+    return Material(
+      color: theme.colorScheme.surfaceContainer,
+      elevation: 4,
+      child: ListView(
+        shrinkWrap: true,
+        padding: const EdgeInsets.symmetric(vertical: 4),
+        children: [
+          for (final c in [...history, ...library])
+            _CompletionRow(
+              completion: c,
+              typed: typed,
+              onSearch: () => widget.onSearch(c.text),
+              onFill: () => widget.onFill(c.text),
+              onRemove: c.kind == CompletionKind.history
+                  ? () => ref.read(searchHistoryProvider.notifier).remove(c.text)
+                  : null,
+            ),
+          if (goTo.isNotEmpty) ...[
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
+              child: Text(
+                l.searchGoTo,
+                style: theme.textTheme.labelMedium?.copyWith(color: theme.colorScheme.onSurfaceVariant),
               ),
-              if (performers.isNotEmpty) ...[
-                header(l.performersTitle),
-                for (final p in performers)
-                  ListTile(
-                    dense: true,
-                    leading: ChannelAvatar(name: p.name, imageUrl: p.imageUrl),
-                    title: Text(p.name, maxLines: 1, overflow: TextOverflow.ellipsis),
-                    onTap: () => onPerformer(p.id),
-                  ),
-              ],
-              if (tags.isNotEmpty) ...[
-                header(l.tagsTitle),
-                for (final t in tags)
-                  ListTile(
-                    dense: true,
-                    leading: const SizedBox(width: 36, child: Icon(Icons.sell_outlined)),
-                    title: Text(t.name, maxLines: 1, overflow: TextOverflow.ellipsis),
-                    onTap: () => onTag(t.id),
-                  ),
-              ],
-              if (studios.isNotEmpty) ...[
-                header(l.studiosTitle),
-                for (final s in studios)
-                  ListTile(
-                    dense: true,
-                    leading: ChannelAvatar(name: s.name, imageUrl: s.imageUrl),
-                    title: Text(s.name, maxLines: 1, overflow: TextOverflow.ellipsis),
-                    onTap: () => onStudio(s.id),
-                  ),
-              ],
-            ],
-          ),
-        ),
+            ),
+            SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 4),
+              child: Row(
+                spacing: 8,
+                children: [
+                  for (final c in goTo)
+                    ActionChip(
+                      avatar: c.kind == CompletionKind.tag
+                          ? const Icon(Icons.sell_outlined, size: 18)
+                          : ChannelAvatar(name: c.text, imageUrl: c.imageUrl, radius: 12),
+                      label: Text(c.text),
+                      onPressed: () => widget.onOpen(c),
+                    ),
+                ],
+              ),
+            ),
+          ],
+        ],
       ),
     );
   }
+}
+
+/// One completion: tapping searches it, the arrow puts it into the field to
+/// type on, and a recent search can be removed (its x or a long press).
+class _CompletionRow extends StatelessWidget {
+  const _CompletionRow({
+    required this.completion,
+    required this.typed,
+    required this.onSearch,
+    required this.onFill,
+    this.onRemove,
+  });
+
+  final Completion completion;
+  final String typed;
+  final VoidCallback onSearch;
+  final VoidCallback onFill;
+  final VoidCallback? onRemove;
+
+  static IconData _icon(CompletionKind kind) => switch (kind) {
+        CompletionKind.history => Icons.history,
+        CompletionKind.performer => Icons.person_outline,
+        CompletionKind.tag => Icons.sell_outlined,
+        CompletionKind.studio => Icons.subscriptions_outlined,
+        CompletionKind.scene => Icons.search,
+      };
+
+  @override
+  Widget build(BuildContext context) {
+    final l = context.l10n;
+    final theme = Theme.of(context);
+    final text = completion.text;
+    final muted = theme.colorScheme.onSurfaceVariant;
+    return Row(
+      children: [
+        Expanded(
+          child: Semantics(
+            button: true,
+            label: l.searchFor(text),
+            excludeSemantics: true,
+            child: InkWell(
+              onTap: onSearch,
+              onLongPress: onRemove,
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(minHeight: 48),
+                child: Padding(
+                  padding: const EdgeInsetsDirectional.fromSTEB(16, 8, 8, 8),
+                  child: Row(
+                    children: [
+                      Icon(_icon(completion.kind), size: 20, color: muted),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: Text.rich(
+                          highlightedSpan(text, typed),
+                          style: theme.textTheme.bodyLarge,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+        if (onRemove != null)
+          Semantics(
+            button: true,
+            label: l.searchRemoveFromHistory(text),
+            excludeSemantics: true,
+            onTap: onRemove,
+            child: IconButton(
+              tooltip: l.remove,
+              icon: Icon(Icons.close, size: 18, color: muted),
+              onPressed: onRemove,
+            ),
+          ),
+        Semantics(
+          button: true,
+          label: l.searchFillInText(text),
+          excludeSemantics: true,
+          onTap: onFill,
+          child: IconButton(
+            tooltip: l.searchFillIn,
+            icon: Icon(Icons.north_west, size: 20, color: muted),
+            onPressed: onFill,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+/// [text] with the parts matching [typed] in bold and the rest in normal
+/// weight.
+@visibleForTesting
+TextSpan highlightedSpan(String text, String typed) {
+  const bold = TextStyle(fontWeight: FontWeight.w700);
+  final children = <TextSpan>[];
+  var pos = 0;
+  for (final (start, end) in highlightRanges(text, typed)) {
+    if (start > pos) children.add(TextSpan(text: text.substring(pos, start)));
+    children.add(TextSpan(text: text.substring(start, end), style: bold));
+    pos = end;
+  }
+  if (pos < text.length) children.add(TextSpan(text: text.substring(pos)));
+  return TextSpan(style: const TextStyle(fontWeight: FontWeight.w400), children: children);
 }
 
 /// No results for [term] in [scope] (SEARCH-2): offers the other areas and,
@@ -467,9 +728,12 @@ class _PerformerResults extends ConsumerWidget {
         children: [
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 0, 4, 0),
-            child: Row(
+            // Wraps "see all" below the title when large text leaves no room.
+            child: Wrap(
+              alignment: WrapAlignment.spaceBetween,
+              crossAxisAlignment: WrapCrossAlignment.center,
               children: [
-                Expanded(child: Text(context.l10n.performersTitle, style: Theme.of(context).textTheme.titleMedium)),
+                Text(context.l10n.performersTitle, style: Theme.of(context).textTheme.titleMedium),
                 TextButton(onPressed: onSeeAll, child: Text(context.l10n.seeAll)),
               ],
             ),
@@ -619,9 +883,11 @@ class _Discover extends ConsumerWidget {
           SliverToBoxAdapter(
             child: Padding(
               padding: const EdgeInsets.fromLTRB(16, 12, 4, 4),
-              child: Row(
+              child: Wrap(
+                alignment: WrapAlignment.spaceBetween,
+                crossAxisAlignment: WrapCrossAlignment.center,
                 children: [
-                  Expanded(child: Text(context.l10n.popularTags, style: theme.textTheme.titleMedium)),
+                  Text(context.l10n.popularTags, style: theme.textTheme.titleMedium),
                   TextButton(onPressed: () => openTags(ref), child: Text(context.l10n.seeAll)),
                 ],
               ),

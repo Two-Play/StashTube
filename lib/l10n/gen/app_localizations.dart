@@ -1082,6 +1082,12 @@ abstract class AppLocalizations {
   /// **'Add server'**
   String get addServer;
 
+  /// No description provided for @addServerTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Add a server'**
+  String get addServerTitle;
+
   /// No description provided for @connectToStash.
   ///
   /// In en, this message translates to:
@@ -1171,6 +1177,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'This server needs a login'**
   String get loginAuthTitle;
+
+  /// Under the login step's title: the server's name and host.
+  ///
+  /// In en, this message translates to:
+  /// **'{name} · {host}'**
+  String loginAuthServer(String name, String host);
 
   /// No description provided for @loginAuthIntro.
   ///
@@ -2654,11 +2666,35 @@ abstract class AppLocalizations {
   /// **'Nothing matches \"{term}\"'**
   String searchNoResults(String term);
 
-  /// No description provided for @searchSubmitIn.
+  /// Screen reader label of a search completion row.
   ///
   /// In en, this message translates to:
-  /// **'{scope, select, images{Search images for \"{term}\"} galleries{Search galleries for \"{term}\"} performers{Search performers for \"{term}\"} studios{Search studios for \"{term}\"} other{Search scenes for \"{term}\"}}'**
-  String searchSubmitIn(String scope, String term);
+  /// **'Search for {text}'**
+  String searchFor(String text);
+
+  /// Tooltip of the arrow that puts a completion into the search field without searching.
+  ///
+  /// In en, this message translates to:
+  /// **'Fill in'**
+  String get searchFillIn;
+
+  /// No description provided for @searchFillInText.
+  ///
+  /// In en, this message translates to:
+  /// **'Fill in {text}'**
+  String searchFillInText(String text);
+
+  /// No description provided for @searchRemoveFromHistory.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove {text} from recent searches'**
+  String searchRemoveFromHistory(String text);
+
+  /// Header above performers, tags and studios matching the typed text, which open their pages.
+  ///
+  /// In en, this message translates to:
+  /// **'Go to'**
+  String get searchGoTo;
 
   /// No description provided for @searchOtherAreas.
   ///

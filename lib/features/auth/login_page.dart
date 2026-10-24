@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/config/design_tokens.dart';
 import '../../core/config/haptics.dart';
 import '../../core/config/server_config.dart';
 import '../../data/repositories/stash_repository.dart';
@@ -19,8 +20,8 @@ final serverVerifierProvider = Provider<Future<void> Function(ServerConfig)>(
 enum _AuthMethod { apiKey, password }
 
 /// Connects the app to a Stash server in two steps (ONB-1): the address
-/// first, and only when the server asks for it (401/403) an API key or a
-/// username and password (2.7), with an optional name.
+/// and an optional name first, and only when the server asks for it
+/// (401/403) an API key or a username and password (2.7).
 /// Lists saved servers to pick from (2.6). Pushed from the settings with
 /// [addServer] to save another server, or with [edit] to change a saved
 /// one (2.7), which shows address and sign-in together.
@@ -214,52 +215,59 @@ class _LoginPageState extends ConsumerState<LoginPage> {
         if (!didPop && _credentialsStep) _changeAddress();
       },
       child: Scaffold(
-        appBar: widget._pushed
-            ? AppBar(title: Text(_editing ? context.l10n.editServer : context.l10n.addServer))
-            : null,
+        // Adding a server has the heading in the page, like the first login.
+        appBar: _editing ? AppBar(title: Text(context.l10n.editServer)) : (widget.addServer ? AppBar() : null),
         body: SafeArea(
           child: Center(
             child: SingleChildScrollView(
-              padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 24),
-              child: Form(
-                key: _formKey,
-                child: AutofillGroup(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      if (!widget._pushed) ...[
-                        const Center(child: AppLogo(size: 72, background: AppLogo.tile)),
-                        const SizedBox(height: 12),
-                        Text(context.l10n.connectToStash, textAlign: TextAlign.center, style: theme.textTheme.headlineSmall),
-                      ],
-                      AnimatedSize(
-                        duration: const Duration(milliseconds: 250),
-                        curve: Curves.easeOutCubic,
-                        alignment: Alignment.topCenter,
-                        child: AnimatedSwitcher(
+              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xl, vertical: AppSpacing.xl),
+              child: ConstrainedBox(
+                // Landscape and tablets: a readable column, not full width.
+                constraints: const BoxConstraints(maxWidth: 480),
+                child: Form(
+                  key: _formKey,
+                  child: AutofillGroup(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        if (!_editing) ...[
+                          const Center(child: AppLogo(size: 72, background: AppLogo.tile)),
+                          const SizedBox(height: AppSpacing.l),
+                          Text(
+                            widget.addServer ? context.l10n.addServerTitle : context.l10n.connectToStash,
+                            textAlign: TextAlign.center,
+                            style: theme.textTheme.headlineSmall,
+                          ),
+                        ],
+                        AnimatedSize(
                           duration: const Duration(milliseconds: 250),
-                          transitionBuilder: (child, animation) => FadeTransition(
-                            opacity: animation,
-                            child: SlideTransition(
-                              position: Tween(
-                                begin: Offset(child.key == const ValueKey('credentials') ? 0.15 : -0.15, 0),
-                                end: Offset.zero,
-                              ).animate(animation),
-                              child: child,
+                          curve: Curves.easeOutCubic,
+                          alignment: Alignment.topCenter,
+                          child: AnimatedSwitcher(
+                            duration: const Duration(milliseconds: 250),
+                            transitionBuilder: (child, animation) => FadeTransition(
+                              opacity: animation,
+                              child: SlideTransition(
+                                position: Tween(
+                                  begin: Offset(child.key == const ValueKey('credentials') ? 0.15 : -0.15, 0),
+                                  end: Offset.zero,
+                                ).animate(animation),
+                                child: child,
+                              ),
                             ),
+                            layoutBuilder: (current, previous) => Stack(
+                              alignment: Alignment.topCenter,
+                              children: [...previous, ?current],
+                            ),
+                            child: _editing
+                                ? KeyedSubtree(key: const ValueKey('edit'), child: _credentials(theme))
+                                : _credentialsStep
+                                    ? KeyedSubtree(key: const ValueKey('credentials'), child: _credentials(theme))
+                                    : KeyedSubtree(key: const ValueKey('address'), child: _address(theme)),
                           ),
-                          layoutBuilder: (current, previous) => Stack(
-                            alignment: Alignment.topCenter,
-                            children: [...previous, ?current],
-                          ),
-                          child: _editing
-                              ? KeyedSubtree(key: const ValueKey('edit'), child: _credentials(theme))
-                              : _credentialsStep
-                                  ? KeyedSubtree(key: const ValueKey('credentials'), child: _credentials(theme))
-                                  : KeyedSubtree(key: const ValueKey('address'), child: _address(theme)),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                 ),
               ),
@@ -270,20 +278,32 @@ class _LoginPageState extends ConsumerState<LoginPage> {
     );
   }
 
-  Widget _urlField({bool autofocus = false, required VoidCallback onSubmitted}) => TextFormField(
+  /// The address; the name field follows it in both forms.
+  Widget _urlField() => TextFormField(
         controller: _urlController,
         keyboardType: TextInputType.url,
         autocorrect: false,
-        autofocus: autofocus,
         autofillHints: const [AutofillHints.url],
-        textInputAction: _editing ? TextInputAction.next : TextInputAction.go,
-        onFieldSubmitted: _editing ? null : (_) => onSubmitted(),
+        textInputAction: TextInputAction.next,
         decoration: InputDecoration(
           border: const OutlineInputBorder(),
           labelText: context.l10n.serverUrl,
           prefixIcon: const Icon(Icons.dns_outlined),
         ),
         validator: (v) => ServerConfig.normalizeUrl(v ?? '') == null ? context.l10n.serverUrlInvalid : null,
+      );
+
+  /// The optional name; empty keeps the default (the address).
+  Widget _nameField({required VoidCallback onSubmitted}) => TextFormField(
+        controller: _nameController,
+        textInputAction: TextInputAction.done,
+        onFieldSubmitted: (_) => onSubmitted(),
+        decoration: InputDecoration(
+          border: const OutlineInputBorder(),
+          labelText: context.l10n.nameOptional,
+          hintText: context.l10n.nameHint,
+          prefixIcon: const Icon(Icons.label_outline),
+        ),
       );
 
   Widget _errorAndButton(ThemeData theme, {required String label, required VoidCallback onPressed}) => Column(
@@ -304,13 +324,13 @@ class _LoginPageState extends ConsumerState<LoginPage> {
         ],
       );
 
-  /// Step 1: the address, saved servers and the demo.
+  /// Step 1: the address and name, saved servers and the demo.
   Widget _address(ThemeData theme) {
     final saved = widget._pushed ? const <ServerProfile>[] : ref.watch(serverProfilesProvider).profiles;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        const SizedBox(height: 8),
+        const SizedBox(height: AppSpacing.s),
         Text(
           context.l10n.loginIntro,
           textAlign: TextAlign.center,
@@ -333,8 +353,10 @@ class _LoginPageState extends ConsumerState<LoginPage> {
           const SizedBox(height: 16),
           Text(context.l10n.orAddAnotherServer, style: theme.textTheme.titleSmall),
         ],
-        const SizedBox(height: 32),
-        _urlField(onSubmitted: _connect),
+        const SizedBox(height: AppSpacing.xl),
+        _urlField(),
+        const SizedBox(height: AppSpacing.l),
+        _nameField(onSubmitted: _connect),
         _errorAndButton(theme, label: context.l10n.connect, onPressed: _connect),
         if (!widget._pushed) ...[
           const SizedBox(height: 32),
@@ -355,19 +377,24 @@ class _LoginPageState extends ConsumerState<LoginPage> {
     );
   }
 
-  /// Step 2, or the whole form when editing a saved server: API key or
-  /// username and password, and the optional name.
+  /// Step 2: API key or username and password (the name was asked in
+  /// step 1 and shows under the title). Editing a saved server shows
+  /// address, name and sign-in together.
   Widget _credentials(ThemeData theme) {
     final l = context.l10n;
     final useKey = _method == _AuthMethod.apiKey;
     final urls = _authUrls;
+    final host = urls != null && urls.isNotEmpty ? Uri.parse(urls.first).host : null;
+    final name = _nameController.text.trim();
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         const SizedBox(height: 16),
-        if (_editing)
-          _urlField(onSubmitted: _signIn)
-        else ...[
+        if (_editing) ...[
+          _urlField(),
+          const SizedBox(height: AppSpacing.l),
+          _nameField(onSubmitted: _signIn),
+        ] else ...[
           Row(
             children: [
               IconButton(
@@ -381,9 +408,9 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(l.loginAuthTitle, style: theme.textTheme.titleMedium),
-                    if (urls != null && urls.isNotEmpty)
+                    if (host != null)
                       Text(
-                        Uri.parse(urls.first).host,
+                        name.isEmpty ? host : l.loginAuthServer(name, host),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurfaceVariant),
@@ -433,7 +460,8 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                   obscureText: _obscureKey,
                   autocorrect: false,
                   enableSuggestions: false,
-                  textInputAction: TextInputAction.next,
+                  textInputAction: TextInputAction.done,
+                  onFieldSubmitted: (_) => _signIn(),
                   decoration: InputDecoration(
                     border: const OutlineInputBorder(),
                     labelText: _editing ? l.apiKeyOptional : l.apiKey,
@@ -474,7 +502,8 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                       autocorrect: false,
                       enableSuggestions: false,
                       autofillHints: const [AutofillHints.password],
-                      textInputAction: TextInputAction.next,
+                      textInputAction: TextInputAction.done,
+                      onFieldSubmitted: (_) => _signIn(),
                       decoration: InputDecoration(
                         border: const OutlineInputBorder(),
                         labelText: l.password,
@@ -489,18 +518,6 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                     ),
                   ],
                 ),
-        ),
-        const SizedBox(height: 16),
-        TextFormField(
-          controller: _nameController,
-          textInputAction: TextInputAction.done,
-          onFieldSubmitted: (_) => _signIn(),
-          decoration: InputDecoration(
-            border: const OutlineInputBorder(),
-            labelText: l.nameOptional,
-            hintText: l.nameHint,
-            prefixIcon: const Icon(Icons.label_outline),
-          ),
         ),
         _errorAndButton(theme, label: _editing ? l.save : l.signIn, onPressed: _signIn),
       ],
