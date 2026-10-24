@@ -9,6 +9,7 @@ import '../core/pagination/paged_notifier.dart';
 export '../core/pagination/paged_notifier.dart' show PagedState, PagedValue;
 import 'models/gallery.dart';
 import 'models/group.dart';
+import 'models/image_details.dart';
 import 'models/image_item.dart';
 import 'models/list_queries.dart';
 import 'models/marker.dart';
@@ -126,6 +127,13 @@ final imageListProvider =
   ImageListNotifier.new,
 );
 
+/// An image's details for the viewer's info sheet, loaded when it opens and
+/// kept briefly, so swiping back and forth doesn't refetch.
+final imageDetailsProvider = FutureProvider.autoDispose.family<ImageDetails, String>((ref, id) {
+  ref.cacheFor(const Duration(minutes: 2));
+  return ref.watch(stashRepositoryProvider).findImageDetails(id);
+});
+
 final libraryStatsProvider = FutureProvider.autoDispose<LibraryStats>(
   (ref) => ref.watch(stashRepositoryProvider).libraryStats(),
 );
@@ -190,6 +198,11 @@ class MarkerListNotifier extends PagedNotifier<Marker, MarkerQuery> {
 final markerListProvider =
     AsyncNotifierProvider.autoDispose.family<MarkerListNotifier, PagedState<Marker>, MarkerQuery>(
   MarkerListNotifier.new,
+);
+
+/// How many markers a channel has (whether its markers tab shows).
+final markerCountProvider = FutureProvider.autoDispose.family<int, MarkerQuery>(
+  (ref, query) => ref.watch(stashRepositoryProvider).countMarkers(query),
 );
 
 class GroupListNotifier extends PagedNotifier<Group, GroupQuery> {

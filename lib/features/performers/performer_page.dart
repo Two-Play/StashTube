@@ -15,13 +15,14 @@ import '../channel/channel_tabs.dart';
 import '../edit/edit_common.dart';
 import '../edit/edit_pages.dart';
 import '../library/images_tab.dart';
+import '../library/markers_tab.dart';
 import '../shorts/shorts_feed.dart';
 import 'favorite_button.dart';
 import '../../l10n/l10n.dart';
 
 /// Performer "channel" (CH-2): a header with their picture, name and
-/// favorite button above the tabs videos, shorts, images, galleries (each
-/// only when there are any) and about.
+/// favorite button above the tabs videos, shorts, markers, images,
+/// galleries (each only when there are any) and about.
 class PerformerPage extends ConsumerWidget {
   const PerformerPage({super.key, required this.performerId});
 
@@ -34,11 +35,14 @@ class PerformerPage extends ConsumerWidget {
     final performer = ref.watch(performerProvider(performerId));
     final counts = ref.watch(performerProfileProvider(performerId)).value?.counts;
     final shorts = ref.watch(performerShortsCountProvider(performerId)).value ?? 0;
+    final markerQuery = MarkerQuery(performerId: performerId);
+    final markers = ref.watch(markerCountProvider(markerQuery)).value ?? 0;
     final name = performer.value?.name;
 
     final tabs = [
       ChannelTab.videos,
       if (shorts > 0) ChannelTab.shorts,
+      if (markers > 0) ChannelTab.markers,
       if ((counts?.images ?? 0) > 0) ChannelTab.images,
       if ((counts?.galleries ?? 0) > 0) ChannelTab.galleries,
       ChannelTab.about,
@@ -72,6 +76,7 @@ class PerformerPage extends ConsumerWidget {
               source: ShortsSource.performer(performerId, title: name),
               headerSlivers: headerSlivers,
             ),
+          ChannelTab.markers => MarkerGridView(initialQuery: markerQuery, headerSlivers: headerSlivers),
           ChannelTab.images => ImageGridView(
               initialQuery: ImageQuery(performerId: performerId),
               sorts: ImageSort.browse,
@@ -93,6 +98,7 @@ class PerformerPage extends ConsumerWidget {
     ref.invalidate(performerProvider(performerId));
     ref.invalidate(performerProfileProvider(performerId));
     ref.invalidate(performerShortsCountProvider(performerId));
+    ref.invalidate(markerCountProvider(MarkerQuery(performerId: performerId)));
   }
 }
 

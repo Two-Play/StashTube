@@ -1111,6 +1111,22 @@ class AppLocalizationsEn extends AppLocalizations {
   String get showMore => '...more';
 
   @override
+  String moreTags(int count) {
+    return '+$count';
+  }
+
+  @override
+  String moreTagsSemantics(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count more tags',
+      one: '1 more tag',
+    );
+    return '$_temp0';
+  }
+
+  @override
   String get showDescription => 'Show description';
 
   @override
@@ -1179,8 +1195,14 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String oCounterSemantics(int count) {
-    return 'O-counter $count, add one';
+    return 'O-counter: $count';
   }
+
+  @override
+  String get oCounterTitle => 'O-counter';
+
+  @override
+  String get removeO => 'Remove one O';
 
   @override
   String get undo => 'Undo';
@@ -1458,6 +1480,30 @@ class AppLocalizationsEn extends AppLocalizations {
   String get fileModified => 'Modified';
 
   @override
+  String get imageInfo => 'Image info';
+
+  @override
+  String get imagePhotographer => 'Photographer';
+
+  @override
+  String get imageDimensions => 'Dimensions';
+
+  @override
+  String get imageOCounter => 'O-counter';
+
+  @override
+  String get imageTags => 'Tags';
+
+  @override
+  String get imageGalleries => 'Galleries';
+
+  @override
+  String get imageCreated => 'Added';
+
+  @override
+  String get imageUpdated => 'Updated';
+
+  @override
   String get copyPath => 'Copy path';
 
   @override
@@ -1673,6 +1719,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get channelTabShorts => 'Shorts';
+
+  @override
+  String get channelTabMarkers => 'Markers';
 
   @override
   String get channelTabImages => 'Images';

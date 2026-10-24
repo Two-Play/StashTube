@@ -59,8 +59,9 @@ class SceneActions extends ConsumerWidget {
             onPressed: () => showRatingSheet(context, scene: scene, onError: showError),
           ),
           gap,
+          // "O · 3"; counting up and down happens in a small sheet.
           Tooltip(
-            message: l.addO,
+            message: l.oCounterTitle,
             child: FilledButton.tonalIcon(
               icon: const Icon(Icons.water_drop_outlined),
               label: Semantics(
@@ -68,23 +69,7 @@ class SceneActions extends ConsumerWidget {
                 excludeSemantics: true,
                 child: Text(l.oCounterLabel(oCount)),
               ),
-              onPressed: () async {
-                Haptics.medium();
-                try {
-                  final count = await ref.read(sceneEditsProvider.notifier).addO(scene);
-                  messenger.showSnackBar(SnackBar(
-                    content: Text(l.oCountValue(count)),
-                    // With an action, snack bars would stay until tapped.
-                    persist: false,
-                    action: SnackBarAction(
-                      label: l.undo,
-                      onPressed: () => ref.read(sceneEditsProvider.notifier).removeO(scene).catchError(showError),
-                    ),
-                  ));
-                } catch (e) {
-                  showError(e);
-                }
-              },
+              onPressed: () => showOCounterSheet(context, scene: scene, onError: showError),
             ),
           ),
           gap,
@@ -114,8 +99,9 @@ class SceneActions extends ConsumerWidget {
   }
 }
 
-/// The compact star picker behind the rating button: a tap rates and closes
-/// it, tapping the current rating removes it.
+/// The star picker behind the rating button: five large stars across the
+/// whole sheet, the current value and "Remove rating". A tap rates and
+/// closes it, tapping the current rating removes it.
 Future<void> showRatingSheet(BuildContext context, {required Scene scene, required ValueChanged<Object> onError}) =>
     showModalBottomSheet<void>(
       context: context,
@@ -132,34 +118,81 @@ class _RatingSheet extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l = context.l10n;
+    final theme = Theme.of(context);
     final stars = effectiveStars(ref, scene);
-    return SafeArea(
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(AppSpacing.l, 0, AppSpacing.l, AppSpacing.l),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(context.l10n.rateThisScene, style: Theme.of(context).textTheme.titleMedium),
-            const SizedBox(height: AppSpacing.s),
-            _RatingStars(
-              stars: stars,
-              onRate: (value) {
-                Haptics.selection();
-                ref.read(sceneEditsProvider.notifier).rate(scene, value).catchError(onError);
-              },
-              onPicked: () => Navigator.pop(context),
-            ),
-          ],
+
+    void rate(int value) {
+      Haptics.selection();
+      ref.read(sceneEditsProvider.notifier).rate(scene, value).catchError(onError);
+    }
+
+    return _SheetBody(
+      title: l.rateThisScene,
+      // The slider below says the value to screen readers.
+      subtitle: ExcludeSemantics(
+        child: Text(
+          l.ratingValue(stars),
+          style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.onSurfaceVariant),
         ),
       ),
+      children: [
+        _RatingStars(stars: stars, onRate: rate, onPicked: () => Navigator.pop(context)),
+        const SizedBox(height: AppSpacing.s),
+        TextButton.icon(
+          icon: const Icon(Icons.star_border_rounded),
+          label: Text(l.removeRating),
+          onPressed: stars == 0
+              ? null
+              : () {
+                  rate(0);
+                  Navigator.pop(context);
+                },
+        ),
+      ],
     );
   }
 }
 
-/// Five stars for sighted users to tap (tapping the current rating removes
-/// it), and one adjustable element for screen readers: "Rating, 4 of 5
-/// stars", swiped up or down like a slider (A11Y-2). [onPicked] follows a
-/// tap only, so adjusting with a screen reader keeps the picker open.
+/// The layout the rating and O-counter sheets share: a centered title and
+/// value over full-width content. The bottom sheet itself keeps its width
+/// in check on tablets (Material's 640 dp).
+class _SheetBody extends StatelessWidget {
+  const _SheetBody({required this.title, this.subtitle, required this.children});
+
+  final String title;
+  final Widget? subtitle;
+  final List<Widget> children;
+
+  @override
+  Widget build(BuildContext context) => SafeArea(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.fromLTRB(AppSpacing.l, 0, AppSpacing.l, AppSpacing.l),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Semantics(
+                header: true,
+                child: Text(title, textAlign: TextAlign.center, style: Theme.of(context).textTheme.titleLarge),
+              ),
+              if (subtitle case final subtitle?) ...[
+                const SizedBox(height: AppSpacing.xs),
+                Center(child: subtitle),
+              ],
+              const SizedBox(height: AppSpacing.l),
+              ...children,
+            ],
+          ),
+        ),
+      );
+}
+
+/// Five stars spread over the width for sighted users to tap (tapping the
+/// current rating removes it), and one adjustable element for screen
+/// readers: "Rating, 4 of 5 stars", swiped up or down like a slider
+/// (A11Y-2). [onPicked] follows a tap only, so adjusting with a screen
+/// reader keeps the picker open.
 class _RatingStars extends StatelessWidget {
   const _RatingStars({required this.stars, required this.onRate, this.onPicked});
 
@@ -182,26 +215,126 @@ class _RatingStars extends StatelessWidget {
       onIncrease: stars < 5 ? () => onRate(stars + 1) : null,
       onDecrease: stars > 0 ? () => onRate(stars - 1) : null,
       child: ExcludeSemantics(
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            // Full 48 dp targets: five fit in 256 dp, so even 320 dp wide
-            // screens have room.
-            for (var i = 1; i <= 5; i++)
-              IconButton(
-                tooltip: i == stars ? l.removeRating : l.rateStars(i),
-                icon: Icon(
-                  i <= stars ? Icons.star_rounded : Icons.star_outline_rounded,
-                  color: i <= stars ? rating : colors.onSurfaceVariant,
-                ),
-                onPressed: () {
-                  onRate(i == stars ? 0 : i);
-                  onPicked?.call();
-                },
-              ),
-          ],
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            // Each star gets a fifth of the width (at least 57 dp on a
+            // 320 dp phone), drawn as large as it allows.
+            final slot = constraints.maxWidth / 5;
+            final iconSize = (slot * 0.6).clamp(32.0, 56.0);
+            return Row(
+              children: [
+                for (var i = 1; i <= 5; i++)
+                  Expanded(
+                    child: SizedBox(
+                      height: iconSize + AppSpacing.xl,
+                      child: IconButton(
+                        tooltip: i == stars ? l.removeRating : l.rateStars(i),
+                        iconSize: iconSize,
+                        icon: Icon(
+                          i <= stars ? Icons.star_rounded : Icons.star_outline_rounded,
+                          color: i <= stars ? rating : colors.onSurfaceVariant,
+                        ),
+                        onPressed: () {
+                          onRate(i == stars ? 0 : i);
+                          onPicked?.call();
+                        },
+                      ),
+                    ),
+                  ),
+              ],
+            );
+          },
         ),
       ),
+    );
+  }
+}
+
+/// The O-counter's sheet: the count large in the middle between − and +.
+/// Each tap saves right away (optimistically); a failed save closes the
+/// sheet, so its snack bar isn't hidden behind it.
+Future<void> showOCounterSheet(BuildContext context, {required Scene scene, required ValueChanged<Object> onError}) =>
+    showModalBottomSheet<void>(
+      context: context,
+      useRootNavigator: true,
+      showDragHandle: true,
+      builder: (_) => _OCounterSheet(scene: scene, onError: onError),
+    );
+
+class _OCounterSheet extends ConsumerWidget {
+  const _OCounterSheet({required this.scene, required this.onError});
+
+  final Scene scene;
+  final ValueChanged<Object> onError;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l = context.l10n;
+    final theme = Theme.of(context);
+    final count = effectiveOCounter(ref, scene);
+    final notifier = ref.read(sceneEditsProvider.notifier);
+
+    Future<void> save(Future<Object?> Function() change) async {
+      final navigator = Navigator.of(context);
+      try {
+        await change();
+      } catch (e) {
+        if (context.mounted) navigator.pop();
+        onError(e);
+      }
+    }
+
+    void add() {
+      Haptics.medium();
+      save(() => notifier.addO(scene));
+    }
+
+    void remove() {
+      Haptics.light();
+      save(() => notifier.removeO(scene));
+    }
+
+    final buttonStyle = IconButton.styleFrom(minimumSize: const Size.square(64), iconSize: 32);
+    return _SheetBody(
+      title: l.oCounterTitle,
+      children: [
+        // One adjustable element for screen readers ("O-counter, 3"), like
+        // the rating (A11Y-2).
+        Semantics(
+          container: true,
+          label: l.oCounterTitle,
+          value: '$count',
+          increasedValue: '${count + 1}',
+          decreasedValue: count > 0 ? '${count - 1}' : null,
+          onIncrease: add,
+          onDecrease: count > 0 ? remove : null,
+          child: ExcludeSemantics(
+            child: Row(
+              children: [
+                IconButton.filledTonal(
+                  tooltip: l.removeO,
+                  style: buttonStyle,
+                  icon: const Icon(Icons.remove),
+                  onPressed: count > 0 ? remove : null,
+                ),
+                Expanded(
+                  child: Text(
+                    '$count',
+                    textAlign: TextAlign.center,
+                    style: theme.textTheme.displayMedium?.copyWith(fontWeight: FontWeight.w600),
+                  ),
+                ),
+                IconButton.filledTonal(
+                  tooltip: l.addO,
+                  style: buttonStyle,
+                  icon: const Icon(Icons.add),
+                  onPressed: add,
+                ),
+              ],
+            ),
+          ),
+        ),
+      ],
     );
   }
 }

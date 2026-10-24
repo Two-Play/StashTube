@@ -26,8 +26,10 @@ import '../shell/navigation.dart';
 import '../shorts/shorts_feed.dart';
 import '../shorts/shorts_page.dart';
 
-/// The tabs of a performer or studio channel (CH-2), in this order.
-enum ChannelTab { videos, shorts, images, galleries, about }
+/// The tabs of a performer or studio channel (CH-2), in this order: the
+/// video tabs (videos, shorts, markers: moments in the videos) before the
+/// pictures.
+enum ChannelTab { videos, shorts, markers, images, galleries, about }
 
 extension ChannelTabLabel on ChannelTab {
   String label(BuildContext context) {
@@ -35,6 +37,7 @@ extension ChannelTabLabel on ChannelTab {
     return switch (this) {
       ChannelTab.videos => l.channelTabVideos,
       ChannelTab.shorts => l.channelTabShorts,
+      ChannelTab.markers => l.channelTabMarkers,
       ChannelTab.images => l.channelTabImages,
       ChannelTab.galleries => l.channelTabGalleries,
       ChannelTab.about => l.channelTabAbout,

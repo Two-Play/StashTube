@@ -16,22 +16,50 @@ import '../../l10n/l10n.dart';
 
 /// Scene markers of all scenes (the marked moments), like Stash's markers
 /// page. Tapping one plays its scene from the marker.
-class MarkersTab extends ConsumerStatefulWidget {
+class MarkersTab extends StatefulWidget {
   const MarkersTab({super.key});
 
   @override
-  ConsumerState<MarkersTab> createState() => _MarkersTabState();
+  State<MarkersTab> createState() => _MarkersTabState();
 }
 
-class _MarkersTabState extends ConsumerState<MarkersTab> with AutomaticKeepAliveClientMixin {
-  var _query = MarkerQuery();
-
+class _MarkersTabState extends State<MarkersTab> with AutomaticKeepAliveClientMixin {
   @override
   bool get wantKeepAlive => true;
 
   @override
   Widget build(BuildContext context) {
     super.build(context);
+    return MarkerGridView(initialQuery: MarkerQuery());
+  }
+}
+
+/// Markers as a grid of [MarkerTile]s with sort chips, paging and
+/// pull-to-refresh: the library's markers and a channel's markers tab.
+class MarkerGridView extends ConsumerStatefulWidget {
+  const MarkerGridView({super.key, required this.initialQuery, this.headerSlivers = const []});
+
+  final MarkerQuery initialQuery;
+
+  /// Slivers above the sort chips, e.g. a channel's header and tab bar.
+  final List<Widget> headerSlivers;
+
+  @override
+  ConsumerState<MarkerGridView> createState() => _MarkerGridViewState();
+}
+
+class _MarkerGridViewState extends ConsumerState<MarkerGridView> {
+  late MarkerQuery _query = widget.initialQuery;
+
+  @override
+  void didUpdateWidget(MarkerGridView oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // E.g. sub-studios switched on or off: keeps the chosen sort.
+    if (oldWidget.initialQuery != widget.initialQuery) _query = widget.initialQuery.withSort(_query.sort);
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final provider = markerListProvider(_query);
     final value = ref.watch(provider);
     final theme = Theme.of(context);
@@ -43,12 +71,13 @@ class _MarkersTabState extends ConsumerState<MarkersTab> with AutomaticKeepAlive
         child: CustomScrollView(
           physics: const AlwaysScrollableScrollPhysics(),
           slivers: [
+            ...widget.headerSlivers,
             SliverToBoxAdapter(
               child: ChipBar<MarkerSort>(
                 values: MarkerSort.values,
                 selected: _query.sort,
                 labelOf: (s) => s.label(context.l10n),
-                onSelected: (s) => setState(() => _query = MarkerQuery(sort: s)),
+                onSelected: (s) => setState(() => _query = _query.withSort(s)),
               ),
             ),
             if (value.current case final state?)

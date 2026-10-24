@@ -1114,6 +1114,22 @@ class AppLocalizationsDe extends AppLocalizations {
   String get showMore => '...mehr';
 
   @override
+  String moreTags(int count) {
+    return '+$count';
+  }
+
+  @override
+  String moreTagsSemantics(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count weitere Tags',
+      one: '1 weiterer Tag',
+    );
+    return '$_temp0';
+  }
+
+  @override
   String get showDescription => 'Beschreibung anzeigen';
 
   @override
@@ -1182,8 +1198,14 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String oCounterSemantics(int count) {
-    return 'O-Zähler $count, eins hinzufügen';
+    return 'O-Zähler: $count';
   }
+
+  @override
+  String get oCounterTitle => 'O-Zähler';
+
+  @override
+  String get removeO => 'Ein O entfernen';
 
   @override
   String get undo => 'Rückgängig';
@@ -1464,6 +1486,30 @@ class AppLocalizationsDe extends AppLocalizations {
   String get fileModified => 'Geändert';
 
   @override
+  String get imageInfo => 'Bildinfo';
+
+  @override
+  String get imagePhotographer => 'Fotograf';
+
+  @override
+  String get imageDimensions => 'Abmessungen';
+
+  @override
+  String get imageOCounter => 'O-Zähler';
+
+  @override
+  String get imageTags => 'Tags';
+
+  @override
+  String get imageGalleries => 'Galerien';
+
+  @override
+  String get imageCreated => 'Hinzugefügt';
+
+  @override
+  String get imageUpdated => 'Aktualisiert';
+
+  @override
   String get copyPath => 'Pfad kopieren';
 
   @override
@@ -1681,6 +1727,9 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get channelTabShorts => 'Shorts';
+
+  @override
+  String get channelTabMarkers => 'Marker';
 
   @override
   String get channelTabImages => 'Bilder';

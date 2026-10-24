@@ -87,6 +87,9 @@ class DemoLibrary {
   var _nextId = 100;
 
   static const _filmDate = '2008-05-30';
+
+  /// A still's file size in bytes, roughly (they are 10 to 40 kB).
+  static const _imageSize = 60000;
   static const _filmUrl = 'https://studio.blender.org/films/big-buck-bunny/';
   static const _credit = 'From Big Buck Bunny, the open movie by the Blender Foundation (CC BY 3.0).';
 
@@ -208,6 +211,7 @@ class DemoLibrary {
           studioId: '2',
           galleryIds: ['1'],
           performerIds: ['1'],
+          tagIds: [tag('Animation')],
           rating100: i.isEven ? 80 : null,
           createdAt: _now.subtract(Duration(hours: i)),
         ),
@@ -411,6 +415,31 @@ class DemoLibrary {
     'title': i.title,
     'date': _filmDate,
     'rating100': i.rating100,
+    'code': null,
+    'details': _credit,
+    'photographer': 'Blender Foundation',
+    'o_counter': 0,
+    'organized': true,
+    'created_at': i.createdAt.toUtc().toIso8601String(),
+    'updated_at': i.createdAt.toUtc().toIso8601String(),
+    // The stills are 640 × 360 JPEGs (tool/demo/make_demo_assets.sh).
+    'visual_files': [
+      {
+        '__typename': 'ImageFile',
+        'path': '/demo/images/${i.file}.jpg',
+        'basename': '${i.file}.jpg',
+        'size': _imageSize,
+        'format': 'jpeg',
+        'width': 640,
+        'height': 360,
+      },
+    ],
+    'tags': (Map<String, dynamic> _) => [
+      for (final id in i.tagIds) ..._tags.where((t) => t.id == id).map(_tagObject),
+    ],
+    'galleries': (Map<String, dynamic> _) => [
+      for (final id in i.galleryIds) ..._galleries.where((g) => g.id == id).map(_galleryObject),
+    ],
     'paths': {
       '__typename': 'ImagePathsType',
       'thumbnail': _media('images/${i.file}.jpg'),
@@ -445,8 +474,17 @@ class DemoLibrary {
       return scene == null ? null : _sceneObject(scene);
     },
     'findSceneMarkers': (Map<String, dynamic> args) {
+      // Markers have the performers of their scene (as in Stash).
+      final filter = args['scene_marker_filter'] as Map<String, dynamic>?;
+      final matching = _markers.where((m) {
+        if (filter == null) return true;
+        final scene = _scene(m.sceneId);
+        return scene != null &&
+            _ids(filter['performers'], scene.performerIds) &&
+            _sceneMatches(scene, filter['scene_filter'] as Map<String, dynamic>?);
+      });
       final page = _page(
-        _markers,
+        matching,
         args['filter'],
         text: (m) => '${m.title} ${_scene(m.sceneId)?.title}',
         sortKey: (m, sort) => switch (sort) {
@@ -540,6 +578,7 @@ class DemoLibrary {
     },
     'findGallery': (Map<String, dynamic> args) =>
         _galleries.where((g) => g.id == args['id']).map(_galleryObject).firstOrNull,
+    'findImage': (Map<String, dynamic> args) => _images.where((i) => i.id == args['id']).map(_imageObject).firstOrNull,
     'findImages': (Map<String, dynamic> args) {
       final filter = args['image_filter'] as Map<String, dynamic>?;
       final page = _page(
@@ -548,7 +587,7 @@ class DemoLibrary {
               _ids(filter?['galleries'], i.galleryIds) &&
               _ids(filter?['performers'], i.performerIds) &&
               _ids(filter?['studios'], _studioIds(i.studioId, filter?['studios'])) &&
-              _ids(filter?['tags'], const []) &&
+              _ids(filter?['tags'], i.tagIds) &&
               _number(filter?['rating100'], i.rating100) &&
               _resolution(filter?['resolution'], 480),
         ),
@@ -592,7 +631,7 @@ class DemoLibrary {
       'scenes_size': _scenes.fold<double>(0, (sum, s) => sum + s.clip.size),
       'scenes_duration': _scenes.fold<double>(0, (sum, s) => sum + s.clip.duration),
       'image_count': _images.length,
-      'images_size': _images.length * 60000.0,
+      'images_size': _images.length * _imageSize.toDouble(),
       'gallery_count': _galleries.length,
       'performer_count': _performers.length,
       'studio_count': _studios.length,
@@ -1044,11 +1083,13 @@ class _Image {
     required this.createdAt,
     this.rating100,
     this.performerIds = const [],
+    this.tagIds = const [],
   });
 
   final String id;
   final String file;
   final List<String> performerIds;
+  final List<String> tagIds;
   final String title;
   final String studioId;
   final List<String> galleryIds;
