@@ -67,6 +67,9 @@ void main() {
           'files': [videoFileJson({'path': '/a.mp4', 'height': 1080})],
         }),
       },
+      'SceneMarkerEnds': {
+        'findScene': {'__typename': 'Scene', 'id': '1', 'scene_markers': const []},
+      },
       'Stats': {'stats': statsJson({'scene_count': 12})},
     });
 
@@ -95,13 +98,20 @@ void main() {
           'id': 'm1',
           'title': '',
           'seconds': 83.5,
-          'end_seconds': null,
           'screenshot': 'http://s/scene/1/scene_marker/m1/screenshot',
           'preview': 'http://s/scene/1/scene_marker/m1/preview',
           'primary_tag': {'__typename': 'Tag', 'id': '3', 'name': 'Outdoor'},
           'scene': sceneJson({'id': '1', 'title': 'Sunset'}),
         },
       ]),
+      'MarkerEnds': {
+        'findSceneMarkers': {
+          '__typename': 'FindSceneMarkersResultType',
+          'scene_markers': [
+            {'__typename': 'SceneMarker', 'id': 'm1', 'end_seconds': null},
+          ],
+        },
+      },
     });
     final result = await r.findMarkers(MarkerQuery(sort: MarkerSort.title));
     final marker = result.items.single;
@@ -109,7 +119,8 @@ void main() {
     expect(marker.screenshotUrl, 'http://s/scene/1/scene_marker/m1/screenshot');
     expect(marker.previewUrl, 'http://s/scene/1/scene_marker/m1/preview');
     expect(result.totalCount, 1);
-    expect(sent.single.variables['filter'], containsPair('sort', 'title'));
+    // Then the optional end times.
+    expect(sent.first.variables['filter'], containsPair('sort', 'title'));
   });
 
   test('filters are sent in the schema\'s input types', () async {

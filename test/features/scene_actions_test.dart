@@ -59,8 +59,9 @@ class FakeRepository implements StashRepository {
     required double seconds,
     required String primaryTagId,
     String title = '',
+    double? endSeconds,
   }) async {
-    markers.add({'scene': sceneId, 'seconds': seconds, 'tag': primaryTagId, 'title': title});
+    markers.add({'scene': sceneId, 'seconds': seconds, 'tag': primaryTagId, 'title': title, 'end': ?endSeconds});
     return SceneMarker(id: '1', title: title, seconds: seconds);
   }
 

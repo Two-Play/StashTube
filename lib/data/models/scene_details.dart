@@ -65,17 +65,45 @@ SceneStream? pickPreferredStream(List<SceneStream> streams, String preferred) {
   return candidates.where((s) => s.height! <= want).firstOrNull;
 }
 
-/// A scene marker, shown as a chapter.
+/// A scene marker, shown as a chapter. Newer Stash versions let a marker
+/// span a range ([endSeconds]); older ones only mark a moment.
 class SceneMarker {
-  const SceneMarker({required this.id, required this.title, required this.seconds, this.screenshotUrl});
+  const SceneMarker({
+    required this.id,
+    required this.title,
+    required this.seconds,
+    this.endSeconds,
+    this.screenshotUrl,
+  });
 
   final String id;
   final String title;
   final double seconds;
 
+  /// The end of a ranged marker; null for a marked moment. Only set when
+  /// after [seconds] (see [markerEnd]).
+  final double? endSeconds;
+
   /// Stash's still of the marker (generated with the marker previews); the
   /// URL is set even when the file is missing, then it fails to load.
   final String? screenshotUrl;
+
+  bool get isRange => endSeconds != null;
+
+  /// Length of a ranged marker in seconds; null for a moment.
+  double? get rangeSeconds => endSeconds == null ? null : endSeconds! - seconds;
+
+  /// Whether [position] lies inside this ranged marker.
+  bool containsInRange(double position) =>
+      endSeconds != null && position >= seconds && position < endSeconds!;
+
+  SceneMarker withEnd(double? end) => SceneMarker(
+        id: id,
+        title: title,
+        seconds: seconds,
+        endSeconds: markerEnd(seconds, end),
+        screenshotUrl: screenshotUrl,
+      );
 
   factory SceneMarker.fromFields(Fragment$MarkerFields m) => SceneMarker(
         id: m.id,
@@ -84,6 +112,10 @@ class SceneMarker {
         screenshotUrl: nonEmpty(m.screenshot),
       );
 }
+
+/// A marker's end as the app uses it: null unless after the start (Stash
+/// allows an end equal to the start, which marks no range).
+double? markerEnd(double start, double? end) => end != null && end > start ? end : null;
 
 /// A video file of a scene, as Stash's scan reports it.
 class SceneFile {
@@ -151,6 +183,7 @@ class SceneDetails {
     this.files = const [],
     this.spriteUrl,
     this.vttUrl,
+    this.markerRanges = false,
   });
 
   final List<SceneStream> streams;
@@ -165,6 +198,23 @@ class SceneDetails {
   /// time ranges to regions of it. Null when Stash hasn't generated them.
   final String? spriteUrl;
   final String? vttUrl;
+
+  /// Whether the server knows marker end times (Stash 0.28+): then markers
+  /// may be ranges, and new markers can get an end.
+  final bool markerRanges;
+
+  /// With the markers' end times from the optional query; [ends] null means
+  /// the server doesn't support them.
+  SceneDetails withMarkerEnds(Map<String, double?>? ends) => ends == null
+      ? this
+      : SceneDetails(
+          streams: streams,
+          files: files,
+          spriteUrl: spriteUrl,
+          vttUrl: vttUrl,
+          markerRanges: true,
+          markers: [for (final m in markers) ends.containsKey(m.id) ? m.withEnd(ends[m.id]) : m],
+        );
 
   factory SceneDetails.fromGraphql(Query$FindSceneDetails$findScene s) => SceneDetails(
         spriteUrl: nonEmpty(s.paths.sprite),
@@ -181,13 +231,20 @@ class SceneDetails {
         ],
       );
 
-  /// The chapter that contains [seconds], if any.
+  /// The chapter that contains [seconds], if any: a ranged marker while
+  /// [seconds] is inside its range, a moment until the next marker starts.
+  /// The later start wins where they overlap.
   SceneMarker? markerAt(double seconds) {
-    SceneMarker? current;
-    for (final m in markers) {
-      if (m.seconds > seconds) break;
-      current = m;
+    var latest = true;
+    for (final m in markers.reversed) {
+      if (m.seconds > seconds) continue;
+      if (m.isRange) {
+        if (m.containsInRange(seconds)) return m;
+      } else if (latest) {
+        return m;
+      }
+      latest = false;
     }
-    return current;
+    return null;
   }
 }

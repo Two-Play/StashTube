@@ -128,7 +128,7 @@ void main() {
     expect(controlsVisible(tester), isFalse, reason: 'hides again after the scrub');
   });
 
-  testWidgets('double tap right/left seeks ±10 s', (tester) async {
+  testWidgets('double tap right/left seeks ±5 s (more in seek_sequence_test)', (tester) async {
     await pump(tester);
     final rect = tester.getRect(find.byType(StashVideoControls));
     final right = Offset(rect.right - 30, rect.center.dy);
@@ -136,7 +136,8 @@ void main() {
     await tester.pump(const Duration(milliseconds: 50));
     await tester.tapAt(right);
     await tester.pump();
-    expect(player.seeks, [const Duration(seconds: 40)]);
+    expect(player.seeks, [const Duration(seconds: 35)]);
+    await tester.pump(const Duration(seconds: 1)); // the sequence ends
 
     final left = Offset(rect.left + 30, rect.center.dy);
     await tester.tapAt(left);

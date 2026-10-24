@@ -109,7 +109,7 @@
   "tabHome": "Home",
   "tabPerformers": "Performers",
   "tabStudios": "Studios",
-  "tabSubscriptions": "Subscriptions",
+  "tabSubscriptions": "Favorites",
   "tabLibrary": "Library",
   "tabWatchLater": "Later",
   "tabTags": "Tags",
@@ -193,6 +193,17 @@
   "@markerAt": {
     "placeholders": {
       "time": {
+        "type": "String"
+      }
+    }
+  },
+  "markerFromTo": "Marker from {start} to {end}",
+  "@markerFromTo": {
+    "placeholders": {
+      "start": {
+        "type": "String"
+      },
+      "end": {
         "type": "String"
       }
     }
@@ -485,7 +496,7 @@
   "search": "Search",
   "continueWatching": "Continue watching",
   "newFromFavorites": "New from favorites",
-  "subscriptionsEmpty": "No subscriptions yet",
+  "subscriptionsEmpty": "No favorites yet",
   "subscriptionsEmptyHint": "Mark performers as favorites to see their newest scenes here.",
   "performerHasNewScenes": "{name}, new scenes",
   "@performerHasNewScenes": {
@@ -614,6 +625,22 @@
   "minimize": "Minimize",
   "back10": "Back 10 s",
   "forward10": "Forward 10 s",
+  "seekForwardSeconds": "{count, plural, =1{Forward 1 second} other{Forward {count} seconds}}",
+  "@seekForwardSeconds": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "seekBackSeconds": "{count, plural, =1{Back 1 second} other{Back {count} seconds}}",
+  "@seekBackSeconds": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "pause": "Pause",
   "play": "Play",
   "previousScene": "Previous scene",
@@ -740,7 +767,7 @@
   "streamTranscoded": "Transcoded – seeking may be limited",
   "noAlternativeStreams": "No alternative streams available",
   "streamsLoadFailed": "Couldn't load streams",
-  "chapters": "Chapters",
+  "chapters": "Markers",
   "close": "Close",
   "upNextEmpty": "Nothing else to watch here",
   "moreFrom": "More from {name}",
@@ -890,6 +917,34 @@
   "titleOptional": "Title (optional)",
   "primaryTagRequired": "Primary tag (required)",
   "addMarker": "Add marker",
+  "markerRange": "{start}–{end}",
+  "@markerRange": {
+    "placeholders": {
+      "start": {
+        "type": "String"
+      },
+      "end": {
+        "type": "String"
+      }
+    }
+  },
+  "markerRangeWithLength": "{range} · {length}",
+  "@markerRangeWithLength": {
+    "placeholders": {
+      "range": {
+        "type": "String"
+      },
+      "length": {
+        "type": "String"
+      }
+    }
+  },
+  "markerEndOptional": "End (optional)",
+  "markerEndSet": "Set end to current position",
+  "markerEndEarlier": "End 5 seconds earlier",
+  "markerEndLater": "End 5 seconds later",
+  "markerEndClear": "Remove end",
+  "markerEndInvalid": "The end must be after the start.",
   "saved": "Saved",
   "later": "Later",
   "exitFullscreen": "Exit fullscreen",
@@ -1085,7 +1140,7 @@
   "moreActions": "More",
   "fastForward2x": "2× speed",
   "gestureTipsTitle": "Player gestures",
-  "gestureTipDoubleTap": "Double-tap left or right: ±{seconds} s",
+  "gestureTipDoubleTap": "Double-tap left or right: {seconds} s back/forward, keep tapping to skip further",
   "@gestureTipDoubleTap": {
     "placeholders": {
       "seconds": {
@@ -1361,6 +1416,15 @@
       }
     }
   },
+  "sectionNotifications": "Notifications",
+  "systemNotifications": "System notifications",
+  "systemNotificationsSubtitle": "Tells you when a server task you started ends while StashTube is in the background. Only while the system keeps the app running: Android ends it after a while, iOS pauses it soon after you leave it.",
+  "discreetNotifications": "Discreet notifications",
+  "discreetNotificationsSubtitle": "Only “StashTube” and a neutral text, without task or server names. Hidden on the lock screen.",
+  "notificationsDenied": "Notifications not allowed",
+  "notificationsDeniedBody": "StashTube may not show notifications. Allow them in the system settings, then switch them on here again.",
+  "notificationTaskFinished": "A task has finished",
+  "notificationTaskFailed": "A task has failed",
   "sectionJobs": "Running tasks",
   "noJobs": "No tasks running",
   "stopJob": "Stop task",

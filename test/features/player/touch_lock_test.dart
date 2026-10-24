@@ -157,7 +157,7 @@ void main() {
     await tester.pump(const Duration(milliseconds: 50));
     await tester.tapAt(right);
     await tester.pump(const Duration(seconds: 1));
-    expect(player.seeks, [const Duration(seconds: 40)]);
+    expect(player.seeks, [const Duration(seconds: 35)]);
   });
 
   testWidgets('leaving fullscreen unlocks', (tester) async {

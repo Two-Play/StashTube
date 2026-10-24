@@ -9,6 +9,7 @@ import '../../data/models/performer.dart';
 import '../../data/models/scene_filter.dart';
 import '../../data/models/studio.dart';
 import '../../data/providers.dart';
+import '../../widgets/scene_shelf.dart';
 import '../../widgets/chip_bar.dart';
 import '../../widgets/paged_sliver.dart';
 import '../../widgets/performer_tile.dart';
@@ -786,17 +787,10 @@ class _PerformerResults extends ConsumerWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 0, 4, 0),
-            // Wraps "see all" below the title when large text leaves no room.
-            child: Wrap(
-              alignment: WrapAlignment.spaceBetween,
-              crossAxisAlignment: WrapCrossAlignment.center,
-              children: [
-                Text(context.l10n.performersTitle, style: Theme.of(context).textTheme.titleMedium),
-                TextButton(onPressed: onSeeAll, child: Text(context.l10n.seeAll)),
-              ],
-            ),
+          ShelfHeader(
+            title: context.l10n.performersTitle,
+            onSeeAll: onSeeAll,
+            padding: const EdgeInsetsDirectional.fromSTEB(16, 0, 4, 0),
           ),
           SizedBox(
             height: 100,
@@ -941,16 +935,10 @@ class _Discover extends ConsumerWidget {
         ],
         if (tags.isNotEmpty) ...[
           SliverToBoxAdapter(
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(16, 12, 4, 4),
-              child: Wrap(
-                alignment: WrapAlignment.spaceBetween,
-                crossAxisAlignment: WrapCrossAlignment.center,
-                children: [
-                  Text(context.l10n.popularTags, style: theme.textTheme.titleMedium),
-                  TextButton(onPressed: () => openTags(ref), child: Text(context.l10n.seeAll)),
-                ],
-              ),
+            child: ShelfHeader(
+              title: context.l10n.popularTags,
+              onSeeAll: () => openTags(ref),
+              padding: const EdgeInsetsDirectional.fromSTEB(16, 12, 4, 4),
             ),
           ),
           SliverPadding(

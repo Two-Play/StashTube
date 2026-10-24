@@ -72,7 +72,7 @@ void main() {
     expect(find.byType(GestureTipsOverlay), findsOneWidget);
     expect(find.text('Player gestures'), findsOneWidget);
     expect(find.text('Hold: 2× speed'), findsOneWidget);
-    expect(find.text('Double-tap left or right: ±10 s'), findsOneWidget);
+    expect(find.text('Double-tap left or right: 5 s back/forward, keep tapping to skip further'), findsOneWidget);
     expect(find.text('Pinch: zoom'), findsOneWidget);
     expect(find.text('Swipe down: minimize'), findsOneWidget);
   });

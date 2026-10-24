@@ -1,5 +1,6 @@
 import 'json.dart';
 import 'scene.dart';
+import 'scene_details.dart';
 import 'tag.dart';
 import '../../core/api/documents/scenes.graphql.dart';
 
@@ -22,6 +23,7 @@ class Marker {
   /// The marker's title, or its tag's name when it has none.
   final String title;
   final double seconds;
+  /// The end of a ranged marker (newer Stash); null for a moment.
   final double? endSeconds;
   final Tag tag;
   final Scene scene;
@@ -33,13 +35,26 @@ class Marker {
   /// generated it.
   final String? previewUrl;
 
+  bool get isRange => endSeconds != null;
+
+  /// With the end time from the optional query (see [markerEnd]).
+  Marker withEnd(double? end) => Marker(
+        id: id,
+        title: title,
+        seconds: seconds,
+        endSeconds: markerEnd(seconds, end),
+        tag: tag,
+        scene: scene,
+        screenshotUrl: screenshotUrl,
+        previewUrl: previewUrl,
+      );
+
   factory Marker.fromGraphql(Query$FindSceneMarkers$findSceneMarkers$scene_markers m) {
     final tag = Tag.fromRef(m.primary_tag);
     return Marker(
       id: m.id,
       title: nonEmpty(m.title) ?? tag.name,
       seconds: m.seconds,
-      endSeconds: m.end_seconds,
       tag: tag,
       scene: Scene.fromFields(m.scene),
       screenshotUrl: nonEmpty(m.screenshot),

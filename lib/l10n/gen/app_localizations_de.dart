@@ -199,7 +199,7 @@ class AppLocalizationsDe extends AppLocalizations {
   String get tabStudios => 'Studios';
 
   @override
-  String get tabSubscriptions => 'Abos';
+  String get tabSubscriptions => 'Favoriten';
 
   @override
   String get tabLibrary => 'Bibliothek';
@@ -325,6 +325,11 @@ class AppLocalizationsDe extends AppLocalizations {
   @override
   String markerAt(String time) {
     return 'Marker bei $time';
+  }
+
+  @override
+  String markerFromTo(String start, String end) {
+    return 'Marker von $start bis $end';
   }
 
   @override
@@ -785,7 +790,7 @@ class AppLocalizationsDe extends AppLocalizations {
   String get newFromFavorites => 'Neu von Favoriten';
 
   @override
-  String get subscriptionsEmpty => 'Noch keine Abos';
+  String get subscriptionsEmpty => 'Noch keine Favoriten';
 
   @override
   String get subscriptionsEmptyHint =>
@@ -1005,6 +1010,28 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get forward10 => '10 s vor';
+
+  @override
+  String seekForwardSeconds(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count Sekunden vor',
+      one: '1 Sekunde vor',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String seekBackSeconds(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count Sekunden zurück',
+      one: '1 Sekunde zurück',
+    );
+    return '$_temp0';
+  }
 
   @override
   String get pause => 'Pause';
@@ -1242,7 +1269,7 @@ class AppLocalizationsDe extends AppLocalizations {
   String get streamsLoadFailed => 'Streams konnten nicht geladen werden';
 
   @override
-  String get chapters => 'Kapitel';
+  String get chapters => 'Marker';
 
   @override
   String get close => 'Schließen';
@@ -1406,6 +1433,34 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get addMarker => 'Marker setzen';
+
+  @override
+  String markerRange(String start, String end) {
+    return '$start–$end';
+  }
+
+  @override
+  String markerRangeWithLength(String range, String length) {
+    return '$range · $length';
+  }
+
+  @override
+  String get markerEndOptional => 'Ende (optional)';
+
+  @override
+  String get markerEndSet => 'Ende auf aktuelle Position setzen';
+
+  @override
+  String get markerEndEarlier => 'Ende 5 Sekunden früher';
+
+  @override
+  String get markerEndLater => 'Ende 5 Sekunden später';
+
+  @override
+  String get markerEndClear => 'Ende entfernen';
+
+  @override
+  String get markerEndInvalid => 'Das Ende muss nach dem Start liegen.';
 
   @override
   String get saved => 'Gespeichert';
@@ -1826,7 +1881,7 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String gestureTipDoubleTap(int seconds) {
-    return 'Links oder rechts doppeltippen: ±$seconds s';
+    return 'Links oder rechts doppeltippen: $seconds s zurück/vor, weitertippen springt weiter';
   }
 
   @override
@@ -2287,6 +2342,36 @@ class AppLocalizationsDe extends AppLocalizations {
   String taskFailedNamed(String task) {
     return 'Fehlgeschlagen: $task';
   }
+
+  @override
+  String get sectionNotifications => 'Benachrichtigungen';
+
+  @override
+  String get systemNotifications => 'Systembenachrichtigungen';
+
+  @override
+  String get systemNotificationsSubtitle =>
+      'Meldet, wenn eine von dir gestartete Server-Aufgabe endet, während StashTube im Hintergrund ist. Nur solange das System die App laufen lässt: Android beendet sie nach einer Weile, iOS pausiert sie kurz nach dem Verlassen.';
+
+  @override
+  String get discreetNotifications => 'Diskrete Benachrichtigungen';
+
+  @override
+  String get discreetNotificationsSubtitle =>
+      'Nur „StashTube“ und ein neutraler Text, ohne Aufgaben- oder Servernamen. Auf dem Sperrbildschirm ausgeblendet.';
+
+  @override
+  String get notificationsDenied => 'Benachrichtigungen nicht erlaubt';
+
+  @override
+  String get notificationsDeniedBody =>
+      'StashTube darf keine Benachrichtigungen zeigen. Erlaube sie in den Systemeinstellungen und schalte sie dann hier wieder ein.';
+
+  @override
+  String get notificationTaskFinished => 'Eine Aufgabe ist fertig';
+
+  @override
+  String get notificationTaskFailed => 'Eine Aufgabe ist fehlgeschlagen';
 
   @override
   String get sectionJobs => 'Laufende Aufgaben';

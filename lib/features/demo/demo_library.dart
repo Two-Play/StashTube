@@ -183,18 +183,26 @@ class DemoLibrary {
         ..lastPlayedAt = _now.subtract(Duration(hours: hoursAgo.first));
     }
 
-    // scene, seconds, title, tag
+    // scene, seconds, end (ranged markers, newer Stash), title, tag
     final markers = [
-      ('3', 2.0, 'Chirp', 'Wildlife'),
-      ('5', 6.0, 'Something stirs', 'Nature'),
-      ('6', 3.0, 'The big stretch', 'Comedy'),
-      ('7', 8.0, 'Flowers', 'Nature'),
-      ('8', 9.0, 'A visitor', 'Wildlife'),
+      ('3', 2.0, null, 'Chirp', 'Wildlife'),
+      ('5', 6.0, null, 'Something stirs', 'Nature'),
+      ('6', 3.0, 7.0, 'The big stretch', 'Comedy'),
+      ('7', 8.0, null, 'Flowers', 'Nature'),
+      ('8', 9.0, 15.0, 'A visitor', 'Wildlife'),
     ];
-    for (final (i, (scene, seconds, title, t)) in markers.indexed) {
+    for (final (i, (scene, seconds, end, title, t)) in markers.indexed) {
       if (_scene(scene) == null) continue;
       _markers.add(
-        _Marker('${i + 1}', scene, seconds, title, tag(t), createdAt: _now.subtract(Duration(hours: 6 * (5 - i)))),
+        _Marker(
+          '${i + 1}',
+          scene,
+          seconds,
+          title,
+          tag(t),
+          endSeconds: end,
+          createdAt: _now.subtract(Duration(hours: 6 * (5 - i))),
+        ),
       );
     }
 
@@ -382,7 +390,7 @@ class DemoLibrary {
       'id': m.id,
       'title': m.title,
       'seconds': m.seconds,
-      'end_seconds': null,
+      'end_seconds': m.endSeconds,
       'screenshot': _media('covers/${scene.file}.jpg'),
       'preview': _media('previews/${scene.file}.webp'),
       'primary_tag': (Map<String, dynamic> _) => _tagObject(_tags.firstWhere((t) => t.id == m.tagId)),
@@ -506,7 +514,9 @@ class DemoLibrary {
     'findSceneMarkers': (Map<String, dynamic> args) {
       // Markers have the performers of their scene (as in Stash).
       final filter = args['scene_marker_filter'] as Map<String, dynamic>?;
+      final ids = (args['ids'] as List?)?.map((id) => '$id').toSet();
       final matching = _markers.where((m) {
+        if (ids != null && !ids.contains(m.id)) return false;
         if (filter == null) return true;
         final scene = _scene(m.sceneId);
         return scene != null &&
@@ -941,6 +951,7 @@ class DemoLibrary {
         (input['seconds'] as num).toDouble(),
         input['title'] as String? ?? '',
         '${input['primary_tag_id']}',
+        endSeconds: (input['end_seconds'] as num?)?.toDouble(),
         createdAt: DateTime.now(),
       );
       _markers.add(marker);
@@ -1109,11 +1120,12 @@ class _Scene {
 }
 
 class _Marker {
-  _Marker(this.id, this.sceneId, this.seconds, this.title, this.tagId, {required this.createdAt});
+  _Marker(this.id, this.sceneId, this.seconds, this.title, this.tagId, {this.endSeconds, required this.createdAt});
 
   final String id;
   final String sceneId;
   final double seconds;
+  final double? endSeconds;
   final String title;
   final String tagId;
   final DateTime createdAt;

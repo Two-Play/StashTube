@@ -69,23 +69,28 @@ class SceneShelf extends ConsumerWidget {
 
 /// The heading of a shelf, optionally with "See all".
 class ShelfHeader extends StatelessWidget {
-  const ShelfHeader({super.key, required this.title, this.icon, this.onSeeAll});
+  const ShelfHeader({super.key, required this.title, this.icon, this.onSeeAll, this.padding});
 
   final String title;
   final IconData? icon;
   final VoidCallback? onSeeAll;
 
+  /// Around the row; by default the shelves' margins.
+  final EdgeInsetsGeometry? padding;
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Padding(
-      padding: EdgeInsetsDirectional.fromSTEB(
-        AppSpacing.l,
-        AppSpacing.s,
-        onSeeAll == null ? AppSpacing.l : AppSpacing.xs,
-        AppSpacing.s,
-      ),
-      child: Row(
+      padding: padding ??
+          EdgeInsetsDirectional.fromSTEB(
+            AppSpacing.l,
+            AppSpacing.s,
+            onSeeAll == null ? AppSpacing.l : AppSpacing.xs,
+            AppSpacing.s,
+          ),
+      child: LayoutBuilder(
+        builder: (context, constraints) => Row(
         children: [
           if (icon != null) ...[Icon(icon, size: 20), const SizedBox(width: AppSpacing.s)],
           Expanded(
@@ -99,9 +104,10 @@ class ShelfHeader extends StatelessWidget {
               ),
             ),
           ),
-          // Shares the width with the title at large text sizes.
+          // At the end; takes at most half the width at large text sizes.
           if (onSeeAll != null)
-            Flexible(
+            ConstrainedBox(
+              constraints: BoxConstraints(maxWidth: constraints.maxWidth / 2),
               child: TextButton(
                 onPressed: onSeeAll,
                 child: Text(
@@ -113,6 +119,7 @@ class ShelfHeader extends StatelessWidget {
               ),
             ),
         ],
+      ),
       ),
     );
   }

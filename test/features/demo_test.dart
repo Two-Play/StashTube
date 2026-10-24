@@ -149,6 +149,9 @@ void main() {
     expect(details.streams.single.isDirect, isTrue);
     expect(details.markers.single.title, 'A visitor');
     expect(details.markers.single.screenshotUrl, isNotNull, reason: 'chapter thumbnails');
+    // A ranged marker (newer Stash's end times).
+    expect(details.markerRanges, isTrue);
+    expect([details.markers.single.seconds, details.markers.single.endSeconds], [9, 15]);
     expect(details.files.single.duration, greaterThan(10));
     final thumbs = await repo.scrubThumbnails(details);
     expect(thumbs!.cues, hasLength(details.files.single.duration!.ceil()));
@@ -157,6 +160,12 @@ void main() {
 
     expect((await repo.findMarkers(MarkerQuery())).totalCount, 5);
     expect((await repo.findMarkers(MarkerQuery(search: 'butterfly'))).items.single.title, 'A visitor');
+    expect((await repo.findMarkers(MarkerQuery(search: 'butterfly'))).items.single.endSeconds, 15);
+    expect(
+      [for (final m in (await repo.findMarkers(MarkerQuery(sort: MarkerSort.title))).items) m.endSeconds],
+      [15, null, null, null, 7],
+      reason: 'A visitor, Chirp, Flowers, Something stirs, The big stretch',
+    );
     // A channel's markers: those in the performer's or studio's scenes.
     Future<Set<String>> sceneIds(SceneQuery query) async =>
         {for (final s in (await repo.findScenes(query, perPage: 100)).items) s.id};
@@ -272,6 +281,9 @@ void main() {
 
     final marker = await repo.createMarker(sceneId: '1', seconds: 4, primaryTagId: tag.id, title: 'Clouds');
     expect((await repo.findSceneDetails('1')).markers.single.id, marker.id);
+    final ranged = await repo.createMarker(sceneId: '2', seconds: 2, endSeconds: 6, primaryTagId: tag.id);
+    expect(ranged.endSeconds, 6);
+    expect((await repo.findSceneDetails('2')).markers.single.endSeconds, 6);
 
     await repo.setPerformerFavorite('2', true);
     expect((await repo.findPerformers(PerformerQuery(sort: PerformerSort.favorites))).items, hasLength(2));

@@ -2,6 +2,7 @@ import AVFoundation
 import AVKit
 import Flutter
 import UIKit
+import UserNotifications
 
 @main
 @objc class AppDelegate: FlutterAppDelegate, FlutterImplicitEngineDelegate {
@@ -13,6 +14,8 @@ import UIKit
     _ application: UIApplication,
     didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?
   ) -> Bool {
+    // flutter_local_notifications: delivers notification taps to Dart.
+    UNUserNotificationCenter.current().delegate = self as UNUserNotificationCenterDelegate
     return super.application(application, didFinishLaunchingWithOptions: launchOptions)
   }
 
@@ -305,8 +308,8 @@ final class PrivacyCoverController: NSObject {
 /// mpv's video can't go into picture-in-picture, so an AVPlayer takes over
 /// the stream, like for AirPlay: its layer sits where the app's video is,
 /// the system window grows out of it, and the app pauses its own player.
-/// Methods on `stash/pip`: start {url, headers, startMs, rect: [x, y, w, h]}
-/// (returns whether it started), stop. Calls back pipChanged (bool) and,
+/// Methods on `stash/pip`: start {url, headers, startMs, rect: [x, y, w, h],
+/// aspect?} (returns whether it started), stop. Calls back pipChanged (bool) and,
 /// when it ends, pipStopped {positionMs, playing}, so Dart continues there.
 final class PictureInPictureController: NSObject, AVPictureInPictureControllerDelegate {
   private let channel: FlutterMethodChannel
@@ -315,6 +318,10 @@ final class PictureInPictureController: NSObject, AVPictureInPictureControllerDe
   private var pip: AVPictureInPictureController?
   private var possibleObservation: NSKeyValueObservation?
   private var statusObservation: NSKeyValueObservation?
+  private var sizeObservation: NSKeyValueObservation?
+  private var readyObservation: NSKeyValueObservation?
+  /// The app's video area; the layer is fitted into it by the video's shape.
+  private var videoArea: CGRect = .zero
   private var pendingStart: FlutterResult?
   private var playingWhenStopping = true
 
@@ -340,6 +347,7 @@ final class PictureInPictureController: NSObject, AVPictureInPictureControllerDe
         headers: args["headers"] as? [String: String] ?? [:],
         startMs: (args["startMs"] as? NSNumber)?.int64Value ?? 0,
         frame: rect.count == 4 ? CGRect(x: rect[0], y: rect[1], width: rect[2], height: rect[3]) : .zero,
+        aspect: (args["aspect"] as? NSNumber).map { CGFloat($0.doubleValue) },
         result: result)
     case "stop":
       if pip?.isPictureInPictureActive == true {
@@ -354,7 +362,8 @@ final class PictureInPictureController: NSObject, AVPictureInPictureControllerDe
   }
 
   private func start(
-    url: URL, headers: [String: String], startMs: Int64, frame: CGRect, result: @escaping FlutterResult
+    url: URL, headers: [String: String], startMs: Int64, frame: CGRect, aspect: CGFloat?,
+    result: @escaping FlutterResult
   ) {
     finishStart(false)
     cleanUp()
@@ -370,9 +379,13 @@ final class PictureInPictureController: NSObject, AVPictureInPictureControllerDe
     let item = AVPlayerItem(asset: asset)
     let player = AVPlayer(playerItem: item)
     player.allowsExternalPlayback = false
-    // The layer has to be on screen for picture-in-picture to start.
+    // The layer has to be on screen for picture-in-picture to start. The
+    // window takes its first shape from the layer, so the layer covers just
+    // the video (the app's aspect until the item reports its size): a
+    // portrait video in a 16:9 layer opened as a landscape window.
     let onScreen = frame.width > 1 && frame.height > 1
-    let view = PlayerLayerView(frame: onScreen ? frame : CGRect(x: 0, y: 0, width: 160, height: 90))
+    videoArea = onScreen ? frame : CGRect(x: 0, y: 0, width: 160, height: 160)
+    let view = PlayerLayerView(frame: Self.fit(aspect: aspect ?? 16 / 9, into: videoArea))
     view.isUserInteractionEnabled = false
     view.playerLayer.videoGravity = .resizeAspect
     view.playerLayer.player = player
@@ -390,17 +403,24 @@ final class PictureInPictureController: NSObject, AVPictureInPictureControllerDe
     pendingStart = result
 
     statusObservation = item.observe(\.status) { [weak self] item, _ in
-      guard item.status == .failed else { return }
       DispatchQueue.main.async {
+        guard item.status == .failed else {
+          self?.startWhenReady()
+          return
+        }
         self?.finishStart(false)
         self?.cleanUp()
       }
     }
-    possibleObservation = pip.observe(\.isPictureInPicturePossible, options: [.initial, .new]) { [weak self] pip, _ in
-      DispatchQueue.main.async {
-        guard self?.pendingStart != nil, pip.isPictureInPicturePossible, !pip.isPictureInPictureActive else { return }
-        pip.startPictureInPicture()
-      }
+    // The real size (with the track's rotation), known once the item loaded.
+    sizeObservation = item.observe(\.presentationSize, options: [.initial, .new]) { [weak self] _, _ in
+      DispatchQueue.main.async { self?.startWhenReady() }
+    }
+    readyObservation = view.playerLayer.observe(\.isReadyForDisplay, options: [.new]) { [weak self] _, _ in
+      DispatchQueue.main.async { self?.startWhenReady() }
+    }
+    possibleObservation = pip.observe(\.isPictureInPicturePossible, options: [.initial, .new]) { [weak self] _, _ in
+      DispatchQueue.main.async { self?.startWhenReady() }
     }
     if startMs > 0 {
       player.seek(to: CMTime(value: startMs, timescale: 1000), toleranceBefore: .zero, toleranceAfter: .zero)
@@ -412,6 +432,30 @@ final class PictureInPictureController: NSObject, AVPictureInPictureControllerDe
       self.finishStart(false)
       self.cleanUp()
     }
+  }
+
+  /// Starts picture-in-picture once it is possible and the item knows its
+  /// size, with the layer fitted to it, so the window opens in the video's
+  /// shape instead of starting as 16:9 and turning later.
+  private func startWhenReady() {
+    guard pendingStart != nil, let pip = pip, let item = player?.currentItem, let view = playerView else { return }
+    let size = item.presentationSize
+    guard item.status == .readyToPlay, size.width > 0, size.height > 0 else { return }
+    let fitted = Self.fit(aspect: size.width / size.height, into: videoArea)
+    if view.frame != fitted { view.frame = fitted }
+    guard view.playerLayer.isReadyForDisplay, pip.isPictureInPicturePossible, !pip.isPictureInPictureActive else {
+      return
+    }
+    pip.startPictureInPicture()
+  }
+
+  /// The largest rect of [aspect] (width / height) centered in [area].
+  private static func fit(aspect: CGFloat, into area: CGRect) -> CGRect {
+    guard aspect.isFinite, aspect > 0, area.width > 0, area.height > 0 else { return area }
+    let size = area.width / area.height > aspect
+      ? CGSize(width: area.height * aspect, height: area.height)
+      : CGSize(width: area.width, height: area.width / aspect)
+    return CGRect(x: area.midX - size.width / 2, y: area.midY - size.height / 2, width: size.width, height: size.height)
   }
 
   private var mainWindow: UIWindow? {
@@ -429,6 +473,8 @@ final class PictureInPictureController: NSObject, AVPictureInPictureControllerDe
   private func cleanUp() {
     possibleObservation = nil
     statusObservation = nil
+    sizeObservation = nil
+    readyObservation = nil
     player?.pause()
     player = nil
     pip = nil
