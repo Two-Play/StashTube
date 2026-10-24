@@ -444,6 +444,8 @@ class _ShortsPageState extends ConsumerState<ShortsPage> {
                   muted: _muted,
                   onToggleMute: _toggleMute,
                   onRefresh: () => ref.read(_feed.notifier).refresh(),
+                  // A markers grid's shorts keep its order and filters.
+                  adjustable: widget.source.markers == null,
                 ),
               ],
             ),
@@ -462,7 +464,11 @@ class _TopBar extends StatelessWidget {
     required this.muted,
     required this.onToggleMute,
     required this.onRefresh,
+    this.adjustable = true,
   });
+
+  /// Whether shuffle and the shorts settings apply.
+  final bool adjustable;
 
   /// E.g. the performer whose shorts these are.
   final String? title;
@@ -527,18 +533,20 @@ class _TopBar extends StatelessWidget {
               icon: Icon(muted ? Icons.volume_off : Icons.volume_up),
               onPressed: onToggleMute,
             ),
-            IconButton(
-              tooltip: l.sortShuffle,
-              color: Colors.white,
-              icon: const Icon(Icons.shuffle),
-              onPressed: onRefresh,
-            ),
-            IconButton(
-              tooltip: l.shortsSettings,
-              color: Colors.white,
-              icon: const Icon(Icons.tune),
-              onPressed: () => showShortsSettingsSheet(context),
-            ),
+            if (adjustable) ...[
+              IconButton(
+                tooltip: l.sortShuffle,
+                color: Colors.white,
+                icon: const Icon(Icons.shuffle),
+                onPressed: onRefresh,
+              ),
+              IconButton(
+                tooltip: l.shortsSettings,
+                color: Colors.white,
+                icon: const Icon(Icons.tune),
+                onPressed: () => showShortsSettingsSheet(context),
+              ),
+            ],
           ],
         ),
       ),

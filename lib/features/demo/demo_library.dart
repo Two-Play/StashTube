@@ -190,6 +190,8 @@ class DemoLibrary {
       ('6', 3.0, 7.0, 'The big stretch', 'Comedy'),
       ('7', 8.0, null, 'Flowers', 'Nature'),
       ('8', 9.0, 15.0, 'A visitor', 'Wildlife'),
+      // In a portrait short, for the shorts' "portrait videos only".
+      ('11', 1.0, 4.0, 'Reaching up', 'Comedy'),
     ];
     for (final (i, (scene, seconds, end, title, t)) in markers.indexed) {
       if (_scene(scene) == null) continue;
@@ -201,7 +203,7 @@ class DemoLibrary {
           title,
           tag(t),
           endSeconds: end,
-          createdAt: _now.subtract(Duration(hours: 6 * (5 - i))),
+          createdAt: _now.subtract(Duration(hours: 6 * (markers.length - i))),
         ),
       );
     }

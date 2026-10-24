@@ -1135,12 +1135,13 @@
   "shortsLengthOneMinute": "Up to 1 min",
   "shortsLengthThreeMinutes": "Up to 3 min",
   "shortsLengthTenMinutes": "Up to 10 min",
+  "shortsMaxLengthHint": "Only for videos: a marker plays its marked part.",
   "shortsPortraitOnly": "Portrait videos only",
-  "shortsMarkers": "Markers",
-  "shortsMarkersHint": "Plays scene markers as clips from the original video, looping until the marker ends. With tags, only markers with one of them. Length and orientation don't apply.",
-  "shortsMarkersOff": "Off",
-  "shortsMarkersMixed": "With videos",
-  "shortsMarkersOnly": "Only markers",
+  "shortsContent": "Content",
+  "shortsContentHint": "Markers play the marked part of a scene as a short.",
+  "shortsContentVideos": "Videos only",
+  "shortsContentMixed": "Videos & markers",
+  "shortsContentMarkers": "Markers only",
   "shortMarkerSemantics": "Marker: {title}",
   "@shortMarkerSemantics": {
     "placeholders": {
@@ -1179,6 +1180,19 @@
   "gestureTipsDone": "Got it",
   "showGestureTipsAgain": "Show gesture tips again",
   "showGestureTipsAgainSubtitle": "The next time the player's controls appear",
+  "sectionDoubleTapSeek": "Double-tap to seek",
+  "doubleTapSeek": "Double-tap seeking",
+  "doubleTapSeekSubtitle": "Double-tap the left or right side of the video. Off: a tap shows the controls right away.",
+  "seekStep": "Skip by",
+  "seekCumulative": "Keep tapping to skip further",
+  "seekSequenceExample": "In total: {totals} s …",
+  "@seekSequenceExample": {
+    "placeholders": {
+      "totals": {
+        "type": "String"
+      }
+    }
+  },
   "lockTouch": "Lock screen",
   "touchLocked": "Screen locked",
   "holdToUnlock": "Hold to unlock",
@@ -1324,6 +1338,9 @@
   "libraryMarkers": "Markers",
   "markersEmpty": "No markers yet",
   "markersEmptyHint": "Mark a moment in the player with \"Marker\".",
+  "markersPlayAsShorts": "Play as shorts",
+  "markerPlayAsShort": "Play as short",
+  "markerMoreOptions": "Marker options",
   "markersCount": "{count, plural, =1{1 marker} other{{count} markers}}",
   "@markersCount": {
     "placeholders": {

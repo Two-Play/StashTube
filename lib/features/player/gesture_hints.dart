@@ -41,10 +41,11 @@ final gestureTipsSeenProvider = NotifierProvider<GestureTipsSeenNotifier, bool>(
 /// the gestures that have no button (double tap, hold, pinch, swipe down).
 /// Tapping anywhere or "Got it" calls [onDismiss].
 class GestureTipsOverlay extends StatelessWidget {
-  const GestureTipsOverlay({super.key, required this.onDismiss, required this.seekSeconds});
+  const GestureTipsOverlay({super.key, required this.onDismiss, this.seekSeconds});
 
   final VoidCallback onDismiss;
-  final int seekSeconds;
+  /// The double tap's step; null without double-tap seeking (no tip).
+  final int? seekSeconds;
 
   @override
   Widget build(BuildContext context) {
@@ -101,7 +102,7 @@ class GestureTipsOverlay extends StatelessWidget {
                       Wrap(
                         alignment: WrapAlignment.center,
                         children: [
-                          tip(Icons.touch_app_outlined, l.gestureTipDoubleTap(seekSeconds)),
+                          if (seekSeconds case final seconds?) tip(Icons.touch_app_outlined, l.gestureTipDoubleTap(seconds)),
                           tip(Icons.fast_forward_outlined, l.gestureTipHold),
                           tip(Icons.pinch_outlined, l.gestureTipPinch),
                           tip(Icons.swipe_down_outlined, l.gestureTipSwipeDown),

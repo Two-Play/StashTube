@@ -245,6 +245,53 @@ void main() {
     expect(repo.markerQueries.last.performerId, '1');
   });
 
+  testWidgets('the markers play as shorts, from the first or the chosen one', (tester) async {
+    final observer = _Pushes();
+    final playing = _Playing();
+    final repo = _Repo(markers: 3);
+    await pump(tester, repo, observer: observer, playing: playing);
+    await tester.tap(tab('Markers'));
+    await tester.pumpAndSettle();
+    final grid = repo.markerQueries.single;
+    observer.routes.clear();
+
+    ShortsPage pushed() {
+      final route = observer.routes.single as MaterialPageRoute<dynamic>;
+      final page = route.builder(tester.element(find.byType(PerformerPage))) as ShortsPage;
+      // Never built: it would start native players.
+      route.navigator!.removeRoute(route);
+      observer.routes.clear();
+      return page;
+    }
+
+    await tester.tap(find.text('Play as shorts'));
+    var page = pushed();
+    expect(page.source, ShortsSource.markers(grid), reason: 'the grid\'s markers, filter and sort');
+    expect(page.initialIndex, 0);
+    await tester.pump();
+
+    // The tile's menu: play as before, or as a short from that marker on.
+    await tester.tap(find.byTooltip('Marker options').at(2));
+    await tester.pumpAndSettle();
+    expect(find.text('Play'), findsOneWidget);
+    observer.routes.clear();
+    await tester.tap(find.text('Play as short'));
+    page = pushed();
+    expect(page.source, ShortsSource.markers(grid));
+    expect(page.initialIndex, 2);
+    await tester.pumpAndSettle();
+
+    // A long press opens the same menu; a tap still plays the scene.
+    await tester.longPress(find.text('Moment 1'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Play'));
+    await tester.pumpAndSettle();
+    expect(playing.played, [('v1', 61.0)]);
+    await tester.tap(find.text('Moment 0'));
+    expect(playing.played.last, ('v0', 60.0));
+    expect(observer.routes.whereType<MaterialPageRoute<dynamic>>(), isEmpty, reason: 'no shorts');
+  });
+
   testWidgets('a short opens the shorts player on that short of the same feed', (tester) async {
     final observer = _Pushes();
     await pump(tester, _Repo(shorts: 3), observer: observer);

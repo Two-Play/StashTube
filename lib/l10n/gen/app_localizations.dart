@@ -2960,41 +2960,47 @@ abstract class AppLocalizations {
   /// **'Up to 10 min'**
   String get shortsLengthTenMinutes;
 
+  /// No description provided for @shortsMaxLengthHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Only for videos: a marker plays its marked part.'**
+  String get shortsMaxLengthHint;
+
   /// No description provided for @shortsPortraitOnly.
   ///
   /// In en, this message translates to:
   /// **'Portrait videos only'**
   String get shortsPortraitOnly;
 
-  /// No description provided for @shortsMarkers.
+  /// No description provided for @shortsContent.
   ///
   /// In en, this message translates to:
-  /// **'Markers'**
-  String get shortsMarkers;
+  /// **'Content'**
+  String get shortsContent;
 
-  /// No description provided for @shortsMarkersHint.
+  /// No description provided for @shortsContentHint.
   ///
   /// In en, this message translates to:
-  /// **'Plays scene markers as clips from the original video, looping until the marker ends. With tags, only markers with one of them. Length and orientation don\'t apply.'**
-  String get shortsMarkersHint;
+  /// **'Markers play the marked part of a scene as a short.'**
+  String get shortsContentHint;
 
-  /// No description provided for @shortsMarkersOff.
+  /// No description provided for @shortsContentVideos.
   ///
   /// In en, this message translates to:
-  /// **'Off'**
-  String get shortsMarkersOff;
+  /// **'Videos only'**
+  String get shortsContentVideos;
 
-  /// No description provided for @shortsMarkersMixed.
+  /// No description provided for @shortsContentMixed.
   ///
   /// In en, this message translates to:
-  /// **'With videos'**
-  String get shortsMarkersMixed;
+  /// **'Videos & markers'**
+  String get shortsContentMixed;
 
-  /// No description provided for @shortsMarkersOnly.
+  /// No description provided for @shortsContentMarkers.
   ///
   /// In en, this message translates to:
-  /// **'Only markers'**
-  String get shortsMarkersOnly;
+  /// **'Markers only'**
+  String get shortsContentMarkers;
 
   /// No description provided for @shortMarkerSemantics.
   ///
@@ -3139,6 +3145,42 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'The next time the player\'s controls appear'**
   String get showGestureTipsAgainSubtitle;
+
+  /// No description provided for @sectionDoubleTapSeek.
+  ///
+  /// In en, this message translates to:
+  /// **'Double-tap to seek'**
+  String get sectionDoubleTapSeek;
+
+  /// No description provided for @doubleTapSeek.
+  ///
+  /// In en, this message translates to:
+  /// **'Double-tap seeking'**
+  String get doubleTapSeek;
+
+  /// No description provided for @doubleTapSeekSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Double-tap the left or right side of the video. Off: a tap shows the controls right away.'**
+  String get doubleTapSeekSubtitle;
+
+  /// No description provided for @seekStep.
+  ///
+  /// In en, this message translates to:
+  /// **'Skip by'**
+  String get seekStep;
+
+  /// No description provided for @seekCumulative.
+  ///
+  /// In en, this message translates to:
+  /// **'Keep tapping to skip further'**
+  String get seekCumulative;
+
+  /// No description provided for @seekSequenceExample.
+  ///
+  /// In en, this message translates to:
+  /// **'In total: {totals} s …'**
+  String seekSequenceExample(String totals);
 
   /// No description provided for @lockTouch.
   ///
@@ -3547,6 +3589,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Mark a moment in the player with \"Marker\".'**
   String get markersEmptyHint;
+
+  /// No description provided for @markersPlayAsShorts.
+  ///
+  /// In en, this message translates to:
+  /// **'Play as shorts'**
+  String get markersPlayAsShorts;
+
+  /// No description provided for @markerPlayAsShort.
+  ///
+  /// In en, this message translates to:
+  /// **'Play as short'**
+  String get markerPlayAsShort;
+
+  /// No description provided for @markerMoreOptions.
+  ///
+  /// In en, this message translates to:
+  /// **'Marker options'**
+  String get markerMoreOptions;
 
   /// No description provided for @markersCount.
   ///

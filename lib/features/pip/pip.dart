@@ -281,7 +281,8 @@ class PipScope extends ConsumerWidget {
     final appWindow = pip && ref.watch(pipServiceProvider).canAutoEnter;
     return Stack(
       children: [
-        child,
+        // Only the video shows in the small window: no animations below it.
+        TickerMode(enabled: !appWindow, child: child),
         if (appWindow)
           Positioned.fill(
             child: ColoredBox(

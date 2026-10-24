@@ -205,7 +205,11 @@ void main() {
   });
 
   group('shorts settings sheet', () {
-    testWidgets('the markers are a segmented choice, saved on apply', (tester) async {
+    testWidgets('the content is a segmented choice, saved on apply', (tester) async {
+      // A phone's width: the three labels fit.
+      tester.view.physicalSize = const Size(360, 780);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.reset);
       SharedPreferences.setMockInitialValues({});
       final prefs = await SharedPreferences.getInstance();
       final container = ProviderContainer(overrides: [
@@ -239,7 +243,13 @@ void main() {
         {ShortsMarkers.off},
         reason: 'off by default',
       );
-      await tester.tap(find.descendant(of: segmented, matching: find.text(l.shortsMarkersOnly)));
+      expect(find.text('Content'), findsOneWidget);
+      expect(find.text('Markers play the marked part of a scene as a short.'), findsOneWidget);
+      expect(find.text('Only for videos: a marker plays its marked part.'), findsOneWidget, reason: 'max length');
+      for (final label in ['Videos only', 'Videos & markers', 'Markers only']) {
+        expect(find.descendant(of: segmented, matching: find.text(label)), findsOneWidget);
+      }
+      await tester.tap(find.descendant(of: segmented, matching: find.text(l.shortsContentMarkers)));
       await tester.pumpAndSettle();
       expect(tester.widget<SegmentedButton<ShortsMarkers>>(segmented).selected, {ShortsMarkers.only});
       expect(container.read(shortsSettingsProvider).markers, ShortsMarkers.off, reason: 'not before applying');

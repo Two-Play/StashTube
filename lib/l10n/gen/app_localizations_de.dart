@@ -1836,23 +1836,27 @@ class AppLocalizationsDe extends AppLocalizations {
   String get shortsLengthTenMinutes => 'Bis 10 Min.';
 
   @override
+  String get shortsMaxLengthHint =>
+      'Nur für Videos: Ein Marker spielt seine markierte Stelle.';
+
+  @override
   String get shortsPortraitOnly => 'Nur Hochkant-Videos';
 
   @override
-  String get shortsMarkers => 'Marker';
+  String get shortsContent => 'Inhalt';
 
   @override
-  String get shortsMarkersHint =>
-      'Spielt Szenenmarker als Clips aus dem Originalvideo, in Schleife bis zum Ende des Markers. Mit Tags nur Marker mit einem davon. Länge und Ausrichtung gelten dafür nicht.';
+  String get shortsContentHint =>
+      'Marker spielen die markierte Stelle einer Szene als Short.';
 
   @override
-  String get shortsMarkersOff => 'Aus';
+  String get shortsContentVideos => 'Nur Videos';
 
   @override
-  String get shortsMarkersMixed => 'Mit Videos';
+  String get shortsContentMixed => 'Videos & Marker';
 
   @override
-  String get shortsMarkersOnly => 'Nur Marker';
+  String get shortsContentMarkers => 'Nur Marker';
 
   @override
   String shortMarkerSemantics(String title) {
@@ -1931,6 +1935,27 @@ class AppLocalizationsDe extends AppLocalizations {
   @override
   String get showGestureTipsAgainSubtitle =>
       'Wenn die Player-Steuerung das nächste Mal erscheint';
+
+  @override
+  String get sectionDoubleTapSeek => 'Doppeltippen zum Spulen';
+
+  @override
+  String get doubleTapSeek => 'Spulen per Doppeltippen';
+
+  @override
+  String get doubleTapSeekSubtitle =>
+      'Links oder rechts auf das Video doppeltippen. Aus: Ein Tippen zeigt die Steuerung sofort.';
+
+  @override
+  String get seekStep => 'Sprungweite';
+
+  @override
+  String get seekCumulative => 'Weitertippen springt immer weiter';
+
+  @override
+  String seekSequenceExample(String totals) {
+    return 'Insgesamt: $totals s …';
+  }
 
   @override
   String get lockTouch => 'Bildschirm sperren';
@@ -2170,6 +2195,15 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get markersEmptyHint => 'Markiere eine Stelle im Player mit „Marker“.';
+
+  @override
+  String get markersPlayAsShorts => 'Als Shorts abspielen';
+
+  @override
+  String get markerPlayAsShort => 'Als Short abspielen';
+
+  @override
+  String get markerMoreOptions => 'Marker-Optionen';
 
   @override
   String markersCount(int count) {

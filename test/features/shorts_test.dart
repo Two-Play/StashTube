@@ -43,7 +43,11 @@ class _ShortsRepository implements StashRepository {
   final queries = <SceneQuery>[];
   final markerQueries = <MarkerQuery>[];
   final pages = <int>[];
+  final markerPages = <int>[];
   bool failNext = false;
+
+  /// Thrown by every marker query.
+  Object? markerError;
 
   @override
   Future<PageResult<Scene>> findScenes(SceneQuery query, {int page = 1, int perPage = 24}) async {
@@ -61,6 +65,8 @@ class _ShortsRepository implements StashRepository {
   @override
   Future<PageResult<Marker>> findMarkers(MarkerQuery query, {int page = 1, int perPage = 24}) async {
     markerQueries.add(query);
+    markerPages.add(page);
+    if (markerError case final error?) throw error;
     final all = [for (var i = 0; i < markers; i++) _marker('m$i')];
     return PageResult(items: all.skip((page - 1) * perPage).take(perPage).toList(), totalCount: all.length);
   }
@@ -235,6 +241,78 @@ void main() {
       expect((await _loaded(c)).items.map((s) => s.key), ['o0', 'marker:m0', 'o1', 'marker:m1', 'o2', 'o3']);
     });
 
+    test('"portrait videos only" applies to the markers, the length does not', () {
+      final query = const ShortsSettings(tags: [beach], markers: ShortsMarkers.mixed, length: ShortsLength.oneMinute)
+          .markerQuery!;
+      expect(query.portraitOnly, isTrue);
+      expect(query.toMarkerFilter(), {
+        'scene_filter': {
+          'orientation': {
+            'value': ['PORTRAIT'],
+          },
+        },
+        'tags': {
+          'value': ['1'],
+          'modifier': 'INCLUDES',
+          'depth': 0,
+        },
+      });
+      expect(
+        const ShortsSettings(markers: ShortsMarkers.only, portraitOnly: false).markerQuery!.toMarkerFilter(),
+        isNull,
+      );
+      // A studio's markers in portrait videos: one scene filter.
+      expect(MarkerQuery(studioId: '4', includeSubStudios: true, portraitOnly: true).toMarkerFilter(), {
+        'scene_filter': {
+          'studios': {
+            'value': ['4'],
+            'modifier': 'INCLUDES',
+            'depth': -1,
+          },
+          'orientation': {
+            'value': ['PORTRAIT'],
+          },
+        },
+      });
+      expect(MarkerQuery(portraitOnly: true, seed: 1), isNot(MarkerQuery(seed: 1)));
+    });
+
+    test('the stored content choice reads as before', () {
+      for (final (stored, markers) in [
+        ('off', ShortsMarkers.off),
+        ('mixed', ShortsMarkers.mixed),
+        ('only', ShortsMarkers.only),
+      ]) {
+        expect(ShortsSettings.fromJson({'markers': stored}).markers, markers);
+      }
+    });
+
+    test('a server rejecting the marker query leaves the videos', () async {
+      final repo = _ShortsRepository(others: 3, markers: 2)
+        ..markerError = const StashApiException('Unknown field orientation');
+      final c = await _container(repo, const ShortsSettings(markers: ShortsMarkers.mixed));
+      final feed = await _loaded(c);
+      expect(feed.error, isNull);
+      expect(feed.items.map((s) => s.key), ['o0', 'o1', 'o2']);
+      expect(feed.hasMore, isFalse);
+      expect(repo.markerQueries, hasLength(1), reason: 'not asked again');
+    });
+
+    test('only markers show the server error', () async {
+      final repo = _ShortsRepository(markers: 2)..markerError = const StashApiException('Unknown field orientation');
+      final c = await _container(repo, const ShortsSettings(markers: ShortsMarkers.only));
+      final feed = await _loaded(c);
+      expect(feed.items, isEmpty);
+      expect(feed.error, isA<StashApiException>());
+    });
+
+    test('without a connection the mixed feed shows the error', () async {
+      final repo = _ShortsRepository(others: 3, markers: 2)
+        ..markerError = const StashApiException('offline', isNetworkError: true);
+      final c = await _container(repo, const ShortsSettings(markers: ShortsMarkers.mixed));
+      expect((await _loaded(c)).error, isA<StashApiException>());
+    });
+
     test('performer shorts leave the markers out', () async {
       final repo = _ShortsRepository(others: 2, markers: 2);
       final c = await _container(repo, const ShortsSettings(markers: ShortsMarkers.only));
@@ -342,5 +420,65 @@ void main() {
     expect(config.visible, [AppTab.home, AppTab.performers, AppTab.studios, AppTab.library, AppTab.you]);
     expect(config.isVisible(AppTab.shorts), isFalse);
     expect(NavBarConfig.standard.isVisible(AppTab.shorts), isTrue, reason: 'only stored bars start without it');
+  });
+
+  group('a markers grid as shorts', () {
+    Future<ShortsFeedState> loaded(ProviderContainer c, ShortsSource source) async {
+      final provider = shortsFeedFamily(source);
+      c.listen(provider, (_, _) {});
+      for (var i = 0; i < 20 && c.read(provider).isLoading; i++) {
+        await Future<void>.delayed(Duration.zero);
+      }
+      return c.read(provider);
+    }
+
+    test('plays exactly the grid\'s markers, without the shorts settings', () async {
+      final repo = _ShortsRepository(others: 5, markers: 30);
+      final c = await _container(
+        repo,
+        const ShortsSettings(tags: [beach], markers: ShortsMarkers.off, length: ShortsLength.oneMinute),
+      );
+      final grid = MarkerQuery(sort: MarkerSort.title, performerId: '7');
+      final feed = await loaded(c, ShortsSource.markers(grid));
+      expect(feed.items.map((s) => s.key), [for (var i = 0; i < 24; i++) 'marker:m$i']);
+      expect(feed.hasMore, isTrue);
+      expect(repo.queries, isEmpty, reason: 'no videos');
+      expect(repo.markerQueries.single, same(grid), reason: 'the grid\'s filter and sort, no portrait');
+    });
+
+    test('starts at the page of the tapped marker', () async {
+      final repo = _ShortsRepository(markers: 30);
+      final c = await _container(repo);
+      final feed = await loaded(c, ShortsSource.markers(MarkerQuery(), startPage: 2));
+      expect(repo.markerPages, [2]);
+      expect(feed.items.map((s) => s.key), [for (var i = 24; i < 30; i++) 'marker:m$i']);
+      expect(feed.hasMore, isFalse);
+    });
+
+    test('sources are equal by their query and page', () {
+      final query = MarkerQuery(sort: MarkerSort.random, seed: 5, tagIds: ['1']);
+      expect(
+        ShortsSource.markers(query, title: 'a'),
+        ShortsSource.markers(MarkerQuery(sort: MarkerSort.random, seed: 5, tagIds: ['1'])),
+      );
+      expect(ShortsSource.markers(query), isNot(ShortsSource.markers(query, startPage: 2)));
+      expect(ShortsSource.markers(query), isNot(const ShortsSource.feed()));
+      expect(ShortsSource.markers(query).isFeed, isFalse);
+    });
+
+    test('the tapped marker\'s place in the shorts', () {
+      Marker unplayable(String id) => Marker(
+        id: id,
+        title: id,
+        seconds: 0,
+        tag: const Tag(id: '1', name: 'Beach'),
+        scene: Scene(id: 's$id', title: id),
+      );
+      final items = [for (var i = 0; i < 30; i++) i == 25 ? unplayable('x') : _marker('m$i')];
+      expect(markerShortsStart(items, 3), (startPage: 1, initialIndex: 3));
+      expect(markerShortsStart(items, 27), (startPage: 2, initialIndex: 2), reason: 'm25 cannot play');
+      // Numbered pages: the grid shows only its page.
+      expect(markerShortsStart(items.sublist(0, 10), 4, page: 3), (startPage: 3, initialIndex: 4));
+    });
   });
 }
