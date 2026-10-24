@@ -10,7 +10,7 @@ import '../../widgets/performer_tile.dart';
 import '../search/search_page.dart';
 import '../shell/navigation.dart';
 import '../../l10n/l10n.dart';
-import '../settings/settings_button.dart';
+import '../auth/server_avatar.dart';
 
 class PerformersPage extends ConsumerStatefulWidget {
   const PerformersPage({super.key});
@@ -31,7 +31,7 @@ class _PerformersPageState extends ConsumerState<PerformersPage> {
         title: Text(context.l10n.performersTitle),
         actions: [
           IconButton(icon: const Icon(Icons.search), onPressed: () => openSearch(ref, scope: SearchScope.performers)),
-          const SettingsButton(),
+          const ServerAvatarButton(),
         ],
       ),
       body: RefreshIndicator(

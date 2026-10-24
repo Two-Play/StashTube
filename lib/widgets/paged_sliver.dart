@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/misc.dart' show Refreshable;
 import '../core/config/haptics.dart';
 import '../core/pagination/paged_notifier.dart';
 import '../core/pagination/paging_mode.dart';
+import 'skeleton.dart';
 import 'sliver_columns.dart';
 import 'status_views.dart';
 import '../l10n/l10n.dart';
@@ -51,9 +52,12 @@ class PagedSliver<T> extends ConsumerWidget {
     this.emptyMessage,
     this.emptyIcon = Icons.inbox_outlined,
     this.emptyHint,
+    this.emptyView,
     this.gridDelegate,
     this.columnWidth,
     this.padding = EdgeInsets.zero,
+    this.skeletonBuilder,
+    this.skeletonCount,
   });
 
   final AsyncValue<PagedState<T>> value;
@@ -71,6 +75,10 @@ class PagedSliver<T> extends ConsumerWidget {
   final IconData emptyIcon;
   final String? emptyHint;
 
+  /// Replaces the [EmptyView] built from [emptyMessage], [emptyIcon] and
+  /// [emptyHint], e.g. one with an action.
+  final Widget? emptyView;
+
   /// Renders a grid instead of a list when set.
   final SliverGridDelegate? gridDelegate;
 
@@ -79,6 +87,14 @@ class PagedSliver<T> extends ConsumerWidget {
   final double? columnWidth;
   final EdgeInsets padding;
 
+  /// One placeholder item shown while the first page loads, laid out like
+  /// the items (grid, columns or list). Defaults to a [GridTileSkeleton]
+  /// filling the cell in grids and a [ListTileSkeleton] in lists.
+  final WidgetBuilder? skeletonBuilder;
+
+  /// How many placeholders to show; defaults to 8 in grids, else 4.
+  final int? skeletonCount;
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final state = value.current;
@@ -86,10 +102,10 @@ class PagedSliver<T> extends ConsumerWidget {
       if (value.hasError) {
         return SliverToBoxAdapter(child: ErrorView(error: value.error!, onRetry: onRetry));
       }
-      return const SliverToBoxAdapter(child: LoadingView());
+      return SliverToBoxAdapter(child: _skeleton(context));
     }
     if (state.items.isEmpty) {
-      return SliverToBoxAdapter(child: EmptyView(message: emptyMessage ?? context.l10n.emptyDefault, icon: emptyIcon, hint: emptyHint));
+      return SliverToBoxAdapter(child: emptyView ?? EmptyView(message: emptyMessage ?? context.l10n.emptyDefault, icon: emptyIcon, hint: emptyHint));
     }
 
     final delegate = SliverChildBuilderDelegate(
@@ -117,6 +133,51 @@ class PagedSliver<T> extends ConsumerWidget {
             : _Footer(state: state, onLoadMore: onLoadMore),
       ),
     ]);
+  }
+
+  Widget _skeleton(BuildContext context) {
+    final grid = gridDelegate;
+    final count = skeletonCount ?? (grid != null ? 8 : 4);
+    Widget item(BuildContext context) =>
+        skeletonBuilder?.call(context) ??
+        (grid != null ? const GridTileSkeleton(aspectRatio: null) : const ListTileSkeleton());
+    return SkeletonPulse(
+      child: Padding(
+        padding: padding,
+        child: LayoutBuilder(builder: (context, constraints) {
+          if (grid != null) {
+            return GridView.builder(
+              shrinkWrap: true,
+              primary: false,
+              physics: const NeverScrollableScrollPhysics(),
+              padding: EdgeInsets.zero,
+              gridDelegate: grid,
+              itemCount: count,
+              itemBuilder: (context, _) => item(context),
+            );
+          }
+          final columns = columnWidth == null ? 1 : listColumns(constraints.maxWidth, columnWidth!);
+          if (columns == 1) return Column(children: [for (var i = 0; i < count; i++) item(context)]);
+          // Like [SliverColumns]: rows of several columns.
+          const spacing = 12.0;
+          return Padding(
+            padding: const EdgeInsets.symmetric(horizontal: spacing),
+            child: Column(children: [
+              for (var row = 0; row < (count / columns).ceil(); row++)
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    for (var column = 0; column < columns; column++) ...[
+                      if (column > 0) const SizedBox(width: spacing),
+                      Expanded(child: item(context)),
+                    ],
+                  ],
+                ),
+            ]),
+          );
+        }),
+      ),
+    );
   }
 }
 

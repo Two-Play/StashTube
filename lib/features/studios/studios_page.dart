@@ -9,7 +9,7 @@ import '../../widgets/stash_image.dart';
 import '../search/search_page.dart';
 import '../shell/navigation.dart';
 import '../../l10n/l10n.dart';
-import '../settings/settings_button.dart';
+import '../auth/server_avatar.dart';
 
 /// All studios as a channel list.
 class StudiosPage extends ConsumerWidget {
@@ -26,7 +26,7 @@ class StudiosPage extends ConsumerWidget {
         title: Text(context.l10n.studiosTitle),
         actions: [
           IconButton(icon: const Icon(Icons.search), onPressed: () => openSearch(ref, scope: SearchScope.studios)),
-          const SettingsButton(),
+          const ServerAvatarButton(),
         ],
       ),
       body: RefreshIndicator(

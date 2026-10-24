@@ -127,6 +127,10 @@ void main() {
     expect((await titles(SceneQuery(groupId: '1', sort: SceneSort.groupOrder))).first, 'Morning Sky');
     expect(await titles(SceneQuery(filter: const SceneFilter(minStars: 5))), hasLength(4));
     expect(await titles(SceneQuery(filter: const SceneFilter(resolution: ResolutionFilter.hd))), isEmpty);
+    // "New since your last visit": scenes are added 12 hours apart.
+    final now = DateTime.now();
+    expect(await titles(SceneQuery(createdAfter: now.add(const Duration(minutes: 1)))), isEmpty);
+    expect(await titles(SceneQuery(createdAfter: now.subtract(const Duration(hours: 25)))), hasLength(2));
     final tags = (await repo.findTags(const TagQuery())).items;
     final wildlife = tags.firstWhere((t) => t.name == 'Wildlife');
     final comedy = tags.firstWhere((t) => t.name == 'Comedy');
@@ -144,14 +148,66 @@ void main() {
     final details = await repo.findSceneDetails('8');
     expect(details.streams.single.isDirect, isTrue);
     expect(details.markers.single.title, 'A visitor');
+    expect(details.markers.single.screenshotUrl, isNotNull, reason: 'chapter thumbnails');
+    // A ranged marker (newer Stash's end times).
+    expect(details.markerRanges, isTrue);
+    expect([details.markers.single.seconds, details.markers.single.endSeconds], [9, 15]);
     expect(details.files.single.duration, greaterThan(10));
     final thumbs = await repo.scrubThumbnails(details);
     expect(thumbs!.cues, hasLength(details.files.single.duration!.ceil()));
     expect(thumbs.cues[6].x, 160);
     expect(thumbs.cues[6].y, 90);
 
-    expect((await repo.findMarkers(MarkerQuery())).totalCount, 5);
+    expect((await repo.findMarkers(MarkerQuery())).totalCount, 6);
     expect((await repo.findMarkers(MarkerQuery(search: 'butterfly'))).items.single.title, 'A visitor');
+    expect((await repo.findMarkers(MarkerQuery(search: 'butterfly'))).items.single.endSeconds, 15);
+    expect(
+      [for (final m in (await repo.findMarkers(MarkerQuery(sort: MarkerSort.title))).items) m.endSeconds],
+      [15, null, null, 4, null, 7],
+      reason: 'A visitor, Chirp, Flowers, Reaching up, Something stirs, The big stretch',
+    );
+    // A channel's markers: those in the performer's or studio's scenes.
+    Future<Set<String>> sceneIds(SceneQuery query) async =>
+        {for (final s in (await repo.findScenes(query, perPage: 100)).items) s.id};
+    Future<void> sameScenes(MarkerQuery markers, SceneQuery scenes) async {
+      final ids = await sceneIds(scenes);
+      final all = (await repo.findMarkers(MarkerQuery())).items;
+      final expected = {for (final m in all) if (ids.contains(m.scene.id)) m.id};
+      expect({for (final m in (await repo.findMarkers(markers)).items) m.id}, expected);
+      expect(await repo.countMarkers(markers), expected.length);
+    }
+
+    await sameScenes(MarkerQuery(performerId: '2'), SceneQuery(performerId: '2'));
+    expect(await repo.countMarkers(MarkerQuery(performerId: '2')), isPositive);
+    expect(await repo.countMarkers(MarkerQuery(performerId: 'none')), 0);
+    await sameScenes(MarkerQuery(studioId: '1'), SceneQuery(studioId: '1'));
+    expect(await repo.countMarkers(MarkerQuery(studioId: '1')), 0);
+    await sameScenes(
+      MarkerQuery(studioId: '1', includeSubStudios: true),
+      SceneQuery(studioId: '1', includeSubStudios: true),
+    );
+    expect(await repo.countMarkers(MarkerQuery(studioId: '1', includeSubStudios: true)), 6);
+
+    // The shorts' "portrait videos only" applies to markers through their scene.
+    final portrait = (await repo.findMarkers(MarkerQuery(portraitOnly: true))).items;
+    expect(portrait.map((m) => m.title), ['Reaching up']);
+    expect(
+      (await repo.findMarkers(MarkerQuery(portraitOnly: true, studioId: '2', includeSubStudios: true))).items,
+      isEmpty,
+      reason: 'merged with the studio in one scene filter',
+    );
+    expect(
+      (await repo.findMarkers(MarkerQuery(portraitOnly: true, studioId: '1', includeSubStudios: true))).items.single.title,
+      'Reaching up',
+    );
+
+    // The shorts' markers: those with one of the preferred tags.
+    final markers = (await repo.findMarkers(MarkerQuery())).items;
+    final tagId = markers.first.tag.id;
+    expect((await repo.findMarkers(MarkerQuery(tagIds: [tagId]))).items.map((m) => m.id), [
+      for (final m in markers)
+        if (m.tag.id == tagId) m.id,
+    ]);
 
     final performers = await repo.findPerformers(PerformerQuery(sort: PerformerSort.mostScenes));
     expect(performers.items.first.name, 'Big Buck Bunny');
@@ -176,11 +232,55 @@ void main() {
     final images = await repo.findImages(ImageQuery(galleryId: gallery.id, sort: ImageSort.path));
     expect(images.totalCount, media.images.length);
     expect(images.items.first.imageUrl, '${ServerConfig.demoUrl}/demo/images/${media.images.first}.jpg');
+    // The viewer's info sheet.
+    final image = await repo.findImageDetails(images.items.first.id);
+    expect(image.title, images.items.first.title);
+    expect(image.file!.name, '${media.images.first}.jpg');
+    expect((image.file!.width, image.file!.height), (640, 360));
+    expect(image.file!.size, isPositive);
+    expect(image.photographer, isNotNull);
+    expect(image.created, isNotNull);
+    expect(image.studio!.id, '2');
+    expect(image.performers.single.id, '1');
+    expect(image.tags.single.name, 'Animation');
+    expect(image.galleries.single.title, 'Stills');
 
     final stats = await repo.libraryStats();
     expect(stats.sceneCount, 12);
     final activity = await repo.activityStats();
     expect(activity!.scenesPlayed, 3);
+
+    // The watch chart's play history (16.3): every seeded play, newest within days.
+    final now = DateTime.now();
+    final history = await repo.playHistory(since: now.subtract(const Duration(days: 90)));
+    expect(history!.plays, hasLength(19));
+    expect(history.truncated, isFalse);
+    expect(history.plays.any((p) => now.difference(p).inHours < 24), isTrue);
+  });
+
+  test('channel tabs: profile, counts and media by performer or studio (CH-2)', () async {
+    final profile = await repo.performerProfile('1');
+    expect(profile.aliases, ['Bunny']);
+    expect(profile.heightCm, 180);
+    expect(profile.career, isNotNull);
+    expect(profile.counts.images, media.images.length);
+    expect(profile.counts.galleries, 1);
+    expect((await repo.performerProfile('2')).counts.galleries, 0);
+
+    expect((await repo.findImages(ImageQuery(performerId: '1'))).totalCount, media.images.length);
+    expect((await repo.findImages(ImageQuery(performerId: '2'))).totalCount, 0);
+    expect((await repo.findGalleries(GalleryQuery(performerId: '1'))).items.single.title, 'Stills');
+    expect((await repo.findGalleries(GalleryQuery(performerId: '3'))).items, isEmpty);
+
+    // The stills belong to the sub-studio "Peach Open Movie" of Blender Studio.
+    final network = await repo.studioMediaCounts('1');
+    expect(network.images, media.images.length);
+    expect(network.galleries, 1);
+    expect((await repo.studioMediaCounts('3')).images, 0);
+    expect((await repo.findGalleries(GalleryQuery(studioId: '1'))).items, isEmpty);
+    expect((await repo.findGalleries(GalleryQuery(studioId: '1', includeSubStudios: true))).items, hasLength(1));
+    expect((await repo.findImages(ImageQuery(studioId: '2'))).totalCount, media.images.length);
+    expect((await repo.findImages(ImageQuery(studioId: '1', includeSubStudios: true))).totalCount, media.images.length);
   });
 
   test('edits last while the app runs', () async {
@@ -202,11 +302,17 @@ void main() {
 
     final marker = await repo.createMarker(sceneId: '1', seconds: 4, primaryTagId: tag.id, title: 'Clouds');
     expect((await repo.findSceneDetails('1')).markers.single.id, marker.id);
+    final ranged = await repo.createMarker(sceneId: '2', seconds: 2, endSeconds: 6, primaryTagId: tag.id);
+    expect(ranged.endSeconds, 6);
+    expect((await repo.findSceneDetails('2')).markers.single.endSeconds, 6);
 
     await repo.setPerformerFavorite('2', true);
     expect((await repo.findPerformers(PerformerQuery(sort: PerformerSort.favorites))).items, hasLength(2));
     expect((await repo.updatePerformer('3', {'details': 'Pink'})).details, 'Pink');
     expect((await repo.updateStudio('3', {'name': 'Shorts'})).name, 'Shorts');
+    expect(await repo.studioFavorite('3'), isFalse);
+    await repo.setStudioFavorite('3', true);
+    expect(await repo.studioFavorite('3'), isTrue);
     expect((await repo.updateTag(tag.id, {'description': 'Sky'})).description, 'Sky');
     expect((await repo.updateGallery('1', {'title': 'Frames'})).title, 'Frames');
 
@@ -215,6 +321,30 @@ void main() {
     final played = await repo.findScenesByIds(['2']);
     expect(played.single.playCount, 1);
     expect(played.single.resumeTime, 3);
+  });
+
+  test('add to group and new groups (PL-1)', () async {
+    // Scene 1 is the film's first scene, in group 1.
+    final before = await repo.sceneGroups('1');
+    expect(before.map((g) => g.groupId), ['1']);
+    final filmCount = (await repo.findGroup('1')).sceneCount;
+
+    final group = await repo.createGroup('Favorites');
+    expect(group.name, 'Favorites');
+    expect((await repo.findGroups(const GroupQuery(search: 'fav'))).items.single.id, group.id);
+    expect(await repo.nextGroupIndex(group.id), 1);
+
+    await repo.addSceneToGroup('1', group.id);
+    await repo.addSceneToGroup('2', group.id);
+    expect(await repo.nextGroupIndex(group.id), 3);
+    expect((await repo.sceneGroups('1')).map((g) => g.groupId), ['1', group.id]);
+    expect((await repo.findGroup(group.id)).sceneCount, 2);
+    final inOrder = await repo.findScenes(SceneQuery(groupId: group.id, sort: SceneSort.groupOrder));
+    expect(inOrder.items.map((s) => s.id), ['1', '2']);
+
+    await repo.removeSceneFromGroup('1', '1');
+    expect((await repo.sceneGroups('1')).map((g) => g.groupId), [group.id]);
+    expect((await repo.findGroup('1')).sceneCount, filmCount - 1);
   });
 
   test('media with byte ranges, for the player', () async {

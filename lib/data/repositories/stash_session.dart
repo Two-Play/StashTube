@@ -31,8 +31,7 @@ Future<StashSessionCookie> stashLogin(http.Client client, ServerConfig config, {
     response = await client.send(request);
     await response.stream.drain<void>();
   } catch (e) {
-    throw StashApiException('Could not reach the server: $e',
-        isNetworkError: true, kind: StashErrorKind.unreachable, detail: '$e');
+    throw unreachableException(e, host: request.url.host);
   }
   return parseSessionCookie(response.headers['set-cookie'] ?? '', now: now) ??
       (throw const StashApiException('Invalid username or password.', kind: StashErrorKind.invalidCredentials));

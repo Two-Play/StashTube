@@ -36,4 +36,18 @@ void main() {
       expect(icon.color, theme.colorScheme.onPrimaryContainer);
     }
   });
+
+  testWidgets('an action button shows when it has a label and a callback', (tester) async {
+    var tapped = 0;
+    await tester.pumpWidget(MaterialApp(
+      home: Scaffold(
+        body: EmptyView(message: 'Empty', actionLabel: 'Do it', actionIcon: Icons.add, onAction: () => tapped++),
+      ),
+    ));
+    await tester.tap(find.text('Do it'));
+    expect(tapped, 1);
+
+    await tester.pumpWidget(const MaterialApp(home: Scaffold(body: EmptyView(message: 'Empty', actionLabel: 'Do it'))));
+    expect(find.text('Do it'), findsNothing);
+  });
 }

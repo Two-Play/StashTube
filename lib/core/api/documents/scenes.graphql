@@ -20,6 +20,7 @@ fragment MarkerFields on SceneMarker {
   id
   title
   seconds
+  screenshot
   primary_tag { name }
 }
 
@@ -38,7 +39,6 @@ query FindSceneMarkers($filter: FindFilterType, $scene_marker_filter: SceneMarke
       id
       title
       seconds
-      end_seconds
       screenshot
       preview
       primary_tag { ...TagRef }

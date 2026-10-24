@@ -4,17 +4,22 @@ import android.app.PictureInPictureParams;
 import android.content.ComponentName;
 import android.content.pm.PackageManager;
 import android.content.res.Configuration;
+import android.graphics.Rect;
 import android.os.Build;
 import android.util.Rational;
 import android.view.WindowManager;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.annotation.RequiresApi;
 
 import com.ryanheise.audioservice.AudioServiceFragmentActivity;
 
 import io.flutter.embedding.engine.FlutterEngine;
+import io.flutter.plugin.common.MethodCall;
 import io.flutter.plugin.common.MethodChannel;
+
+import java.util.List;
 
 // A FlutterFragmentActivity (required by local_auth for biometric prompts)
 // that shares its engine with audio_service's media notification (4.12).
@@ -80,8 +85,10 @@ public class MainActivity extends AudioServiceFragmentActivity {
                 });
 
         // Picture-in-picture (4.12): "setAutoEnter" {enabled, aspect} while a
-        // video plays, "enter" {aspect} from the player's button. Reports
-        // "pipChanged" (bool) back to Dart, which then shows only the video.
+        // video plays and whenever its size becomes known or changes, "enter"
+        // {aspect, rect?} from the player's button (rect: the video on screen
+        // in physical pixels, [x, y, w, h]). Reports "pipChanged" (bool) back
+        // to Dart, which then shows only the video.
         pipChannel = new MethodChannel(flutterEngine.getDartExecutor().getBinaryMessenger(), PIP_CHANNEL);
         pipChannel.setMethodCallHandler((call, result) -> {
             Double aspect = call.argument("aspect");
@@ -89,13 +96,19 @@ public class MainActivity extends AudioServiceFragmentActivity {
             switch (call.method) {
                 case "setAutoEnter":
                     autoPip = Boolean.TRUE.equals(call.argument("enabled")) && pipSupported();
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && pipSupported()) {
-                        setPictureInPictureParams(pipParams());
+                    // Also while in picture-in-picture: the window takes the
+                    // new shape (the next video of a queue, the decoded size).
+                    if (pipSupported()) {
+                        try {
+                            setPictureInPictureParams(pipParams(null));
+                        } catch (IllegalArgumentException | IllegalStateException e) {
+                            // An aspect Android refuses; keep the last parameters.
+                        }
                     }
                     result.success(null);
                     break;
                 case "enter":
-                    result.success(enterPip());
+                    result.success(enterPip(sourceRect(call)));
                     break;
                 default:
                     result.notImplemented();
@@ -108,9 +121,24 @@ public class MainActivity extends AudioServiceFragmentActivity {
                 && getPackageManager().hasSystemFeature(PackageManager.FEATURE_PICTURE_IN_PICTURE);
     }
 
+    // The video's place on screen, which the window shrinks out of; only for
+    // the button, since for auto-enter the player may have moved since.
+    @Nullable
+    private static Rect sourceRect(MethodCall call) {
+        List<Number> rect = call.argument("rect");
+        if (rect == null || rect.size() != 4) return null;
+        int left = rect.get(0).intValue();
+        int top = rect.get(1).intValue();
+        int width = rect.get(2).intValue();
+        int height = rect.get(3).intValue();
+        if (width <= 0 || height <= 0) return null;
+        return new Rect(left, top, left + width, top + height);
+    }
+
     @RequiresApi(Build.VERSION_CODES.O)
-    private PictureInPictureParams pipParams() {
+    private PictureInPictureParams pipParams(@Nullable Rect sourceRect) {
         PictureInPictureParams.Builder builder = new PictureInPictureParams.Builder().setAspectRatio(pipAspect);
+        if (sourceRect != null) builder.setSourceRectHint(sourceRect);
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
             // Android 12+ enters by itself, with a smooth animation.
             builder.setAutoEnterEnabled(autoPip).setSeamlessResizeEnabled(false);
@@ -118,11 +146,11 @@ public class MainActivity extends AudioServiceFragmentActivity {
         return builder.build();
     }
 
-    private boolean enterPip() {
+    private boolean enterPip(@Nullable Rect sourceRect) {
         if (!pipSupported()) return false;
         try {
-            return enterPictureInPictureMode(pipParams());
-        } catch (IllegalStateException e) {
+            return enterPictureInPictureMode(pipParams(sourceRect));
+        } catch (IllegalArgumentException | IllegalStateException e) {
             return false;
         }
     }
@@ -137,7 +165,7 @@ public class MainActivity extends AudioServiceFragmentActivity {
     public void onUserLeaveHint() {
         super.onUserLeaveHint();
         // Before Android 12 the app enters picture-in-picture itself.
-        if (autoPip && Build.VERSION.SDK_INT < Build.VERSION_CODES.S) enterPip();
+        if (autoPip && Build.VERSION.SDK_INT < Build.VERSION_CODES.S) enterPip(null);
     }
 
     @Override

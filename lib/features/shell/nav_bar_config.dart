@@ -7,25 +7,23 @@ import 'navigation.dart';
 /// Which tabs the bottom navigation bar shows, and in which order (13.7).
 ///
 /// [order] contains every [AppTab] exactly once, so a tab that is shown
-/// again comes back at the place the user gave it. [alwaysShown] ("all
-/// views") can't be hidden.
+/// again comes back at the place the user gave it. [alwaysShown] ("You")
+/// can't be hidden.
 @immutable
 class NavBarConfig {
   NavBarConfig({required List<AppTab> order, Set<AppTab> hidden = const {}})
       : order = List.unmodifiable(_complete(order)),
         hidden = Set.unmodifiable(hidden.difference({alwaysShown}));
 
-  static const alwaysShown = AppTab.all;
+  static const alwaysShown = AppTab.you;
 
-  /// The bar as it ships: home, performers, library, shorts and "all
-  /// views", which has everything else.
+  /// The bar as it ships (NAV-3): home, shorts, search, library and "You",
+  /// which leads to everything else.
   static final standard = NavBarConfig(
     order: AppTab.values,
     hidden: {
       for (final tab in AppTab.values)
-        if (tab != alwaysShown &&
-            (tab.section != null || tab == AppTab.studios || tab == AppTab.tags || tab == AppTab.search))
-          tab,
+        if (!const {AppTab.home, AppTab.shorts, AppTab.search, AppTab.library, alwaysShown}.contains(tab)) tab,
     },
   );
 
@@ -56,7 +54,7 @@ class NavBarConfig {
   }
 
   /// Hides the last visible tabs (except [alwaysShown]) beyond [maxVisible],
-  /// e.g. for a bar stored before "all views" was added.
+  /// e.g. for a bar stored before the always shown tab was added.
   NavBarConfig fitted() {
     final extra = visible.length - maxVisible;
     if (extra <= 0) return this;
@@ -88,6 +86,7 @@ class NavBarConfig {
 class NavBarConfigNotifier extends Notifier<NavBarConfig> {
   static const _orderKey = 'nav_bar_order';
   static const _hiddenKey = 'nav_bar_hidden';
+  static const _formerAll = 'all';
 
   @override
   NavBarConfig build() {
@@ -103,8 +102,11 @@ class NavBarConfigNotifier extends Notifier<NavBarConfig> {
       ];
       hidden = hidden.where((name) => name != 'settings' && name != AppTab.stats.name).toList();
     }
+    // "All views" became "You" (NAV-3), at the same place in the bar.
+    order = [for (final name in order) name == _formerAll ? AppTab.you.name : name];
     final known = _parse(order);
-    // Tabs added in an update start hidden, so the user's bar stays as it was.
+    // Tabs added in an update start hidden, so the user's bar stays as it
+    // was ("You" can't be hidden: without "all views" it comes in last).
     final added = AppTab.values.where((tab) => !known.contains(tab));
     final config = NavBarConfig(order: known, hidden: {..._parse(hidden), ...added}).fitted();
     // A config that no longer fits the rules (e.g. edited by hand) falls back.

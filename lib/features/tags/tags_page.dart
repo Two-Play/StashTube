@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/config/theme.dart';
 import '../../data/models/list_queries.dart';
 import '../../data/models/tag.dart';
 import '../../data/providers.dart';
@@ -10,7 +11,7 @@ import '../../widgets/stash_image.dart';
 import '../shell/navigation.dart';
 import 'tag_editor.dart';
 import '../../l10n/l10n.dart';
-import '../settings/settings_button.dart';
+import '../auth/server_avatar.dart';
 
 /// Discover: every tag that has scenes, most used first (8.2).
 class TagsPage extends ConsumerStatefulWidget {
@@ -27,7 +28,7 @@ class _TagsPageState extends ConsumerState<TagsPage> {
   Widget build(BuildContext context) {
     final provider = tagListProvider(_query);
     return Scaffold(
-      appBar: AppBar(title: Text(context.l10n.tagsTitle), actions: const [SettingsButton()]),
+      appBar: AppBar(title: Text(context.l10n.tagsTitle), actions: const [ServerAvatarButton()]),
       floatingActionButton: FloatingActionButton.extended(
         icon: const Icon(Icons.add),
         label: Text(context.l10n.newTag),
@@ -57,7 +58,7 @@ class _TagsPageState extends ConsumerState<TagsPage> {
                 emptyIcon: Icons.sell_outlined,
                 emptyHint: context.l10n.tagsEmptyHint,
                 padding: const EdgeInsets.all(12),
-                gridDelegate: tagGridDelegate,
+                gridDelegate: tagGridDelegate(context),
                 onRetry: () => ref.invalidate(provider),
                 onLoadMore: () => ref.read(provider.notifier).loadMore(retry: true),
                 onGoToPage: (page) => ref.read(provider.notifier).goToPage(page),
@@ -71,12 +72,20 @@ class _TagsPageState extends ConsumerState<TagsPage> {
   }
 }
 
-const tagGridDelegate = SliverGridDelegateWithMaxCrossAxisExtent(
-  maxCrossAxisExtent: 200,
-  childAspectRatio: 1.6,
-  mainAxisSpacing: 8,
-  crossAxisSpacing: 8,
-);
+/// Tag tiles keep their 1.6 shape, but grow taller with large text, which
+/// would otherwise overflow them.
+SliverGridDelegate tagGridDelegate(BuildContext context) {
+  final textScaler = MediaQuery.textScalerOf(context);
+  final grows = textScaler.scale(1) > 1.1;
+  return SliverGridDelegateWithMaxCrossAxisExtent(
+    maxCrossAxisExtent: 200,
+    childAspectRatio: 1.6,
+    // Padding, two title lines and the count line.
+    mainAxisExtent: grows ? 20 + textScaler.scale(2 * 24 + 18) : null,
+    mainAxisSpacing: 8,
+    crossAxisSpacing: 8,
+  );
+}
 
 /// Tag card: image (or the accent color) with the name and scene count.
 class TagTile extends ConsumerWidget {
@@ -86,14 +95,15 @@ class TagTile extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final colors = Theme.of(context).colorScheme;
+    final theme = Theme.of(context);
+    final colors = theme.colorScheme;
     return Semantics(
       button: true,
       label: '${tag.name}, ${context.l10n.scenesCount(tag.sceneCount)}',
       excludeSemantics: true,
       child: Material(
         color: colors.primaryContainer,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: AppRadius.cardBorder,
         clipBehavior: Clip.antiAlias,
         child: InkWell(
           onTap: () => openTag(ref, tag.id),
@@ -108,15 +118,18 @@ class TagTile extends ConsumerWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisAlignment: MainAxisAlignment.end,
                   children: [
-                    Text(
-                      '#${tag.name}',
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(color: colors.onPrimaryContainer, fontWeight: FontWeight.w700, fontSize: 15),
+                    // Gives way to the count when the tile gets too short.
+                    Flexible(
+                      child: Text(
+                        '#${tag.name}',
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: theme.textTheme.titleMedium?.copyWith(color: colors.onPrimaryContainer, fontWeight: FontWeight.w700),
+                      ),
                     ),
                     Text(
                       context.l10n.scenesCount(tag.sceneCount),
-                      style: TextStyle(color: colors.onPrimaryContainer, fontSize: 12),
+                      style: theme.textTheme.bodySmall?.copyWith(color: colors.onPrimaryContainer),
                     ),
                   ],
                 ),

@@ -68,6 +68,13 @@ dependencies:
   package_info_plus: ^10.2.2
   # Tells when the phone is upright again after leaving fullscreen sideways (player_controls.dart).
   sensors_plus: ^7.1.1
+  # Animated previews only on Wi-Fi (widgets/animated_previews.dart).
+  connectivity_plus: ^7.3.2
+  # Opens links in the browser (core/utils/external_links.dart).
+  url_launcher: ^6.3.3
+  # System notifications when a server task ends (features/notifications/).
+  # No Google services, so it stays in the F-Droid build.
+  flutter_local_notifications: ^22.3.2
 
 dev_dependencies:
   integration_test:

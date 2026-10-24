@@ -128,6 +128,44 @@ void main() {
       expect(container.read(nowPlayingProvider)?.id, 'c');
     });
 
+    testWidgets('previous goes back in the queue, or restarts the scene after 3 s', (tester) async {
+      final notifier = container.read(nowPlayingProvider.notifier);
+      notifier.playQueue([_scene('a'), _scene('b'), _scene('c')], title: 'Group', start: 1);
+      await tester.pump();
+      expect(container.read(playQueueProvider)?.hasPrevious, isTrue);
+      expect(container.read(playQueueProvider)?.hasNext, isTrue);
+
+      // More than 3 s in: back to the start of the same scene.
+      await player.seek(const Duration(seconds: 20));
+      notifier.playPrevious();
+      expect(player.seeks.last, Duration.zero);
+      expect(container.read(nowPlayingProvider)?.id, 'b');
+
+      // At the start: the previous scene.
+      notifier.playPrevious();
+      await tester.pump();
+      expect(container.read(nowPlayingProvider)?.id, 'a');
+      expect(container.read(playQueueProvider)?.index, 0);
+      expect(container.read(playQueueProvider)?.hasPrevious, isFalse);
+
+      // The first scene has no previous one: it restarts.
+      final seeks = player.seeks.length;
+      notifier.playPrevious();
+      expect(container.read(nowPlayingProvider)?.id, 'a');
+      expect(player.seeks.length, seeks + 1);
+      expect(player.seeks.last, Duration.zero);
+
+      // Next to the end, where nothing follows.
+      notifier.playNext();
+      notifier.playNext();
+      await tester.pump();
+      expect(container.read(nowPlayingProvider)?.id, 'c');
+      expect(container.read(playQueueProvider)?.hasNext, isFalse);
+      notifier.playNext();
+      expect(container.read(nowPlayingProvider)?.id, 'c');
+      expect(container.read(playQueueProvider)?.index, 2);
+    });
+
     testWidgets('playing a scene outside the queue ends it', (tester) async {
       final notifier = container.read(nowPlayingProvider.notifier);
       notifier.playQueue([_scene('a'), _scene('b')], title: 'Group');

@@ -929,6 +929,7 @@ class Fragment$MarkerFields {
     required this.id,
     required this.title,
     required this.seconds,
+    required this.screenshot,
     required this.primary_tag,
     this.$__typename = 'SceneMarker',
   });
@@ -937,12 +938,14 @@ class Fragment$MarkerFields {
     final l$id = json['id'];
     final l$title = json['title'];
     final l$seconds = json['seconds'];
+    final l$screenshot = json['screenshot'];
     final l$primary_tag = json['primary_tag'];
     final l$$__typename = json['__typename'];
     return Fragment$MarkerFields(
       id: (l$id as String),
       title: (l$title as String),
       seconds: (l$seconds as num).toDouble(),
+      screenshot: (l$screenshot as String),
       primary_tag: Fragment$MarkerFields$primary_tag.fromJson(
         (l$primary_tag as Map<String, dynamic>),
       ),
@@ -956,6 +959,8 @@ class Fragment$MarkerFields {
 
   final double seconds;
 
+  final String screenshot;
+
   final Fragment$MarkerFields$primary_tag primary_tag;
 
   final String $__typename;
@@ -968,6 +973,8 @@ class Fragment$MarkerFields {
     _resultData['title'] = l$title;
     final l$seconds = seconds;
     _resultData['seconds'] = l$seconds;
+    final l$screenshot = screenshot;
+    _resultData['screenshot'] = l$screenshot;
     final l$primary_tag = primary_tag;
     _resultData['primary_tag'] = l$primary_tag.toJson();
     final l$$__typename = $__typename;
@@ -980,12 +987,14 @@ class Fragment$MarkerFields {
     final l$id = id;
     final l$title = title;
     final l$seconds = seconds;
+    final l$screenshot = screenshot;
     final l$primary_tag = primary_tag;
     final l$$__typename = $__typename;
     return Object.hashAll([
       l$id,
       l$title,
       l$seconds,
+      l$screenshot,
       l$primary_tag,
       l$$__typename,
     ]);
@@ -1012,6 +1021,11 @@ class Fragment$MarkerFields {
     final l$seconds = seconds;
     final lOther$seconds = other.seconds;
     if (l$seconds != lOther$seconds) {
+      return false;
+    }
+    final l$screenshot = screenshot;
+    final lOther$screenshot = other.screenshot;
+    if (l$screenshot != lOther$screenshot) {
       return false;
     }
     final l$primary_tag = primary_tag;
@@ -1052,6 +1066,13 @@ const fragmentDefinitionMarkerFields = FragmentDefinitionNode(
       ),
       FieldNode(
         name: NameNode(value: 'seconds'),
+        alias: null,
+        arguments: [],
+        directives: [],
+        selectionSet: null,
+      ),
+      FieldNode(
+        name: NameNode(value: 'screenshot'),
         alias: null,
         arguments: [],
         directives: [],
@@ -1888,13 +1909,6 @@ const documentNodeQueryFindSceneMarkers = DocumentNode(
                         selectionSet: null,
                       ),
                       FieldNode(
-                        name: NameNode(value: 'end_seconds'),
-                        alias: null,
-                        arguments: [],
-                        directives: [],
-                        selectionSet: null,
-                      ),
-                      FieldNode(
                         name: NameNode(value: 'screenshot'),
                         alias: null,
                         arguments: [],
@@ -2221,7 +2235,6 @@ class Query$FindSceneMarkers$findSceneMarkers$scene_markers {
     required this.id,
     required this.title,
     required this.seconds,
-    this.end_seconds,
     required this.screenshot,
     required this.preview,
     required this.primary_tag,
@@ -2235,7 +2248,6 @@ class Query$FindSceneMarkers$findSceneMarkers$scene_markers {
     final l$id = json['id'];
     final l$title = json['title'];
     final l$seconds = json['seconds'];
-    final l$end_seconds = json['end_seconds'];
     final l$screenshot = json['screenshot'];
     final l$preview = json['preview'];
     final l$primary_tag = json['primary_tag'];
@@ -2245,7 +2257,6 @@ class Query$FindSceneMarkers$findSceneMarkers$scene_markers {
       id: (l$id as String),
       title: (l$title as String),
       seconds: (l$seconds as num).toDouble(),
-      end_seconds: (l$end_seconds as num?)?.toDouble(),
       screenshot: (l$screenshot as String),
       preview: (l$preview as String),
       primary_tag: Fragment$TagRef.fromJson(
@@ -2261,8 +2272,6 @@ class Query$FindSceneMarkers$findSceneMarkers$scene_markers {
   final String title;
 
   final double seconds;
-
-  final double? end_seconds;
 
   final String screenshot;
 
@@ -2282,8 +2291,6 @@ class Query$FindSceneMarkers$findSceneMarkers$scene_markers {
     _resultData['title'] = l$title;
     final l$seconds = seconds;
     _resultData['seconds'] = l$seconds;
-    final l$end_seconds = end_seconds;
-    _resultData['end_seconds'] = l$end_seconds;
     final l$screenshot = screenshot;
     _resultData['screenshot'] = l$screenshot;
     final l$preview = preview;
@@ -2302,7 +2309,6 @@ class Query$FindSceneMarkers$findSceneMarkers$scene_markers {
     final l$id = id;
     final l$title = title;
     final l$seconds = seconds;
-    final l$end_seconds = end_seconds;
     final l$screenshot = screenshot;
     final l$preview = preview;
     final l$primary_tag = primary_tag;
@@ -2312,7 +2318,6 @@ class Query$FindSceneMarkers$findSceneMarkers$scene_markers {
       l$id,
       l$title,
       l$seconds,
-      l$end_seconds,
       l$screenshot,
       l$preview,
       l$primary_tag,
@@ -2343,11 +2348,6 @@ class Query$FindSceneMarkers$findSceneMarkers$scene_markers {
     final l$seconds = seconds;
     final lOther$seconds = other.seconds;
     if (l$seconds != lOther$seconds) {
-      return false;
-    }
-    final l$end_seconds = end_seconds;
-    final lOther$end_seconds = other.end_seconds;
-    if (l$end_seconds != lOther$end_seconds) {
       return false;
     }
     final l$screenshot = screenshot;

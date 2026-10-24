@@ -18,9 +18,15 @@ import 'nav_bar_config.dart';
 /// Tabs with a [section] show that part of the library on its own.
 enum AppTab {
   home(Icons.home_outlined, Icons.home),
+  shorts(Icons.slow_motion_video_outlined, Icons.slow_motion_video),
+  search(Icons.search, Icons.saved_search),
+  library(Icons.video_library_outlined, Icons.video_library),
   performers(Icons.people_outline, Icons.people),
   studios(Icons.subscriptions_outlined, Icons.subscriptions),
-  library(Icons.video_library_outlined, Icons.video_library),
+
+  /// The favorite performers and their newest scenes (SUB-1).
+  subscriptions(Icons.favorite_border, Icons.favorite),
+  tags(Icons.sell_outlined, Icons.sell),
   scenes(Icons.movie_outlined, Icons.movie, LibrarySection.scenes),
   history(Icons.history, Icons.history, LibrarySection.history),
   watchLater(Icons.watch_later_outlined, Icons.watch_later, LibrarySection.watchLater),
@@ -28,16 +34,14 @@ enum AppTab {
   markers(Icons.bookmarks_outlined, Icons.bookmarks, LibrarySection.markers),
   images(Icons.image_outlined, Icons.image, LibrarySection.images),
   galleries(Icons.photo_library_outlined, Icons.photo_library, LibrarySection.galleries),
-  shorts(Icons.slow_motion_video_outlined, Icons.slow_motion_video),
-  tags(Icons.sell_outlined, Icons.sell),
-  search(Icons.search, Icons.saved_search),
 
   /// Library stats and server info.
   stats(Icons.insights_outlined, Icons.insights, LibrarySection.stats),
 
-  /// Every view of the app (13.10); always in the bar, by default last.
-  /// The settings open from here and from the app bars (`SettingsButton`).
-  all(Icons.apps_outlined, Icons.apps);
+  /// The user's own things (history, watch later, groups, markers) and
+  /// every view not in the bar (NAV-1/3); always in the bar, by default
+  /// last. Replaces the former "all views" tab.
+  you(Icons.account_circle_outlined, Icons.account_circle);
 
   const AppTab(this.icon, this.selectedIcon, [this.section]);
 
@@ -51,18 +55,18 @@ enum AppTab {
         shorts => l.tabShorts,
         performers => l.tabPerformers,
         studios => l.tabStudios,
+        subscriptions => l.tabSubscriptions,
         library => l.tabLibrary,
         watchLater => l.tabWatchLater,
         tags => l.tabTags,
         search => l.tabSearch,
-        all => l.tabAll,
+        you => l.tabYou,
         _ => section!.label(l),
       };
 
   /// Full name in the settings list.
   String title(AppLocalizations l) => switch (this) {
         stats => l.statsAndServer,
-        all => l.allViews,
         _ => section?.label(l) ?? label(l),
       };
 }

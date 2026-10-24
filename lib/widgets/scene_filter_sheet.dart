@@ -159,13 +159,17 @@ class _SceneFilterSheetState extends ConsumerState<SceneFilterSheet> {
               top: false,
               child: Padding(
                 padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
-                child: Row(
+                // Side by side; stacked (apply on top) when large text
+                // doesn't fit them in one row.
+                child: OverflowBar(
+                  alignment: MainAxisAlignment.spaceBetween,
+                  overflowAlignment: OverflowBarAlignment.end,
+                  overflowDirection: VerticalDirection.up,
                   children: [
                     TextButton(
                       onPressed: () => setState(() => _filter = SceneFilter(savedFilter: _filter.savedFilter)),
                       child: Text(context.l10n.reset),
                     ),
-                    const Spacer(),
                     FilledButton(
                       onPressed: () {
                         Haptics.light();

@@ -35,8 +35,9 @@ class StashImage extends ConsumerWidget {
   final bool decodeAtDisplaySize;
   final IconData fallbackIcon;
 
-  /// Shown while loading and if the image fails, instead of the shimmer and
-  /// the icon; e.g. a still frame under an animated preview.
+  /// Shown while loading, if the image fails or without a [url], instead of
+  /// the shimmer and the icon; e.g. a still frame under an animated preview,
+  /// or a channel's initial.
   final Widget? standIn;
 
   /// Decode size for a box of [width]×[height] logical pixels: only the larger
@@ -53,7 +54,7 @@ class StashImage extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final colors = Theme.of(context).colorScheme;
     final url = this.url;
-    if (url == null) return _fallback(colors);
+    if (url == null) return standIn ?? _fallback(colors);
     final headers = ref.watch(authHeadersProvider);
 
     return LayoutBuilder(
@@ -175,7 +176,10 @@ class _ShimmerBoxState extends State<ShimmerBox> with SingleTickerProviderStateM
   }
 }
 
-/// Round avatar for a "channel" (performer or studio), with initials as fallback.
+/// Round avatar for a "channel" (performer or studio), with the name's
+/// initial while the image loads, without one, and for Stash's SVG
+/// placeholder (which would otherwise show a person icon, wrong for studios).
+/// Decorative: the name is always shown next to it, so screen readers skip it.
 class ChannelAvatar extends StatelessWidget {
   const ChannelAvatar({super.key, required this.name, this.imageUrl, this.radius = 18});
 
@@ -187,18 +191,12 @@ class ChannelAvatar extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
     final initial = name.isEmpty ? '?' : name.characters.first.toUpperCase();
-    return ClipOval(
-      child: SizedBox.square(
-        dimension: radius * 2,
-        child: imageUrl == null
-            ? _Initial(initial: initial, colors: colors, radius: radius)
-            : Stack(
-                fit: StackFit.expand,
-                children: [
-                  _Initial(initial: initial, colors: colors, radius: radius),
-                  StashImage(imageUrl, fallbackIcon: Icons.person),
-                ],
-              ),
+    return ExcludeSemantics(
+      child: ClipOval(
+        child: SizedBox.square(
+          dimension: radius * 2,
+          child: StashImage(imageUrl, standIn: _Initial(initial: initial, colors: colors, radius: radius)),
+        ),
       ),
     );
   }

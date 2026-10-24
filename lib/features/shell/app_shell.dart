@@ -5,34 +5,43 @@ import 'package:miniplayer/miniplayer.dart';
 
 import '../../core/config/haptics.dart';
 import '../../l10n/l10n.dart';
+import '../../widgets/connection_banner.dart';
 import '../home/home_page.dart';
 import '../library/library_page.dart';
 import '../performers/performers_page.dart';
-import '../player/closing_slide.dart';
 import '../player/player_providers.dart';
 import '../player/player_view.dart';
 import '../shorts/shorts_page.dart';
 import '../search/search_page.dart';
+import '../server_tasks/server_tasks_page.dart';
 import '../settings/theme_welcome.dart';
 import '../studios/studios_page.dart';
+import '../subscriptions/last_visit.dart';
+import '../subscriptions/subscriptions_page.dart';
 import '../tags/tags_page.dart';
-import 'all_views_page.dart';
+import '../you/you_page.dart';
 import 'nav_bar_config.dart';
 import 'navigation.dart';
+import 'shell_layout.dart';
 
 /// Root layout after login: per-tab navigators, the miniplayer on top of
-/// them and a bottom navigation bar that slides away as the player expands.
+/// them and a bottom navigation bar that slides away as the player expands,
+/// or a navigation rail on wide windows ([ShellLayout], NAV-4).
 class AppShell extends ConsumerWidget {
-  const AppShell({super.key});
+  const AppShell({super.key, @visibleForTesting this.pageBuilder});
 
-  /// The page a tab starts with; also opened from the "all views" menu.
+  /// Replaces [rootPage] in tests.
+  final Widget Function(AppTab tab)? pageBuilder;
+
+  /// The page a tab starts with; also opened from the "You" page.
   static Widget rootPage(AppTab tab) => switch (tab) {
         AppTab(:final section?) => LibrarySectionPage(section: section),
         AppTab.home => const HomePage(),
-        AppTab.all => const AllViewsPage(),
+        AppTab.you => const YouPage(),
         AppTab.shorts => const ShortsPage(),
         AppTab.performers => const PerformersPage(),
         AppTab.studios => const StudiosPage(),
+        AppTab.subscriptions => const SubscriptionsPage(),
         AppTab.library => const LibraryPage(),
         AppTab.tags => const TagsPage(),
         AppTab.search => const SearchPage(autofocus: false),
@@ -59,6 +68,7 @@ class AppShell extends ConsumerWidget {
     }
 
     final scrollControllers = ref.watch(tabScrollControllersProvider);
+    final selected = tabs.indexOf(currentTab).clamp(0, tabs.length - 1);
 
     void selectTab(AppTab tab) {
       if (tab == currentTab) {
@@ -84,20 +94,27 @@ class AppShell extends ConsumerWidget {
           SystemNavigator.pop();
         }
       },
-      child: Scaffold(
-        body: Stack(
-          children: [
-            AnimatedPadding(
-              // Keep the end of every list visible above the collapsed player.
-              // Shrinks along with the closing slide, so no empty strip shows
-              // where the bar was.
-              padding: EdgeInsets.only(bottom: scene == null || hidePlayer || closing ? 0 : kMiniPlayerHeight),
-              duration: ClosingSlide.defaultDuration,
-              curve: ClosingSlide.curve,
+      // The end of a visit (NOTIF-1) and finished server tasks.
+      child: LastVisitRecorder(
+        child: JobFinishedListener(
+          child: ShellLayout(
+            destinations: [
+              for (final tab in tabs) (icon: tab.icon, selectedIcon: tab.selectedIcon, label: tab.label(context.l10n)),
+            ],
+            selectedIndex: selected,
+            onSelect: (i) => selectTab(tabs[i]),
+            playerHeight: playerHeight,
+            hidePlayer: hidePlayer,
+            hideNavigation: hideNavBar,
+            closing: closing,
+            onClosed: () => ref.read(nowPlayingProvider.notifier).close(),
+            // The connection banner (STATE-1) sits above the tabs, below the
+            // player, which covers it when expanded.
+            content: ConnectionBannerScope(
               // Only the tabs in the bar; the GlobalKeys keep each navigator's
               // pages when the tabs are reordered.
               child: IndexedStack(
-                index: tabs.indexOf(currentTab).clamp(0, tabs.length - 1),
+                index: selected,
                 children: [
                   for (final tab in tabs)
                     Navigator(
@@ -105,21 +122,16 @@ class AppShell extends ConsumerWidget {
                       onGenerateRoute: (_) => MaterialPageRoute(
                         builder: (_) => PrimaryScrollController(
                           controller: scrollControllers[tab]!,
-                          child: rootPage(tab),
+                          child: (pageBuilder ?? rootPage)(tab),
                         ),
                       ),
                     ),
                 ],
               ),
             ),
-            if (scene != null)
-              Offstage(
-                offstage: hidePlayer,
-                child: ClosingSlide(
-                  closing: closing,
-                  distance: kMiniPlayerHeight,
-                  onClosed: () => ref.read(nowPlayingProvider.notifier).close(),
-                  child: Miniplayer(
+            miniplayer: scene == null
+                ? null
+                : Miniplayer(
                     controller: ref.watch(miniplayerControllerProvider),
                     valueNotifier: playerHeight,
                     minHeight: kMiniPlayerHeight,
@@ -127,39 +139,8 @@ class AppShell extends ConsumerWidget {
                     onDismissed: () => ref.read(nowPlayingProvider.notifier).close(),
                     builder: (height, _) => PlayerPanel(scene: scene, height: height, maxHeight: maxPlayerHeight),
                   ),
-                ),
-              ),
-          ],
+          ),
         ),
-        bottomNavigationBar: hideNavBar
-            ? null
-            : ValueListenableBuilder<double>(
-                valueListenable: playerHeight,
-                builder: (context, height, child) {
-                  final expanded = scene == null
-                      ? 0.0
-                      : ((height - kMiniPlayerHeight) / (maxPlayerHeight - kMiniPlayerHeight)).clamp(0.0, 1.0);
-                  return ClipRect(
-                    child: Align(
-                      alignment: Alignment.topCenter,
-                      heightFactor: 1 - expanded,
-                      child: child,
-                    ),
-                  );
-                },
-                child: NavigationBar(
-                  selectedIndex: tabs.indexOf(currentTab).clamp(0, tabs.length - 1),
-                  onDestinationSelected: (i) => selectTab(tabs[i]),
-                  destinations: [
-                    for (final tab in tabs)
-                      NavigationDestination(
-                        icon: Icon(tab.icon),
-                        selectedIcon: Icon(tab.selectedIcon),
-                        label: tab.label(context.l10n),
-                      ),
-                  ],
-                ),
-              ),
       ),
     );
   }
