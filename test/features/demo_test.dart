@@ -7,6 +7,7 @@ import 'package:http/testing.dart';
 import 'package:stash_app_mobile/core/config/server_config.dart';
 import 'package:stash_app_mobile/data/models/list_queries.dart';
 import 'package:stash_app_mobile/data/models/scene_filter.dart';
+import 'package:stash_app_mobile/data/models/server_task.dart';
 import 'package:stash_app_mobile/data/repositories/stash_repository.dart';
 import 'package:stash_app_mobile/features/demo/demo_library.dart';
 import 'package:stash_app_mobile/features/demo/demo_server.dart';
@@ -90,6 +91,21 @@ void main() {
     expect(scene.studio?.name, 'Peach Shorts');
     expect(scene.performers.map((p) => p.name), ['Big Buck Bunny', 'Butterfly']);
     expect(scene.height, greaterThan(scene.width!));
+  });
+
+  test('server tasks and the preview check', () async {
+    expect(await repo.jobQueue(), isEmpty);
+    expect(await repo.scanLibrary(ScanOption.standard), isNotEmpty);
+    expect(await repo.generate(GenerateOption.standard), isNotEmpty);
+    expect(await repo.autoTag(), isNotEmpty);
+    expect(await repo.clean(), isNotEmpty);
+    // The demo bundles every preview.
+    final check = await repo.checkPreviews();
+    expect(check.scenes, 8);
+    expect(check.animated, 8);
+    expect(check.videos, 8);
+    expect(check.markers, 4);
+    expect(check.markerAnimated, 4);
   });
 
   test('scene filters', () async {

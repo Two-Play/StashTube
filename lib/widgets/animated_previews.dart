@@ -73,3 +73,29 @@ final feedPreviewDelayProvider = NotifierProvider<FeedPreviewDelayNotifier, Dura
 /// reduced motion.
 bool previewsPlay(BuildContext context, WidgetRef ref, NotifierProvider<Notifier<bool>, bool> setting) =>
     ref.watch(setting) && !MediaQuery.disableAnimationsOf(context);
+
+/// What the lists' previews play: Stash's animated WebP (light, but Stash
+/// only creates them when asked) or its MP4 preview (created by default,
+/// but needs a video player). Markers always play the WebP.
+enum PreviewSource { animatedImage, video }
+
+class PreviewSourceNotifier extends Notifier<PreviewSource> {
+  static const _key = 'preview_source';
+
+  @override
+  PreviewSource build() {
+    try {
+      final name = ref.watch(sharedPreferencesProvider).getString(_key);
+      return PreviewSource.values.where((s) => s.name == name).firstOrNull ?? PreviewSource.animatedImage;
+    } catch (_) {
+      return PreviewSource.animatedImage;
+    }
+  }
+
+  Future<void> set(PreviewSource source) async {
+    state = source;
+    await ref.read(sharedPreferencesProvider).setString(_key, source.name);
+  }
+}
+
+final previewSourceProvider = NotifierProvider<PreviewSourceNotifier, PreviewSource>(PreviewSourceNotifier.new);

@@ -11,6 +11,7 @@ import '../../core/api/documents/scenes.graphql.dart';
 import '../../core/api/documents/studios.graphql.dart';
 import '../../core/api/documents/system.graphql.dart';
 import '../../core/api/documents/tags.graphql.dart';
+import '../../core/api/documents/tasks.graphql.dart';
 import '../../core/api/stash_schema.graphql.dart';
 import '../../core/config/server_config.dart';
 import '../../features/player/playback_tracker.dart';
@@ -26,6 +27,7 @@ import '../models/scene.dart';
 import '../models/saved_filter.dart';
 import '../models/scene_details.dart';
 import '../models/scrub_thumbnails.dart';
+import '../models/server_task.dart';
 import '../models/stats.dart';
 import '../models/studio.dart';
 import '../models/tag.dart';
@@ -521,6 +523,89 @@ class StashRepository implements PlaybackActivityApi {
       variables: Variables$Mutation$PerformerSetFavorite(id: performerId, favorite: favorite),
     ),
   );
+
+  Future<List<ServerJob>> jobQueue() async => [
+    for (final job in (await _query(Options$Query$JobQueue())).jobQueue ?? const <Fragment$JobFields>[])
+      ServerJob.fromFields(job),
+  ];
+
+  Future<void> stopJob(String id) =>
+      _mutate(Options$Mutation$StopJob(variables: Variables$Mutation$StopJob(job_id: id)));
+
+  /// Scans all library paths; returns the job id.
+  Future<String> scanLibrary(Set<ScanOption> options) async => (await _mutate(
+    Options$Mutation$MetadataScan(
+      variables: Variables$Mutation$MetadataScan(
+        input: _input(
+          {for (final o in ScanOption.values) o.key: options.contains(o)},
+          Input$ScanMetadataInput.fromJson,
+          (i) => i.toJson(),
+        )!,
+      ),
+    ),
+  )).metadataScan;
+
+  /// Generates what's missing (no overwrite) for the whole library.
+  Future<String> generate(Set<GenerateOption> options) async => (await _mutate(
+    Options$Mutation$MetadataGenerate(
+      variables: Variables$Mutation$MetadataGenerate(
+        input: _input(
+          {for (final o in GenerateOption.values) o.key: options.contains(o), 'overwrite': false},
+          Input$GenerateMetadataInput.fromJson,
+          (i) => i.toJson(),
+        )!,
+      ),
+    ),
+  )).metadataGenerate;
+
+  /// Tags all files with every performer, studio and tag their paths name.
+  Future<String> autoTag() async => (await _mutate(
+    Options$Mutation$MetadataAutoTag(
+      variables: Variables$Mutation$MetadataAutoTag(
+        input: Input$AutoTagMetadataInput(performers: const ['*'], studios: const ['*'], tags: const ['*']),
+      ),
+    ),
+  )).metadataAutoTag;
+
+  /// Removes the entries of files that are gone from disk.
+  Future<String> clean() async => (await _mutate(
+    Options$Mutation$MetadataClean(
+      variables: Variables$Mutation$MetadataClean(input: Input$CleanMetadataInput(dryRun: false)),
+    ),
+  )).metadataClean;
+
+  /// Looks whether a few random scenes and markers have their previews
+  /// generated: Stash names the preview URLs for every scene and answers
+  /// 404 for missing files.
+  Future<PreviewCheck> checkPreviews({int sample = 8}) async {
+    final scenes = (await findScenes(SceneQuery(sort: SceneSort.random), perPage: sample)).items;
+    final markers = (await findMarkers(MarkerQuery(sort: MarkerSort.random), perPage: sample ~/ 2)).items;
+    Future<int> count(Iterable<String?> urls) async =>
+        (await Future.wait(urls.map(_exists))).where((found) => found).length;
+    final (animated, videos, markerAnimated) = await (
+      count(scenes.map((s) => s.webpUrl)),
+      count(scenes.map((s) => s.previewUrl)),
+      count(markers.map((m) => m.previewUrl)),
+    ).wait;
+    return PreviewCheck(
+      scenes: scenes.length,
+      animated: animated,
+      videos: videos,
+      markers: markers.length,
+      markerAnimated: markerAnimated,
+    );
+  }
+
+  /// Whether the server has the file at [url]; asks for one byte only.
+  Future<bool> _exists(String? url) async {
+    if (url == null) return false;
+    try {
+      final response = await _http.get(Uri.parse(url), headers: {..._authHeaders, 'Range': 'bytes=0-0'});
+      return response.statusCode == 200 || response.statusCode == 206;
+    } catch (_) {
+      return false;
+    }
+  }
 
   static Input$FindFilterType _findFilter({
     String? search,

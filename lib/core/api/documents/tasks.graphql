@@ -1,0 +1,35 @@
+# Server tasks (Settings → Server tasks): start Stash's jobs and follow the
+# job queue. The mutations return the new job's id.
+
+fragment JobFields on Job {
+  id
+  status
+  description
+  subTasks
+  progress
+  error
+}
+
+query JobQueue {
+  jobQueue { ...JobFields }
+}
+
+mutation StopJob($job_id: ID!) {
+  stopJob(job_id: $job_id)
+}
+
+mutation MetadataScan($input: ScanMetadataInput!) {
+  metadataScan(input: $input)
+}
+
+mutation MetadataGenerate($input: GenerateMetadataInput!) {
+  metadataGenerate(input: $input)
+}
+
+mutation MetadataAutoTag($input: AutoTagMetadataInput!) {
+  metadataAutoTag(input: $input)
+}
+
+mutation MetadataClean($input: CleanMetadataInput!) {
+  metadataClean(input: $input)
+}

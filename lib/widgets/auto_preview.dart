@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'animated_previews.dart';
+import 'preview_video.dart';
 import 'stash_image.dart';
 
 /// Plays the animated preview of the first video fully shown in a list, a
@@ -88,9 +89,9 @@ class _AutoPreviewScopeState extends State<AutoPreviewScope> {
 
   @override
   Widget build(BuildContext context) => _AutoPreviewInherited(
-        scope: this,
-        child: NotificationListener<ScrollNotification>(onNotification: _onScroll, child: widget.child),
-      );
+    scope: this,
+    child: NotificationListener<ScrollNotification>(onNotification: _onScroll, child: widget.child),
+  );
 }
 
 class _AutoPreviewInherited extends InheritedWidget {
@@ -102,13 +103,15 @@ class _AutoPreviewInherited extends InheritedWidget {
   bool updateShouldNotify(_AutoPreviewInherited old) => old.scope != scope;
 }
 
-/// A thumbnail that plays [url] (an animated WebP preview) over [child]
-/// while it is the [AutoPreviewScope]'s pick. Just [child] without a scope,
-/// without a preview, or when previews are off.
+/// A thumbnail that plays [url] (an animated WebP preview), or [videoUrl]
+/// with [PreviewSource.video], over [child] while it is the
+/// [AutoPreviewScope]'s pick. Just [child] without a scope, without a
+/// preview, or when previews are off.
 class AutoPreview extends ConsumerStatefulWidget {
-  const AutoPreview({super.key, required this.url, required this.child});
+  const AutoPreview({super.key, required this.url, this.videoUrl, required this.child});
 
   final String? url;
+  final String? videoUrl;
   final Widget child;
 
   @override
@@ -132,7 +135,8 @@ class _AutoPreviewState extends ConsumerState<AutoPreview> {
     if (scope == _scope) return;
     _scope?._unregister(this);
     _scope = scope;
-    if (widget.url != null) scope?._register(this);
+    // Registered with either URL: the preview source can change later.
+    if (widget.url != null || widget.videoUrl != null) scope?._register(this);
   }
 
   @override
@@ -144,7 +148,8 @@ class _AutoPreviewState extends ConsumerState<AutoPreview> {
   @override
   Widget build(BuildContext context) {
     final scope = _scope;
-    final url = widget.url;
+    final video = ref.watch(previewSourceProvider) == PreviewSource.video;
+    final url = video ? widget.videoUrl : widget.url;
     if (scope == null || url == null || !previewsPlay(context, ref, feedPreviewsProvider)) return widget.child;
     return ValueListenableBuilder<_AutoPreviewState?>(
       valueListenable: scope._active,
@@ -155,7 +160,7 @@ class _AutoPreviewState extends ConsumerState<AutoPreview> {
           child!,
           // Loops by itself; the thumbnail shows until it loaded, and if
           // it fails.
-          if (active == this) StashImage(url, standIn: const SizedBox.shrink()),
+          if (active == this) video ? PreviewVideo(url) : StashImage(url, standIn: const SizedBox.shrink()),
         ],
       ),
     );

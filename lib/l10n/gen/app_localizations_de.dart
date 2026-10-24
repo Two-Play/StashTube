@@ -1576,4 +1576,157 @@ class AppLocalizationsDe extends AppLocalizations {
   @override
   String get castApiKeyHint =>
       'Beim Streamen erhält das Cast-Gerät die Stream-Adresse samt deinem API-Key. Andere Geräte in diesem WLAN können sie unter Umständen auslesen.';
+
+  @override
+  String get serverTasks => 'Server-Aufgaben';
+
+  @override
+  String get serverTasksSubtitle => 'Scannen, Generieren, Vorschauen prüfen';
+
+  @override
+  String get sectionPreviewCheck => 'Vorschauen auf dem Server';
+
+  @override
+  String get previewCheckAnimated => 'Animierte Vorschauen (WebP)';
+
+  @override
+  String get previewCheckVideo => 'Video-Vorschauen (MP4)';
+
+  @override
+  String get previewCheckMarkers => 'Marker-Vorschauen (WebP)';
+
+  @override
+  String previewCheckFound(int found, int checked) {
+    return 'Bei $found von $checked Stichproben vorhanden';
+  }
+
+  @override
+  String get previewCheckNothing => 'Keine Szenen zum Prüfen';
+
+  @override
+  String get previewCheckMissingHint =>
+      'Listen und Marker spielen die animierten Vorschauen, die Stash standardmäßig nicht erstellt. Erzeuge sie hier oder stelle in den Einstellungen das Vorschau-Format auf Video um.';
+
+  @override
+  String get generateAnimatedPreviews => 'Animierte Vorschauen erzeugen';
+
+  @override
+  String get checkAgain => 'Erneut prüfen';
+
+  @override
+  String get sectionTasks => 'Aufgaben';
+
+  @override
+  String get taskScan => 'Bibliothek scannen';
+
+  @override
+  String get taskScanSubtitle => 'Findet neue und geänderte Dateien';
+
+  @override
+  String get taskGenerate => 'Generieren';
+
+  @override
+  String get taskGenerateSubtitle =>
+      'Vorschauen, Sprites, Cover u. a. für Dateien, denen sie fehlen';
+
+  @override
+  String get taskAutoTag => 'Automatisch taggen';
+
+  @override
+  String get taskAutoTagSubtitle =>
+      'Ordnet Darsteller, Studios und Tags zu, die in Dateipfaden vorkommen';
+
+  @override
+  String get taskClean => 'Aufräumen';
+
+  @override
+  String get taskCleanSubtitle =>
+      'Entfernt Einträge von Dateien, die es nicht mehr gibt';
+
+  @override
+  String get taskCleanConfirm =>
+      'Einträge fehlender Dateien aus der Bibliothek entfernen? Ihre Bewertungen, Wiedergaben und Marker gehen verloren.';
+
+  @override
+  String get taskScanGenerates => 'Für neue Dateien auch erzeugen';
+
+  @override
+  String get startTask => 'Starten';
+
+  @override
+  String get taskStarted => 'Aufgabe auf dem Server gestartet';
+
+  @override
+  String get sectionJobs => 'Laufende Aufgaben';
+
+  @override
+  String get noJobs => 'Keine laufenden Aufgaben';
+
+  @override
+  String get stopJob => 'Aufgabe abbrechen';
+
+  @override
+  String get jobReady => 'Wartet';
+
+  @override
+  String get jobRunning => 'Läuft';
+
+  @override
+  String get jobFinished => 'Fertig';
+
+  @override
+  String get jobStopping => 'Wird abgebrochen';
+
+  @override
+  String get jobCancelled => 'Abgebrochen';
+
+  @override
+  String get jobFailed => 'Fehlgeschlagen';
+
+  @override
+  String get optionRescan => 'Unveränderte Dateien neu scannen';
+
+  @override
+  String get optionCovers => 'Cover';
+
+  @override
+  String get optionPreviews => 'Video-Vorschauen (MP4)';
+
+  @override
+  String get optionImagePreviews => 'Animierte Vorschauen (WebP)';
+
+  @override
+  String get optionSprites => 'Vorschaubilder der Zeitleiste (Sprites)';
+
+  @override
+  String get optionMarkers => 'Marker-Vorschauen (MP4)';
+
+  @override
+  String get optionMarkerImagePreviews => 'Animierte Marker-Vorschauen (WebP)';
+
+  @override
+  String get optionMarkerScreenshots => 'Marker-Standbilder';
+
+  @override
+  String get optionPhashes => 'Wahrnehmungs-Hashes (Duplikate)';
+
+  @override
+  String get previewSource => 'Vorschau-Format';
+
+  @override
+  String get previewSourceAnimated => 'Animiertes Bild (WebP)';
+
+  @override
+  String get previewSourceVideo => 'Video (MP4)';
+
+  @override
+  String get previewSourceVideoHint =>
+      'Video-Vorschauen laufen in einem eigenen Videoplayer: mehr Daten, Akku und Speicher als WebP, und auf älteren Geräten starten sie langsamer. Marker spielen weiter die WebP-Vorschauen.';
+
+  @override
+  String get previewsOnServer => 'Vorschauen auf dem Server prüfen';
+
+  @override
+  String get previewsOnServerSubtitle =>
+      'Ob Stash sie erstellt hat, und fehlende erzeugen';
 }

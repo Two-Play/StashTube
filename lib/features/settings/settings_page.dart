@@ -14,6 +14,7 @@ import '../player/player_providers.dart';
 import '../security/app_lock.dart';
 import '../auth/server_switcher.dart';
 import '../security/app_icon.dart';
+import '../server_tasks/server_tasks_page.dart';
 import '../security/app_lock_gate.dart';
 import '../shell/nav_bar_config.dart';
 import 'about.dart';
@@ -89,6 +90,13 @@ class SettingsPage extends ConsumerWidget {
             }),
             trailing: const Icon(Icons.edit_outlined),
             onTap: server == null ? null : () => openServerEditor(context, server),
+          ),
+          ListTile(
+            leading: const Icon(Icons.task_alt),
+            title: Text(l.serverTasks),
+            subtitle: Text(l.serverTasksSubtitle),
+            trailing: const Icon(Icons.chevron_right),
+            onTap: () => _openServerTasks(context),
           ),
           _SectionTitle(l.sectionAppearance),
           const Padding(
@@ -167,6 +175,30 @@ class SettingsPage extends ConsumerWidget {
             onChanged: withHaptic((v) => ref.read(feedPreviewsProvider.notifier).set(v)),
           ),
           ListTile(
+            leading: const Icon(Icons.movie_filter_outlined),
+            title: Text(l.previewSource),
+            enabled: ref.watch(feedPreviewsProvider),
+            trailing: DropdownButton<PreviewSource>(
+              value: ref.watch(previewSourceProvider),
+              underline: const SizedBox.shrink(),
+              items: [
+                DropdownMenuItem(value: PreviewSource.animatedImage, child: Text(l.previewSourceAnimated)),
+                DropdownMenuItem(value: PreviewSource.video, child: Text(l.previewSourceVideo)),
+              ],
+              onChanged: ref.watch(feedPreviewsProvider)
+                  ? (source) {
+                      if (source != null) ref.read(previewSourceProvider.notifier).set(source);
+                    }
+                  : null,
+            ),
+          ),
+          // MP4 previews need a native player per preview (one at a time).
+          if (ref.watch(previewSourceProvider) == PreviewSource.video && ref.watch(feedPreviewsProvider))
+            ListTile(
+              leading: Icon(Icons.info_outline, color: theme.colorScheme.tertiary),
+              subtitle: Text(l.previewSourceVideoHint),
+            ),
+          ListTile(
             leading: const Icon(Icons.timer_outlined),
             title: Text(l.feedPreviewDelay),
             enabled: ref.watch(feedPreviewsProvider),
@@ -190,6 +222,13 @@ class SettingsPage extends ConsumerWidget {
             subtitle: Text(l.markerPreviewsSubtitle),
             value: ref.watch(markerPreviewsProvider),
             onChanged: withHaptic((v) => ref.read(markerPreviewsProvider.notifier).set(v)),
+          ),
+          ListTile(
+            leading: const Icon(Icons.fact_check_outlined),
+            title: Text(l.previewsOnServer),
+            subtitle: Text(l.previewsOnServerSubtitle),
+            trailing: const Icon(Icons.chevron_right),
+            onTap: () => _openServerTasks(context),
           ),
           ListTile(
             leading: const Icon(Icons.account_circle_outlined),
@@ -245,6 +284,10 @@ class SettingsPage extends ConsumerWidget {
     );
   }
 }
+
+/// Inside the settings sheet.
+void _openServerTasks(BuildContext context) =>
+    Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => const ServerTasksPage()));
 
 /// Picture-in-picture when leaving the app (Android) and background
 /// playback (4.12).
