@@ -5,6 +5,7 @@ import 'package:http/http.dart' as http;
 import '../../core/api/documents/galleries.graphql.dart';
 import '../../core/api/documents/groups.graphql.dart';
 import '../../core/api/documents/images.graphql.dart';
+import '../../core/api/documents/markers.graphql.dart';
 import '../../core/api/documents/performers.graphql.dart';
 import '../../core/api/documents/refs.graphql.dart';
 import '../../core/api/documents/scenes.graphql.dart';
@@ -18,6 +19,7 @@ import '../../features/player/playback_tracker.dart';
 import '../connection_status.dart';
 import '../models/gallery.dart';
 import '../models/group.dart';
+import '../models/image_details.dart';
 import '../models/image_item.dart';
 import '../models/json.dart';
 import '../models/list_queries.dart';
@@ -195,7 +197,7 @@ class StashRepository implements PlaybackActivityApi {
     return PerformerProfile.fromGraphql(performer);
   }
 
-  /// Scene markers of all scenes, for the markers page.
+  /// Scene markers of all scenes (the markers page), or of a channel's.
   Future<PageResult<Marker>> findMarkers(MarkerQuery query, {int page = 1, int perPage = defaultPageSize}) async {
     final data = await _query(
       Options$Query$FindSceneMarkers(
@@ -207,11 +209,24 @@ class StashRepository implements PlaybackActivityApi {
             sort: query.sortField,
             direction: query.direction,
           ),
+          scene_marker_filter: _input(query.toMarkerFilter(), Input$SceneMarkerFilterType.fromJson, (i) => i.toJson()),
         ),
       ),
     );
     final result = data.findSceneMarkers;
     return PageResult(items: [for (final m in result.scene_markers) Marker.fromGraphql(m)], totalCount: result.count);
+  }
+
+  /// How many markers [query] finds, without loading them.
+  Future<int> countMarkers(MarkerQuery query) async {
+    final data = await _query(
+      Options$Query$SceneMarkerCount(
+        variables: Variables$Query$SceneMarkerCount(
+          scene_marker_filter: _input(query.toMarkerFilter(), Input$SceneMarkerFilterType.fromJson, (i) => i.toJson()),
+        ),
+      ),
+    );
+    return data.findSceneMarkers.count;
   }
 
   Future<PageResult<Studio>> findStudios(StudioQuery query, {int page = 1, int perPage = defaultPageSize}) async {
@@ -251,6 +266,14 @@ class StashRepository implements PlaybackActivityApi {
   @override
   Future<void> addPlay(String sceneId) =>
       _mutate(Options$Mutation$SceneAddPlay(variables: Variables$Mutation$SceneAddPlay(id: sceneId)));
+
+  /// One image with everything the viewer's info sheet shows.
+  Future<ImageDetails> findImageDetails(String id) async {
+    final data = await _query(Options$Query$FindImageDetails(variables: Variables$Query$FindImageDetails(id: id)));
+    final image = data.findImage;
+    if (image == null) throw const StashApiException('Image not found.', kind: StashErrorKind.notFound);
+    return ImageDetails.fromGraphql(image);
+  }
 
   Future<PageResult<ImageItem>> findImages(ImageQuery query, {int page = 1, int perPage = defaultPageSize}) async {
     final data = await _query(

@@ -14,14 +14,15 @@ import '../edit/edit_common.dart';
 import '../edit/edit_pages.dart';
 import '../channel/channel_tabs.dart';
 import '../library/images_tab.dart';
+import '../library/markers_tab.dart';
 import '../shell/navigation.dart';
 import '../shorts/shorts_feed.dart';
 import '../../l10n/l10n.dart';
 
 /// Studio "channel" (CH-2): header with the parent studio and sub-studios
-/// (7.3) above the tabs videos, shorts, images, galleries (each only when
-/// there are any) and about. The videos, images and galleries optionally
-/// include the sub-studios'.
+/// (7.3) above the tabs videos, shorts, markers, images, galleries (each
+/// only when there are any) and about. The videos, markers, images and
+/// galleries optionally include the sub-studios'.
 class StudioPage extends ConsumerStatefulWidget {
   const StudioPage({super.key, required this.studioId});
 
@@ -40,6 +41,8 @@ class _StudioPageState extends ConsumerState<StudioPage> {
 
   String get _id => widget.studioId;
 
+  MarkerQuery get _markerCountQuery => MarkerQuery(studioId: _id, includeSubStudios: true);
+
   @override
   Widget build(BuildContext context) {
     final studio = ref.watch(studioProvider(_id));
@@ -49,10 +52,14 @@ class _StudioPageState extends ConsumerState<StudioPage> {
     final shortsSource = ShortsSource.studio(_id, title: name);
     final shorts = ref.watch(channelShortsCountProvider(shortsSource)).value ?? 0;
     final counts = ref.watch(studioMediaCountsProvider(_id)).value;
+    // Like the media counts, with the sub-studios' (the toggle only
+    // filters the tab).
+    final markers = ref.watch(markerCountProvider(_markerCountQuery)).value ?? 0;
 
     final tabs = [
       ChannelTab.videos,
       if (shorts > 0) ChannelTab.shorts,
+      if (markers > 0) ChannelTab.markers,
       if ((counts?.images ?? 0) > 0) ChannelTab.images,
       if ((counts?.galleries ?? 0) > 0) ChannelTab.galleries,
       ChannelTab.about,
@@ -107,6 +114,10 @@ class _StudioPageState extends ConsumerState<StudioPage> {
               onRefresh: _refreshHeader,
             ),
           ChannelTab.shorts => ChannelShortsGrid(source: shortsSource, headerSlivers: headerSlivers),
+          ChannelTab.markers => MarkerGridView(
+              initialQuery: MarkerQuery(studioId: _id, includeSubStudios: includeSubStudios),
+              headerSlivers: headerSlivers,
+            ),
           ChannelTab.images => ImageGridView(
               // The grid keeps its query; a new one for the toggle.
               key: ValueKey(includeSubStudios),
@@ -139,6 +150,7 @@ class _StudioPageState extends ConsumerState<StudioPage> {
     ref.invalidate(studioProvider(_id));
     ref.invalidate(studioMediaCountsProvider(_id));
     ref.invalidate(channelShortsCountProvider(ShortsSource.studio(_id)));
+    ref.invalidate(markerCountProvider(_markerCountQuery));
   }
 }
 

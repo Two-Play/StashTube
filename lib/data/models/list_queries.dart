@@ -416,24 +416,64 @@ class GalleryQuery {
   int get hashCode => Object.hash(sort, search, performerId, studioId, includeSubStudios, seed);
 }
 
-/// Arguments for the markers page (scene markers of all scenes).
+/// Arguments for the markers page (scene markers of all scenes), or a
+/// channel's markers tab (those of a performer's or studio's scenes).
 class MarkerQuery {
-  MarkerQuery({this.sort = MarkerSort.recentlyAdded, this.search, int? seed})
-      : seed = seed ?? (sort == MarkerSort.random ? newRandomSeed() : 0);
+  MarkerQuery({
+    this.sort = MarkerSort.recentlyAdded,
+    this.search,
+    this.performerId,
+    this.studioId,
+    this.includeSubStudios = false,
+    int? seed,
+  }) : seed = seed ?? (sort == MarkerSort.random ? newRandomSeed() : 0);
 
   final MarkerSort sort;
 
   /// Free text (Stash's `q`: the marker's title, its scene's title, ...).
   final String? search;
+
+  /// Only markers in scenes of this performer.
+  final String? performerId;
+
+  /// Only markers in scenes of this studio, with [includeSubStudios] also
+  /// of its sub-studios.
+  final String? studioId;
+  final bool includeSubStudios;
   final int seed;
 
   String get sortField => sort == MarkerSort.random ? 'random_$seed' : sort.field;
   String get direction => sort == MarkerSort.title ? 'ASC' : 'DESC';
 
-  @override
-  bool operator ==(Object other) =>
-      other is MarkerQuery && other.sort == sort && other.search == search && other.seed == seed;
+  /// Stash's `SceneMarkerFilterType`: markers have their scene's
+  /// performers; the studio goes through the scene (`scene_filter`).
+  Map<String, dynamic>? toMarkerFilter() {
+    final criteria = {
+      ..._channelCriteria(performerId, null, false),
+      if (studioId != null) 'scene_filter': _channelCriteria(null, studioId, includeSubStudios),
+    };
+    return criteria.isEmpty ? null : criteria;
+  }
+
+  /// The same markers in another order (a fresh shuffle for random).
+  MarkerQuery withSort(MarkerSort sort) => MarkerQuery(
+        sort: sort,
+        search: search,
+        performerId: performerId,
+        studioId: studioId,
+        includeSubStudios: includeSubStudios,
+      );
 
   @override
-  int get hashCode => Object.hash(sort, search, seed);
+  bool operator ==(Object other) =>
+      other is MarkerQuery &&
+      other.sort == sort &&
+      other.search == search &&
+      other.performerId == performerId &&
+      other.studioId == studioId &&
+      other.includeSubStudios == includeSubStudios &&
+      other.seed == seed;
+
+  @override
+  int get hashCode => Object.hash(sort, search, performerId, studioId, includeSubStudios, seed);
 }

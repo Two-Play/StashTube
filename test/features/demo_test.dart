@@ -152,6 +152,27 @@ void main() {
 
     expect((await repo.findMarkers(MarkerQuery())).totalCount, 5);
     expect((await repo.findMarkers(MarkerQuery(search: 'butterfly'))).items.single.title, 'A visitor');
+    // A channel's markers: those in the performer's or studio's scenes.
+    Future<Set<String>> sceneIds(SceneQuery query) async =>
+        {for (final s in (await repo.findScenes(query, perPage: 100)).items) s.id};
+    Future<void> sameScenes(MarkerQuery markers, SceneQuery scenes) async {
+      final ids = await sceneIds(scenes);
+      final all = (await repo.findMarkers(MarkerQuery())).items;
+      final expected = {for (final m in all) if (ids.contains(m.scene.id)) m.id};
+      expect({for (final m in (await repo.findMarkers(markers)).items) m.id}, expected);
+      expect(await repo.countMarkers(markers), expected.length);
+    }
+
+    await sameScenes(MarkerQuery(performerId: '2'), SceneQuery(performerId: '2'));
+    expect(await repo.countMarkers(MarkerQuery(performerId: '2')), isPositive);
+    expect(await repo.countMarkers(MarkerQuery(performerId: 'none')), 0);
+    await sameScenes(MarkerQuery(studioId: '1'), SceneQuery(studioId: '1'));
+    expect(await repo.countMarkers(MarkerQuery(studioId: '1')), 0);
+    await sameScenes(
+      MarkerQuery(studioId: '1', includeSubStudios: true),
+      SceneQuery(studioId: '1', includeSubStudios: true),
+    );
+    expect(await repo.countMarkers(MarkerQuery(studioId: '1', includeSubStudios: true)), 5);
 
     final performers = await repo.findPerformers(PerformerQuery(sort: PerformerSort.mostScenes));
     expect(performers.items.first.name, 'Big Buck Bunny');
@@ -176,6 +197,18 @@ void main() {
     final images = await repo.findImages(ImageQuery(galleryId: gallery.id, sort: ImageSort.path));
     expect(images.totalCount, media.images.length);
     expect(images.items.first.imageUrl, '${ServerConfig.demoUrl}/demo/images/${media.images.first}.jpg');
+    // The viewer's info sheet.
+    final image = await repo.findImageDetails(images.items.first.id);
+    expect(image.title, images.items.first.title);
+    expect(image.file!.name, '${media.images.first}.jpg');
+    expect((image.file!.width, image.file!.height), (640, 360));
+    expect(image.file!.size, isPositive);
+    expect(image.photographer, isNotNull);
+    expect(image.created, isNotNull);
+    expect(image.studio!.id, '2');
+    expect(image.performers.single.id, '1');
+    expect(image.tags.single.name, 'Animation');
+    expect(image.galleries.single.title, 'Stills');
 
     final stats = await repo.libraryStats();
     expect(stats.sceneCount, 12);

@@ -1,0 +1,6 @@
+# How many markers a channel's markers tab would list (whether to show it).
+query SceneMarkerCount($scene_marker_filter: SceneMarkerFilterType) {
+  findSceneMarkers(filter: { per_page: 1 }, scene_marker_filter: $scene_marker_filter) {
+    count
+  }
+}

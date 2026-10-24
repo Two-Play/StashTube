@@ -6,13 +6,16 @@ import 'package:stash_app_mobile/core/config/server_config.dart';
 import 'package:stash_app_mobile/data/models/gallery.dart';
 import 'package:stash_app_mobile/data/models/image_item.dart';
 import 'package:stash_app_mobile/data/models/list_queries.dart';
+import 'package:stash_app_mobile/data/models/marker.dart';
 import 'package:stash_app_mobile/data/models/page_result.dart';
 import 'package:stash_app_mobile/data/models/performer_profile.dart';
 import 'package:stash_app_mobile/data/models/saved_filter.dart';
 import 'package:stash_app_mobile/data/models/scene.dart';
 import 'package:stash_app_mobile/data/models/studio.dart';
+import 'package:stash_app_mobile/data/models/tag.dart';
 import 'package:stash_app_mobile/data/repositories/stash_repository.dart';
 import 'package:stash_app_mobile/features/channel/channel_tabs.dart';
+import 'package:stash_app_mobile/features/library/markers_tab.dart';
 import 'package:stash_app_mobile/features/shell/navigation.dart';
 import 'package:stash_app_mobile/features/shorts/shorts_feed.dart';
 import 'package:stash_app_mobile/features/shorts/shorts_page.dart';
@@ -21,15 +24,18 @@ import 'package:stash_app_mobile/features/studios/studio_page.dart';
 import '../../helpers.dart';
 
 class _Repo implements StashRepository {
-  _Repo({required this.studio, this.counts = const ChannelMediaCounts(), this.shorts = 0});
+  _Repo({required this.studio, this.counts = const ChannelMediaCounts(), this.shorts = 0, this.markers = 0});
 
   final Studio studio;
   final ChannelMediaCounts counts;
   final int shorts;
+  final int markers;
 
   final sceneQueries = <SceneQuery>[];
   final imageQueries = <ImageQuery>[];
   final galleryQueries = <GalleryQuery>[];
+  final markerQueries = <MarkerQuery>[];
+  final markerCountQueries = <MarkerQuery>[];
 
   @override
   Future<Studio> findStudio(String id) async => studio;
@@ -62,6 +68,31 @@ class _Repo implements StashRepository {
   Future<PageResult<Gallery>> findGalleries(GalleryQuery query, {int page = 1, int perPage = 24}) async {
     galleryQueries.add(query);
     return PageResult(items: page > 1 ? const [] : const [Gallery(id: 'g1', title: 'Backstage')], totalCount: 1);
+  }
+
+  @override
+  Future<int> countMarkers(MarkerQuery query) async {
+    markerCountQueries.add(query);
+    return markers;
+  }
+
+  @override
+  Future<PageResult<Marker>> findMarkers(MarkerQuery query, {int page = 1, int perPage = 24}) async {
+    markerQueries.add(query);
+    return PageResult(
+      items: [
+        if (page == 1)
+          for (var i = 0; i < markers; i++)
+            Marker(
+              id: 'm$i',
+              title: 'Moment $i',
+              seconds: 30.0 + i,
+              tag: const Tag(id: 't1', name: 'Outdoor'),
+              scene: Scene(id: 'v$i', title: 'Video $i', streamUrl: 'http://s/v$i'),
+            ),
+      ],
+      totalCount: markers,
+    );
   }
 
   @override
@@ -151,6 +182,38 @@ void main() {
     final shortsQuery = repo.sceneQueries.where((q) => q.filter.portraitOnly).last;
     expect(shortsQuery.studioId, 's1');
     expect(shortsQuery.includeSubStudios, isTrue);
+  });
+
+  testWidgets('markers show with the sub-studios\' unless switched off', (tester) async {
+    final repo = _Repo(studio: _network, markers: 2);
+    await pump(tester, repo);
+    expect(tabLabels(tester), ['Videos', 'Markers', 'About']);
+    // Whether the tab shows counts the sub-studios', like the media counts.
+    expect(repo.markerCountQueries.single.toMarkerFilter(), {
+      'scene_filter': {
+        'studios': {'value': ['s1'], 'modifier': 'INCLUDES', 'depth': -1},
+      },
+    });
+
+    await tester.tap(tab('Markers'));
+    await tester.pumpAndSettle();
+    expect(repo.markerQueries.last.studioId, 's1');
+    expect(repo.markerQueries.last.includeSubStudios, isTrue);
+    expect(find.byType(MarkerTile), findsNWidgets(2));
+
+    await tester.tap(find.text('A–Z'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Include sub-studios'));
+    await tester.pumpAndSettle();
+    expect(repo.markerQueries.last.includeSubStudios, isFalse);
+    expect(repo.markerQueries.last.sort, MarkerSort.title, reason: 'the toggle keeps the sort');
+  });
+
+  testWidgets('a studio without markers has no markers tab', (tester) async {
+    final repo = _Repo(studio: _network);
+    await pump(tester, repo);
+    expect(tab('Markers'), findsNothing);
+    expect(repo.markerQueries, isEmpty);
   });
 
   testWidgets('a short opens the studio\'s shorts at that short', (tester) async {

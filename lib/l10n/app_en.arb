@@ -639,6 +639,22 @@
   "addTags": "Add tags",
   "editTags": "Edit tags",
   "showMore": "...more",
+  "moreTags": "+{count}",
+  "@moreTags": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "moreTagsSemantics": "{count, plural, =1{1 more tag} other{{count} more tags}}",
+  "@moreTagsSemantics": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "showDescription": "Show description",
   "sceneDescription": "Description",
   "noDescription": "No description",
@@ -695,7 +711,7 @@
       }
     }
   },
-  "oCounterSemantics": "O-counter {count}, add one",
+  "oCounterSemantics": "O-counter: {count}",
   "@oCounterSemantics": {
     "placeholders": {
       "count": {
@@ -703,6 +719,8 @@
       }
     }
   },
+  "oCounterTitle": "O-counter",
+  "removeO": "Remove one O",
   "undo": "Undo",
   "editSceneDetails": "Edit scene details",
   "marker": "Marker",
@@ -849,6 +867,20 @@
   "fileFrameRate": "Frame rate",
   "fileBitRate": "Bit rate",
   "fileModified": "Modified",
+  "imageInfo": "Image info",
+  "@imageInfo": {
+    "description": "Tooltip of the image viewer's info button and title of its sheet."
+  },
+  "imagePhotographer": "Photographer",
+  "imageDimensions": "Dimensions",
+  "imageOCounter": "O-counter",
+  "imageTags": "Tags",
+  "imageGalleries": "Galleries",
+  "imageCreated": "Added",
+  "@imageCreated": {
+    "description": "When the image was added to Stash."
+  },
+  "imageUpdated": "Updated",
   "copyPath": "Copy path",
   "pathCopied": "Path copied",
   "framesPerSecond": "{fps} fps",
@@ -975,6 +1007,7 @@
   },
   "channelTabVideos": "Videos",
   "channelTabShorts": "Shorts",
+  "channelTabMarkers": "Markers",
   "channelTabImages": "Images",
   "channelTabGalleries": "Galleries",
   "channelTabAbout": "About",

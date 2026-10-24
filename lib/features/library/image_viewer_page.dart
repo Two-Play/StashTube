@@ -9,10 +9,13 @@ import '../../data/models/list_queries.dart';
 import '../../l10n/l10n.dart';
 import '../../data/providers.dart';
 import '../shell/navigation.dart';
+import 'gallery_page.dart';
+import 'image_info.dart';
 import '../../widgets/stash_image.dart';
 
 /// Fullscreen image viewer: swipe between images, pinch or double tap to
-/// zoom, tap to toggle the info overlay (with the performers). Loads more images when nearing the end.
+/// zoom, tap to toggle the info overlay (with the performers), "i" for the
+/// image's details. Loads more images when nearing the end.
 class ImageViewerPage extends ConsumerStatefulWidget {
   const ImageViewerPage({super.key, required this.query, required this.initialIndex});
 
@@ -54,6 +57,27 @@ class _ImageViewerPageState extends ConsumerState<ImageViewerPage> {
     }
   }
 
+  /// Shows [image]'s info sheet, and the page tapped there. The viewer
+  /// covers the shell (and the player), so like the performer chips it
+  /// closes and the page opens in the current tab, where back leads to
+  /// the grid the viewer came from.
+  Future<void> _showInfo(ImageItem image) async {
+    final link = await showImageInfoSheet(context, image.id);
+    if (link == null || !mounted) return;
+    switch (link.target) {
+      case ImageInfoTarget.performer:
+        openPerformer(ref, link.id);
+      case ImageInfoTarget.studio:
+        openStudio(ref, link.id);
+      case ImageInfoTarget.tag:
+        openTag(ref, link.id);
+      case ImageInfoTarget.gallery:
+        // Opened from that gallery: closing the viewer is enough.
+        if (link.id != widget.query.galleryId) openPage(ref, GalleryPage(galleryId: link.id));
+    }
+    Navigator.of(context).pop();
+  }
+
   @override
   Widget build(BuildContext context) {
     final items = ref.watch(imageListProvider(widget.query)).current?.items ?? const <ImageItem>[];
@@ -84,7 +108,12 @@ class _ImageViewerPageState extends ConsumerState<ImageViewerPage> {
             duration: const Duration(milliseconds: 200),
             child: IgnorePointer(
               ignoring: !_showOverlay,
-              child: _Overlay(image: current, position: _index + 1, total: items.length),
+              child: _Overlay(
+                image: current,
+                position: _index + 1,
+                total: items.length,
+                onInfo: current == null ? null : () => _showInfo(current),
+              ),
             ),
           ),
         ],
@@ -164,11 +193,12 @@ class _ZoomableImageState extends State<_ZoomableImage> with SingleTickerProvide
 }
 
 class _Overlay extends ConsumerWidget {
-  const _Overlay({required this.image, required this.position, required this.total});
+  const _Overlay({required this.image, required this.position, required this.total, this.onInfo});
 
   final ImageItem? image;
   final int position;
   final int total;
+  final VoidCallback? onInfo;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -202,6 +232,12 @@ class _Overlay extends ConsumerWidget {
                     style: const TextStyle(color: Colors.white),
                   ),
                 ),
+                if (onInfo != null)
+                  IconButton(
+                    icon: const Icon(Icons.info_outline, color: Colors.white),
+                    tooltip: l.imageInfo,
+                    onPressed: onInfo,
+                  ),
               ],
             ),
           ),

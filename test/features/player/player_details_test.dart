@@ -19,6 +19,9 @@ import 'package:stash_app_mobile/features/player/player_providers.dart';
 import 'package:stash_app_mobile/features/edit/edit_pages.dart';
 import 'package:stash_app_mobile/features/player/player_view.dart';
 import 'package:stash_app_mobile/features/player/scene_description.dart';
+import 'package:stash_app_mobile/features/player/scene_tags_row.dart';
+import 'package:stash_app_mobile/features/shell/navigation.dart';
+import 'package:stash_app_mobile/features/tags/tag_page.dart';
 import 'package:stash_app_mobile/features/tags/tag_editor.dart';
 import 'package:stash_app_mobile/l10n/gen/app_localizations.dart';
 import 'package:stash_app_mobile/widgets/skeleton.dart';
@@ -96,6 +99,7 @@ void main() {
     double textScale = 1,
     Size size = const Size(320, 640),
     double videoHeight = 0,
+    Scene scene = _scene,
   }) async {
     tester.view.physicalSize = size;
     tester.view.devicePixelRatio = 1;
@@ -103,6 +107,8 @@ void main() {
     await tester.pumpWidget(UncontrolledProviderScope(
       container: container,
       child: MaterialApp(
+        // Where openTag & co. push their pages.
+        navigatorKey: container.read(tabNavigatorKeysProvider)[container.read(currentTabProvider)],
         localizationsDelegates: AppLocalizations.localizationsDelegates,
         supportedLocales: AppLocalizations.supportedLocales,
         builder: (context, child) => MediaQuery(
@@ -114,7 +120,7 @@ void main() {
             children: [
               // Where the video would be.
               SizedBox(height: videoHeight),
-              const Expanded(child: PlayerDetails(scene: _scene)),
+              Expanded(child: PlayerDetails(scene: scene)),
             ],
           ),
         ),
@@ -175,7 +181,7 @@ void main() {
     expect(find.text('Some Studio'), findsOneWidget);
     expect(find.text('O · 0'), findsOneWidget);
     // Not on the page anymore.
-    for (final text in ['Some description of the scene.', '#outdoor', 'File info', 'Edit tags']) {
+    for (final text in ['Some description of the scene.', 'File info', 'Edit tags']) {
       expect(find.text(text), findsNothing, reason: text);
     }
 
@@ -224,6 +230,71 @@ void main() {
     expect(header, findsOneWidget);
     expect(tester.getBottomLeft(header).dy, lessThan(780));
     expect(find.text('Chapters'), findsOneWidget, reason: 'a typical scene, with chapters');
+  });
+
+  testWidgets('the first tags show under the actions; a tag opens its page', (tester) async {
+    container.read(playQueueProvider.notifier).set(null);
+    const scene = Scene(
+      id: 's1',
+      title: 'Tagged',
+      studio: Studio(id: '1', name: 'Some Studio'),
+      tags: [Tag(id: '1', name: 'a'), Tag(id: '2', name: 'b'), Tag(id: '3', name: 'c')],
+    );
+    await pumpDetails(tester, size: const Size(360, 780), scene: scene);
+    for (final tag in ['#a', '#b', '#c']) {
+      expect(find.text(tag).hitTestable(), findsOneWidget, reason: '$tag fits');
+    }
+    expect(find.textContaining(RegExp(r'^\+\d')).hitTestable(), findsNothing, reason: 'no "+N" when all fit');
+
+    await tester.tap(find.text('#b'));
+    await settle(tester);
+    expect(find.byType(TagPage), findsOneWidget);
+  });
+
+  testWidgets('more tags than fit in one line end in "+N", which opens the description', (tester) async {
+    container.read(playQueueProvider.notifier).set(null);
+    final names = ['outdoor', 'summer', 'beach', 'sunset', 'friends', 'vacation', 'travel', 'ocean'];
+    final scene = Scene(
+      id: 's1',
+      title: 'Tagged',
+      studio: const Studio(id: '1', name: 'Some Studio'),
+      tags: [for (final (i, n) in names.indexed) Tag(id: '$i', name: n)],
+    );
+    final semantics = tester.ensureSemantics();
+    await pumpDetails(tester, size: const Size(360, 780), scene: scene);
+
+    final row = find.byType(SceneTagsRow);
+    final shown = [for (final n in names) if (find.descendant(of: row, matching: find.text('#$n')).hitTestable().evaluate().isNotEmpty) n];
+    expect(shown, isNotEmpty);
+    expect(shown, names.take(shown.length), reason: 'the first tags, in order');
+    expect(shown.length, lessThanOrEqualTo(5));
+    final more = find.text('+${names.length - shown.length}');
+    expect(more.hitTestable(), findsOneWidget);
+    expect(find.bySemanticsLabel('${names.length - shown.length} more tags'), findsOneWidget);
+    // The tags left out are neither shown nor read out.
+    expect(find.bySemanticsLabel('#ocean'), findsNothing);
+    // One line, within the screen.
+    final rowBox = tester.getRect(row);
+    expect(tester.getRect(more).right, lessThanOrEqualTo(rowBox.right));
+
+    await tester.tap(more);
+    await settle(tester);
+    expect(find.byType(SceneDescriptionSheet), findsOneWidget);
+    expect(inSheet(find.text('#ocean')), findsOneWidget, reason: 'the sheet lists all tags');
+    semantics.dispose();
+  });
+
+  testWidgets('the tags stay in one line with 2× text', (tester) async {
+    container.read(playQueueProvider.notifier).set(null);
+    await pumpDetails(tester, size: const Size(320, 640), textScale: 2);
+    expect(tester.takeException(), isNull, reason: 'no overflow');
+    final row = tester.getRect(find.byType(SceneTagsRow));
+    final first = tester.getRect(find.text('#outdoor'));
+    expect(row.right, lessThanOrEqualTo(320));
+    expect(first.height, greaterThan(30), reason: 'drawn at the larger size');
+    final more = find.textContaining(RegExp(r'^\+\d'));
+    expect(more.hitTestable(), findsOneWidget, reason: 'the rest behind "+N"');
+    expect((tester.getCenter(more.hitTestable()).dy - first.center.dy).abs(), lessThan(1), reason: 'same line');
   });
 
   testWidgets('"Up next" loads with placeholders instead of a spinner (HOME-2)', (tester) async {

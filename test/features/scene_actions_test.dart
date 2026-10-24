@@ -42,7 +42,10 @@ class FakeRepository implements StashRepository {
   }
 
   @override
-  Future<int> removeSceneO(String sceneId) async => --oCount;
+  Future<int> removeSceneO(String sceneId) async {
+    if (fail) throw const StashApiException('denied');
+    return --oCount;
+  }
 
   @override
   Future<PageResult<Tag>> findTags(TagQuery query, {int page = 1, int perPage = 24}) async => const PageResult(
@@ -194,11 +197,48 @@ void main() {
     semantics.dispose();
   });
 
-  testWidgets('the stars are full-size tap targets', (tester) async {
+  testWidgets('the stars spread over the sheet as large tap targets, with the value and "Remove rating"',
+      (tester) async {
+    tester.view.physicalSize = const Size(360, 780);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
     await pumpActions(tester);
     await openRating(tester, '3');
-    final button = find.ancestor(of: inSheet(find.byIcon(Icons.star_rounded)).first, matching: find.byType(IconButton));
-    expect(tester.getSize(button), const Size(48, 48));
+    expect(inSheet(find.text('3 of 5 stars')), findsOneWidget, reason: 'the current value');
+
+    final stars = find.descendant(of: find.byType(BottomSheet), matching: find.byType(IconButton));
+    expect(stars, findsNWidgets(5));
+    for (final star in stars.evaluate()) {
+      final size = (star.renderObject! as RenderBox).size;
+      expect(size.width, greaterThanOrEqualTo(48));
+      expect(size.height, greaterThanOrEqualTo(48));
+    }
+    final span = tester.getTopRight(stars.last).dx - tester.getTopLeft(stars.first).dx;
+    expect(span, greaterThanOrEqualTo(0.8 * 360), reason: 'the stars use the full width');
+
+    await tester.tap(inSheet(find.text('Remove rating')));
+    await tester.pumpAndSettle();
+    expect(find.byType(BottomSheet), findsNothing, reason: 'closed');
+    expect(repo.ratings, [null]);
+    expect(find.text('Rate'), findsOneWidget);
+
+    await openRating(tester, 'Rate');
+    expect(inSheet(find.text('No rating')), findsOneWidget);
+    final remove = find.ancestor(of: inSheet(find.text('Remove rating')), matching: find.byType(TextButton));
+    expect(tester.widget<TextButton>(remove).onPressed, isNull, reason: 'nothing to remove');
+  });
+
+  testWidgets('on a tablet the rating sheet keeps a sensible width', (tester) async {
+    tester.view.physicalSize = const Size(1200, 900);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+    await pumpActions(tester);
+    await openRating(tester, '3');
+    final stars = find.descendant(of: find.byType(BottomSheet), matching: find.byType(IconButton));
+    final span = Rect.fromPoints(tester.getTopLeft(stars.first), tester.getBottomRight(stars.last));
+    expect(span.width, lessThanOrEqualTo(640));
+    expect(span.width, greaterThan(400), reason: 'still spread out');
+    expect(span.center.dx, closeTo(600, 1), reason: 'centered');
   });
 
   testWidgets('watch later toggles', (tester) async {
@@ -236,25 +276,85 @@ void main() {
     expect(find.byType(SceneEditPage), findsOneWidget);
   });
 
-  testWidgets('O button counts up and offers undo', (tester) async {
+  Future<void> openO(WidgetTester tester, String label) async {
+    await tester.tap(find.text(label));
+    await tester.pumpAndSettle();
+    expect(inSheet(find.text('O-counter')), findsOneWidget);
+  }
+
+  testWidgets('the O button opens a counter with − and +; each saves right away', (tester) async {
     await pumpActions(tester);
-    expect(find.bySemanticsLabel('O-counter 3, add one'), findsOneWidget);
-    await tester.tap(find.text('O · 3'));
+    expect(find.bySemanticsLabel('O-counter: 3'), findsOneWidget, reason: 'the button says the count');
+    await openO(tester, 'O · 3');
+    expect(repo.oCount, 3, reason: 'opening it changes nothing');
+    expect(inSheet(find.text('3')), findsOneWidget);
+
+    final add = find.byTooltip('Add O');
+    final remove = find.byTooltip('Remove one O');
+    for (final button in [add, remove]) {
+      expect(tester.getSize(button).width, greaterThanOrEqualTo(48));
+      expect(tester.getSize(button).height, greaterThanOrEqualTo(48));
+    }
+
+    await tester.tap(add);
     await tester.pumpAndSettle();
-    expect(find.text('O · 4'), findsOneWidget);
-    await tester.tap(find.text('Undo'));
+    expect(repo.oCount, 4);
+    expect(inSheet(find.text('4')), findsOneWidget);
+    expect(find.text('O · 4'), findsOneWidget, reason: 'the pill follows');
+    expect(find.text('Undo'), findsNothing, reason: 'no undo snack bar anymore');
+
+    await tester.tap(remove);
     await tester.pumpAndSettle();
-    expect(repo.oCount, 3);
+    await tester.tap(remove);
+    await tester.pumpAndSettle();
+    await tester.tap(remove);
+    await tester.pumpAndSettle();
+    expect(repo.oCount, 1);
+    await tester.tap(remove);
+    await tester.pumpAndSettle();
+    expect(repo.oCount, 0);
+    expect(inSheet(find.text('0')), findsOneWidget);
+    final minus = find.ancestor(of: find.byIcon(Icons.remove), matching: find.byType(IconButton));
+    expect(tester.widget<IconButton>(minus).onPressed, isNull, reason: '− is disabled at 0');
   });
 
-  testWidgets('the O snack bar goes away by itself', (tester) async {
+  testWidgets('the O-counter is one adjustable element for screen readers', (tester) async {
+    final semantics = tester.ensureSemantics();
     await pumpActions(tester);
-    await tester.tap(find.text('O · 3'));
+    await openO(tester, 'O · 3');
+    final counter = find.bySemanticsLabel('O-counter').last;
+    expect(
+      tester.getSemantics(counter),
+      matchesSemantics(
+        label: 'O-counter',
+        value: '3',
+        increasedValue: '4',
+        decreasedValue: '2',
+        hasIncreaseAction: true,
+        hasDecreaseAction: true,
+      ),
+    );
+    expect(find.bySemanticsLabel('Add O'), findsNothing, reason: 'the buttons are hidden from screen readers');
+
+    tester.semantics.increase(find.semantics.byLabel('O-counter').last);
     await tester.pumpAndSettle();
-    expect(find.text('Undo'), findsOneWidget);
-    await tester.pump(const Duration(seconds: 5));
+    expect(repo.oCount, 4);
+    expect(tester.getSemantics(counter).value, '4');
+    tester.semantics.decrease(find.semantics.byLabel('O-counter').last);
     await tester.pumpAndSettle();
-    expect(find.text('Undo'), findsNothing);
+    expect(repo.oCount, 3);
+    semantics.dispose();
+  });
+
+  testWidgets('a failed O save is reverted and shown as a snack bar', (tester) async {
+    await pumpActions(tester);
+    await openO(tester, 'O · 3');
+    repo.fail = true;
+    await tester.tap(find.byTooltip('Add O'));
+    await tester.pumpAndSettle();
+    expect(find.byType(BottomSheet), findsNothing, reason: 'closed, so the snack bar shows');
+    expect(find.textContaining("Couldn't save"), findsOneWidget);
+    expect(find.text('O · 3'), findsOneWidget, reason: 'reverted');
   });
 
   testWidgets('adding a marker requires a tag and uses the player position', (tester) async {

@@ -20,6 +20,7 @@ import 'player_providers.dart';
 import 'player_transition.dart';
 import 'scene_actions.dart';
 import 'scene_description.dart';
+import 'scene_tags_row.dart';
 import '../../l10n/l10n.dart';
 
 /// Width / height of [scene]'s video, updated once the player knows the
@@ -553,6 +554,11 @@ class _SceneInfo extends ConsumerWidget {
               ],
             ),
           ),
+        // The first tags; "+N" opens the description sheet with all of them.
+        Padding(
+          padding: const EdgeInsets.only(top: AppSpacing.xs),
+          child: SceneTagsRow(scene: scene),
+        ),
         if (details != null && details.markers.isNotEmpty) ChapterList(details: details),
         const SizedBox(height: AppSpacing.s),
       ],

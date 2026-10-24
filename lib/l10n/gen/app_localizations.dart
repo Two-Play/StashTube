@@ -1832,6 +1832,18 @@ abstract class AppLocalizations {
   /// **'...more'**
   String get showMore;
 
+  /// No description provided for @moreTags.
+  ///
+  /// In en, this message translates to:
+  /// **'+{count}'**
+  String moreTags(int count);
+
+  /// No description provided for @moreTagsSemantics.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 more tag} other{{count} more tags}}'**
+  String moreTagsSemantics(int count);
+
   /// No description provided for @showDescription.
   ///
   /// In en, this message translates to:
@@ -1919,8 +1931,20 @@ abstract class AppLocalizations {
   /// No description provided for @oCounterSemantics.
   ///
   /// In en, this message translates to:
-  /// **'O-counter {count}, add one'**
+  /// **'O-counter: {count}'**
   String oCounterSemantics(int count);
+
+  /// No description provided for @oCounterTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'O-counter'**
+  String get oCounterTitle;
+
+  /// No description provided for @removeO.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove one O'**
+  String get removeO;
 
   /// No description provided for @undo.
   ///
@@ -2426,6 +2450,54 @@ abstract class AppLocalizations {
   /// **'Modified'**
   String get fileModified;
 
+  /// Tooltip of the image viewer's info button and title of its sheet.
+  ///
+  /// In en, this message translates to:
+  /// **'Image info'**
+  String get imageInfo;
+
+  /// No description provided for @imagePhotographer.
+  ///
+  /// In en, this message translates to:
+  /// **'Photographer'**
+  String get imagePhotographer;
+
+  /// No description provided for @imageDimensions.
+  ///
+  /// In en, this message translates to:
+  /// **'Dimensions'**
+  String get imageDimensions;
+
+  /// No description provided for @imageOCounter.
+  ///
+  /// In en, this message translates to:
+  /// **'O-counter'**
+  String get imageOCounter;
+
+  /// No description provided for @imageTags.
+  ///
+  /// In en, this message translates to:
+  /// **'Tags'**
+  String get imageTags;
+
+  /// No description provided for @imageGalleries.
+  ///
+  /// In en, this message translates to:
+  /// **'Galleries'**
+  String get imageGalleries;
+
+  /// When the image was added to Stash.
+  ///
+  /// In en, this message translates to:
+  /// **'Added'**
+  String get imageCreated;
+
+  /// No description provided for @imageUpdated.
+  ///
+  /// In en, this message translates to:
+  /// **'Updated'**
+  String get imageUpdated;
+
   /// No description provided for @copyPath.
   ///
   /// In en, this message translates to:
@@ -2797,6 +2869,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Shorts'**
   String get channelTabShorts;
+
+  /// No description provided for @channelTabMarkers.
+  ///
+  /// In en, this message translates to:
+  /// **'Markers'**
+  String get channelTabMarkers;
 
   /// No description provided for @channelTabImages.
   ///

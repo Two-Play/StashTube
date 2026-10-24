@@ -7,15 +7,19 @@ import 'package:stash_app_mobile/core/config/server_config.dart';
 import 'package:stash_app_mobile/data/models/gallery.dart';
 import 'package:stash_app_mobile/data/models/image_item.dart';
 import 'package:stash_app_mobile/data/models/list_queries.dart';
+import 'package:stash_app_mobile/data/models/marker.dart';
 import 'package:stash_app_mobile/data/models/page_result.dart';
 import 'package:stash_app_mobile/data/models/performer.dart';
 import 'package:stash_app_mobile/data/models/performer_profile.dart';
 import 'package:stash_app_mobile/data/models/saved_filter.dart';
 import 'package:stash_app_mobile/data/models/scene.dart';
+import 'package:stash_app_mobile/data/models/tag.dart';
 import 'package:stash_app_mobile/data/repositories/stash_repository.dart';
 import 'package:stash_app_mobile/features/channel/channel_tabs.dart';
 import 'package:stash_app_mobile/features/library/galleries_tab.dart';
+import 'package:stash_app_mobile/features/library/markers_tab.dart';
 import 'package:stash_app_mobile/features/performers/performer_page.dart';
+import 'package:stash_app_mobile/features/player/player_providers.dart';
 import 'package:stash_app_mobile/features/shell/navigation.dart';
 import 'package:stash_app_mobile/features/shorts/shorts_feed.dart';
 import 'package:stash_app_mobile/features/shorts/shorts_page.dart';
@@ -29,16 +33,20 @@ class _Repo implements StashRepository {
     this.profile = const PerformerProfile(),
     this.urls = const [],
     this.shorts = 0,
+    this.markers = 0,
   });
 
   final Performer performer;
   final PerformerProfile profile;
   final List<String> urls;
   final int shorts;
+  final int markers;
 
   final sceneQueries = <SceneQuery>[];
   final imageQueries = <ImageQuery>[];
   final galleryQueries = <GalleryQuery>[];
+  final markerQueries = <MarkerQuery>[];
+  final markerCountQueries = <MarkerQuery>[];
 
   @override
   Future<Performer> findPerformer(String id) async => performer;
@@ -84,6 +92,31 @@ class _Repo implements StashRepository {
   }
 
   @override
+  Future<int> countMarkers(MarkerQuery query) async {
+    markerCountQueries.add(query);
+    return markers;
+  }
+
+  @override
+  Future<PageResult<Marker>> findMarkers(MarkerQuery query, {int page = 1, int perPage = 24}) async {
+    markerQueries.add(query);
+    return PageResult(
+      items: [
+        if (page == 1)
+          for (var i = 0; i < markers; i++)
+            Marker(
+              id: 'm$i',
+              title: 'Moment $i',
+              seconds: 60.0 + i,
+              tag: const Tag(id: 't1', name: 'Outdoor'),
+              scene: Scene(id: 'v$i', title: 'Video $i', streamUrl: 'http://s/v$i'),
+            ),
+      ],
+      totalCount: markers,
+    );
+  }
+
+  @override
   Future<List<SavedFilter>> savedSceneFilters() async => const [];
 
   @override
@@ -92,6 +125,16 @@ class _Repo implements StashRepository {
 
 /// Records pushed routes without building them (the shorts player needs
 /// native players).
+class _Playing extends NowPlayingNotifier {
+  final played = <(String, double?)>[];
+
+  @override
+  Scene? build() => null;
+
+  @override
+  void play(Scene scene, {double? at}) => played.add((scene.id, at));
+}
+
 class _Pushes extends NavigatorObserver {
   final routes = <Route<dynamic>>[];
 
@@ -102,7 +145,7 @@ class _Pushes extends NavigatorObserver {
 void main() {
   late SharedPreferences prefs;
 
-  Future<ProviderContainer> pump(WidgetTester tester, _Repo repo, {_Pushes? observer}) async {
+  Future<ProviderContainer> pump(WidgetTester tester, _Repo repo, {_Pushes? observer, _Playing? playing}) async {
     prefs = (await tester.runAsync(() async {
       SharedPreferences.setMockInitialValues({});
       return SharedPreferences.getInstance();
@@ -111,6 +154,7 @@ void main() {
       ...testServer,
       sharedPreferencesProvider.overrideWithValue(prefs),
       stashRepositoryProvider.overrideWithValue(repo),
+      if (playing != null) nowPlayingProvider.overrideWith(() => playing),
     ]);
     addTearDown(container.dispose);
     await tester.pumpWidget(UncontrolledProviderScope(
@@ -138,6 +182,7 @@ void main() {
     expect(tab('Videos'), findsOneWidget);
     expect(tab('About'), findsOneWidget);
     expect(tab('Shorts'), findsNothing);
+    expect(tab('Markers'), findsNothing);
     expect(tab('Images'), findsNothing);
     expect(tab('Galleries'), findsNothing);
     expect(find.text('Video 0'), findsOneWidget);
@@ -148,10 +193,11 @@ void main() {
     final repo = _Repo(
       profile: const PerformerProfile(counts: ChannelMediaCounts(images: 40, galleries: 1)),
       shorts: 3,
+      markers: 2,
     );
     await pump(tester, repo);
     expect([for (final t in tester.widget<TabBar>(find.byType(TabBar)).tabs) (t as Tab).text],
-        ['Videos', 'Shorts', 'Images', 'Galleries', 'About']);
+        ['Videos', 'Shorts', 'Markers', 'Images', 'Galleries', 'About']);
 
     await tester.tap(tab('Images'));
     await tester.pumpAndSettle();
@@ -169,6 +215,33 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.byType(ChannelShortTile), findsNWidgets(3));
     expect(find.text('Short 2'), findsOneWidget);
+  });
+
+  testWidgets('markers lists the markers of the performer\'s scenes and plays from one', (tester) async {
+    final repo = _Repo(markers: 2);
+    final playing = _Playing();
+    await pump(tester, repo, playing: playing);
+    expect(repo.markerCountQueries.single.performerId, '1');
+
+    await tester.tap(tab('Markers'));
+    await tester.pumpAndSettle();
+    final query = repo.markerQueries.single;
+    expect(query.performerId, '1');
+    expect(query.sort, MarkerSort.recentlyAdded);
+    expect(query.toMarkerFilter(), {
+      'performers': {'value': ['1'], 'modifier': 'INCLUDES'},
+    });
+    expect(find.text('2 markers'), findsOneWidget);
+    expect(find.byType(MarkerTile), findsNWidgets(2));
+
+    await tester.tap(find.text('Moment 1'));
+    expect(playing.played, [('v1', 61.0)]);
+
+    // The sort chips keep the performer.
+    await tester.tap(find.text('A–Z'));
+    await tester.pumpAndSettle();
+    expect(repo.markerQueries.last.sort, MarkerSort.title);
+    expect(repo.markerQueries.last.performerId, '1');
   });
 
   testWidgets('a short opens the shorts player on that short of the same feed', (tester) async {
