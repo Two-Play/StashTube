@@ -18,7 +18,8 @@ import 'player_providers.dart';
 /// Seek bar that shows a preview frame above the finger while scrubbing
 /// (from Stash's sprite thumbnails, if generated) plus the target time and
 /// chapter. Chapters (scene markers) split the bar into segments and are
-/// marked with dots; scrubbing near one snaps onto it. Seeks
+/// marked with dots; ranged markers (newer Stash) tint their part of the
+/// track. Scrubbing near a marker's start or end snaps onto it. Seeks
 /// once on release, like YouTube.
 ///
 /// The thumbnails load lazily: the WebVTT once the bar is [visible] or
@@ -71,7 +72,8 @@ class _PreviewSeekBarState extends ConsumerState<PreviewSeekBar> {
   double? _drag;
   double _barWidth = 1;
 
-  /// Scene markers as fractions of the duration, from the last build.
+  /// Scene marker starts and range ends as fractions of the duration, from
+  /// the last build: where scrubbing snaps.
   List<double> _markerFractions = const [];
 
   /// The marker the drag currently snaps to.
@@ -187,10 +189,18 @@ class _PreviewSeekBarState extends ConsumerState<PreviewSeekBar> {
     // Like the thumbnails, only once the bar is shown or touched.
     final details = _loadThumbnails ? ref.watch(sceneDetailsProvider(widget.sceneId)).value : null;
     final markers = details?.markers ?? const <SceneMarker>[];
-    _markerFractions = [
+    double fraction(double seconds) => (seconds * 1000 / _totalMs).clamp(0.0, 1.0);
+    final points = [
       if (_totalMs > 0)
-        for (final m in markers) (m.seconds * 1000 / _totalMs).clamp(0.0, 1.0),
+        for (final m in markers)
+          if (!m.isRange) fraction(m.seconds),
     ];
+    final ranges = [
+      if (_totalMs > 0)
+        for (final m in markers)
+          if (m.endSeconds case final end?) (fraction(m.seconds), fraction(end)),
+    ];
+    _markerFractions = [...points, for (final (start, end) in ranges) ...[start, end]];
 
     return OverlayPortal(
       controller: _overlay,
@@ -217,12 +227,14 @@ class _PreviewSeekBarState extends ConsumerState<PreviewSeekBar> {
                 height: 28,
                 width: double.infinity,
                 child: CustomPaint(
-                  painter: _SeekBarPainter(
+                  painter: SeekBarPainter(
                     played: played,
                     buffered: remote == null ? _fractionOf(_buffer) : 0,
                     dragging: _drag != null,
                     playedColor: colors.primary,
-                    chapters: _markerFractions,
+                    rangeColor: colors.tertiary,
+                    chapters: points,
+                    ranges: ranges,
                   ),
                 ),
               ),
@@ -358,25 +370,39 @@ class SpriteFrame extends StatelessWidget {
   }
 }
 
-class _SeekBarPainter extends CustomPainter {
-  _SeekBarPainter({
+/// Paints [PreviewSeekBar]'s track; public for tests.
+@visibleForTesting
+class SeekBarPainter extends CustomPainter {
+  SeekBarPainter({
     required this.played,
     required this.buffered,
     required this.dragging,
     required this.playedColor,
+    Color? rangeColor,
     this.chapters = const [],
-  });
+    this.ranges = const [],
+  }) : rangeColor = rangeColor ?? playedColor;
 
   final double played;
   final double buffered;
   final bool dragging;
   final Color playedColor;
 
-  /// Chapter starts (scene markers) as fractions of the duration: gaps in
-  /// the track plus a dot each.
+  /// Tint of the ranged markers' parts of the track.
+  final Color rangeColor;
+
+  /// Moments (scene markers without an end) as fractions of the duration:
+  /// gaps in the track plus a dot each.
   final List<double> chapters;
 
-  List<double> get markers => [for (final c in chapters) if (c >= 0 && c <= 1) c];
+  /// Ranged markers as (start, end) fractions: a tinted segment of the track
+  /// with a gap at either end and a dot at the start.
+  final List<(double, double)> ranges;
+
+  List<double> get markers => [
+    for (final c in [...chapters, for (final (start, _) in ranges) start])
+      if (c >= 0 && c <= 1) c,
+  ];
 
   static const _chapterGap = 2.0;
 
@@ -398,10 +424,18 @@ class _SeekBarPainter extends CustomPainter {
       RRect.fromRectAndRadius(Rect.fromLTWH(0, track.top, size.width * played, trackHeight), radius),
       Paint()..color = playedColor,
     );
+    // Ranges over the track, slightly taller, translucent so played and
+    // buffered still show through.
+    final rangePaint = Paint()..color = rangeColor.withValues(alpha: 0.55);
+    for (final (start, end) in ranges) {
+      if (end <= start) continue;
+      final rect = Rect.fromLTRB(size.width * start, track.top - 1, size.width * end, track.bottom + 1);
+      canvas.drawRect(rect, rangePaint);
+    }
     final gap = Paint()..blendMode = BlendMode.clear;
-    for (final c in chapters) {
+    for (final c in [...chapters, for (final (start, end) in ranges) ...[start, end]]) {
       if (c <= 0 || c >= 1) continue;
-      canvas.drawRect(Rect.fromLTWH(size.width * c - _chapterGap / 2, track.top, _chapterGap, trackHeight), gap);
+      canvas.drawRect(Rect.fromLTWH(size.width * c - _chapterGap / 2, track.top - 1, _chapterGap, trackHeight + 2), gap);
     }
     canvas.restore();
     // Markers as dots on the track, so they can be found without scrubbing.
@@ -416,10 +450,12 @@ class _SeekBarPainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(_SeekBarPainter old) =>
+  bool shouldRepaint(SeekBarPainter old) =>
       old.played != played ||
       old.buffered != buffered ||
       old.dragging != dragging ||
       old.playedColor != playedColor ||
-      !listEquals(old.chapters, chapters);
+      old.rangeColor != rangeColor ||
+      !listEquals(old.chapters, chapters) ||
+      !listEquals(old.ranges, ranges);
 }

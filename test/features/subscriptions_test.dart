@@ -103,7 +103,7 @@ void main() {
 
   testWidgets('without favorites a hint explains how to subscribe', (tester) async {
     await pumpPage(tester, _Repo(favorites: const []));
-    expect(find.text('No subscriptions yet'), findsOneWidget);
+    expect(find.text('No favorites yet'), findsOneWidget);
     expect(find.text('Mark performers as favorites to see their newest scenes here.'), findsOneWidget);
     expect(find.text('New with Anna'), findsNothing);
   });

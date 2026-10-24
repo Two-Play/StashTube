@@ -1,7 +1,9 @@
 import 'dart:async';
 import 'dart:math' as math;
 
+import 'package:flutter/gestures.dart' show kDoubleTapSlop, kDoubleTapTimeout, kTouchSlop;
 import 'package:flutter/material.dart';
+import 'package:flutter/semantics.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:media_kit/media_kit.dart';
 
@@ -28,7 +30,10 @@ import '../../l10n/l10n.dart';
 /// removed our seek bar mid-drag).
 ///
 /// * tap: show/hide; auto-hide after [hideAfter] while playing
-/// * double tap on the left/right third: seek ∓/± 10 s
+/// * double tap on the left/right third: seek ∓/± 5 s, and every further
+///   tap on that side within [seekSequenceWindow] skips further, like
+///   YouTube: 5, 10, 20, 30 s … in total ([seekSequenceTotal]); also while
+///   casting, where the TV seeks
 /// * hold: double speed until released
 /// * pinch with two fingers: zoom into the video ([videoZoomProvider]); it
 ///   stays until zoomed out or another scene starts
@@ -65,7 +70,15 @@ class StashVideoControls extends ConsumerStatefulWidget {
   final List<Widget> topActions;
   final Duration hideAfter;
 
-  static const seekStep = Duration(seconds: 10);
+  /// The first jump of a double tap; the gesture tips name it.
+  static const firstSeekStep = Duration(seconds: 5);
+
+  /// How long a seek sequence waits for the next tap on its side.
+  static const seekSequenceWindow = Duration(milliseconds: 700);
+
+  /// The total jump after [taps] taps of a seek sequence: 5, 10, 20, 30 s …
+  static Duration seekSequenceTotal(int taps) =>
+      taps <= 1 ? firstSeekStep : Duration(seconds: 10 * (taps - 1));
 
   @override
   ConsumerState<StashVideoControls> createState() => _StashVideoControlsState();
@@ -75,7 +88,6 @@ class _StashVideoControlsState extends ConsumerState<StashVideoControls> {
   bool _visible = false;
   bool _interacting = false;
   Timer? _hideTimer;
-  Offset? _doubleTapPosition;
 
   /// The speed before holding for 2×; null while not holding.
   double? _rateBeforeHold;
@@ -165,14 +177,31 @@ class _StashVideoControlsState extends ConsumerState<StashVideoControls> {
   /// The player being held at 2×, kept for [dispose] (no `ref` there).
   Player? _heldPlayer;
 
-  /// -1 = rewound, 1 = skipped forward; shown briefly as feedback.
-  int _seekFeedback = 0;
-  Timer? _feedbackTimer;
+  /// The running seek sequence: -1 = back, 1 = forward, 0 = none. Its
+  /// [_seekTaps] taps jump [StashVideoControls.seekSequenceTotal] from
+  /// [_seekBase], the position when it started.
+  int _seekDirection = 0;
+  int _seekTaps = 0;
+  Duration _seekBase = Duration.zero;
+  Duration? _lastSeekTarget;
+  Timer? _seekTimer;
+
+  /// Taps are tracked from raw pointers, so a tap that extends a sequence
+  /// counts right away instead of after the double-tap timeout.
+  int? _tapPointer;
+  Offset _tapDownPosition = Offset.zero;
+  Timer? _tapHoldTimer;
+
+  /// The previous tap while it can still become a double tap.
+  ({int side, Offset position})? _lastTap;
+  Timer? _lastTapTimer;
 
   @override
   void dispose() {
     _hideTimer?.cancel();
-    _feedbackTimer?.cancel();
+    _seekTimer?.cancel();
+    _tapHoldTimer?.cancel();
+    _lastTapTimer?.cancel();
     // Minimized or closed while holding: the release never arrives here, and
     // mpv would keep 2× for every following scene.
     final rate = _rateBeforeHold;
@@ -201,6 +230,7 @@ class _StashVideoControlsState extends ConsumerState<StashVideoControls> {
   void _lock() {
     Haptics.medium();
     _endHold();
+    _endSeekSequence();
     _pointers.clear();
     _hideTimer?.cancel();
     setState(() {
@@ -248,29 +278,162 @@ class _StashVideoControlsState extends ConsumerState<StashVideoControls> {
     _scheduleHide();
   }
 
-  void _onDoubleTap() {
-    final position = _doubleTapPosition;
-    if (position == null) return;
-    final width = context.size?.width ?? 0;
-    final player = ref.read(playerProvider);
-    final int direction;
-    if (position.dx < width / 3) {
-      direction = -1;
-    } else if (position.dx > width * 2 / 3) {
-      direction = 1;
-    } else {
+  void _onTapPointerDown(PointerDownEvent e) {
+    if (_tapPointer != null) {
+      // A second finger: no tap.
+      _cancelTapPointer();
       return;
     }
-    final target = player.state.position + StashVideoControls.seekStep * direction;
-    final max = player.state.duration;
-    player.seek(target < Duration.zero ? Duration.zero : (max > Duration.zero && target > max ? max : target));
-
-    _feedbackTimer?.cancel();
-    setState(() => _seekFeedback = direction);
-    _feedbackTimer = Timer(const Duration(milliseconds: 600), () {
-      if (mounted) setState(() => _seekFeedback = 0);
-    });
+    _tapPointer = e.pointer;
+    _tapDownPosition = e.localPosition;
+    // Held this long, it is a hold, not a tap.
+    _tapHoldTimer = Timer(kHoldDelay, _cancelTapPointer);
   }
+
+  void _onTapPointerMove(PointerMoveEvent e) {
+    if (e.pointer == _tapPointer && (e.localPosition - _tapDownPosition).distance > kTouchSlop) _cancelTapPointer();
+  }
+
+  void _cancelTapPointer() {
+    _tapHoldTimer?.cancel();
+    _tapPointer = null;
+  }
+
+  /// A tap on the video ([side] -1 = left third, 1 = right third, 0 = the
+  /// middle); null for a pointer that wasn't a tap.
+  int? _tapSide(PointerUpEvent e, {int? side}) {
+    if (e.pointer != _tapPointer) return null;
+    _cancelTapPointer();
+    if (_pinching) return null;
+    if (side != null) return side;
+    final width = context.size?.width ?? 0;
+    final dx = e.localPosition.dx;
+    return dx < width / 3 ? -1 : (dx > width * 2 / 3 ? 1 : 0);
+  }
+
+  /// Double tap on a side starts a seek sequence; while it runs, every
+  /// single tap on that side extends it, a tap on the other side starts a
+  /// new one there, and a tap in the middle ends it (and toggles the
+  /// controls as usual).
+  void _onSeekTap(int side, Offset position) {
+    if (_locked || _tipsShowing) return;
+    if (_seekDirection != 0) {
+      _clearLastTap();
+      if (side == 0) {
+        _endSeekSequence();
+      } else if (side == _seekDirection) {
+        _extendSeekSequence();
+      } else {
+        _startSeekSequence(side);
+      }
+      return;
+    }
+    final last = _lastTap;
+    if (side != 0 && last != null && last.side == side && (position - last.position).distance <= kDoubleTapSlop) {
+      _clearLastTap();
+      _startSeekSequence(side);
+      return;
+    }
+    _lastTap = (side: side, position: position);
+    _lastTapTimer?.cancel();
+    _lastTapTimer = Timer(kDoubleTapTimeout, _clearLastTap);
+  }
+
+  void _clearLastTap() {
+    _lastTapTimer?.cancel();
+    _lastTap = null;
+  }
+
+  bool get _casting => ref.read(castConnectionProvider).value != null;
+
+  void _startSeekSequence(int direction) {
+    _seekBase = _casting
+        ? ref.read(castPlaybackProvider).value?.position ?? Duration.zero
+        : ref.read(playerProvider).state.position;
+    _seekDirection = direction;
+    _seekTaps = 0;
+    _lastSeekTarget = null;
+    _extendSeekSequence();
+  }
+
+  void _extendSeekSequence() {
+    final l = context.l10n;
+    _seekTaps++;
+    final total = StashVideoControls.seekSequenceTotal(_seekTaps);
+    final casting = _casting;
+    final player = ref.read(playerProvider);
+    // While casting, the player doesn't know the length: take the scene's.
+    final max = casting ? Duration(milliseconds: (widget.scene.duration * 1000).round()) : player.state.duration;
+    var target = _seekBase + total * _seekDirection;
+    if (target < Duration.zero) target = Duration.zero;
+    if (max > Duration.zero && target > max) target = max;
+    // Seeks right away, so the picture follows every tap; from the start
+    // position, so mpv's lagging position doesn't add up errors.
+    if (target != _lastSeekTarget) {
+      _lastSeekTarget = target;
+      if (casting) {
+        unawaited(ref.read(castServiceProvider).seek(target));
+      } else {
+        unawaited(player.seek(target));
+      }
+    }
+    Haptics.selection();
+    final seconds = total.inSeconds;
+    unawaited(SemanticsService.sendAnnouncement(
+      View.of(context),
+      _seekDirection > 0 ? l.seekForwardSeconds(seconds) : l.seekBackSeconds(seconds),
+      Directionality.of(context),
+    ));
+    _seekTimer?.cancel();
+    _seekTimer = Timer(StashVideoControls.seekSequenceWindow, _endSeekSequence);
+    setState(() {});
+  }
+
+  void _endSeekSequence() {
+    _seekTimer?.cancel();
+    if (_seekDirection == 0) return;
+    if (mounted) setState(() => _seekDirection = 0);
+  }
+
+  /// The bubble of the running seek sequence, on its side.
+  Widget _seekFeedback() => IgnorePointer(
+        child: ExcludeSemantics(
+          child: Align(
+            alignment: _seekDirection < 0 ? const Alignment(-0.6, 0) : const Alignment(0.6, 0),
+            child: _SeekFeedback(
+              forward: _seekDirection > 0,
+              seconds: StashVideoControls.seekSequenceTotal(_seekTaps).inSeconds,
+              taps: _seekTaps,
+            ),
+          ),
+        ),
+      );
+
+  /// While casting: tap areas left and right of [CastingControls]' buttons,
+  /// so double taps seek on the TV as well.
+  Widget _castSeekZones() => LayoutBuilder(builder: (context, constraints) {
+        // CastingControls' middle row: two 48 dp buttons, the 64 dp play
+        // button and two gaps; the zones stay clear of it, of the top bar
+        // and of the timeline.
+        const buttonRow = 48 * 2 + 64 + AppSpacing.l * 2;
+        final width = math.max(0.0, math.min(constraints.maxWidth / 3, (constraints.maxWidth - buttonRow) / 2 - AppSpacing.s));
+        Widget zone(int side) => Listener(
+              behavior: HitTestBehavior.opaque,
+              onPointerDown: _onTapPointerDown,
+              onPointerMove: _onTapPointerMove,
+              onPointerCancel: (_) => _cancelTapPointer(),
+              onPointerUp: (e) {
+                final tapped = _tapSide(e, side: side);
+                if (tapped != null) _onSeekTap(tapped, e.localPosition);
+              },
+            );
+        return Stack(
+          children: [
+            Positioned(left: 0, top: 56, bottom: 88, width: width, child: zone(-1)),
+            Positioned(right: 0, top: 56, bottom: 88, width: width, child: zone(1)),
+          ],
+        );
+      });
 
   void _startHold() {
     final player = ref.read(playerProvider);
@@ -318,7 +481,16 @@ class _StashVideoControlsState extends ConsumerState<StashVideoControls> {
 
     // While casting, the video plays on the TV: show remote controls instead.
     final casting = ref.watch(castConnectionProvider).value;
-    if (casting != null) return CastingControls(connection: casting, showMinimize: !fullscreen);
+    if (casting != null) {
+      return Stack(
+        fit: StackFit.expand,
+        children: [
+          CastingControls(connection: casting, showMinimize: !fullscreen),
+          _castSeekZones(),
+          if (_seekDirection != 0) _seekFeedback(),
+        ],
+      );
+    }
     final error = ref.watch(playbackErrorProvider);
 
     // Layers: gestures at the bottom, a purely visual scrim, buttons on top.
@@ -338,25 +510,35 @@ class _StashVideoControlsState extends ConsumerState<StashVideoControls> {
           HoldDetector(
             onHoldStart: _startHold,
             onHoldEnd: _endHold,
-            child: GestureDetector(
-              behavior: HitTestBehavior.opaque,
-              onTap: () => _visible ? _hide() : _show(),
-              onDoubleTapDown: (d) => _doubleTapPosition = d.localPosition,
-              onDoubleTap: _onDoubleTap,
-              // Claim vertical drags so the miniplayer's own pan doesn't fight
-              // with DragToMinimize, which handles the swipe-down from raw
-              // pointer events.
-              onVerticalDragStart: (_) {},
-              onVerticalDragUpdate: (_) {},
-            ),
-          ),
-          if (_seekFeedback != 0)
-            IgnorePointer(
-              child: Align(
-                alignment: _seekFeedback < 0 ? const Alignment(-0.6, 0) : const Alignment(0.6, 0),
-                child: _SeekFeedback(forward: _seekFeedback > 0),
+            // Seek taps from raw pointers (see _onSeekTap); only taps that
+            // reach the gesture layer, not the buttons above it.
+            child: Listener(
+              onPointerDown: _onTapPointerDown,
+              onPointerMove: _onTapPointerMove,
+              onPointerCancel: (_) => _cancelTapPointer(),
+              onPointerUp: (e) {
+                final side = _tapSide(e);
+                if (side != null) _onSeekTap(side, e.localPosition);
+              },
+              child: GestureDetector(
+                behavior: HitTestBehavior.opaque,
+                // Taps of a seek sequence don't toggle the controls.
+                onTap: () {
+                  if (_seekDirection != 0) return;
+                  _visible ? _hide() : _show();
+                },
+                // Seeking is handled by _onSeekTap; this only makes a single
+                // tap wait, so the first tap of a double tap doesn't toggle.
+                onDoubleTap: () {},
+                // Claim vertical drags so the miniplayer's own pan doesn't
+                // fight with DragToMinimize, which handles the swipe-down
+                // from raw pointer events.
+                onVerticalDragStart: (_) {},
+                onVerticalDragUpdate: (_) {},
               ),
             ),
+          ),
+          if (_seekDirection != 0) _seekFeedback(),
           if (_rateBeforeHold != null)
             IgnorePointer(
               child: Align(
@@ -509,7 +691,7 @@ class _StashVideoControlsState extends ConsumerState<StashVideoControls> {
           // Always there (empty without an error), so the tree stays the same.
           _PlaybackErrorOverlay(error: error, sceneId: widget.scene.id, onQuality: widget.onQuality),
           if (_tipsShowing)
-            GestureTipsOverlay(seekSeconds: StashVideoControls.seekStep.inSeconds, onDismiss: _dismissTips),
+            GestureTipsOverlay(seekSeconds: StashVideoControls.firstSeekStep.inSeconds, onDismiss: _dismissTips),
           // Always there (empty while unlocked), above the gestures and buttons.
           TouchLockLayer(locked: _locked && fullscreen, onUnlock: _unlock),
           if (_pinching)
@@ -689,28 +871,73 @@ class _TimeLabel extends StatelessWidget {
       );
 }
 
+/// The bubble of a seek sequence: the total jump, with a ripple and arrows
+/// that run again on every tap ([taps]); still with reduced motion.
 class _SeekFeedback extends StatelessWidget {
-  const _SeekFeedback({required this.forward});
+  const _SeekFeedback({required this.forward, required this.seconds, required this.taps});
 
   final bool forward;
+  final int seconds;
+  final int taps;
 
   @override
-  Widget build(BuildContext context) => DecoratedBox(
-        decoration: BoxDecoration(color: AppColors.of(context).videoScrimSoft, shape: BoxShape.circle),
-        child: Padding(
-          padding: const EdgeInsets.all(AppSpacing.l),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(forward ? Icons.fast_forward : Icons.fast_rewind, color: Colors.white),
-              Text(
-                '${StashVideoControls.seekStep.inSeconds} s',
-                style: const TextStyle(color: Colors.white, fontSize: AppTextSize.overlayLabel),
+  Widget build(BuildContext context) {
+    final animate = !MediaQuery.disableAnimationsOf(context);
+    final scrim = AppColors.of(context).videoScrimSoft;
+    return TweenAnimationBuilder<double>(
+      key: ValueKey(taps),
+      tween: Tween(begin: animate ? 0 : 1, end: 1),
+      duration: animate ? const Duration(milliseconds: 500) : Duration.zero,
+      builder: (context, t, _) {
+        // Each arrow lights up in turn, in the seek direction.
+        Widget arrow(int i) {
+          final lit = animate ? (1 - ((t * 3) - i - 0.5).abs()).clamp(0.0, 1.0) : 1.0;
+          return Opacity(
+            opacity: 0.35 + 0.65 * lit,
+            child: const Icon(Icons.play_arrow, color: Colors.white, size: 18),
+          );
+        }
+
+        final arrows = [for (var i = 0; i < 3; i++) arrow(i)];
+        return Stack(
+          alignment: Alignment.center,
+          children: [
+            if (animate)
+              Opacity(
+                opacity: (1 - t) * 0.6,
+                child: Transform.scale(
+                  scale: 1 + t * 0.6,
+                  child: DecoratedBox(
+                    decoration: BoxDecoration(color: scrim, shape: BoxShape.circle),
+                    child: const SizedBox.square(dimension: 96),
+                  ),
+                ),
               ),
-            ],
-          ),
-        ),
-      );
+            DecoratedBox(
+              decoration: BoxDecoration(color: scrim, shape: BoxShape.circle),
+              child: Padding(
+                padding: const EdgeInsets.all(AppSpacing.l),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    // Back: the arrows point left and run right to left.
+                    Transform.flip(
+                      flipX: !forward,
+                      child: Row(mainAxisSize: MainAxisSize.min, children: arrows),
+                    ),
+                    Text(
+                      context.l10n.durationSeconds(seconds),
+                      style: const TextStyle(color: Colors.white, fontSize: AppTextSize.overlayLabel),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
 }
 
 /// Playback speeds offered in [showSpeedSheet].

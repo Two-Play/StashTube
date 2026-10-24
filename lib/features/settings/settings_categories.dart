@@ -11,6 +11,7 @@ import '../../data/providers.dart';
 import '../../l10n/l10n.dart';
 import '../../widgets/animated_previews.dart';
 import '../auth/server_switcher.dart';
+import '../notifications/notifications.dart';
 import '../pip/pip.dart';
 import '../player/gesture_hints.dart';
 import '../player/lock_screen.dart';
@@ -436,7 +437,10 @@ class PrivacySettingsPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) =>
-      SettingsSubPage(title: context.l10n.sectionPrivacy, children: const [_SecuritySettings()]);
+      SettingsSubPage(
+        title: context.l10n.sectionPrivacy,
+        children: const [_SecuritySettings(), NotificationSettingsSection()],
+      );
 }
 
 class AboutSettingsPage extends StatelessWidget {

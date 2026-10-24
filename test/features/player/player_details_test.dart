@@ -229,7 +229,7 @@ void main() {
     final header = find.text('More from Some Studio');
     expect(header, findsOneWidget);
     expect(tester.getBottomLeft(header).dy, lessThan(780));
-    expect(find.text('Chapters'), findsOneWidget, reason: 'a typical scene, with chapters');
+    expect(find.text('Markers'), findsOneWidget, reason: 'a typical scene, with chapters');
   });
 
   testWidgets('the first tags show under the actions; a tag opens its page', (tester) async {

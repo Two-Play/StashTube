@@ -263,7 +263,7 @@ abstract class AppLocalizations {
   /// No description provided for @tabSubscriptions.
   ///
   /// In en, this message translates to:
-  /// **'Subscriptions'**
+  /// **'Favorites'**
   String get tabSubscriptions;
 
   /// No description provided for @tabLibrary.
@@ -433,6 +433,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Marker at {time}'**
   String markerAt(String time);
+
+  /// No description provided for @markerFromTo.
+  ///
+  /// In en, this message translates to:
+  /// **'Marker from {start} to {end}'**
+  String markerFromTo(String start, String end);
 
   /// No description provided for @watchLaterRemove.
   ///
@@ -1187,7 +1193,7 @@ abstract class AppLocalizations {
   /// No description provided for @subscriptionsEmpty.
   ///
   /// In en, this message translates to:
-  /// **'No subscriptions yet'**
+  /// **'No favorites yet'**
   String get subscriptionsEmpty;
 
   /// No description provided for @subscriptionsEmptyHint.
@@ -1561,6 +1567,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Forward 10 s'**
   String get forward10;
+
+  /// No description provided for @seekForwardSeconds.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{Forward 1 second} other{Forward {count} seconds}}'**
+  String seekForwardSeconds(int count);
+
+  /// No description provided for @seekBackSeconds.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{Back 1 second} other{Back {count} seconds}}'**
+  String seekBackSeconds(int count);
 
   /// No description provided for @pause.
   ///
@@ -1985,7 +2003,7 @@ abstract class AppLocalizations {
   /// No description provided for @chapters.
   ///
   /// In en, this message translates to:
-  /// **'Chapters'**
+  /// **'Markers'**
   String get chapters;
 
   /// No description provided for @close.
@@ -2215,6 +2233,54 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Add marker'**
   String get addMarker;
+
+  /// No description provided for @markerRange.
+  ///
+  /// In en, this message translates to:
+  /// **'{start}–{end}'**
+  String markerRange(String start, String end);
+
+  /// No description provided for @markerRangeWithLength.
+  ///
+  /// In en, this message translates to:
+  /// **'{range} · {length}'**
+  String markerRangeWithLength(String range, String length);
+
+  /// No description provided for @markerEndOptional.
+  ///
+  /// In en, this message translates to:
+  /// **'End (optional)'**
+  String get markerEndOptional;
+
+  /// No description provided for @markerEndSet.
+  ///
+  /// In en, this message translates to:
+  /// **'Set end to current position'**
+  String get markerEndSet;
+
+  /// No description provided for @markerEndEarlier.
+  ///
+  /// In en, this message translates to:
+  /// **'End 5 seconds earlier'**
+  String get markerEndEarlier;
+
+  /// No description provided for @markerEndLater.
+  ///
+  /// In en, this message translates to:
+  /// **'End 5 seconds later'**
+  String get markerEndLater;
+
+  /// No description provided for @markerEndClear.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove end'**
+  String get markerEndClear;
+
+  /// No description provided for @markerEndInvalid.
+  ///
+  /// In en, this message translates to:
+  /// **'The end must be after the start.'**
+  String get markerEndInvalid;
 
   /// No description provided for @saved.
   ///
@@ -2987,7 +3053,7 @@ abstract class AppLocalizations {
   /// No description provided for @gestureTipDoubleTap.
   ///
   /// In en, this message translates to:
-  /// **'Double-tap left or right: ±{seconds} s'**
+  /// **'Double-tap left or right: {seconds} s back/forward, keep tapping to skip further'**
   String gestureTipDoubleTap(int seconds);
 
   /// No description provided for @gestureTipHold.
@@ -3757,6 +3823,60 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Failed: {task}'**
   String taskFailedNamed(String task);
+
+  /// No description provided for @sectionNotifications.
+  ///
+  /// In en, this message translates to:
+  /// **'Notifications'**
+  String get sectionNotifications;
+
+  /// No description provided for @systemNotifications.
+  ///
+  /// In en, this message translates to:
+  /// **'System notifications'**
+  String get systemNotifications;
+
+  /// No description provided for @systemNotificationsSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Tells you when a server task you started ends while StashTube is in the background. Only while the system keeps the app running: Android ends it after a while, iOS pauses it soon after you leave it.'**
+  String get systemNotificationsSubtitle;
+
+  /// No description provided for @discreetNotifications.
+  ///
+  /// In en, this message translates to:
+  /// **'Discreet notifications'**
+  String get discreetNotifications;
+
+  /// No description provided for @discreetNotificationsSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Only “StashTube” and a neutral text, without task or server names. Hidden on the lock screen.'**
+  String get discreetNotificationsSubtitle;
+
+  /// No description provided for @notificationsDenied.
+  ///
+  /// In en, this message translates to:
+  /// **'Notifications not allowed'**
+  String get notificationsDenied;
+
+  /// No description provided for @notificationsDeniedBody.
+  ///
+  /// In en, this message translates to:
+  /// **'StashTube may not show notifications. Allow them in the system settings, then switch them on here again.'**
+  String get notificationsDeniedBody;
+
+  /// No description provided for @notificationTaskFinished.
+  ///
+  /// In en, this message translates to:
+  /// **'A task has finished'**
+  String get notificationTaskFinished;
+
+  /// No description provided for @notificationTaskFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'A task has failed'**
+  String get notificationTaskFailed;
 
   /// No description provided for @sectionJobs.
   ///

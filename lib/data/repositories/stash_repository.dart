@@ -269,7 +269,53 @@ class StashRepository implements PlaybackActivityApi {
       ),
     );
     final result = data.findSceneMarkers;
-    return PageResult(items: [for (final m in result.scene_markers) Marker.fromGraphql(m)], totalCount: result.count);
+    final markers = [for (final m in result.scene_markers) Marker.fromGraphql(m)];
+    final ends = markers.isEmpty ? null : await _markerEnds([for (final m in markers) m.id]);
+    return PageResult(
+      items: ends == null ? markers : [for (final m in markers) ends.containsKey(m.id) ? m.withEnd(ends[m.id]) : m],
+      totalCount: result.count,
+    );
+  }
+
+  /// The marker end queries the server rejected (older Stash), so they
+  /// aren't sent again.
+  final _unsupportedMarkerEnds = <String>{};
+
+  /// End times by marker id, or null on servers without them.
+  Future<Map<String, double?>?> _markerEnds(List<String> ids) => _optionalMarkerEnds(
+    'list',
+    () async => [
+      for (final m in (await _query(Options$Query$MarkerEnds(variables: Variables$Query$MarkerEnds(ids: ids))))
+          .findSceneMarkers
+          .scene_markers)
+        (m.id, m.end_seconds),
+    ],
+  );
+
+  /// End times of the scene's markers, or null on servers without them.
+  Future<Map<String, double?>?> sceneMarkerEnds(String sceneId) => _optionalMarkerEnds(
+    'scene',
+    () async => [
+      for (final m in (await _query(
+            Options$Query$SceneMarkerEnds(variables: Variables$Query$SceneMarkerEnds(id: sceneId)),
+          )).findScene?.scene_markers ??
+          const <Query$SceneMarkerEnds$findScene$scene_markers>[])
+        (m.id, m.end_seconds),
+    ],
+  );
+
+  Future<Map<String, double?>?> _optionalMarkerEnds(
+    String kind,
+    Future<List<(String, double?)>> Function() load,
+  ) async {
+    if (_unsupportedMarkerEnds.contains(kind)) return null;
+    try {
+      return {for (final (id, end) in await load()) id: end};
+    } on StashApiException catch (e) {
+      if (e.isNetworkError) rethrow;
+      _unsupportedMarkerEnds.add(kind);
+      return null;
+    }
   }
 
   /// How many markers [query] finds, without loading them.
@@ -553,10 +599,14 @@ class StashRepository implements PlaybackActivityApi {
 
 
   Future<SceneDetails> findSceneDetails(String sceneId) async {
+    // Both at once; the end times are optional (older Stash has none).
+    // Its error (a network error) is rethrown where awaited below, or not
+    // reported when the details failed first.
+    final ends = sceneMarkerEnds(sceneId)..ignore();
     final data = await _query(Options$Query$FindSceneDetails(variables: Variables$Query$FindSceneDetails(id: sceneId)));
     final scene = data.findScene;
     if (scene == null) throw const StashApiException('Scene not found.', kind: StashErrorKind.notFound);
-    return SceneDetails.fromGraphql(scene);
+    return SceneDetails.fromGraphql(scene).withMarkerEnds(await ends);
   }
 
   /// Seek preview thumbnails of a scene; null if Stash hasn't generated
@@ -698,6 +748,7 @@ class StashRepository implements PlaybackActivityApi {
     required double seconds,
     required String primaryTagId,
     String title = '',
+    double? endSeconds,
   }) async {
     final data = await _mutate(
       Options$Mutation$SceneMarkerCreate(
@@ -705,6 +756,8 @@ class StashRepository implements PlaybackActivityApi {
           input: Input$SceneMarkerCreateInput(
             scene_id: sceneId,
             seconds: seconds,
+            // Only sent when set: older servers reject the field.
+            end_seconds: endSeconds,
             primary_tag_id: primaryTagId,
             title: title,
           ),
@@ -713,7 +766,7 @@ class StashRepository implements PlaybackActivityApi {
     );
     final marker = data.sceneMarkerCreate;
     if (marker == null) throw const StashApiException('Marker was not created.', kind: StashErrorKind.notSaved);
-    return SceneMarker.fromFields(marker);
+    return SceneMarker.fromFields(marker).withEnd(endSeconds);
   }
 
   Future<void> setPerformerFavorite(String performerId, bool favorite) => _mutate(

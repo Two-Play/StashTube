@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/config/theme.dart';
 
-import '../../core/utils/format.dart';
 import '../../data/models/list_queries.dart';
 import '../../data/models/marker.dart';
 import '../../data/providers.dart';
@@ -11,6 +10,7 @@ import '../../widgets/chip_bar.dart';
 import '../../widgets/paged_sliver.dart';
 import '../../widgets/scene_card.dart';
 import '../../widgets/stash_image.dart';
+import '../player/player_controls.dart';
 import '../player/player_providers.dart';
 import '../../l10n/l10n.dart';
 
@@ -114,8 +114,8 @@ class _MarkerGridViewState extends ConsumerState<MarkerGridView> {
   }
 }
 
-/// The frame at the marker with its time, the marker's title and below it
-/// the scene and the marker's tag.
+/// The frame at the marker with its time (a ranged marker's range and
+/// length), the marker's title and below it the scene and the marker's tag.
 class MarkerTile extends ConsumerWidget {
   const MarkerTile({super.key, required this.marker});
 
@@ -134,7 +134,7 @@ class MarkerTile extends ConsumerWidget {
       label: [
         marker.title,
         marker.scene.title,
-        l.markerAt(spokenDuration(l, marker.seconds)),
+        spokenMarkerTime(l, marker.seconds, marker.endSeconds),
         if (showTag) marker.tag.name,
       ].join(', '),
       child: InkWell(
@@ -173,7 +173,7 @@ class MarkerTile extends ConsumerWidget {
                                 Icon(Icons.bookmark, color: badge.onBadge, size: 12),
                                 const SizedBox(width: AppSpacing.xs),
                                 Text(
-                                  formatDuration(marker.seconds),
+                                  markerTimeLabel(l, marker.seconds, marker.endSeconds, withLength: true),
                                   style: TextStyle(
                                     color: badge.onBadge,
                                     fontSize: AppTextSize.overlayLabel,

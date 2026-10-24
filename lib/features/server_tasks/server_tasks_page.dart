@@ -8,6 +8,8 @@ import '../../core/config/server_config.dart';
 import '../../data/models/server_task.dart';
 import '../../data/repositories/stash_repository.dart';
 import '../../l10n/l10n.dart';
+import '../notifications/notifications.dart';
+import '../settings/settings_button.dart';
 
 /// Stash's task queue, polled while someone watches it.
 class JobQueueNotifier extends AsyncNotifier<List<ServerJob>> {
@@ -85,33 +87,76 @@ class _ServerTasksPageState extends State<ServerTasksPage> {
   Widget build(BuildContext context) => const ScaffoldMessenger(child: _ServerTasksView());
 }
 
-/// Shows a snack bar when a job started from the app ends ("Finished:
-/// Scan library", NOTIF-1), unless the tasks page, which shows it anyway,
-/// is open. Polls the queue only while such a job runs. A job that ends
-/// while the app is in the background is reported when it comes back.
-/// Placed once around the shell.
-class JobFinishedListener extends ConsumerWidget {
+/// Reports when a job started from the app ends ("Finished: Scan library",
+/// NOTIF-1). Polls the queue only while such a job runs.
+///
+/// In the app it shows a snack bar, unless the tasks page, which shows it
+/// anyway, is open. In the background (hidden or paused) it posts a system
+/// notification instead when they are switched on ([notifyTaskEnded]);
+/// otherwise the job is reported when the app comes back. The app only
+/// notices it while the system lets it run: Android stops it after a
+/// while, iOS suspends it soon after it is left, so a job that ends then is
+/// reported in the app on return. Tapping the notification opens the tasks
+/// page. Placed once around the shell.
+class JobFinishedListener extends ConsumerStatefulWidget {
   const JobFinishedListener({super.key, required this.child});
 
   final Widget child;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<JobFinishedListener> createState() => _JobFinishedListenerState();
+}
+
+class _JobFinishedListenerState extends ConsumerState<JobFinishedListener> {
+  StreamSubscription<String>? _taps;
+
+  @override
+  void initState() {
+    super.initState();
+    final service = ref.read(notificationServiceProvider);
+    if (!service.isSupported) return;
+    _taps = service.taps.listen(_open);
+    unawaited(service.launchPayload().then((payload) {
+      if (payload != null) _open(payload);
+    }));
+  }
+
+  @override
+  void dispose() {
+    _taps?.cancel();
+    super.dispose();
+  }
+
+  void _open(String payload) {
+    if (!mounted || payload != NotificationPayload.serverTasks) return;
+    // Already there, or the settings sheet is open anyway.
+    if (ServerTasksPage.isOpen || ref.read(settingsOpenProvider)) return;
+    openSettings(context, ref, initialPage: const ServerTasksPage());
+  }
+
+  @override
+  Widget build(BuildContext context) {
     if (ref.watch(startedJobsProvider).isNotEmpty) {
       ref.listen(jobQueueProvider, (_, next) {
         final jobs = next.value;
-        if (jobs != null) _report(context, ref, jobs);
+        if (jobs != null) _report(jobs);
       });
     }
-    return child;
+    return widget.child;
   }
 
-  void _report(BuildContext context, WidgetRef ref, List<ServerJob> jobs) {
+  bool get _notificationsOn =>
+      ref.read(notificationServiceProvider).isSupported && ref.read(notificationSettingsProvider).enabled;
+
+  void _report(List<ServerJob> jobs) {
     final l = context.l10n;
     final messenger = ScaffoldMessenger.maybeOf(context);
     final lifecycle = WidgetsBinding.instance.lifecycleState;
-    // In the background: reported when the app is back.
-    if (lifecycle != null && lifecycle != AppLifecycleState.resumed) return;
+    final inApp = lifecycle == null || lifecycle == AppLifecycleState.resumed;
+    // Inactive (e.g. the app switcher): reported in the app when it's back.
+    final background = lifecycle == AppLifecycleState.hidden || lifecycle == AppLifecycleState.paused;
+    // In the background without system notifications: reported on return.
+    if (!inApp && !(background && _notificationsOn)) return;
     for (final MapEntry(key: id, value: name) in ref.read(startedJobsProvider).entries) {
       final job = jobs.where((j) => j.id == id).firstOrNull;
       // Stash drops ended jobs from the queue after a while.
@@ -119,8 +164,13 @@ class JobFinishedListener extends ConsumerWidget {
       if (job != null && (job.isActive || state == JobState.stopping)) continue;
       ref.read(startedJobsProvider.notifier).remove(id);
       // Stopped by the user: nothing to report.
-      if (state == JobState.cancelled || ServerTasksPage.isOpen || messenger == null) continue;
+      if (state == JobState.cancelled) continue;
       final failed = state == JobState.failed;
+      if (!inApp) {
+        unawaited(notifyTaskEnded(ref, l, jobId: id, taskName: name, failed: failed));
+        continue;
+      }
+      if (ServerTasksPage.isOpen || messenger == null) continue;
       if (failed) {
         Haptics.error();
       } else {

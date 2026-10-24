@@ -15,6 +15,7 @@ import '../../data/models/scene_details.dart';
 import '../../data/models/scrub_thumbnails.dart';
 import '../../data/providers.dart';
 import '../../data/repositories/stash_session.dart';
+import '../../widgets/scene_card.dart';
 import '../../widgets/stash_image.dart';
 import 'player_providers.dart';
 import 'preview_seek_bar.dart';
@@ -273,8 +274,22 @@ class _QualitySheet extends ConsumerWidget {
   }
 }
 
-/// Horizontal list of chapters; tapping one seeks there. Highlights the
-/// chapter currently playing.
+/// A marker's time as the chapters and the markers grid show it: `1:15`, or
+/// for a ranged marker `0:40–1:10`, with [withLength] `0:40–1:10 · 0:30`.
+String markerTimeLabel(AppLocalizations l, double start, double? end, {bool withLength = false}) {
+  if (end == null) return formatDuration(start);
+  final range = l.markerRange(formatDuration(start), formatDuration(end));
+  return withLength ? l.markerRangeWithLength(range, formatDuration(end - start)) : range;
+}
+
+/// What a screen reader says for a marker's time.
+String spokenMarkerTime(AppLocalizations l, double start, double? end) => end == null
+    ? l.markerAt(spokenDuration(l, start))
+    : l.markerFromTo(spokenDuration(l, start), spokenDuration(l, end));
+
+/// Horizontal list of chapters; tapping one seeks there (a ranged marker to
+/// its start). Highlights the chapter currently playing: a ranged marker
+/// while the position is inside its range, a moment until the next marker.
 ///
 /// Each chapter shows the marker's screenshot with its time as a badge and
 /// the title below. Markers without a screenshot use the scene's sprite
@@ -366,7 +381,9 @@ class ChapterList extends ConsumerWidget {
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
                                 Text(
-                                  formatDuration(marker.seconds),
+                                  markerTimeLabel(context.l10n, marker.seconds, marker.endSeconds, withLength: true),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
                                   style: theme.textTheme.labelSmall?.copyWith(color: theme.colorScheme.primary),
                                 ),
                                 Text(
@@ -474,7 +491,7 @@ class _ChapterThumbnailTile extends ConsumerWidget {
                               decoration:
                                   BoxDecoration(color: badge.badgeBackground, borderRadius: AppRadius.badgeBorder),
                               child: Text(
-                                formatDuration(marker.seconds),
+                                markerTimeLabel(context.l10n, marker.seconds, marker.endSeconds),
                                 style: TextStyle(
                                   color: badge.onBadge,
                                   fontSize: AppTextSize.overlayLabel,
@@ -497,6 +514,15 @@ class _ChapterThumbnailTile extends ConsumerWidget {
                       fontWeight: current ? FontWeight.w600 : null,
                     ),
                   ),
+                  // A ranged marker's length; the badge has its range.
+                  if (marker.rangeSeconds case final length?)
+                    Text(
+                      formatDuration(length),
+                      maxLines: 1,
+                      style: theme.textTheme.labelSmall?.copyWith(
+                        color: current ? colors.onPrimaryContainer : colors.onSurfaceVariant,
+                      ),
+                    ),
                 ],
               ),
             ),

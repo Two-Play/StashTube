@@ -412,7 +412,8 @@ Future<void> showAddMarkerSheet(BuildContext context, {required Scene scene, req
       builder: (_) => AddMarkerSheet(scene: scene, seconds: seconds),
     );
 
-/// Creates a scene marker (10.3). Stash requires a primary tag.
+/// Creates a scene marker (10.3). Stash requires a primary tag. On servers
+/// with ranged markers (newer Stash) the marker can also get an end.
 class AddMarkerSheet extends ConsumerStatefulWidget {
   const AddMarkerSheet({super.key, required this.scene, required this.seconds});
 
@@ -430,6 +431,23 @@ class _AddMarkerSheetState extends ConsumerState<AddMarkerSheet> {
   Tag? _tag;
   bool _saving = false;
 
+  /// The ranged marker's end; null for a moment.
+  double? _end;
+
+  /// Step of the end's − / + buttons.
+  static const _endStep = 5.0;
+
+  bool get _endValid => _end == null || _end! > widget.seconds;
+
+  /// The end at the current position, or a little after the start while
+  /// the player still stands there.
+  void _setEndToPosition() {
+    final position = ref.read(nowPlayingProvider.notifier).currentPosition().inMilliseconds / 1000;
+    setState(() => _end = position > widget.seconds ? position : widget.seconds + 2 * _endStep);
+  }
+
+  void _moveEnd(double by) => setState(() => _end = ((_end ?? widget.seconds) + by).clamp(0.0, double.infinity));
+
   @override
   void dispose() {
     _debounce?.cancel();
@@ -439,7 +457,8 @@ class _AddMarkerSheetState extends ConsumerState<AddMarkerSheet> {
 
   Future<void> _save() async {
     final tag = _tag;
-    if (tag == null) return;
+    if (tag == null || !_endValid) return;
+    final end = _end;
     setState(() => _saving = true);
     final messenger = ScaffoldMessenger.of(context);
     final navigator = Navigator.of(context);
@@ -451,12 +470,16 @@ class _AddMarkerSheetState extends ConsumerState<AddMarkerSheet> {
             seconds: widget.seconds,
             primaryTagId: tag.id,
             title: _title.text.trim(),
+            endSeconds: end,
           );
       // Chapters come from the scene details.
       container.invalidate(sceneDetailsProvider(widget.scene.id));
       // Closed meanwhile: popping now would remove the page below the sheet.
       if (mounted) navigator.pop();
-      messenger.showSnackBar(SnackBar(content: Text(l.markerAdded(formatDuration(widget.seconds)))));
+      final time = end == null
+          ? formatDuration(widget.seconds)
+          : l.markerRange(formatDuration(widget.seconds), formatDuration(end));
+      messenger.showSnackBar(SnackBar(content: Text(l.markerAdded(time))));
     } catch (e) {
       if (mounted) setState(() => _saving = false);
       messenger.showSnackBar(SnackBar(content: Text(l.markerAddFailed(errorText(l, e)))));
@@ -468,6 +491,8 @@ class _AddMarkerSheetState extends ConsumerState<AddMarkerSheet> {
     final theme = Theme.of(context);
     final query = _tagSearch.isEmpty ? const TagQuery() : TagQuery(search: _tagSearch, sort: TagSort.name);
     final tags = ref.watch(tagListProvider(query)).current?.items ?? const <Tag>[];
+    // Only servers that know marker end times get the field.
+    final ranges = ref.watch(sceneDetailsProvider(widget.scene.id)).value?.markerRanges ?? false;
 
     return Padding(
       padding: EdgeInsets.only(bottom: MediaQuery.viewInsetsOf(context).bottom),
@@ -518,9 +543,10 @@ class _AddMarkerSheetState extends ConsumerState<AddMarkerSheet> {
                   ],
                 ),
               ],
+              if (ranges) ...[const SizedBox(height: 12), _buildEnd(context)],
               const SizedBox(height: 16),
               FilledButton(
-                onPressed: _tag == null || _saving ? null : _save,
+                onPressed: _tag == null || !_endValid || _saving ? null : _save,
                 child: _saving
                     ? const SizedBox.square(dimension: 20, child: CircularProgressIndicator(strokeWidth: 2))
                     : Text(context.l10n.addMarker),
@@ -528,6 +554,57 @@ class _AddMarkerSheetState extends ConsumerState<AddMarkerSheet> {
             ],
           ),
         ),
+      ),
+    );
+  }
+
+  /// The optional end: unset, a button sets it to the current position;
+  /// set, − / + move it by [_endStep] and an X removes it.
+  Widget _buildEnd(BuildContext context) {
+    final theme = Theme.of(context);
+    final l = context.l10n;
+    final end = _end;
+    if (end == null) {
+      return Align(
+        alignment: Alignment.centerLeft,
+        child: OutlinedButton.icon(
+          icon: const Icon(Icons.last_page),
+          label: Text(l.markerEndSet),
+          onPressed: _setEndToPosition,
+        ),
+      );
+    }
+    return InputDecorator(
+      decoration: InputDecoration(
+        labelText: l.markerEndOptional,
+        border: const OutlineInputBorder(),
+        errorText: _endValid ? null : l.markerEndInvalid,
+        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: Text(
+              l.markerRange(formatDuration(widget.seconds), formatDuration(end)),
+              style: theme.textTheme.bodyLarge,
+            ),
+          ),
+          IconButton(
+            tooltip: l.markerEndEarlier,
+            icon: const Icon(Icons.remove),
+            onPressed: () => _moveEnd(-_endStep),
+          ),
+          IconButton(
+            tooltip: l.markerEndLater,
+            icon: const Icon(Icons.add),
+            onPressed: () => _moveEnd(_endStep),
+          ),
+          IconButton(
+            tooltip: l.markerEndClear,
+            icon: const Icon(Icons.close),
+            onPressed: () => setState(() => _end = null),
+          ),
+        ],
       ),
     );
   }

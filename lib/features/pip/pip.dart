@@ -6,12 +6,14 @@ import 'package:media_kit/media_kit.dart';
 import 'package:media_kit_video/media_kit_video.dart';
 
 import '../../core/config/server_config.dart';
+import '../../data/models/scene.dart';
 import '../../data/models/scene_details.dart';
 import '../../data/providers.dart';
 import '../../data/repositories/stash_session.dart';
 import '../cast/cast_media.dart';
 import '../cast/cast_providers.dart';
 import '../player/lock_screen.dart';
+import '../player/player_controls.dart';
 import '../player/player_providers.dart';
 import '../security/app_lock.dart';
 import 'pip_service.dart';
@@ -93,13 +95,31 @@ final _autoPipWantedProvider = Provider<bool>((ref) {
   return ref.watch(_mainPlayingProvider);
 });
 
-/// Width / height of the playing video, within what Android accepts.
-double _videoAspect(Player player) {
-  final width = player.state.width;
-  final height = player.state.height;
-  final aspect = width == null || height == null || width <= 0 || height <= 0 ? 16 / 9 : width / height;
-  return aspect.clamp(0.42, 2.38);
-}
+/// Width / height of the picture-in-picture window for [scene]: like the
+/// player's video area (`videoAspect`, Stash's file size first, since right
+/// after switching scenes the player still reports the previous video),
+/// within what Android accepts; 16:9 only when neither knows the size.
+double pipAspect(PlayerState state, Scene? scene) =>
+    clampPipAspect(scene == null ? null : videoAspect(state, scene, sceneFirst: true));
+
+/// [pipAspect] of the playing scene, updated once the player knows the
+/// decoded size. Without a scene it doesn't touch the player, so the native
+/// player isn't created at startup.
+final _pipAspectProvider = Provider<double>((ref) {
+  final scene = ref.watch(nowPlayingProvider);
+  if (scene == null) return clampPipAspect(null);
+  final player = ref.watch(playerProvider);
+  final subscriptions = [
+    player.stream.width.listen((_) => ref.invalidateSelf()),
+    player.stream.height.listen((_) => ref.invalidateSelf()),
+  ];
+  ref.onDispose(() {
+    for (final s in subscriptions) {
+      s.cancel();
+    }
+  });
+  return pipAspect(player.state, scene);
+});
 
 /// Whether the app is in picture-in-picture: Android's small window, or on
 /// iOS the native player's.
@@ -119,9 +139,18 @@ class PipNotifier extends Notifier<bool> {
     final events = service.events.listen(_onEvent);
     ref.onDispose(events.cancel);
 
-    ref.listen(_autoPipWantedProvider, (_, wanted) {
-      unawaited(service.setAutoEnter(enabled: wanted, aspect: _videoAspect(ref.read(playerProvider))));
-    });
+    // Android takes the window's shape from these parameters, also for
+    // auto-enter on Android 12+: send them again when the video's size
+    // becomes known or changes, not only when playback starts (a portrait
+    // video otherwise entered as 16:9).
+    if (service.canAutoEnter) {
+      void update() => unawaited(
+          service.setAutoEnter(enabled: ref.read(_autoPipWantedProvider), aspect: ref.read(_pipAspectProvider)));
+      ref.listen(_autoPipWantedProvider, (_, _) => update());
+      ref.listen(_pipAspectProvider, (previous, aspect) {
+        if (previous != aspect) update();
+      });
+    }
     // Another scene, a closed player or playing in the app again ends the
     // native picture-in-picture.
     ref.listen(nowPlayingProvider, (_, scene) {
@@ -187,6 +216,7 @@ class PipNotifier extends Notifier<bool> {
         headers: ref.read(authHeadersProvider),
         start: start,
         from: from ?? Rect.zero,
+        aspect: videoAspect(player.state, scene, sceneFirst: true),
       );
       if (!ref.mounted) return started;
       if (started) {
@@ -197,7 +227,7 @@ class PipNotifier extends Notifier<bool> {
       }
       return started;
     }
-    return service.enter(aspect: _videoAspect(player));
+    return service.enter(aspect: ref.read(_pipAspectProvider), from: from);
   }
 }
 

@@ -4,3 +4,19 @@ query SceneMarkerCount($scene_marker_filter: SceneMarkerFilterType) {
     count
   }
 }
+
+# End times of a scene's markers (ranged markers, Stash 0.28+), queried
+# separately so older servers keep their markers without ranges.
+query SceneMarkerEnds($id: ID!) {
+  findScene(id: $id) {
+    id
+    scene_markers { id end_seconds }
+  }
+}
+
+# End times of the markers listed on a markers page.
+query MarkerEnds($ids: [ID!]) {
+  findSceneMarkers(ids: $ids, filter: { per_page: -1 }) {
+    scene_markers { id end_seconds }
+  }
+}

@@ -123,7 +123,7 @@ void main() {
     expect(find.widgetWithText(ShelfHeader, 'Markers'), findsOneWidget);
     expect(find.text('A marker'), findsOneWidget);
 
-    for (final title in ['Stats', 'Subscriptions', 'Performers', 'Studios', 'Tags', 'Server tasks', 'Settings']) {
+    for (final title in ['Stats', 'Favorites', 'Performers', 'Studios', 'Tags', 'Server tasks', 'Settings']) {
       expect(find.widgetWithText(ListTile, title), findsOneWidget, reason: title);
     }
     // Views not in the standard bar, but not those in it.

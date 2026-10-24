@@ -3,6 +3,34 @@ import 'dart:io';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter/widgets.dart';
+
+/// Android accepts picture-in-picture aspect ratios between 1:2.39 and
+/// 2.39:1; a bit inside, so rounding never crosses the limit.
+const pipMinAspect = 0.42;
+const pipMaxAspect = 2.38;
+
+/// [aspect] within what Android's picture-in-picture accepts; 16:9 when
+/// unknown.
+double clampPipAspect(double? aspect) =>
+    aspect == null || !aspect.isFinite || aspect <= 0 ? 16 / 9 : aspect.clamp(pipMinAspect, pipMaxAspect);
+
+/// The part of [box] (logical pixels) that a video of [aspect] fills,
+/// centered as `BoxFit.contain` places it, in physical pixels for Android's
+/// `setSourceRectHint`. Null for an empty box.
+Rect? pipSourceRect(Rect box, double aspect, double pixelRatio) {
+  if (box.width <= 1 || box.height <= 1 || aspect <= 0) return null;
+  final fitted = box.width / box.height > aspect
+      ? Size(box.height * aspect, box.height)
+      : Size(box.width, box.width / aspect);
+  final rect = Rect.fromCenter(center: box.center, width: fitted.width, height: fitted.height);
+  return Rect.fromLTRB(
+    (rect.left * pixelRatio).roundToDouble(),
+    (rect.top * pixelRatio).roundToDouble(),
+    (rect.right * pixelRatio).roundToDouble(),
+    (rect.bottom * pixelRatio).roundToDouble(),
+  );
+}
 
 /// Something the platform's picture-in-picture reported.
 sealed class PipEvent {
@@ -38,19 +66,26 @@ abstract class PipService {
 
   Stream<PipEvent> get events;
 
-  /// Android: enter picture-in-picture when the user leaves the app.
+  /// Android: enter picture-in-picture when the user leaves the app, in a
+  /// window of [aspect] (width / height). Sent again whenever the video's
+  /// size becomes known or changes, also while in picture-in-picture.
   Future<void> setAutoEnter({required bool enabled, required double aspect});
 
-  /// Android: shrinks the app's window to the video.
-  Future<bool> enter({required double aspect});
+  /// Android: shrinks the app's window to the video, a window of [aspect].
+  /// [from] is the video's place on screen in logical pixels, which the
+  /// window shrinks out of.
+  Future<bool> enter({required double aspect, Rect? from});
 
   /// iOS: plays [url] natively from [start] in picture-in-picture, growing
-  /// out of [from] (the video's place on screen, in logical pixels).
+  /// out of [from] (the video's place on screen, in logical pixels). [aspect]
+  /// is the video's width / height as far as the app knows it, so the
+  /// window doesn't start in the wrong shape.
   Future<bool> startNative({
     required String url,
     required Map<String, String> headers,
     required Duration start,
     required Rect from,
+    double? aspect,
   });
 
   /// iOS: ends the native picture-in-picture.
@@ -80,7 +115,7 @@ class UnsupportedPipService implements PipService {
   Future<void> setAutoEnter({required bool enabled, required double aspect}) async {}
 
   @override
-  Future<bool> enter({required double aspect}) async => false;
+  Future<bool> enter({required double aspect, Rect? from}) async => false;
 
   @override
   Future<bool> startNative({
@@ -88,6 +123,7 @@ class UnsupportedPipService implements PipService {
     required Map<String, String> headers,
     required Duration start,
     required Rect from,
+    double? aspect,
   }) async =>
       false;
 
@@ -98,8 +134,8 @@ class UnsupportedPipService implements PipService {
 /// The `stash/pip` channel of `MainActivity` (Android) and
 /// `PictureInPictureController` in `AppDelegate.swift` (iOS).
 class ChannelPipService implements PipService {
-  ChannelPipService({required this.native}) {
-    _channel.setMethodCallHandler((call) async {
+  ChannelPipService({required this.native, this.channel = const MethodChannel('stash/pip'), this.pixelRatio}) {
+    channel.setMethodCallHandler((call) async {
       final args = call.arguments;
       switch (call.method) {
         case 'pipChanged':
@@ -117,7 +153,12 @@ class ChannelPipService implements PipService {
   /// iOS: the native player plays in picture-in-picture.
   final bool native;
 
-  static const _channel = MethodChannel('stash/pip');
+  /// `stash/pip`; another in tests.
+  final MethodChannel channel;
+
+  /// Physical pixels per logical pixel, for Android's source rect hint; the
+  /// first view's when null. Set in tests.
+  final double? pixelRatio;
   final _events = StreamController<PipEvent>.broadcast();
 
   @override
@@ -136,8 +177,21 @@ class ChannelPipService implements PipService {
   }
 
   @override
-  Future<bool> enter({required double aspect}) async =>
-      !native && await _invoke<bool>('enter', {'aspect': aspect}) == true;
+  Future<bool> enter({required double aspect, Rect? from}) async {
+    if (native) return false;
+    final hint = from == null ? null : pipSourceRect(from, aspect, _pixelRatio);
+    return await _invoke<bool>('enter', {
+          'aspect': aspect,
+          if (hint != null) 'rect': [hint.left, hint.top, hint.width, hint.height],
+        }) ==
+        true;
+  }
+
+  double get _pixelRatio {
+    if (pixelRatio != null) return pixelRatio!;
+    final views = WidgetsBinding.instance.platformDispatcher.views;
+    return views.isEmpty ? 1 : views.first.devicePixelRatio;
+  }
 
   @override
   Future<bool> startNative({
@@ -145,6 +199,7 @@ class ChannelPipService implements PipService {
     required Map<String, String> headers,
     required Duration start,
     required Rect from,
+    double? aspect,
   }) async =>
       native &&
       await _invoke<bool>('start', {
@@ -152,6 +207,7 @@ class ChannelPipService implements PipService {
             'headers': headers,
             'startMs': start.inMilliseconds,
             'rect': [from.left, from.top, from.width, from.height],
+            'aspect': ?aspect,
           }) ==
           true;
 
@@ -162,7 +218,7 @@ class ChannelPipService implements PipService {
 
   Future<T?> _invoke<T>(String method, [Object? arguments]) async {
     try {
-      return await _channel.invokeMethod<T>(method, arguments);
+      return await channel.invokeMethod<T>(method, arguments);
     } on PlatformException catch (e) {
       debugPrint('Picture-in-picture: $method failed: ${e.message}');
       return null;

@@ -27,7 +27,7 @@
   "tabHome": "Start",
   "tabPerformers": "Performer",
   "tabStudios": "Studios",
-  "tabSubscriptions": "Abos",
+  "tabSubscriptions": "Favoriten",
   "tabLibrary": "Bibliothek",
   "tabWatchLater": "Später",
   "tabTags": "Tags",
@@ -56,6 +56,17 @@
   "starsCount": "{count, plural, =1{1 Stern} other{{count} Sterne}}",
   "watchedPercent": "{percent} % gesehen",
   "markerAt": "Marker bei {time}",
+  "markerFromTo": "Marker von {start} bis {end}",
+  "@markerFromTo": {
+    "placeholders": {
+      "start": {
+        "type": "String"
+      },
+      "end": {
+        "type": "String"
+      }
+    }
+  },
   "watchLaterRemove": "Aus „Später ansehen“ entfernen",
   "watchLaterSave": "Zu „Später ansehen“ hinzufügen",
   "editDetails": "Details bearbeiten",
@@ -181,7 +192,7 @@
   "search": "Suche",
   "continueWatching": "Weiterschauen",
   "newFromFavorites": "Neu von Favoriten",
-  "subscriptionsEmpty": "Noch keine Abos",
+  "subscriptionsEmpty": "Noch keine Favoriten",
   "subscriptionsEmptyHint": "Markiere Darsteller als Favoriten, um hier ihre neuesten Szenen zu sehen.",
   "performerHasNewScenes": "{name}, neue Szenen",
   "newSinceLastVisit": "{count, plural, =1{1 neues Video seit deinem letzten Besuch} other{{count} neue Videos seit deinem letzten Besuch}}",
@@ -244,6 +255,8 @@
   "minimize": "Minimieren",
   "back10": "10 s zurück",
   "forward10": "10 s vor",
+  "seekForwardSeconds": "{count, plural, =1{1 Sekunde vor} other{{count} Sekunden vor}}",
+  "seekBackSeconds": "{count, plural, =1{1 Sekunde zurück} other{{count} Sekunden zurück}}",
   "pause": "Pause",
   "play": "Abspielen",
   "previousScene": "Vorherige Szene",
@@ -314,7 +327,7 @@
   "streamTranscoded": "Transkodiert – Spulen evtl. eingeschränkt",
   "noAlternativeStreams": "Keine alternativen Streams verfügbar",
   "streamsLoadFailed": "Streams konnten nicht geladen werden",
-  "chapters": "Kapitel",
+  "chapters": "Marker",
   "close": "Schließen",
   "upNextEmpty": "Hier gibt es sonst nichts zu sehen",
   "moreFrom": "Mehr von {name}",
@@ -353,6 +366,34 @@
   "titleOptional": "Titel (optional)",
   "primaryTagRequired": "Haupt-Tag (erforderlich)",
   "addMarker": "Marker setzen",
+  "markerRange": "{start}–{end}",
+  "@markerRange": {
+    "placeholders": {
+      "start": {
+        "type": "String"
+      },
+      "end": {
+        "type": "String"
+      }
+    }
+  },
+  "markerRangeWithLength": "{range} · {length}",
+  "@markerRangeWithLength": {
+    "placeholders": {
+      "range": {
+        "type": "String"
+      },
+      "length": {
+        "type": "String"
+      }
+    }
+  },
+  "markerEndOptional": "Ende (optional)",
+  "markerEndSet": "Ende auf aktuelle Position setzen",
+  "markerEndEarlier": "Ende 5 Sekunden früher",
+  "markerEndLater": "Ende 5 Sekunden später",
+  "markerEndClear": "Ende entfernen",
+  "markerEndInvalid": "Das Ende muss nach dem Start liegen.",
   "saved": "Gespeichert",
   "later": "Später",
   "exitFullscreen": "Vollbild beenden",
@@ -481,7 +522,7 @@
   "moreActions": "Mehr",
   "fastForward2x": "2× Tempo",
   "gestureTipsTitle": "Gesten im Player",
-  "gestureTipDoubleTap": "Links oder rechts doppeltippen: ±{seconds} s",
+  "gestureTipDoubleTap": "Links oder rechts doppeltippen: {seconds} s zurück/vor, weitertippen springt weiter",
   "gestureTipHold": "Halten: 2× Tempo",
   "gestureTipPinch": "Mit zwei Fingern spreizen: Zoom",
   "gestureTipSwipeDown": "Nach unten wischen: minimieren",
@@ -610,6 +651,15 @@
   "taskStarted": "Aufgabe auf dem Server gestartet",
   "taskFinishedNamed": "Fertig: {task}",
   "taskFailedNamed": "Fehlgeschlagen: {task}",
+  "sectionNotifications": "Benachrichtigungen",
+  "systemNotifications": "Systembenachrichtigungen",
+  "systemNotificationsSubtitle": "Meldet, wenn eine von dir gestartete Server-Aufgabe endet, während StashTube im Hintergrund ist. Nur solange das System die App laufen lässt: Android beendet sie nach einer Weile, iOS pausiert sie kurz nach dem Verlassen.",
+  "discreetNotifications": "Diskrete Benachrichtigungen",
+  "discreetNotificationsSubtitle": "Nur „StashTube“ und ein neutraler Text, ohne Aufgaben- oder Servernamen. Auf dem Sperrbildschirm ausgeblendet.",
+  "notificationsDenied": "Benachrichtigungen nicht erlaubt",
+  "notificationsDeniedBody": "StashTube darf keine Benachrichtigungen zeigen. Erlaube sie in den Systemeinstellungen und schalte sie dann hier wieder ein.",
+  "notificationTaskFinished": "Eine Aufgabe ist fertig",
+  "notificationTaskFailed": "Eine Aufgabe ist fehlgeschlagen",
   "sectionJobs": "Laufende Aufgaben",
   "noJobs": "Keine laufenden Aufgaben",
   "stopJob": "Aufgabe abbrechen",

@@ -199,7 +199,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get tabStudios => 'Studios';
 
   @override
-  String get tabSubscriptions => 'Subscriptions';
+  String get tabSubscriptions => 'Favorites';
 
   @override
   String get tabLibrary => 'Library';
@@ -323,6 +323,11 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String markerAt(String time) {
     return 'Marker at $time';
+  }
+
+  @override
+  String markerFromTo(String start, String end) {
+    return 'Marker from $start to $end';
   }
 
   @override
@@ -783,7 +788,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get newFromFavorites => 'New from favorites';
 
   @override
-  String get subscriptionsEmpty => 'No subscriptions yet';
+  String get subscriptionsEmpty => 'No favorites yet';
 
   @override
   String get subscriptionsEmptyHint =>
@@ -1001,6 +1006,28 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get forward10 => 'Forward 10 s';
+
+  @override
+  String seekForwardSeconds(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Forward $count seconds',
+      one: 'Forward 1 second',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String seekBackSeconds(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Back $count seconds',
+      one: 'Back 1 second',
+    );
+    return '$_temp0';
+  }
 
   @override
   String get pause => 'Pause';
@@ -1238,7 +1265,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get streamsLoadFailed => 'Couldn\'t load streams';
 
   @override
-  String get chapters => 'Chapters';
+  String get chapters => 'Markers';
 
   @override
   String get close => 'Close';
@@ -1402,6 +1429,34 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get addMarker => 'Add marker';
+
+  @override
+  String markerRange(String start, String end) {
+    return '$start–$end';
+  }
+
+  @override
+  String markerRangeWithLength(String range, String length) {
+    return '$range · $length';
+  }
+
+  @override
+  String get markerEndOptional => 'End (optional)';
+
+  @override
+  String get markerEndSet => 'Set end to current position';
+
+  @override
+  String get markerEndEarlier => 'End 5 seconds earlier';
+
+  @override
+  String get markerEndLater => 'End 5 seconds later';
+
+  @override
+  String get markerEndClear => 'Remove end';
+
+  @override
+  String get markerEndInvalid => 'The end must be after the start.';
 
   @override
   String get saved => 'Saved';
@@ -1819,7 +1874,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String gestureTipDoubleTap(int seconds) {
-    return 'Double-tap left or right: ±$seconds s';
+    return 'Double-tap left or right: $seconds s back/forward, keep tapping to skip further';
   }
 
   @override
@@ -2276,6 +2331,36 @@ class AppLocalizationsEn extends AppLocalizations {
   String taskFailedNamed(String task) {
     return 'Failed: $task';
   }
+
+  @override
+  String get sectionNotifications => 'Notifications';
+
+  @override
+  String get systemNotifications => 'System notifications';
+
+  @override
+  String get systemNotificationsSubtitle =>
+      'Tells you when a server task you started ends while StashTube is in the background. Only while the system keeps the app running: Android ends it after a while, iOS pauses it soon after you leave it.';
+
+  @override
+  String get discreetNotifications => 'Discreet notifications';
+
+  @override
+  String get discreetNotificationsSubtitle =>
+      'Only “StashTube” and a neutral text, without task or server names. Hidden on the lock screen.';
+
+  @override
+  String get notificationsDenied => 'Notifications not allowed';
+
+  @override
+  String get notificationsDeniedBody =>
+      'StashTube may not show notifications. Allow them in the system settings, then switch them on here again.';
+
+  @override
+  String get notificationTaskFinished => 'A task has finished';
+
+  @override
+  String get notificationTaskFailed => 'A task has failed';
 
   @override
   String get sectionJobs => 'Running tasks';
