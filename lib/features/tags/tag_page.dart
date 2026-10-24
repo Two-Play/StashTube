@@ -24,18 +24,16 @@ class TagPage extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final tag = ref.watch(tagProvider(tagId));
 
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(tag.value == null ? '' : '#${tag.value!.name}', maxLines: 1, overflow: TextOverflow.ellipsis),
-        actions: [
-          if (tag.value case final value?)
-            IconButton(
-              tooltip: context.l10n.edit,
-              icon: const Icon(Icons.edit_outlined),
-              onPressed: () => openEditor(context, ref, TagEditPage(tag: value)),
-            ),
-        ],
-      ),
+    return ChannelScaffold(
+      title: Text(tag.value == null ? '' : '#${tag.value!.name}', maxLines: 1, overflow: TextOverflow.ellipsis),
+      actions: [
+        if (tag.value case final value?)
+          IconButton(
+            tooltip: context.l10n.edit,
+            icon: const Icon(Icons.edit_outlined),
+            onPressed: () => openEditor(context, ref, TagEditPage(tag: value)),
+          ),
+      ],
       body: SceneFeedView(
         initialQuery: SceneQuery(
           sort: SceneSort.newest,

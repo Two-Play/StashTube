@@ -130,9 +130,10 @@ void main() {
 
   testWidgets('O button counts up and offers undo', (tester) async {
     await pumpActions(tester);
-    await tester.tap(find.text('3'));
+    expect(find.bySemanticsLabel('O-counter 3, add one'), findsOneWidget);
+    await tester.tap(find.text('O · 3'));
     await tester.pumpAndSettle();
-    expect(find.text('4'), findsOneWidget);
+    expect(find.text('O · 4'), findsOneWidget);
     await tester.tap(find.text('Undo'));
     await tester.pumpAndSettle();
     expect(repo.oCount, 3);
@@ -140,7 +141,7 @@ void main() {
 
   testWidgets('the O snack bar goes away by itself', (tester) async {
     await pumpActions(tester);
-    await tester.tap(find.text('3'));
+    await tester.tap(find.text('O · 3'));
     await tester.pumpAndSettle();
     expect(find.text('Undo'), findsOneWidget);
     await tester.pump(const Duration(seconds: 5));

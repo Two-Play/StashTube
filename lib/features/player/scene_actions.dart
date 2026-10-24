@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/config/haptics.dart';
+import '../../core/config/theme.dart';
 import '../../core/utils/format.dart';
 import '../../data/models/list_queries.dart';
 import '../../data/models/scene.dart';
@@ -46,7 +47,7 @@ class SceneActions extends ConsumerWidget {
                   visualDensity: VisualDensity.compact,
                   tooltip: i == stars ? l.removeRating : l.rateStars(i),
                   icon: Icon(i <= stars ? Icons.star_rounded : Icons.star_outline_rounded,
-                      color: i <= stars ? Colors.amber.shade600 : colors.onSurfaceVariant),
+                      color: i <= stars ? AppColors.of(context).rating : colors.onSurfaceVariant),
                   onPressed: () {
                     Haptics.selection();
                     // Tapping the current rating again removes it.
@@ -63,7 +64,11 @@ class SceneActions extends ConsumerWidget {
             children: [
               ActionChip(
                 avatar: const Icon(Icons.water_drop_outlined, size: 18),
-                label: Text('$oCount'),
+                label: Semantics(
+                  label: l.oCounterSemantics(oCount),
+                  excludeSemantics: true,
+                  child: Text(l.oCounterLabel(oCount)),
+                ),
                 tooltip: l.addO,
                 onPressed: () async {
                   Haptics.medium();

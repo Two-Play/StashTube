@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../core/config/haptics.dart';
 import '../data/models/list_queries.dart';
 import '../data/models/scene.dart';
 import '../data/providers.dart';
@@ -71,21 +72,56 @@ class _ShelfCard extends ConsumerWidget {
     final meta = sceneMetaLine(context, ref, scene, withDate: false);
     return SizedBox(
       width: 240,
-      child: InkWell(
-        borderRadius: BorderRadius.circular(8),
-        onTap: () => ref.read(nowPlayingProvider.notifier).play(scene),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            ClipRRect(
-              borderRadius: BorderRadius.circular(8),
-              child: SceneThumbnail(scene: scene, compact: true),
-            ),
-            const SizedBox(height: 6),
-            Text(scene.title, maxLines: 2, overflow: TextOverflow.ellipsis, style: theme.textTheme.titleSmall),
-            Text(sceneChannel(context, ref, scene).name, maxLines: 1, overflow: TextOverflow.ellipsis, style: muted),
-            if (meta.isNotEmpty) Text(meta, maxLines: 1, overflow: TextOverflow.ellipsis, style: muted),
-          ],
+      child: TileSemantics(
+        label: sceneSemanticsLabel(context, ref, scene),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(8),
+          onTap: () => ref.read(nowPlayingProvider.notifier).play(scene),
+          // A shortcut for the ⋮ next to the title.
+          onLongPress: () {
+            Haptics.heavy();
+            showSceneMenu(context, ref, scene);
+          },
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              ExcludeSemantics(
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(8),
+                  child: SceneThumbnail(scene: scene, compact: true),
+                ),
+              ),
+              const SizedBox(height: 6),
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                    child: ExcludeSemantics(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            scene.title,
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                            style: theme.textTheme.titleSmall,
+                          ),
+                          Text(
+                            sceneChannel(context, ref, scene).name,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: muted,
+                          ),
+                          if (meta.isNotEmpty) Text(meta, maxLines: 1, overflow: TextOverflow.ellipsis, style: muted),
+                        ],
+                      ),
+                    ),
+                  ),
+                  SceneMenuButton(scene: scene, dense: true),
+                ],
+              ),
+            ],
+          ),
         ),
       ),
     );

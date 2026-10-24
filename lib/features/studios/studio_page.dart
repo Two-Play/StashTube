@@ -38,18 +38,16 @@ class _StudioPageState extends ConsumerState<StudioPage> {
     final hasChildren = studio.value?.children.isNotEmpty ?? false;
     final includeSubStudios = _includeSubStudios ?? hasChildren;
 
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(studio.value?.name ?? '', maxLines: 1, overflow: TextOverflow.ellipsis),
-        actions: [
-          if (studio.value case final value?)
-            IconButton(
-              tooltip: context.l10n.edit,
-              icon: const Icon(Icons.edit_outlined),
-              onPressed: () => openEditor(context, ref, StudioEditPage(studio: value)),
-            ),
-        ],
-      ),
+    return ChannelScaffold(
+      title: Text(studio.value?.name ?? '', maxLines: 1, overflow: TextOverflow.ellipsis),
+      actions: [
+        if (studio.value case final value?)
+          IconButton(
+            tooltip: context.l10n.edit,
+            icon: const Icon(Icons.edit_outlined),
+            onPressed: () => openEditor(context, ref, StudioEditPage(studio: value)),
+          ),
+      ],
       body: SceneFeedView(
         initialQuery: SceneQuery(
           sort: SceneSort.newest,

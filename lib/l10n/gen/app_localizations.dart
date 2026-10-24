@@ -380,6 +380,48 @@ abstract class AppLocalizations {
   /// **'Play'**
   String get sceneMenuPlay;
 
+  /// No description provided for @sceneMoreOptions.
+  ///
+  /// In en, this message translates to:
+  /// **'More options'**
+  String get sceneMoreOptions;
+
+  /// No description provided for @durationHours.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 hour} other{{count} hours}}'**
+  String durationHours(int count);
+
+  /// No description provided for @durationMinutes.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 minute} other{{count} minutes}}'**
+  String durationMinutes(int count);
+
+  /// No description provided for @durationSeconds.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 second} other{{count} seconds}}'**
+  String durationSeconds(int count);
+
+  /// No description provided for @starsCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 star} other{{count} stars}}'**
+  String starsCount(int count);
+
+  /// No description provided for @watchedPercent.
+  ///
+  /// In en, this message translates to:
+  /// **'{percent}% watched'**
+  String watchedPercent(int percent);
+
+  /// No description provided for @markerAt.
+  ///
+  /// In en, this message translates to:
+  /// **'Marker at {time}'**
+  String markerAt(String time);
+
   /// No description provided for @watchLaterRemove.
   ///
   /// In en, this message translates to:
@@ -493,6 +535,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Retry'**
   String get retry;
+
+  /// No description provided for @playbackFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t play this video'**
+  String get playbackFailed;
+
+  /// No description provided for @otherQuality.
+  ///
+  /// In en, this message translates to:
+  /// **'Other quality'**
+  String get otherQuality;
 
   /// No description provided for @sortRecentlyAdded.
   ///
@@ -763,6 +817,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Tap \"Later\" on a scene to watch it afterwards.'**
   String get watchLaterEmptyHint;
+
+  /// No description provided for @watchLaterDeviceOnly.
+  ///
+  /// In en, this message translates to:
+  /// **'Saved on this device only, not on the server.'**
+  String get watchLaterDeviceOnly;
 
   /// No description provided for @favoriteUpdateFailed.
   ///
@@ -1201,6 +1261,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Couldn\'t connect to {device}: {error}'**
   String castConnectFailed(String device, String error);
+
+  /// No description provided for @castPlayFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t play on {device}: {error}'**
+  String castPlayFailed(String device, String error);
 
   /// No description provided for @minimize.
   ///
@@ -1693,6 +1759,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'O-count: {count}'**
   String oCountValue(int count);
+
+  /// No description provided for @oCounterLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'O · {count}'**
+  String oCounterLabel(int count);
+
+  /// No description provided for @oCounterSemantics.
+  ///
+  /// In en, this message translates to:
+  /// **'O-counter {count}, add one'**
+  String oCounterSemantics(int count);
 
   /// No description provided for @undo.
   ///

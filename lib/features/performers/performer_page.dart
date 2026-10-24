@@ -27,18 +27,16 @@ class PerformerPage extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final performer = ref.watch(performerProvider(performerId));
 
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(performer.value?.name ?? '', maxLines: 1, overflow: TextOverflow.ellipsis),
-        actions: [
-          if (performer.value case final value?)
-            IconButton(
-              tooltip: context.l10n.edit,
-              icon: const Icon(Icons.edit_outlined),
-              onPressed: () => openEditor(context, ref, PerformerEditPage(performer: value)),
-            ),
-        ],
-      ),
+    return ChannelScaffold(
+      title: Text(performer.value?.name ?? '', maxLines: 1, overflow: TextOverflow.ellipsis),
+      actions: [
+        if (performer.value case final value?)
+          IconButton(
+            tooltip: context.l10n.edit,
+            icon: const Icon(Icons.edit_outlined),
+            onPressed: () => openEditor(context, ref, PerformerEditPage(performer: value)),
+          ),
+      ],
       body: SceneFeedView(
         initialQuery: SceneQuery(sort: SceneSort.newest, performerId: performerId),
         sorts: _sorts,

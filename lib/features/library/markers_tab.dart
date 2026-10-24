@@ -8,6 +8,7 @@ import '../../data/providers.dart';
 import '../../widgets/animated_previews.dart';
 import '../../widgets/chip_bar.dart';
 import '../../widgets/paged_sliver.dart';
+import '../../widgets/scene_card.dart';
 import '../../widgets/stash_image.dart';
 import '../player/player_providers.dart';
 import '../../l10n/l10n.dart';
@@ -96,59 +97,74 @@ class MarkerTile extends ConsumerWidget {
     final muted = theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurfaceVariant);
     final still = StashImage(marker.screenshotUrl ?? marker.scene.screenshotUrl, fallbackIcon: Icons.bookmark_outline);
     final preview = previewsPlay(context, ref, markerPreviewsProvider) ? marker.previewUrl : null;
-    return InkWell(
-      borderRadius: BorderRadius.circular(8),
-      onTap: () => ref.read(nowPlayingProvider.notifier).play(marker.scene, at: marker.seconds),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          ClipRRect(
-            borderRadius: BorderRadius.circular(8),
-            child: AspectRatio(
-              aspectRatio: 16 / 9,
-              child: Stack(
-                fit: StackFit.expand,
-                children: [
-                  if (preview != null)
-                    // Loops by itself (animated WebP); the still frame shows
-                    // until it loaded, and if Stash has none.
-                    StashImage(preview, standIn: still)
-                  else
-                    still,
-                  Positioned(
-                    right: 6,
-                    bottom: 6,
-                    child: DecoratedBox(
-                      decoration: BoxDecoration(
-                        color: Colors.black.withValues(alpha: 0.8),
-                        borderRadius: BorderRadius.circular(4),
-                      ),
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            const Icon(Icons.bookmark, color: Colors.white, size: 12),
-                            const SizedBox(width: 4),
-                            Text(
-                              formatDuration(marker.seconds),
-                              style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w500),
+    final l = context.l10n;
+    final showTag = marker.tag.name != marker.title;
+    return TileSemantics(
+      label: [
+        marker.title,
+        marker.scene.title,
+        l.markerAt(spokenDuration(l, marker.seconds)),
+        if (showTag) marker.tag.name,
+      ].join(', '),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(8),
+        onTap: () => ref.read(nowPlayingProvider.notifier).play(marker.scene, at: marker.seconds),
+        child: ExcludeSemantics(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              ClipRRect(
+                borderRadius: BorderRadius.circular(8),
+                child: AspectRatio(
+                  aspectRatio: 16 / 9,
+                  child: Stack(
+                    fit: StackFit.expand,
+                    children: [
+                      if (preview != null)
+                        // Loops by itself (animated WebP); the still frame shows
+                        // until it loaded, and if Stash has none.
+                        StashImage(preview, standIn: still)
+                      else
+                        still,
+                      Positioned(
+                        right: 6,
+                        bottom: 6,
+                        child: DecoratedBox(
+                          decoration: BoxDecoration(
+                            color: Colors.black.withValues(alpha: 0.8),
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                const Icon(Icons.bookmark, color: Colors.white, size: 12),
+                                const SizedBox(width: 4),
+                                Text(
+                                  formatDuration(marker.seconds),
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                              ],
                             ),
-                          ],
+                          ),
                         ),
                       ),
-                    ),
+                    ],
                   ),
-                ],
+                ),
               ),
-            ),
+              const SizedBox(height: 6),
+              Text(marker.title, maxLines: 1, overflow: TextOverflow.ellipsis, style: theme.textTheme.titleSmall),
+              Text(marker.scene.title, maxLines: 1, overflow: TextOverflow.ellipsis, style: muted),
+              if (showTag) Text('#${marker.tag.name}', maxLines: 1, overflow: TextOverflow.ellipsis, style: muted),
+            ],
           ),
-          const SizedBox(height: 6),
-          Text(marker.title, maxLines: 1, overflow: TextOverflow.ellipsis, style: theme.textTheme.titleSmall),
-          Text(marker.scene.title, maxLines: 1, overflow: TextOverflow.ellipsis, style: muted),
-          if (marker.tag.name != marker.title)
-            Text('#${marker.tag.name}', maxLines: 1, overflow: TextOverflow.ellipsis, style: muted),
-        ],
+        ),
       ),
     );
   }
