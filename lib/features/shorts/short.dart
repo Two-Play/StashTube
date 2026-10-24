@@ -40,6 +40,21 @@ class Short {
 
   String get title => marker?.title ?? scene.title;
 
+  /// How far playback may stray from a marker's clip before
+  /// [correctionFor] brings it back: the A-B loop jumps back a moment after
+  /// the end.
+  static const clipTolerance = Duration(seconds: 1);
+
+  /// Where a marker short's player has to go when it is at [position]: the
+  /// clip's start once the position left the clip (e.g. the scene ended
+  /// and looped to 0); null while inside, and always for a whole video.
+  Duration? correctionFor(Duration position) {
+    final start = this.start;
+    final end = this.end;
+    if (start == null || end == null) return null;
+    return position >= start - clipTolerance && position <= end + clipTolerance ? null : start;
+  }
+
   static Duration _duration(double seconds) => Duration(milliseconds: (seconds * 1000).round());
 
   @override

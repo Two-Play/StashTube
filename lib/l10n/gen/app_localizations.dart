@@ -1580,6 +1580,18 @@ abstract class AppLocalizations {
   /// **'{count, plural, =1{Back 1 second} other{Back {count} seconds}}'**
   String seekBackSeconds(int count);
 
+  /// No description provided for @seekBar.
+  ///
+  /// In en, this message translates to:
+  /// **'Seek bar'**
+  String get seekBar;
+
+  /// No description provided for @seekBarValue.
+  ///
+  /// In en, this message translates to:
+  /// **'{position} of {duration}'**
+  String seekBarValue(String position, String duration);
+
   /// No description provided for @pause.
   ///
   /// In en, this message translates to:
@@ -2983,6 +2995,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Only markers'**
   String get shortsMarkersOnly;
+
+  /// No description provided for @shortMarkerSemantics.
+  ///
+  /// In en, this message translates to:
+  /// **'Marker: {title}'**
+  String shortMarkerSemantics(String title);
 
   /// No description provided for @shortsEmpty.
   ///

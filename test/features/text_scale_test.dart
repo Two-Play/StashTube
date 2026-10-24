@@ -31,6 +31,8 @@ import 'package:stash_app_mobile/features/security/app_lock.dart';
 import 'package:stash_app_mobile/features/player/player_providers.dart';
 import 'package:stash_app_mobile/features/shell/app_shell.dart';
 import 'package:stash_app_mobile/features/shell/navigation.dart';
+import 'package:stash_app_mobile/features/shorts/shorts_settings.dart';
+import 'package:stash_app_mobile/features/shorts/shorts_settings_sheet.dart';
 import 'package:stash_app_mobile/features/you/you_page.dart';
 import 'package:stash_app_mobile/l10n/gen/app_localizations.dart';
 import 'package:stash_app_mobile/widgets/sliver_columns.dart';
@@ -326,6 +328,27 @@ void main() {
         await tester.drag(find.byType(CustomScrollView).first, const Offset(0, -800));
         await settle(tester);
         expectNoOverflow(at, 'performer, scrolled');
+      });
+
+      // The shorts page itself needs real players; its settings sheet doesn't.
+      testScaled('shorts settings sheet', (tester) async {
+        await pumpPage(
+          tester,
+          Builder(
+            builder: (context) => Scaffold(
+              body: TextButton(onPressed: () => showShortsSettingsSheet(context), child: const Text('open')),
+            ),
+          ),
+          at: at,
+        );
+        await tester.tap(find.text('open'));
+        await settle(tester);
+        expect(find.byType(ShortsSettingsSheet), findsOneWidget);
+        expectNoOverflow(at, 'shorts settings');
+        final list = find.descendant(of: find.byType(ShortsSettingsSheet), matching: find.byType(Scrollable)).first;
+        await tester.scrollUntilVisible(find.byType(SegmentedButton<ShortsMarkers>), 300, scrollable: list);
+        await settle(tester);
+        expectNoOverflow(at, 'shorts settings, scrolled');
       });
 
       testScaled('settings and its pages', (tester) async {

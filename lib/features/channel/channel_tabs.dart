@@ -8,23 +8,19 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/config/haptics.dart';
-import '../../core/config/theme.dart';
 import '../../core/utils/external_links.dart';
-import '../../core/utils/format.dart';
 import '../../data/models/gallery.dart';
 import '../../data/models/list_queries.dart';
-import '../../data/models/scene.dart';
 import '../../data/providers.dart';
 import '../../l10n/l10n.dart';
 import '../../widgets/channel_header.dart';
 import '../../widgets/chip_bar.dart';
 import '../../widgets/paged_sliver.dart';
-import '../../widgets/scene_card.dart';
 import '../../widgets/skeleton.dart';
-import '../../widgets/stash_image.dart';
 import '../../widgets/status_views.dart';
 import '../library/galleries_tab.dart';
 import '../shell/navigation.dart';
+import '../shorts/short_tile.dart';
 import '../shorts/shorts_feed.dart';
 import '../shorts/shorts_page.dart';
 
@@ -423,9 +419,8 @@ class _ChannelShortsGridState extends ConsumerState<ChannelShortsGrid> {
           sliver: SliverGrid(
             gridDelegate: _gridDelegate,
             delegate: SliverChildBuilderDelegate(
-              (_, i) => ChannelShortTile(
-                // A channel's feed has only whole videos, no markers.
-                scene: items[i].scene,
+              (_, i) => ShortTile(
+                short: items[i],
                 onTap: () => openPage(ref, ShortsPage(source: widget.source, initialIndex: i)),
               ),
               childCount: items.length,
@@ -454,71 +449,6 @@ class _ChannelShortsGridState extends ConsumerState<ChannelShortsGrid> {
       ),
     );
   }
-}
-
-/// A short's 9:16 tile: still, title and length.
-class ChannelShortTile extends StatelessWidget {
-  const ChannelShortTile({super.key, required this.scene, required this.onTap});
-
-  final Scene scene;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) => ClipRRect(
-        borderRadius: AppRadius.thumbnailBorder,
-        child: Material(
-          color: Colors.black,
-          child: TileSemantics(
-            label: [scene.title, if (scene.duration > 0) spokenDuration(context.l10n, scene.duration)].join(', '),
-            child: InkWell(
-              onTap: onTap,
-              child: ExcludeSemantics(
-                child: Stack(
-                  fit: StackFit.expand,
-                  children: [
-                    StashImage(scene.screenshotUrl, fallbackIcon: Icons.slow_motion_video),
-                    DecoratedBox(
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          begin: Alignment.bottomCenter,
-                          end: Alignment.center,
-                          colors: [AppColors.of(context).videoScrim, Colors.transparent],
-                        ),
-                      ),
-                    ),
-                    Positioned(
-                      left: 6,
-                      right: 6,
-                      bottom: 6,
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Text(
-                            scene.title,
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: AppTextSize.overlayLabel,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                          if (scene.duration > 0)
-                            Text(
-                              formatDuration(scene.duration),
-                              style: const TextStyle(color: Colors.white70, fontSize: AppTextSize.overlayCaption),
-                            ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-        ),
-      );
 }
 
 /// A channel's galleries as a grid of covers with sort chips.

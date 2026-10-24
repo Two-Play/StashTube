@@ -16,12 +16,12 @@ import 'package:stash_app_mobile/data/models/saved_filter.dart';
 import 'package:stash_app_mobile/data/models/scene.dart';
 import 'package:stash_app_mobile/data/models/tag.dart';
 import 'package:stash_app_mobile/data/repositories/stash_repository.dart';
-import 'package:stash_app_mobile/features/channel/channel_tabs.dart';
 import 'package:stash_app_mobile/features/library/galleries_tab.dart';
 import 'package:stash_app_mobile/features/library/markers_tab.dart';
 import 'package:stash_app_mobile/features/performers/performer_page.dart';
 import 'package:stash_app_mobile/features/player/player_providers.dart';
 import 'package:stash_app_mobile/features/shell/navigation.dart';
+import 'package:stash_app_mobile/features/shorts/short_tile.dart';
 import 'package:stash_app_mobile/features/shorts/shorts_feed.dart';
 import 'package:stash_app_mobile/features/shorts/shorts_page.dart';
 import 'package:stash_app_mobile/widgets/scene_card.dart';
@@ -214,7 +214,7 @@ void main() {
 
     await tester.tap(tab('Shorts'));
     await tester.pumpAndSettle();
-    expect(find.byType(ChannelShortTile), findsNWidgets(3));
+    expect(find.byType(ShortTile), findsNWidgets(3));
     expect(find.text('Short 2'), findsOneWidget);
   });
 

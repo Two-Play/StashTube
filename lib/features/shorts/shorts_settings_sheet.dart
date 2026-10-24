@@ -140,17 +140,18 @@ class _ShortsSettingsSheetState extends ConsumerState<ShortsSettingsSheet> {
                   section(l.shortsMarkers),
                   Text(l.shortsMarkersHint, style: theme.textTheme.bodySmall),
                   const SizedBox(height: 8),
-                  Wrap(
-                    spacing: 6,
-                    runSpacing: 6,
-                    children: [
+                  // A mode, not a filter: one segmented choice.
+                  SegmentedButton<ShortsMarkers>(
+                    segments: [
                       for (final markers in ShortsMarkers.values)
-                        ChoiceChip(
-                          label: Text(markers.label(l)),
-                          selected: _settings.markers == markers,
-                          onSelected: (_) => setState(() => _settings = _settings.copyWith(markers: markers)),
-                        ),
+                        ButtonSegment(value: markers, label: Text(markers.label(l))),
                     ],
+                    selected: {_settings.markers},
+                    showSelectedIcon: false,
+                    onSelectionChanged: (selection) {
+                      Haptics.selection();
+                      setState(() => _settings = _settings.copyWith(markers: selection.single));
+                    },
                   ),
                   const SizedBox(height: 16),
                 ],
@@ -160,15 +161,20 @@ class _ShortsSettingsSheetState extends ConsumerState<ShortsSettingsSheet> {
               top: false,
               child: Padding(
                 padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
-                child: Row(
+                // Side by side; stacked (apply on top) when large text
+                // doesn't fit them in one row.
+                child: OverflowBar(
+                  alignment: MainAxisAlignment.spaceBetween,
+                  overflowAlignment: OverflowBarAlignment.end,
+                  overflowDirection: VerticalDirection.up,
                   children: [
                     TextButton(
                       onPressed: () => setState(() => _settings = const ShortsSettings()),
                       child: Text(l.reset),
                     ),
-                    const Spacer(),
                     FilledButton(
                       onPressed: () {
+                        Haptics.light();
                         ref.read(shortsSettingsProvider.notifier).set(_settings);
                         Navigator.pop(context);
                       },

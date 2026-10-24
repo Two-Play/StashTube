@@ -641,6 +641,18 @@
       }
     }
   },
+  "seekBar": "Seek bar",
+  "seekBarValue": "{position} of {duration}",
+  "@seekBarValue": {
+    "placeholders": {
+      "position": {
+        "type": "String"
+      },
+      "duration": {
+        "type": "String"
+      }
+    }
+  },
   "pause": "Pause",
   "play": "Play",
   "previousScene": "Previous scene",
@@ -1129,6 +1141,14 @@
   "shortsMarkersOff": "Off",
   "shortsMarkersMixed": "With videos",
   "shortsMarkersOnly": "Only markers",
+  "shortMarkerSemantics": "Marker: {title}",
+  "@shortMarkerSemantics": {
+    "placeholders": {
+      "title": {
+        "type": "String"
+      }
+    }
+  },
   "shortsEmpty": "No shorts found",
   "shortsEmptyHint": "Shorts are short portrait videos. Try a longer maximum length or other tags.",
   "shortsFullVideo": "Full video",

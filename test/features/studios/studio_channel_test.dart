@@ -14,9 +14,9 @@ import 'package:stash_app_mobile/data/models/scene.dart';
 import 'package:stash_app_mobile/data/models/studio.dart';
 import 'package:stash_app_mobile/data/models/tag.dart';
 import 'package:stash_app_mobile/data/repositories/stash_repository.dart';
-import 'package:stash_app_mobile/features/channel/channel_tabs.dart';
 import 'package:stash_app_mobile/features/library/markers_tab.dart';
 import 'package:stash_app_mobile/features/shell/navigation.dart';
+import 'package:stash_app_mobile/features/shorts/short_tile.dart';
 import 'package:stash_app_mobile/features/shorts/shorts_feed.dart';
 import 'package:stash_app_mobile/features/shorts/shorts_page.dart';
 import 'package:stash_app_mobile/features/studios/studio_page.dart';
@@ -178,7 +178,7 @@ void main() {
 
     await tester.tap(tab('Shorts'));
     await tester.pumpAndSettle();
-    expect(find.byType(ChannelShortTile), findsNWidgets(2));
+    expect(find.byType(ShortTile), findsNWidgets(2));
     final shortsQuery = repo.sceneQueries.where((q) => q.filter.portraitOnly).last;
     expect(shortsQuery.studioId, 's1');
     expect(shortsQuery.includeSubStudios, isTrue);
