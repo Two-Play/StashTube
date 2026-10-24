@@ -2,9 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/config/design_tokens.dart';
 import '../../core/config/haptics.dart';
-import '../../core/utils/format.dart';
 import '../../data/models/list_queries.dart';
+import '../../data/models/performer.dart';
 import '../../data/models/scene.dart';
 import '../../data/providers.dart';
 import '../../widgets/play_pause_icon.dart';
@@ -14,13 +15,11 @@ import '../../widgets/stash_image.dart';
 import '../shell/navigation.dart';
 import '../cast/cast_providers.dart';
 import 'drag_to_minimize.dart';
-import 'file_info.dart';
 import 'player_controls.dart';
 import 'player_providers.dart';
 import 'player_transition.dart';
-import '../tags/tag_editor.dart';
 import 'scene_actions.dart';
-import 'scene_edits.dart';
+import 'scene_description.dart';
 import '../../l10n/l10n.dart';
 
 /// Width / height of [scene]'s video, updated once the player knows the
@@ -353,8 +352,8 @@ class _ProgressBar extends ConsumerWidget {
   }
 }
 
-/// Everything below the video: title, channel, performers, tags, description
-/// and "Up next".
+/// Everything below the video: the scene's title, channel, actions,
+/// performers and chapters, then "Up next" (or the queue).
 class PlayerDetails extends ConsumerWidget {
   const PlayerDetails({super.key, required this.scene, this.topSpacer = 0});
 
@@ -461,125 +460,101 @@ class _QueueDetails extends StatelessWidget {
   }
 }
 
-class _SceneInfo extends ConsumerStatefulWidget {
+/// The scene's part of the details, ordered like YouTube's watch page
+/// (WATCH-2): title and meta (tap for the description sheet), the channel,
+/// one action bar, the performers and the chapters, so "Up next" starts
+/// within the first screen.
+class _SceneInfo extends ConsumerWidget {
   const _SceneInfo({required this.scene});
 
   final Scene scene;
 
   @override
-  ConsumerState<_SceneInfo> createState() => _SceneInfoState();
-}
-
-class _SceneInfoState extends ConsumerState<_SceneInfo> {
-  bool _expanded = false;
-  bool _titleExpanded = false;
-
-  @override
-  Widget build(BuildContext context) {
-    final scene = widget.scene;
+  Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
+    final l = context.l10n;
     final muted = theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurfaceVariant);
-    final studio = scene.studio;
     final details = ref.watch(sceneDetailsProvider(scene.id)).value;
-    final tags = effectiveTags(ref, scene);
+    final meta = sceneMetaText(l, scene);
 
-    final meta = [
-      if (scene.playCount > 0) context.l10n.playsCount(scene.playCount),
-      if (scene.date != null) formatDate(scene.date!),
-      if (resolutionLabel(scene.height) != null) resolutionLabel(scene.height)!,
-    ].join(' • ');
+    // The studio, else the first performer, is the scene's channel.
+    final studio = scene.studio;
+    final performer = studio == null ? scene.performers.firstOrNull : null;
+    final performers = performer != null && scene.performers.length == 1 ? const <Performer>[] : scene.performers;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Padding(
-          padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
-          // Long titles (often file names) are cut to two lines; tap to expand.
-          child: GestureDetector(
-            onTap: () => setState(() => _titleExpanded = !_titleExpanded),
-            child: AnimatedSize(
-              duration: const Duration(milliseconds: 150),
-              alignment: Alignment.topCenter,
-              child: Text(
-                scene.title,
-                maxLines: _titleExpanded ? null : 2,
-                overflow: _titleExpanded ? TextOverflow.visible : TextOverflow.ellipsis,
-                style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w600),
+        // Long titles (often file names) are cut to two lines; the sheet
+        // shows all of it (WATCH-5).
+        Semantics(
+          button: true,
+          onTapHint: l.showDescription,
+          child: InkWell(
+            onTap: () => showSceneDescription(context, scene),
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(AppSpacing.l, AppSpacing.m, AppSpacing.l, AppSpacing.s),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    scene.title,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w600),
+                  ),
+                  const SizedBox(height: AppSpacing.xs),
+                  Text.rich(
+                    TextSpan(children: [
+                      if (meta.isNotEmpty) ...[
+                        TextSpan(text: meta),
+                        const WidgetSpan(child: SizedBox(width: AppSpacing.s)),
+                      ],
+                      TextSpan(
+                        text: l.showMore,
+                        style: TextStyle(color: theme.colorScheme.onSurface, fontWeight: FontWeight.w600),
+                      ),
+                    ]),
+                    style: muted,
+                  ),
+                ],
               ),
             ),
           ),
         ),
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16),
-          child: Text(meta, style: muted),
-        ),
-        SceneActions(scene: scene),
         if (studio != null)
           ListTile(
             leading: ChannelAvatar(name: studio.name, imageUrl: studio.imageUrl),
             title: Text(studio.name, maxLines: 1, overflow: TextOverflow.ellipsis, style: theme.textTheme.titleSmall),
             trailing: const Icon(Icons.chevron_right),
             onTap: () => openStudio(ref, studio.id),
+          )
+        else if (performer != null)
+          ListTile(
+            leading: ChannelAvatar(name: performer.name, imageUrl: performer.imageUrl),
+            title: Text(performer.name, maxLines: 1, overflow: TextOverflow.ellipsis, style: theme.textTheme.titleSmall),
+            trailing: const Icon(Icons.chevron_right),
+            onTap: () => openPerformer(ref, performer.id),
           ),
-        if (scene.performers.isNotEmpty)
+        SceneActions(scene: scene),
+        if (performers.isNotEmpty)
           // Rows as tall as their chips, so large text isn't cut off.
-          _ChipRow(
-            spacing: 8,
-            children: [
-              for (final p in scene.performers)
-                ActionChip(
-                  avatar: ChannelAvatar(name: p.name, imageUrl: p.imageUrl, radius: 12),
-                  label: Text(p.name),
-                  onPressed: () => openPerformer(ref, p.id),
-                ),
-            ],
-          ),
-        _ChipRow(
-          spacing: 6,
-          children: [
-            for (final tag in tags)
-              ActionChip(
-                label: Text('#${tag.name}'),
-                labelStyle: TextStyle(color: theme.colorScheme.primary),
-                onPressed: () => openTag(ref, tag.id),
-              ),
-            ActionChip(
-              avatar: Icon(tags.isEmpty ? Icons.add : Icons.edit_outlined, size: 16),
-              label: Text(tags.isEmpty ? context.l10n.addTags : context.l10n.editTags),
-              onPressed: () => showSceneTagEditor(context, scene, tags),
-            ),
-          ],
-        ),
-        if (details != null && details.markers.isNotEmpty) ChapterList(details: details),
-        if (scene.details != null)
           Padding(
-            padding: const EdgeInsets.fromLTRB(12, 8, 12, 0),
-            child: Material(
-              color: theme.colorScheme.surfaceContainerHighest,
-              borderRadius: BorderRadius.circular(12),
-              child: InkWell(
-                borderRadius: BorderRadius.circular(12),
-                onTap: () => setState(() => _expanded = !_expanded),
-                child: Padding(
-                  padding: const EdgeInsets.all(12),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        scene.details!,
-                        maxLines: _expanded ? null : 2,
-                        overflow: _expanded ? null : TextOverflow.ellipsis,
-                        style: theme.textTheme.bodyMedium,
-                      ),
-                      Text(_expanded ? context.l10n.showLess : context.l10n.showMore, style: theme.textTheme.labelMedium),
-                    ],
+            padding: const EdgeInsets.only(top: AppSpacing.xs),
+            child: _ChipRow(
+              spacing: AppSpacing.s,
+              children: [
+                for (final p in performers)
+                  ActionChip(
+                    avatar: ChannelAvatar(name: p.name, imageUrl: p.imageUrl, radius: 12),
+                    label: Text(p.name),
+                    onPressed: () => openPerformer(ref, p.id),
                   ),
-                ),
-              ),
+              ],
             ),
           ),
-        if (details != null && details.files.isNotEmpty) FileInfoCard(files: details.files),
-        const SizedBox(height: 8),
+        if (details != null && details.markers.isNotEmpty) ChapterList(details: details),
+        const SizedBox(height: AppSpacing.s),
       ],
     );
   }

@@ -9,6 +9,7 @@ import 'package:integration_test/integration_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:stash_app_mobile/main.dart' as app;
 import 'package:stash_app_mobile/widgets/performer_tile.dart';
+import 'package:stash_app_mobile/widgets/scene_shelf.dart';
 
 void main() {
   final binding = IntegrationTestWidgetsFlutterBinding.ensureInitialized();
@@ -54,9 +55,14 @@ void main() {
 
     await shot(tester, 'home');
 
-    await tap(tester, find.text('Shorts'), wait: 6);
+    // The collapsed player has the same texts (performers, ...): only
+    // look in the bar, the grid and the tabs.
+    Finder inBar(String label) => find.descendant(of: find.byType(NavigationBar), matching: find.text(label));
+
+    // Shorts are a tab of the standard bar.
+    await tap(tester, inBar('Shorts'), wait: 6);
     await shot(tester, 'shorts');
-    await tap(tester, find.byType(BackButton), wait: 2);
+    await tap(tester, inBar('Home'), wait: 2);
 
     await tap(tester, find.text('The Robots Arrive'), wait: 6);
     // A tap on the video shows the controls (after the double tap timeout).
@@ -65,20 +71,24 @@ void main() {
     await shot(tester, 'player');
     await tap(tester, find.byIcon(Icons.keyboard_arrow_down), wait: 2);
 
-    // The collapsed player has the same texts (performers, ...): only
-    // look in the bar, the grid and the tabs.
-    Finder inBar(String label) => find.descendant(of: find.byType(NavigationBar), matching: find.text(label));
+    // Performers and markers are on the "You" page, below its shelves.
+    Future<void> tapOnYou(Finder finder, {double wait = 3}) async {
+      await tester.ensureVisible(finder.first);
+      await run(tester, 1);
+      await tap(tester, finder, wait: wait);
+    }
 
-    await tap(tester, inBar('Performers'), wait: 3);
+    await tap(tester, inBar('You'), wait: 3);
+    await tapOnYou(find.widgetWithText(ListTile, 'Performers'));
     await tap(tester, find.widgetWithText(PerformerTile, 'Celia'), wait: 4);
     await shot(tester, 'channel');
 
-    await tap(tester, inBar('Library'), wait: 2);
-    final markersTab = find.descendant(of: find.byType(TabBar), matching: find.text('Markers'));
-    // The tab is past the edge of the scrolling tab bar.
-    await tester.ensureVisible(markersTab);
-    await run(tester, 1);
-    await tap(tester, markersTab, wait: 5);
+    // Selecting the tab again goes back to the "You" page.
+    await tap(tester, inBar('You'), wait: 2);
+    await tapOnYou(
+      find.descendant(of: find.widgetWithText(ShelfHeader, 'Markers'), matching: find.byType(TextButton)),
+      wait: 5,
+    );
     await shot(tester, 'markers');
   });
 }

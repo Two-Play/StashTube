@@ -11,10 +11,10 @@ import '../cast/cast_ui.dart';
 import '../player/player_providers.dart';
 import '../shell/navigation.dart';
 import '../shorts/shorts_feed.dart';
-import '../shorts/shorts_page.dart';
 import '../shorts/shorts_shelf.dart';
 import '../../l10n/l10n.dart';
 import '../server_tasks/server_tasks_page.dart';
+import '../auth/server_avatar.dart';
 import '../settings/settings_button.dart';
 
 /// YouTube-style home: logo app bar, sticky filter chips, shelves and an
@@ -146,16 +146,11 @@ class _HomePageState extends ConsumerState<HomePage> {
                         actions: [
                           const CastButton(),
                           IconButton(
-                            tooltip: context.l10n.tabShorts,
-                            icon: const Icon(Icons.slow_motion_video),
-                            onPressed: () => openPage(ref, const ShortsPage()),
-                          ),
-                          IconButton(
                             tooltip: context.l10n.search,
                             icon: const Icon(Icons.search),
                             onPressed: () => openSearch(ref),
                           ),
-                          const SettingsButton(),
+                          const ServerAvatarButton(),
                         ],
                       ),
                     ),

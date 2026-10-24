@@ -1826,17 +1826,29 @@ abstract class AppLocalizations {
   /// **'Edit tags'**
   String get editTags;
 
-  /// No description provided for @showLess.
-  ///
-  /// In en, this message translates to:
-  /// **'Show less'**
-  String get showLess;
-
   /// No description provided for @showMore.
   ///
   /// In en, this message translates to:
   /// **'...more'**
   String get showMore;
+
+  /// No description provided for @showDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Show description'**
+  String get showDescription;
+
+  /// No description provided for @sceneDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Description'**
+  String get sceneDescription;
+
+  /// No description provided for @noDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'No description'**
+  String get noDescription;
 
   /// No description provided for @saveFailed.
   ///
@@ -1849,6 +1861,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Remove rating'**
   String get removeRating;
+
+  /// No description provided for @rateScene.
+  ///
+  /// In en, this message translates to:
+  /// **'Rate'**
+  String get rateScene;
+
+  /// No description provided for @rateThisScene.
+  ///
+  /// In en, this message translates to:
+  /// **'Rate this scene'**
+  String get rateThisScene;
+
+  /// No description provided for @ratingButtonSemantics.
+  ///
+  /// In en, this message translates to:
+  /// **'Rating: {rating}'**
+  String ratingButtonSemantics(String rating);
 
   /// No description provided for @rateStars.
   ///
@@ -2630,17 +2660,17 @@ abstract class AppLocalizations {
   /// **'Apple TV and AirPlay TVs'**
   String get airPlayHint;
 
-  /// No description provided for @allViews.
+  /// No description provided for @moreViews.
   ///
   /// In en, this message translates to:
-  /// **'All views'**
-  String get allViews;
+  /// **'More views'**
+  String get moreViews;
 
-  /// No description provided for @tabAll.
+  /// No description provided for @tabYou.
   ///
   /// In en, this message translates to:
-  /// **'All'**
-  String get tabAll;
+  /// **'You'**
+  String get tabYou;
 
   /// No description provided for @colorStashTube.
   ///
@@ -2755,6 +2785,144 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'{count, plural, =1{1 short} other{{count} shorts}}'**
   String performerShorts(int count);
+
+  /// No description provided for @channelTabVideos.
+  ///
+  /// In en, this message translates to:
+  /// **'Videos'**
+  String get channelTabVideos;
+
+  /// No description provided for @channelTabShorts.
+  ///
+  /// In en, this message translates to:
+  /// **'Shorts'**
+  String get channelTabShorts;
+
+  /// No description provided for @channelTabImages.
+  ///
+  /// In en, this message translates to:
+  /// **'Images'**
+  String get channelTabImages;
+
+  /// No description provided for @channelTabGalleries.
+  ///
+  /// In en, this message translates to:
+  /// **'Galleries'**
+  String get channelTabGalleries;
+
+  /// Tab of a performer's or studio's page with their details and links.
+  ///
+  /// In en, this message translates to:
+  /// **'About'**
+  String get channelTabAbout;
+
+  /// No description provided for @channelAboutEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing here yet'**
+  String get channelAboutEmpty;
+
+  /// No description provided for @channelLinks.
+  ///
+  /// In en, this message translates to:
+  /// **'Links'**
+  String get channelLinks;
+
+  /// No description provided for @copyLink.
+  ///
+  /// In en, this message translates to:
+  /// **'Copy link'**
+  String get copyLink;
+
+  /// No description provided for @linkCopied.
+  ///
+  /// In en, this message translates to:
+  /// **'Link copied'**
+  String get linkCopied;
+
+  /// No description provided for @fieldAliases.
+  ///
+  /// In en, this message translates to:
+  /// **'Also known as'**
+  String get fieldAliases;
+
+  /// No description provided for @fieldDeathDate.
+  ///
+  /// In en, this message translates to:
+  /// **'Died'**
+  String get fieldDeathDate;
+
+  /// No description provided for @fieldCountry.
+  ///
+  /// In en, this message translates to:
+  /// **'Country'**
+  String get fieldCountry;
+
+  /// No description provided for @fieldEthnicity.
+  ///
+  /// In en, this message translates to:
+  /// **'Ethnicity'**
+  String get fieldEthnicity;
+
+  /// No description provided for @fieldHairColor.
+  ///
+  /// In en, this message translates to:
+  /// **'Hair color'**
+  String get fieldHairColor;
+
+  /// No description provided for @fieldEyeColor.
+  ///
+  /// In en, this message translates to:
+  /// **'Eye color'**
+  String get fieldEyeColor;
+
+  /// No description provided for @fieldHeight.
+  ///
+  /// In en, this message translates to:
+  /// **'Height'**
+  String get fieldHeight;
+
+  /// No description provided for @fieldWeight.
+  ///
+  /// In en, this message translates to:
+  /// **'Weight'**
+  String get fieldWeight;
+
+  /// No description provided for @fieldMeasurements.
+  ///
+  /// In en, this message translates to:
+  /// **'Measurements'**
+  String get fieldMeasurements;
+
+  /// No description provided for @fieldCareer.
+  ///
+  /// In en, this message translates to:
+  /// **'Career'**
+  String get fieldCareer;
+
+  /// No description provided for @fieldTattoos.
+  ///
+  /// In en, this message translates to:
+  /// **'Tattoos'**
+  String get fieldTattoos;
+
+  /// No description provided for @fieldPiercings.
+  ///
+  /// In en, this message translates to:
+  /// **'Piercings'**
+  String get fieldPiercings;
+
+  /// No description provided for @heightCm.
+  ///
+  /// In en, this message translates to:
+  /// **'{cm} cm'**
+  String heightCm(int cm);
+
+  /// No description provided for @weightKg.
+  ///
+  /// In en, this message translates to:
+  /// **'{kg} kg'**
+  String weightKg(int kg);
 
   /// No description provided for @themeWelcomeTitle.
   ///

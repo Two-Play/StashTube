@@ -279,6 +279,9 @@ class ImageQuery {
     this.galleryId,
     this.search,
     this.filter = SceneFilter.none,
+    this.performerId,
+    this.studioId,
+    this.includeSubStudios = false,
     int? seed,
   }) : seed = seed ?? (sort == ImageSort.random ? newRandomSeed() : 0);
 
@@ -293,6 +296,14 @@ class ImageQuery {
   /// Tags, minimum rating and resolution (15.4); the duration doesn't apply
   /// to images and isn't offered for them.
   final SceneFilter filter;
+
+  /// Only images of this performer (their channel's images tab).
+  final String? performerId;
+
+  /// Only images of this studio, with [includeSubStudios] also of its
+  /// sub-studios (the studio channel's images tab).
+  final String? studioId;
+  final bool includeSubStudios;
   final int seed;
 
   String get sortField => sort == ImageSort.random ? 'random_$seed' : sort.field;
@@ -306,6 +317,7 @@ class ImageQuery {
           'value': [galleryId],
           'modifier': 'INCLUDES',
         },
+      ..._channelCriteria(performerId, studioId, includeSubStudios),
     };
     return criteria.isEmpty ? null : criteria;
   }
@@ -315,6 +327,9 @@ class ImageQuery {
         galleryId: galleryId,
         search: clearSearch ? null : (search ?? this.search),
         filter: filter ?? this.filter,
+        performerId: performerId,
+        studioId: studioId,
+        includeSubStudios: includeSubStudios,
         // Picking a sort again (e.g. "Shuffle") starts a fresh shuffle.
         seed: sort == null ? seed : null,
       );
@@ -326,31 +341,79 @@ class ImageQuery {
       other.galleryId == galleryId &&
       other.search == search &&
       other.filter == filter &&
+      other.performerId == performerId &&
+      other.studioId == studioId &&
+      other.includeSubStudios == includeSubStudios &&
       other.seed == seed;
 
   @override
-  int get hashCode => Object.hash(sort, galleryId, search, filter, seed);
+  int get hashCode => Object.hash(sort, galleryId, search, filter, performerId, studioId, includeSubStudios, seed);
 }
 
+/// The `performers`/`studios` criteria of a channel's images or galleries.
+Map<String, dynamic> _channelCriteria(String? performerId, String? studioId, bool includeSubStudios) => {
+      if (performerId != null) 'performers': {'value': [performerId], 'modifier': 'INCLUDES'},
+      if (studioId != null)
+        'studios': {
+          'value': [studioId],
+          'modifier': 'INCLUDES',
+          'depth': includeSubStudios ? -1 : 0,
+        },
+    };
+
 class GalleryQuery {
-  GalleryQuery({this.sort = GallerySort.recentlyAdded, this.search, int? seed})
-      : seed = seed ?? (sort == GallerySort.random ? newRandomSeed() : 0);
+  GalleryQuery({
+    this.sort = GallerySort.recentlyAdded,
+    this.search,
+    this.performerId,
+    this.studioId,
+    this.includeSubStudios = false,
+    int? seed,
+  }) : seed = seed ?? (sort == GallerySort.random ? newRandomSeed() : 0);
 
   final GallerySort sort;
 
   /// Free text (Stash's `q`: title, path, ...).
   final String? search;
+
+  /// Only galleries of this performer (their channel's galleries tab).
+  final String? performerId;
+
+  /// Only galleries of this studio, with [includeSubStudios] also of its
+  /// sub-studios.
+  final String? studioId;
+  final bool includeSubStudios;
   final int seed;
 
   String get sortField => sort == GallerySort.random ? 'random_$seed' : sort.field;
   String get direction => sort == GallerySort.title ? 'ASC' : 'DESC';
 
-  @override
-  bool operator ==(Object other) =>
-      other is GalleryQuery && other.sort == sort && other.search == search && other.seed == seed;
+  Map<String, dynamic>? toGalleryFilter() {
+    final criteria = _channelCriteria(performerId, studioId, includeSubStudios);
+    return criteria.isEmpty ? null : criteria;
+  }
+
+  /// The same galleries in another order (a fresh shuffle for random).
+  GalleryQuery withSort(GallerySort sort) => GalleryQuery(
+        sort: sort,
+        search: search,
+        performerId: performerId,
+        studioId: studioId,
+        includeSubStudios: includeSubStudios,
+      );
 
   @override
-  int get hashCode => Object.hash(sort, search, seed);
+  bool operator ==(Object other) =>
+      other is GalleryQuery &&
+      other.sort == sort &&
+      other.search == search &&
+      other.performerId == performerId &&
+      other.studioId == studioId &&
+      other.includeSubStudios == includeSubStudios &&
+      other.seed == seed;
+
+  @override
+  int get hashCode => Object.hash(sort, search, performerId, studioId, includeSubStudios, seed);
 }
 
 /// Arguments for the markers page (scene markers of all scenes).

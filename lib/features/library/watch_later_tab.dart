@@ -30,7 +30,7 @@ class WatchLaterTab extends ConsumerWidget {
                   icon: Icons.watch_later_outlined,
                   hint: context.l10n.watchLaterEmptyHint,
                 ),
-                const _DeviceOnlyNote(),
+                const WatchLaterDeviceOnlyNote(),
               ],
             ),
           ),
@@ -59,7 +59,7 @@ class WatchLaterTab extends ConsumerWidget {
               columnWidth: 480,
               itemBuilder: (context, i) => _item(context, ref, value, i),
             ),
-            const SliverToBoxAdapter(child: _DeviceOnlyNote()),
+            const SliverToBoxAdapter(child: WatchLaterDeviceOnlyNote()),
           ],
         ),
       _ => const LoadingView(),
@@ -89,8 +89,8 @@ class WatchLaterTab extends ConsumerWidget {
 
 /// The list is stored per server on this device only (PL-2): a second
 /// device shows its own list.
-class _DeviceOnlyNote extends StatelessWidget {
-  const _DeviceOnlyNote();
+class WatchLaterDeviceOnlyNote extends StatelessWidget {
+  const WatchLaterDeviceOnlyNote({super.key});
 
   @override
   Widget build(BuildContext context) {

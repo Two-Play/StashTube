@@ -112,6 +112,11 @@ class DemoLibrary {
         birthdate: _filmDate,
         details: 'A big, friendly rabbit who loves sunny mornings and flowers.',
         urls: [_filmUrl],
+        aliases: ['Bunny'],
+        heightCm: 180,
+        hairColor: 'Grey',
+        eyeColor: 'Brown',
+        career: '2008 -',
       ),
       _Performer('2', 'Purple Bird', image: 'purple-bird', rating100: 80, details: 'Always the first one awake.'),
       _Performer('3', 'Butterfly', image: 'butterfly', rating100: 80, disambiguation: 'pink'),
@@ -202,6 +207,7 @@ class DemoLibrary {
           title: 'Still ${i + 1}',
           studioId: '2',
           galleryIds: ['1'],
+          performerIds: ['1'],
           rating100: i.isEven ? 80 : null,
           createdAt: _now.subtract(Duration(hours: i)),
         ),
@@ -246,6 +252,10 @@ class DemoLibrary {
     'url': s.url,
     'details': s.details,
     'scene_count': (Map<String, dynamic> _) => _scenes.where((sc) => sc.studioId == s.id).length,
+    'image_count': (Map<String, dynamic> args) =>
+        _images.where((i) => _inStudio(i.studioId, s.id, deep: args['depth'] == -1)).length,
+    'gallery_count': (Map<String, dynamic> args) =>
+        _galleries.where((g) => _inStudio(g.studioId, s.id, deep: args['depth'] == -1)).length,
     'parent_studio': (Map<String, dynamic> _) =>
         _studios.where((p) => p.id == s.parentId).map(_studioObject).firstOrNull,
     'child_studios': (Map<String, dynamic> _) => _studios.where((c) => c.parentId == s.id).map(_studioObject).toList(),
@@ -264,7 +274,20 @@ class DemoLibrary {
     'rating100': p.rating100,
     'details': p.details,
     'urls': p.urls,
+    'alias_list': p.aliases,
+    'death_date': null,
+    'ethnicity': null,
+    'hair_color': p.hairColor,
+    'eye_color': p.eyeColor,
+    'height_cm': p.heightCm,
+    'weight': null,
+    'measurements': null,
+    'career_length': p.career,
+    'tattoos': null,
+    'piercings': null,
     'scene_count': (Map<String, dynamic> _) => _scenes.where((s) => s.performerIds.contains(p.id)).length,
+    'image_count': (Map<String, dynamic> _) => _images.where((i) => i.performerIds.contains(p.id)).length,
+    'gallery_count': (Map<String, dynamic> _) => _galleries.where((g) => g.performerIds.contains(p.id)).length,
   };
 
   Map<String, Object?> _tagObject(_Tag t) => {
@@ -394,7 +417,9 @@ class DemoLibrary {
       'image': _media('images/${i.file}.jpg'),
     },
     'studio': (Map<String, dynamic> _) => _studios.where((s) => s.id == i.studioId).map(_studioObject).firstOrNull,
-    'performers': const <Object>[],
+    'performers': (Map<String, dynamic> _) => [
+      for (final id in i.performerIds) ..._performers.where((p) => p.id == id).map(_performerObject),
+    ],
   };
 
   // --- Queries --------------------------------------------------------------
@@ -493,8 +518,13 @@ class DemoLibrary {
     },
     'findGroup': (Map<String, dynamic> args) => _groups.where((g) => g.id == args['id']).map(_groupObject).firstOrNull,
     'findGalleries': (Map<String, dynamic> args) {
+      final filter = args['gallery_filter'] as Map<String, dynamic>?;
       final page = _page(
-        _galleries,
+        _galleries.where(
+          (g) =>
+              _ids(filter?['performers'], g.performerIds) &&
+              _ids(filter?['studios'], _studioIds(g.studioId, filter?['studios'])),
+        ),
         args['filter'],
         text: (g) => g.title,
         sortKey: (g, sort) => switch (sort) {
@@ -516,6 +546,8 @@ class DemoLibrary {
         _images.where(
           (i) =>
               _ids(filter?['galleries'], i.galleryIds) &&
+              _ids(filter?['performers'], i.performerIds) &&
+              _ids(filter?['studios'], _studioIds(i.studioId, filter?['studios'])) &&
               _ids(filter?['tags'], const []) &&
               _number(filter?['rating100'], i.rating100) &&
               _resolution(filter?['resolution'], 480),
@@ -631,6 +663,20 @@ class DemoLibrary {
     if (f['NOT'] case final Map<String, dynamic> not when _sceneMatches(s, not)) return false;
     return true;
   }
+
+  /// Whether [studioId] is [id], or with [deep] one of its sub-studios.
+  bool _inStudio(String? studioId, String id, {required bool deep}) {
+    for (var s = studioId; s != null; s = deep ? _studioParent(s) : null) {
+      if (s == id) return true;
+    }
+    return false;
+  }
+
+  /// The ids a `studios` [criterion] matches an item of [studioId] by: the
+  /// studio, with depth -1 also every parent above it.
+  List<String> _studioIds(String? studioId, Object? criterion) => [
+    for (var s = studioId; s != null; s = criterion is Map && criterion['depth'] == -1 ? _studioParent(s) : null) s,
+  ];
 
   String? _studioParent(String? id) => _studios.where((s) => s.id == id).firstOrNull?.parentId;
 
@@ -884,6 +930,11 @@ class _Performer {
     this.details,
     this.disambiguation,
     this.urls = const [],
+    this.aliases = const [],
+    this.heightCm,
+    this.hairColor,
+    this.eyeColor,
+    this.career,
   });
 
   final String id;
@@ -897,6 +948,11 @@ class _Performer {
   String? details;
   String? disambiguation;
   List<String> urls;
+  final List<String> aliases;
+  final int? heightCm;
+  final String? hairColor;
+  final String? eyeColor;
+  final String? career;
 }
 
 class _Tag {
@@ -987,10 +1043,12 @@ class _Image {
     required this.galleryIds,
     required this.createdAt,
     this.rating100,
+    this.performerIds = const [],
   });
 
   final String id;
   final String file;
+  final List<String> performerIds;
   final String title;
   final String studioId;
   final List<String> galleryIds;

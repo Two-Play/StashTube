@@ -16,7 +16,10 @@ import 'package:stash_app_mobile/data/providers.dart';
 import 'package:stash_app_mobile/data/repositories/stash_repository.dart';
 import 'package:stash_app_mobile/data/repositories/stash_session.dart';
 import 'package:stash_app_mobile/features/player/player_providers.dart';
+import 'package:stash_app_mobile/features/edit/edit_pages.dart';
 import 'package:stash_app_mobile/features/player/player_view.dart';
+import 'package:stash_app_mobile/features/player/scene_description.dart';
+import 'package:stash_app_mobile/features/tags/tag_editor.dart';
 import 'package:stash_app_mobile/l10n/gen/app_localizations.dart';
 import 'package:stash_app_mobile/widgets/skeleton.dart';
 
@@ -38,11 +41,18 @@ const _scene = Scene(
   tags: [Tag(id: '1', name: 'outdoor'), Tag(id: '2', name: 'summer'), Tag(id: '3', name: 'beach')],
 );
 
-/// "Up next" that never finishes loading.
+/// "Up next" (and tag searches) that never finish loading.
 class _LoadingRepository implements StashRepository {
   @override
   Future<PageResult<Scene>> findScenes(SceneQuery query, {int page = 1, int perPage = 24}) =>
       Completer<PageResult<Scene>>().future;
+
+  @override
+  Future<PageResult<Tag>> findTags(TagQuery query, {int page = 1, int perPage = 24}) =>
+      Completer<PageResult<Tag>>().future;
+
+  @override
+  Future<List<String>?> sceneUrls(String id) async => const [];
 
   @override
   dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
@@ -69,6 +79,7 @@ void main() {
       playerProvider.overrideWithValue(FakePlayer()),
       authHeadersProvider.overrideWithValue(const {}),
       sceneDetailsProvider('s1').overrideWith((ref) async => _details),
+      stashRepositoryProvider.overrideWithValue(_LoadingRepository()),
     ]);
     container.read(playQueueProvider.notifier).set(
           const PlayQueue(
@@ -80,8 +91,13 @@ void main() {
   });
   tearDown(() => container.dispose());
 
-  Future<void> pumpDetails(WidgetTester tester, {double textScale = 1}) async {
-    tester.view.physicalSize = const Size(320, 640);
+  Future<void> pumpDetails(
+    WidgetTester tester, {
+    double textScale = 1,
+    Size size = const Size(320, 640),
+    double videoHeight = 0,
+  }) async {
+    tester.view.physicalSize = size;
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.reset);
     await tester.pumpWidget(UncontrolledProviderScope(
@@ -93,7 +109,15 @@ void main() {
           data: MediaQuery.of(context).copyWith(textScaler: TextScaler.linear(textScale)),
           child: child!,
         ),
-        home: const Scaffold(body: PlayerDetails(scene: _scene)),
+        home: Scaffold(
+          body: Column(
+            children: [
+              // Where the video would be.
+              SizedBox(height: videoHeight),
+              const Expanded(child: PlayerDetails(scene: _scene)),
+            ],
+          ),
+        ),
       ),
     ));
     await tester.pump();
@@ -113,7 +137,7 @@ void main() {
     expect(tester.takeException(), isNull, reason: 'no overflow');
 
     // Chip rows and chapter tiles grow with the text instead of clipping it.
-    for (final text in ['First Performer', '#outdoor', 'The middle part', 'Some Studio']) {
+    for (final text in ['First Performer', 'O · 0', 'The middle part', 'Some Studio']) {
       final label = find.text(text).first;
       final box = tester.renderObject<RenderBox>(label);
       expect(box.size.height, greaterThan(30), reason: '$text is drawn at the larger size');
@@ -127,11 +151,79 @@ void main() {
       }
     }
 
-    // The rating's stars keep 48 dp targets.
-    final star = find.byIcon(Icons.star_rounded).first;
-    final button = find.ancestor(of: star, matching: find.byType(IconButton));
+    // The action bar's pills keep 48 dp targets.
+    final button = find.ancestor(of: find.text('4'), matching: find.byWidgetPredicate((w) => w is ButtonStyleButton));
     expect(tester.getSize(button).height, greaterThanOrEqualTo(48));
     expect(tester.getSize(button).width, greaterThanOrEqualTo(48));
+  });
+
+  /// "Up next"'s placeholders shimmer forever, so pumpAndSettle can't be used.
+  Future<void> settle(WidgetTester tester) async {
+    for (var i = 0; i < 10; i++) {
+      await tester.pump(const Duration(milliseconds: 100));
+    }
+  }
+
+  Finder inSheet(Finder finder) => find.descendant(of: find.byType(BottomSheet), matching: finder);
+
+  testWidgets('title, meta, channel and actions come first; the rest is in the description sheet (WATCH-2)',
+      (tester) async {
+    container.read(playQueueProvider.notifier).set(null);
+    await pumpDetails(tester);
+    expect(find.text('3 plays · 1080p'), findsNothing, reason: 'the meta line ends with "...more"');
+    expect(find.textContaining('3 plays · 1080p', findRichText: true), findsOneWidget);
+    expect(find.text('Some Studio'), findsOneWidget);
+    expect(find.text('O · 0'), findsOneWidget);
+    // Not on the page anymore.
+    for (final text in ['Some description of the scene.', '#outdoor', 'File info', 'Edit tags']) {
+      expect(find.text(text), findsNothing, reason: text);
+    }
+
+    await tester.tap(find.text(_scene.title));
+    await settle(tester);
+    for (final text in [_scene.title, 'Some description of the scene.', '#outdoor', '#summer', '#beach', 'File info', 'Edit scene']) {
+      expect(inSheet(find.text(text)), findsOneWidget, reason: text);
+    }
+
+    // Tags are edited in a sheet over this one.
+    await tester.ensureVisible(inSheet(find.text('Edit tags')));
+    await tester.tap(inSheet(find.text('Edit tags')));
+    await settle(tester);
+    expect(find.byType(SceneTagEditor), findsOneWidget);
+    await tester.tapAt(const Offset(160, 20));
+    await settle(tester);
+    expect(find.byType(SceneTagEditor), findsNothing);
+
+    // "Edit scene" closes the sheet and opens the editor.
+    await tester.ensureVisible(inSheet(find.text('Edit scene')));
+    await settle(tester);
+    await tester.tap(inSheet(find.text('Edit scene')));
+    await settle(tester);
+    expect(find.text('Some description of the scene.'), findsWidgets, reason: 'in the edit form');
+    expect(find.byType(SceneDescriptionSheet), findsNothing);
+    expect(find.byType(SceneEditPage), findsOneWidget);
+  });
+
+  testWidgets('the title opens the description for screen readers too (WATCH-5)', (tester) async {
+    final semantics = tester.ensureSemantics();
+    container.read(playQueueProvider.notifier).set(null);
+    await pumpDetails(tester);
+    expect(
+      tester.getSemantics(find.text(_scene.title)),
+      isSemantics(isButton: true, hasTapAction: true, onTapHint: 'Show description'),
+    );
+    semantics.dispose();
+  });
+
+  testWidgets('"Up next" starts within the first screen on a 360×780 phone (WATCH-2)', (tester) async {
+    container.read(playQueueProvider.notifier).set(null);
+    // Status bar plus a 16:9 video, as in the player.
+    await pumpDetails(tester, size: const Size(360, 780), videoHeight: 24 + 360 * 9 / 16);
+    await tester.pump();
+    final header = find.text('More from Some Studio');
+    expect(header, findsOneWidget);
+    expect(tester.getBottomLeft(header).dy, lessThan(780));
+    expect(find.text('Chapters'), findsOneWidget, reason: 'a typical scene, with chapters');
   });
 
   testWidgets('"Up next" loads with placeholders instead of a spinner (HOME-2)', (tester) async {

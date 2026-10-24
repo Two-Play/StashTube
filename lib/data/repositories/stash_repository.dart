@@ -24,6 +24,7 @@ import '../models/list_queries.dart';
 import '../models/marker.dart';
 import '../models/page_result.dart';
 import '../models/performer.dart';
+import '../models/performer_profile.dart';
 import '../models/scene.dart';
 import '../models/saved_filter.dart';
 import '../models/scene_details.dart';
@@ -185,6 +186,15 @@ class StashRepository implements PlaybackActivityApi {
     return Performer.fromFields(performer, details: performer.details);
   }
 
+  /// The performer's details for their channel's about tab, and how many
+  /// images and galleries they have.
+  Future<PerformerProfile> performerProfile(String id) async {
+    final data = await _query(Options$Query$PerformerProfile(variables: Variables$Query$PerformerProfile(id: id)));
+    final performer = data.findPerformer;
+    if (performer == null) throw const StashApiException('Performer not found.', kind: StashErrorKind.notFound);
+    return PerformerProfile.fromGraphql(performer);
+  }
+
   /// Scene markers of all scenes, for the markers page.
   Future<PageResult<Marker>> findMarkers(MarkerQuery query, {int page = 1, int perPage = defaultPageSize}) async {
     final data = await _query(
@@ -221,6 +231,14 @@ class StashRepository implements PlaybackActivityApi {
     final studio = data.findStudio;
     if (studio == null) throw const StashApiException('Studio not found.', kind: StashErrorKind.notFound);
     return Studio.fromFields(studio);
+  }
+
+  /// How many images and galleries the studio and its sub-studios have.
+  Future<ChannelMediaCounts> studioMediaCounts(String id) async {
+    final data = await _query(Options$Query$StudioMediaCounts(variables: Variables$Query$StudioMediaCounts(id: id)));
+    final studio = data.findStudio;
+    if (studio == null) throw const StashApiException('Studio not found.', kind: StashErrorKind.notFound);
+    return ChannelMediaCounts.fromStudio(studio);
   }
 
   @override
@@ -264,6 +282,7 @@ class StashRepository implements PlaybackActivityApi {
             sort: query.sortField,
             direction: query.direction,
           ),
+          gallery_filter: _input(query.toGalleryFilter(), Input$GalleryFilterType.fromJson, (i) => i.toJson()),
         ),
       ),
     );
