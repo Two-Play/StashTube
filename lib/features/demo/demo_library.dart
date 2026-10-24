@@ -402,6 +402,7 @@ class DemoLibrary {
   Map<String, Object?> _queryRoot() => {
     '__typename': 'Query',
     'systemStatus': {'__typename': 'SystemStatus', 'status': 'OK'},
+    'jobQueue': const <Object>[],
     'version': {'__typename': 'Version', 'version': 'demo'},
     'findScenes': (Map<String, dynamic> args) {
       final ids = (args['ids'] as List?)?.map((e) => '$e').toSet();
@@ -742,6 +743,10 @@ class DemoLibrary {
 
   Map<String, Object?> _mutationRoot() => {
     '__typename': 'Mutation',
+    // Server tasks: accepted, but there is nothing to scan or generate.
+    for (final task in ['metadataScan', 'metadataGenerate', 'metadataAutoTag', 'metadataClean'])
+      task: (Map<String, dynamic> _) => '${_nextId++}',
+    'stopJob': (Map<String, dynamic> _) => true,
     'sceneSaveActivity': (Map<String, dynamic> args) {
       final scene = _scene(args['id']);
       if (scene == null) return false;

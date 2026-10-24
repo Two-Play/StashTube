@@ -225,6 +225,7 @@ class SceneThumbnail extends ConsumerWidget {
           // In lists, the first fully shown video plays its preview.
           AutoPreview(
             url: scene.webpUrl,
+            videoUrl: scene.previewUrl,
             child: StashImage(scene.screenshotUrl, fallbackIcon: Icons.movie_outlined),
           ),
           if (resolution != null && !compact)
