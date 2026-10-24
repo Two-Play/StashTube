@@ -155,6 +155,8 @@ class PlayQueue {
 
   bool get hasNext => index + 1 < scenes.length;
 
+  bool get hasPrevious => index > 0;
+
   PlayQueue at(int index) => PlayQueue(title: title, scenes: scenes, index: index);
 }
 
@@ -173,11 +175,109 @@ final playQueueProvider = NotifierProvider<PlayQueueNotifier, PlayQueue?>(PlayQu
 /// Emits true when the current media played to the end.
 final playerCompletedProvider = StreamProvider<bool>((ref) => ref.watch(playerProvider).stream.completed);
 
+/// A playback failure of the main player: mpv's message and the last
+/// position that played before it, if any (to retry from there).
+class PlaybackError {
+  const PlaybackError(this.message, {this.position});
+
+  final String message;
+  final Duration? position;
+}
+
+/// The current playback error of the main player, or null (WATCH-1).
+///
+/// mpv also reports errors it recovers from (a broken frame), so an error
+/// only counts once playback hasn't moved on for [confirmDelay]; playback
+/// moving forward afterwards clears it again, and so does opening a file
+/// (another scene, quality or [retry]). Watches the player only while a
+/// scene is open, so the native player isn't created just for this.
+class PlaybackErrorNotifier extends Notifier<PlaybackError?> {
+  static const confirmDelay = Duration(seconds: 2);
+
+  /// Last position that played since the current file was opened.
+  Duration? _played;
+  Duration? _pendingFrom;
+  Timer? _confirm;
+
+  @override
+  PlaybackError? build() {
+    _reset();
+    _played = null;
+    final sceneId = ref.watch(nowPlayingProvider.select((s) => s?.id));
+    if (sceneId == null) return null;
+    final player = ref.watch(playerProvider);
+    final subscriptions = [
+      player.stream.error.listen(_onError),
+      player.stream.position.listen(_onPosition),
+      // A file is opening (quality switch, retry).
+      player.stream.playlist.listen((_) => clear()),
+    ];
+    ref.onDispose(() {
+      _confirm?.cancel();
+      for (final s in subscriptions) {
+        s.cancel();
+      }
+    });
+    return null;
+  }
+
+  void _onError(String message) {
+    // While casting the local player only waits; the TV plays.
+    if (ref.read(isCastingProvider) || _confirm != null) return;
+    final from = _played;
+    _pendingFrom = from ?? Duration.zero;
+    _confirm = Timer(confirmDelay, () {
+      _confirm = null;
+      if (!ref.mounted || _pendingFrom == null) return;
+      _pendingFrom = null;
+      state = PlaybackError(message, position: from);
+    });
+  }
+
+  void _onPosition(Duration position) {
+    final from = _pendingFrom ?? state?.position ?? (state != null ? Duration.zero : null);
+    if (from != null && position > from + const Duration(seconds: 1)) {
+      // Playback went on: the error didn't stop it.
+      _reset();
+      if (state != null) state = null;
+    }
+    if (position > Duration.zero) _played = position;
+  }
+
+  void _reset() {
+    _confirm?.cancel();
+    _confirm = null;
+    _pendingFrom = null;
+  }
+
+  /// Opens the scene again from where it stopped, or where it was opened
+  /// if it never played.
+  void retry() {
+    final start = state?.position;
+    clear();
+    ref.read(nowPlayingProvider.notifier).reopen(start);
+  }
+
+  /// A new file is opening: forget the old one's error and position.
+  void clear() {
+    _reset();
+    _played = null;
+    if (state != null) state = null;
+  }
+}
+
+final playbackErrorProvider =
+    NotifierProvider<PlaybackErrorNotifier, PlaybackError?>(PlaybackErrorNotifier.new);
+
 /// The scene in the player, or null when the player is closed.
 class NowPlayingNotifier extends Notifier<Scene?> {
   /// Last position reported by the cast device, to continue locally after
   /// disconnecting.
   Duration _lastCastPosition = Duration.zero;
+
+  /// Where the current file was opened, to retry from there when it failed
+  /// before playing.
+  Duration _openedAt = Duration.zero;
 
   @override
   Scene? build() {
@@ -227,6 +327,27 @@ class NowPlayingNotifier extends Notifier<Scene?> {
     if (queue == null || !queue.hasNext) return;
     ref.read(playQueueProvider.notifier).set(queue.at(queue.index + 1));
     play(queue.scenes[queue.index + 1]);
+  }
+
+  /// How far into a scene "previous" restarts it instead of going back.
+  static const restartThreshold = Duration(seconds: 3);
+
+  /// Back in the queue like a media player: restarts the scene once more
+  /// than [restartThreshold] has played (or at the queue's start), else
+  /// plays the previous scene.
+  void playPrevious() {
+    if (state == null) return;
+    final queue = ref.read(playQueueProvider);
+    if (queue == null || !queue.hasPrevious || currentPosition() > restartThreshold) {
+      if (ref.read(isCastingProvider)) {
+        unawaited(ref.read(castServiceProvider).seek(Duration.zero));
+      } else {
+        ref.read(playerProvider).seek(Duration.zero);
+      }
+      return;
+    }
+    ref.read(playQueueProvider.notifier).set(queue.at(queue.index - 1));
+    play(queue.scenes[queue.index - 1]);
   }
 
   /// Plays [scene]. Inside the active queue this moves the queue position;
@@ -301,6 +422,9 @@ class NowPlayingNotifier extends Notifier<Scene?> {
       await ref.read(castServiceProvider).load(media);
     } catch (e) {
       debugPrint('Casting failed: $e');
+      if (ref.mounted) {
+        ref.read(castFailureProvider.notifier).report(e, ref.read(castConnectionProvider).value?.deviceName);
+      }
     } finally {
       details.close();
     }
@@ -315,6 +439,16 @@ class NowPlayingNotifier extends Notifier<Scene?> {
     await ref.read(preferredStreamProvider.notifier).set(stream.isDirect ? null : stream.label);
   }
 
+  /// Opens the current scene's stream again from [start], else from where
+  /// it was opened, e.g. after a playback error ([PlaybackErrorNotifier.retry]).
+  void reopen([Duration? start]) {
+    final scene = state;
+    if (scene == null) return;
+    final url = ref.read(currentStreamProvider)?.url ?? scene.streamUrl;
+    if (url == null) return;
+    _open(url, start ?? _openedAt, play: !ref.read(isCastingProvider));
+  }
+
   /// Where playback is: on the cast device while casting, else in the
   /// local player.
   Duration currentPosition() =>
@@ -324,6 +458,7 @@ class NowPlayingNotifier extends Notifier<Scene?> {
       ref.read(playerProvider).seek(Duration(milliseconds: (seconds * 1000).round()));
 
   void _open(String url, Duration start, {bool play = true}) {
+    _openedAt = start;
     ref.read(playerProvider).open(
           Media(
             url,

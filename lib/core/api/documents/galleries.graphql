@@ -11,8 +11,8 @@ fragment GalleryFields on Gallery {
   performers { ...PerformerRef }
 }
 
-query FindGalleries($filter: FindFilterType) {
-  findGalleries(filter: $filter) {
+query FindGalleries($filter: FindFilterType, $gallery_filter: GalleryFilterType) {
+  findGalleries(filter: $filter, gallery_filter: $gallery_filter) {
     count
     galleries { ...GalleryFields }
   }

@@ -32,29 +32,46 @@ MediaItem lockScreenItem(Scene scene, {Map<String, String> headers = const {}}) 
 
 /// The controls and position for the player's state. The platform moves
 /// the position on by itself while playing, from [position] at [now].
+///
+/// Previous and next only while a queue plays, as far as it goes on
+/// ([PlayQueue.hasPrevious], [PlayQueue.hasNext]), like the player's own
+/// buttons. Without them the platform shows no track buttons at all, so a
+/// single scene offers no "previous" that would only restart it. The
+/// compact notification keeps rewind, play/pause and fast-forward.
+///
+/// iOS shows its 10-second skip buttons in place of the track buttons, so
+/// with [skipsHideTracks] (iOS) a queue drops rewind and fast-forward to
+/// make previous and next visible; seeking still works through the bar.
 PlaybackState lockScreenState({
   required bool playing,
   required bool buffering,
   required Duration position,
   double speed = 1,
+  bool hasPrevious = false,
   bool hasNext = false,
+  bool skipsHideTracks = false,
   DateTime? now,
-}) =>
-    PlaybackState(
-      controls: [
-        MediaControl.rewind,
-        playing ? MediaControl.pause : MediaControl.play,
-        MediaControl.fastForward,
-        if (hasNext) MediaControl.skipToNext,
-      ],
-      systemActions: const {MediaAction.seek, MediaAction.seekForward, MediaAction.seekBackward},
-      androidCompactActionIndices: const [0, 1, 2],
-      processingState: buffering ? AudioProcessingState.buffering : AudioProcessingState.ready,
-      playing: playing,
-      updatePosition: position,
-      speed: speed,
-      updateTime: now,
-    );
+}) {
+  final skips = !(skipsHideTracks && (hasPrevious || hasNext));
+  final first = hasPrevious && skips ? 1 : 0;
+  final controls = [
+    if (hasPrevious) MediaControl.skipToPrevious,
+    if (skips) MediaControl.rewind,
+    playing ? MediaControl.pause : MediaControl.play,
+    if (skips) MediaControl.fastForward,
+    if (hasNext) MediaControl.skipToNext,
+  ];
+  return PlaybackState(
+    controls: controls,
+    systemActions: const {MediaAction.seek, MediaAction.seekForward, MediaAction.seekBackward},
+    androidCompactActionIndices: [for (var i = first; i < first + 3 && i < controls.length; i++) i],
+    processingState: buffering ? AudioProcessingState.buffering : AudioProcessingState.ready,
+    playing: playing,
+    updatePosition: position,
+    speed: speed,
+    updateTime: now,
+  );
+}
 
 /// Nothing to show: clears the lock screen and the notification.
 final _idle = PlaybackState(processingState: AudioProcessingState.idle);
@@ -66,6 +83,7 @@ class LockScreenCommands {
     required this.pause,
     required this.seek,
     required this.skipToNext,
+    this.skipToPrevious,
     required this.stop,
   });
 
@@ -73,6 +91,9 @@ class LockScreenCommands {
   final VoidCallback pause;
   final ValueChanged<Duration> seek;
   final VoidCallback skipToNext;
+
+  /// Back in the queue, or restart ([NowPlayingNotifier.playPrevious]).
+  final VoidCallback? skipToPrevious;
   final VoidCallback stop;
 }
 
@@ -100,6 +121,9 @@ class StashAudioHandler extends BaseAudioHandler with SeekHandler {
 
   @override
   Future<void> skipToNext() async => commands?.skipToNext();
+
+  @override
+  Future<void> skipToPrevious() async => commands?.skipToPrevious?.call();
 
   @override
   Future<void> stop() async => commands?.stop();
@@ -165,6 +189,7 @@ final lockScreenControlsProvider = Provider<void>((ref) {
       pause: player.pause,
       seek: player.seek,
       skipToNext: () => ref.read(nowPlayingProvider.notifier).playNext(),
+      skipToPrevious: () => ref.read(nowPlayingProvider.notifier).playPrevious(),
       stop: () => ref.read(nowPlayingProvider.notifier).dismiss(),
     );
 
@@ -177,6 +202,7 @@ final lockScreenControlsProvider = Provider<void>((ref) {
       sentPosition = state.position;
       sentAt = DateTime.now();
       sentPlaying = state.playing;
+      final queue = ref.read(playQueueProvider);
       handler.show(
         item,
         lockScreenState(
@@ -184,13 +210,20 @@ final lockScreenControlsProvider = Provider<void>((ref) {
           buffering: state.buffering,
           position: state.position,
           speed: state.rate,
-          hasNext: ref.read(playQueueProvider)?.hasNext ?? false,
+          hasPrevious: queue?.hasPrevious ?? false,
+          hasNext: queue?.hasNext ?? false,
+          skipsHideTracks: Platform.isIOS,
           now: sentAt,
         ),
       );
     }
 
     publish();
+    // The queue can move or end without another scene (then the provider
+    // rebuilds anyway): previous/next follow it.
+    ref.listen(playQueueProvider, (_, _) {
+      if (!disposed) publish();
+    });
     subscriptions.addAll([
       player.stream.playing.listen((_) => publish()),
       player.stream.buffering.listen((_) => publish()),

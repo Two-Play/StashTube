@@ -1333,6 +1333,425 @@ extension ClientExtension$Query$FindStudio on graphql.GraphQLClient {
   }
 }
 
+class Variables$Query$StudioMediaCounts {
+  factory Variables$Query$StudioMediaCounts({required String id}) =>
+      Variables$Query$StudioMediaCounts._({r'id': id});
+
+  Variables$Query$StudioMediaCounts._(this._$data);
+
+  factory Variables$Query$StudioMediaCounts.fromJson(
+    Map<String, dynamic> data,
+  ) {
+    final result$data = <String, dynamic>{};
+    final l$id = data['id'];
+    result$data['id'] = (l$id as String);
+    return Variables$Query$StudioMediaCounts._(result$data);
+  }
+
+  Map<String, dynamic> _$data;
+
+  String get id => (_$data['id'] as String);
+
+  Map<String, dynamic> toJson() {
+    final result$data = <String, dynamic>{};
+    final l$id = id;
+    result$data['id'] = l$id;
+    return result$data;
+  }
+
+  @override
+  bool operator ==(Object other) {
+    if (identical(this, other)) {
+      return true;
+    }
+    if (other is! Variables$Query$StudioMediaCounts ||
+        runtimeType != other.runtimeType) {
+      return false;
+    }
+    final l$id = id;
+    final lOther$id = other.id;
+    if (l$id != lOther$id) {
+      return false;
+    }
+    return true;
+  }
+
+  @override
+  int get hashCode {
+    final l$id = id;
+    return Object.hashAll([l$id]);
+  }
+}
+
+class Query$StudioMediaCounts {
+  Query$StudioMediaCounts({this.findStudio, this.$__typename = 'Query'});
+
+  factory Query$StudioMediaCounts.fromJson(Map<String, dynamic> json) {
+    final l$findStudio = json['findStudio'];
+    final l$$__typename = json['__typename'];
+    return Query$StudioMediaCounts(
+      findStudio: l$findStudio == null
+          ? null
+          : Query$StudioMediaCounts$findStudio.fromJson(
+              (l$findStudio as Map<String, dynamic>),
+            ),
+      $__typename: (l$$__typename as String),
+    );
+  }
+
+  final Query$StudioMediaCounts$findStudio? findStudio;
+
+  final String $__typename;
+
+  Map<String, dynamic> toJson() {
+    final _resultData = <String, dynamic>{};
+    final l$findStudio = findStudio;
+    _resultData['findStudio'] = l$findStudio?.toJson();
+    final l$$__typename = $__typename;
+    _resultData['__typename'] = l$$__typename;
+    return _resultData;
+  }
+
+  @override
+  int get hashCode {
+    final l$findStudio = findStudio;
+    final l$$__typename = $__typename;
+    return Object.hashAll([l$findStudio, l$$__typename]);
+  }
+
+  @override
+  bool operator ==(Object other) {
+    if (identical(this, other)) {
+      return true;
+    }
+    if (other is! Query$StudioMediaCounts || runtimeType != other.runtimeType) {
+      return false;
+    }
+    final l$findStudio = findStudio;
+    final lOther$findStudio = other.findStudio;
+    if (l$findStudio != lOther$findStudio) {
+      return false;
+    }
+    final l$$__typename = $__typename;
+    final lOther$$__typename = other.$__typename;
+    if (l$$__typename != lOther$$__typename) {
+      return false;
+    }
+    return true;
+  }
+}
+
+const documentNodeQueryStudioMediaCounts = DocumentNode(
+  definitions: [
+    OperationDefinitionNode(
+      type: OperationType.query,
+      name: NameNode(value: 'StudioMediaCounts'),
+      variableDefinitions: [
+        VariableDefinitionNode(
+          variable: VariableNode(name: NameNode(value: 'id')),
+          type: NamedTypeNode(name: NameNode(value: 'ID'), isNonNull: true),
+          defaultValue: DefaultValueNode(value: null),
+          directives: [],
+        ),
+      ],
+      directives: [],
+      selectionSet: SelectionSetNode(
+        selections: [
+          FieldNode(
+            name: NameNode(value: 'findStudio'),
+            alias: null,
+            arguments: [
+              ArgumentNode(
+                name: NameNode(value: 'id'),
+                value: VariableNode(name: NameNode(value: 'id')),
+              ),
+            ],
+            directives: [],
+            selectionSet: SelectionSetNode(
+              selections: [
+                FieldNode(
+                  name: NameNode(value: 'id'),
+                  alias: null,
+                  arguments: [],
+                  directives: [],
+                  selectionSet: null,
+                ),
+                FieldNode(
+                  name: NameNode(value: 'image_count'),
+                  alias: null,
+                  arguments: [
+                    ArgumentNode(
+                      name: NameNode(value: 'depth'),
+                      value: IntValueNode(value: '-1'),
+                    ),
+                  ],
+                  directives: [],
+                  selectionSet: null,
+                ),
+                FieldNode(
+                  name: NameNode(value: 'gallery_count'),
+                  alias: null,
+                  arguments: [
+                    ArgumentNode(
+                      name: NameNode(value: 'depth'),
+                      value: IntValueNode(value: '-1'),
+                    ),
+                  ],
+                  directives: [],
+                  selectionSet: null,
+                ),
+                FieldNode(
+                  name: NameNode(value: '__typename'),
+                  alias: null,
+                  arguments: [],
+                  directives: [],
+                  selectionSet: null,
+                ),
+              ],
+            ),
+          ),
+          FieldNode(
+            name: NameNode(value: '__typename'),
+            alias: null,
+            arguments: [],
+            directives: [],
+            selectionSet: null,
+          ),
+        ],
+      ),
+    ),
+  ],
+);
+Query$StudioMediaCounts _parserFn$Query$StudioMediaCounts(
+  Map<String, dynamic> data,
+) => Query$StudioMediaCounts.fromJson(data);
+typedef OnQueryComplete$Query$StudioMediaCounts = FutureOr<void> Function(
+  Map<String, dynamic>?,
+  Query$StudioMediaCounts?,
+);
+
+class Options$Query$StudioMediaCounts
+    extends graphql.QueryOptions<Query$StudioMediaCounts> {
+  Options$Query$StudioMediaCounts({
+    String? operationName,
+    required Variables$Query$StudioMediaCounts variables,
+    graphql.FetchPolicy? fetchPolicy,
+    graphql.ErrorPolicy? errorPolicy,
+    graphql.CacheRereadPolicy? cacheRereadPolicy,
+    Object? optimisticResult,
+    Query$StudioMediaCounts? typedOptimisticResult,
+    Duration? pollInterval,
+    graphql.Context? context,
+    OnQueryComplete$Query$StudioMediaCounts? onComplete,
+    graphql.OnQueryError? onError,
+  }) : onCompleteWithParsed = onComplete,
+       super(
+         variables: variables.toJson(),
+         operationName: operationName ?? 'StudioMediaCounts',
+         fetchPolicy: fetchPolicy,
+         errorPolicy: errorPolicy,
+         cacheRereadPolicy: cacheRereadPolicy,
+         optimisticResult: optimisticResult ?? typedOptimisticResult?.toJson(),
+         pollInterval: pollInterval,
+         context: context,
+         onComplete: onComplete == null
+             ? null
+             : (data) => onComplete(
+                 data,
+                 data == null ? null : _parserFn$Query$StudioMediaCounts(data),
+               ),
+         onError: onError,
+         document: documentNodeQueryStudioMediaCounts,
+         parserFn: _parserFn$Query$StudioMediaCounts,
+       );
+
+  final OnQueryComplete$Query$StudioMediaCounts? onCompleteWithParsed;
+
+  @override
+  List<Object?> get properties => [
+    ...super.onComplete == null
+        ? super.properties
+        : super.properties.where((property) => property != onComplete),
+    onCompleteWithParsed,
+  ];
+}
+
+class WatchOptions$Query$StudioMediaCounts
+    extends graphql.WatchQueryOptions<Query$StudioMediaCounts> {
+  WatchOptions$Query$StudioMediaCounts({
+    String? operationName,
+    required Variables$Query$StudioMediaCounts variables,
+    graphql.FetchPolicy? fetchPolicy,
+    graphql.ErrorPolicy? errorPolicy,
+    graphql.CacheRereadPolicy? cacheRereadPolicy,
+    Object? optimisticResult,
+    Query$StudioMediaCounts? typedOptimisticResult,
+    graphql.Context? context,
+    Duration? pollInterval,
+    bool? eagerlyFetchResults,
+    bool carryForwardDataOnException = true,
+    bool fetchResults = false,
+  }) : super(
+         variables: variables.toJson(),
+         operationName: operationName ?? 'StudioMediaCounts',
+         fetchPolicy: fetchPolicy,
+         errorPolicy: errorPolicy,
+         cacheRereadPolicy: cacheRereadPolicy,
+         optimisticResult: optimisticResult ?? typedOptimisticResult?.toJson(),
+         context: context,
+         document: documentNodeQueryStudioMediaCounts,
+         pollInterval: pollInterval,
+         eagerlyFetchResults: eagerlyFetchResults,
+         carryForwardDataOnException: carryForwardDataOnException,
+         fetchResults: fetchResults,
+         parserFn: _parserFn$Query$StudioMediaCounts,
+       );
+}
+
+class FetchMoreOptions$Query$StudioMediaCounts
+    extends graphql.FetchMoreOptions {
+  FetchMoreOptions$Query$StudioMediaCounts({
+    required graphql.UpdateQuery updateQuery,
+    required Variables$Query$StudioMediaCounts variables,
+  }) : super(
+         updateQuery: updateQuery,
+         variables: variables.toJson(),
+         document: documentNodeQueryStudioMediaCounts,
+       );
+}
+
+extension ClientExtension$Query$StudioMediaCounts on graphql.GraphQLClient {
+  Future<graphql.QueryResult<Query$StudioMediaCounts>> query$StudioMediaCounts(
+    Options$Query$StudioMediaCounts options,
+  ) async => await this.query(options);
+
+  graphql.ObservableQuery<Query$StudioMediaCounts> watchQuery$StudioMediaCounts(
+    WatchOptions$Query$StudioMediaCounts options,
+  ) => this.watchQuery(options);
+
+  void writeQuery$StudioMediaCounts({
+    required Query$StudioMediaCounts data,
+    required Variables$Query$StudioMediaCounts variables,
+    bool broadcast = true,
+  }) => this.writeQuery(
+    graphql.Request(
+      operation: graphql.Operation(
+        document: documentNodeQueryStudioMediaCounts,
+      ),
+      variables: variables.toJson(),
+    ),
+    data: data.toJson(),
+    broadcast: broadcast,
+  );
+
+  Query$StudioMediaCounts? readQuery$StudioMediaCounts({
+    required Variables$Query$StudioMediaCounts variables,
+    bool optimistic = true,
+  }) {
+    final result = this.readQuery(
+      graphql.Request(
+        operation: graphql.Operation(
+          document: documentNodeQueryStudioMediaCounts,
+        ),
+        variables: variables.toJson(),
+      ),
+      optimistic: optimistic,
+    );
+    return result == null ? null : Query$StudioMediaCounts.fromJson(result);
+  }
+}
+
+class Query$StudioMediaCounts$findStudio {
+  Query$StudioMediaCounts$findStudio({
+    required this.id,
+    required this.image_count,
+    required this.gallery_count,
+    this.$__typename = 'Studio',
+  });
+
+  factory Query$StudioMediaCounts$findStudio.fromJson(
+    Map<String, dynamic> json,
+  ) {
+    final l$id = json['id'];
+    final l$image_count = json['image_count'];
+    final l$gallery_count = json['gallery_count'];
+    final l$$__typename = json['__typename'];
+    return Query$StudioMediaCounts$findStudio(
+      id: (l$id as String),
+      image_count: (l$image_count as int),
+      gallery_count: (l$gallery_count as int),
+      $__typename: (l$$__typename as String),
+    );
+  }
+
+  final String id;
+
+  final int image_count;
+
+  final int gallery_count;
+
+  final String $__typename;
+
+  Map<String, dynamic> toJson() {
+    final _resultData = <String, dynamic>{};
+    final l$id = id;
+    _resultData['id'] = l$id;
+    final l$image_count = image_count;
+    _resultData['image_count'] = l$image_count;
+    final l$gallery_count = gallery_count;
+    _resultData['gallery_count'] = l$gallery_count;
+    final l$$__typename = $__typename;
+    _resultData['__typename'] = l$$__typename;
+    return _resultData;
+  }
+
+  @override
+  int get hashCode {
+    final l$id = id;
+    final l$image_count = image_count;
+    final l$gallery_count = gallery_count;
+    final l$$__typename = $__typename;
+    return Object.hashAll([
+      l$id,
+      l$image_count,
+      l$gallery_count,
+      l$$__typename,
+    ]);
+  }
+
+  @override
+  bool operator ==(Object other) {
+    if (identical(this, other)) {
+      return true;
+    }
+    if (other is! Query$StudioMediaCounts$findStudio ||
+        runtimeType != other.runtimeType) {
+      return false;
+    }
+    final l$id = id;
+    final lOther$id = other.id;
+    if (l$id != lOther$id) {
+      return false;
+    }
+    final l$image_count = image_count;
+    final lOther$image_count = other.image_count;
+    if (l$image_count != lOther$image_count) {
+      return false;
+    }
+    final l$gallery_count = gallery_count;
+    final lOther$gallery_count = other.gallery_count;
+    if (l$gallery_count != lOther$gallery_count) {
+      return false;
+    }
+    final l$$__typename = $__typename;
+    final lOther$$__typename = other.$__typename;
+    if (l$$__typename != lOther$$__typename) {
+      return false;
+    }
+    return true;
+  }
+}
+
 class Variables$Mutation$StudioEdit {
   factory Variables$Mutation$StudioEdit({
     required Input$StudioUpdateInput input,
@@ -1596,4 +2015,762 @@ extension ClientExtension$Mutation$StudioEdit on graphql.GraphQLClient {
   graphql.ObservableQuery<Mutation$StudioEdit> watchMutation$StudioEdit(
     WatchOptions$Mutation$StudioEdit options,
   ) => this.watchMutation(options);
+}
+
+class Variables$Query$StudioFavorite {
+  factory Variables$Query$StudioFavorite({required String id}) =>
+      Variables$Query$StudioFavorite._({r'id': id});
+
+  Variables$Query$StudioFavorite._(this._$data);
+
+  factory Variables$Query$StudioFavorite.fromJson(Map<String, dynamic> data) {
+    final result$data = <String, dynamic>{};
+    final l$id = data['id'];
+    result$data['id'] = (l$id as String);
+    return Variables$Query$StudioFavorite._(result$data);
+  }
+
+  Map<String, dynamic> _$data;
+
+  String get id => (_$data['id'] as String);
+
+  Map<String, dynamic> toJson() {
+    final result$data = <String, dynamic>{};
+    final l$id = id;
+    result$data['id'] = l$id;
+    return result$data;
+  }
+
+  @override
+  bool operator ==(Object other) {
+    if (identical(this, other)) {
+      return true;
+    }
+    if (other is! Variables$Query$StudioFavorite ||
+        runtimeType != other.runtimeType) {
+      return false;
+    }
+    final l$id = id;
+    final lOther$id = other.id;
+    if (l$id != lOther$id) {
+      return false;
+    }
+    return true;
+  }
+
+  @override
+  int get hashCode {
+    final l$id = id;
+    return Object.hashAll([l$id]);
+  }
+}
+
+class Query$StudioFavorite {
+  Query$StudioFavorite({this.findStudio, this.$__typename = 'Query'});
+
+  factory Query$StudioFavorite.fromJson(Map<String, dynamic> json) {
+    final l$findStudio = json['findStudio'];
+    final l$$__typename = json['__typename'];
+    return Query$StudioFavorite(
+      findStudio: l$findStudio == null
+          ? null
+          : Query$StudioFavorite$findStudio.fromJson(
+              (l$findStudio as Map<String, dynamic>),
+            ),
+      $__typename: (l$$__typename as String),
+    );
+  }
+
+  final Query$StudioFavorite$findStudio? findStudio;
+
+  final String $__typename;
+
+  Map<String, dynamic> toJson() {
+    final _resultData = <String, dynamic>{};
+    final l$findStudio = findStudio;
+    _resultData['findStudio'] = l$findStudio?.toJson();
+    final l$$__typename = $__typename;
+    _resultData['__typename'] = l$$__typename;
+    return _resultData;
+  }
+
+  @override
+  int get hashCode {
+    final l$findStudio = findStudio;
+    final l$$__typename = $__typename;
+    return Object.hashAll([l$findStudio, l$$__typename]);
+  }
+
+  @override
+  bool operator ==(Object other) {
+    if (identical(this, other)) {
+      return true;
+    }
+    if (other is! Query$StudioFavorite || runtimeType != other.runtimeType) {
+      return false;
+    }
+    final l$findStudio = findStudio;
+    final lOther$findStudio = other.findStudio;
+    if (l$findStudio != lOther$findStudio) {
+      return false;
+    }
+    final l$$__typename = $__typename;
+    final lOther$$__typename = other.$__typename;
+    if (l$$__typename != lOther$$__typename) {
+      return false;
+    }
+    return true;
+  }
+}
+
+const documentNodeQueryStudioFavorite = DocumentNode(
+  definitions: [
+    OperationDefinitionNode(
+      type: OperationType.query,
+      name: NameNode(value: 'StudioFavorite'),
+      variableDefinitions: [
+        VariableDefinitionNode(
+          variable: VariableNode(name: NameNode(value: 'id')),
+          type: NamedTypeNode(name: NameNode(value: 'ID'), isNonNull: true),
+          defaultValue: DefaultValueNode(value: null),
+          directives: [],
+        ),
+      ],
+      directives: [],
+      selectionSet: SelectionSetNode(
+        selections: [
+          FieldNode(
+            name: NameNode(value: 'findStudio'),
+            alias: null,
+            arguments: [
+              ArgumentNode(
+                name: NameNode(value: 'id'),
+                value: VariableNode(name: NameNode(value: 'id')),
+              ),
+            ],
+            directives: [],
+            selectionSet: SelectionSetNode(
+              selections: [
+                FieldNode(
+                  name: NameNode(value: 'id'),
+                  alias: null,
+                  arguments: [],
+                  directives: [],
+                  selectionSet: null,
+                ),
+                FieldNode(
+                  name: NameNode(value: 'favorite'),
+                  alias: null,
+                  arguments: [],
+                  directives: [],
+                  selectionSet: null,
+                ),
+                FieldNode(
+                  name: NameNode(value: '__typename'),
+                  alias: null,
+                  arguments: [],
+                  directives: [],
+                  selectionSet: null,
+                ),
+              ],
+            ),
+          ),
+          FieldNode(
+            name: NameNode(value: '__typename'),
+            alias: null,
+            arguments: [],
+            directives: [],
+            selectionSet: null,
+          ),
+        ],
+      ),
+    ),
+  ],
+);
+Query$StudioFavorite _parserFn$Query$StudioFavorite(
+  Map<String, dynamic> data,
+) => Query$StudioFavorite.fromJson(data);
+typedef OnQueryComplete$Query$StudioFavorite = FutureOr<void> Function(
+  Map<String, dynamic>?,
+  Query$StudioFavorite?,
+);
+
+class Options$Query$StudioFavorite
+    extends graphql.QueryOptions<Query$StudioFavorite> {
+  Options$Query$StudioFavorite({
+    String? operationName,
+    required Variables$Query$StudioFavorite variables,
+    graphql.FetchPolicy? fetchPolicy,
+    graphql.ErrorPolicy? errorPolicy,
+    graphql.CacheRereadPolicy? cacheRereadPolicy,
+    Object? optimisticResult,
+    Query$StudioFavorite? typedOptimisticResult,
+    Duration? pollInterval,
+    graphql.Context? context,
+    OnQueryComplete$Query$StudioFavorite? onComplete,
+    graphql.OnQueryError? onError,
+  }) : onCompleteWithParsed = onComplete,
+       super(
+         variables: variables.toJson(),
+         operationName: operationName ?? 'StudioFavorite',
+         fetchPolicy: fetchPolicy,
+         errorPolicy: errorPolicy,
+         cacheRereadPolicy: cacheRereadPolicy,
+         optimisticResult: optimisticResult ?? typedOptimisticResult?.toJson(),
+         pollInterval: pollInterval,
+         context: context,
+         onComplete: onComplete == null
+             ? null
+             : (data) => onComplete(
+                 data,
+                 data == null ? null : _parserFn$Query$StudioFavorite(data),
+               ),
+         onError: onError,
+         document: documentNodeQueryStudioFavorite,
+         parserFn: _parserFn$Query$StudioFavorite,
+       );
+
+  final OnQueryComplete$Query$StudioFavorite? onCompleteWithParsed;
+
+  @override
+  List<Object?> get properties => [
+    ...super.onComplete == null
+        ? super.properties
+        : super.properties.where((property) => property != onComplete),
+    onCompleteWithParsed,
+  ];
+}
+
+class WatchOptions$Query$StudioFavorite
+    extends graphql.WatchQueryOptions<Query$StudioFavorite> {
+  WatchOptions$Query$StudioFavorite({
+    String? operationName,
+    required Variables$Query$StudioFavorite variables,
+    graphql.FetchPolicy? fetchPolicy,
+    graphql.ErrorPolicy? errorPolicy,
+    graphql.CacheRereadPolicy? cacheRereadPolicy,
+    Object? optimisticResult,
+    Query$StudioFavorite? typedOptimisticResult,
+    graphql.Context? context,
+    Duration? pollInterval,
+    bool? eagerlyFetchResults,
+    bool carryForwardDataOnException = true,
+    bool fetchResults = false,
+  }) : super(
+         variables: variables.toJson(),
+         operationName: operationName ?? 'StudioFavorite',
+         fetchPolicy: fetchPolicy,
+         errorPolicy: errorPolicy,
+         cacheRereadPolicy: cacheRereadPolicy,
+         optimisticResult: optimisticResult ?? typedOptimisticResult?.toJson(),
+         context: context,
+         document: documentNodeQueryStudioFavorite,
+         pollInterval: pollInterval,
+         eagerlyFetchResults: eagerlyFetchResults,
+         carryForwardDataOnException: carryForwardDataOnException,
+         fetchResults: fetchResults,
+         parserFn: _parserFn$Query$StudioFavorite,
+       );
+}
+
+class FetchMoreOptions$Query$StudioFavorite extends graphql.FetchMoreOptions {
+  FetchMoreOptions$Query$StudioFavorite({
+    required graphql.UpdateQuery updateQuery,
+    required Variables$Query$StudioFavorite variables,
+  }) : super(
+         updateQuery: updateQuery,
+         variables: variables.toJson(),
+         document: documentNodeQueryStudioFavorite,
+       );
+}
+
+extension ClientExtension$Query$StudioFavorite on graphql.GraphQLClient {
+  Future<graphql.QueryResult<Query$StudioFavorite>> query$StudioFavorite(
+    Options$Query$StudioFavorite options,
+  ) async => await this.query(options);
+
+  graphql.ObservableQuery<Query$StudioFavorite> watchQuery$StudioFavorite(
+    WatchOptions$Query$StudioFavorite options,
+  ) => this.watchQuery(options);
+
+  void writeQuery$StudioFavorite({
+    required Query$StudioFavorite data,
+    required Variables$Query$StudioFavorite variables,
+    bool broadcast = true,
+  }) => this.writeQuery(
+    graphql.Request(
+      operation: graphql.Operation(document: documentNodeQueryStudioFavorite),
+      variables: variables.toJson(),
+    ),
+    data: data.toJson(),
+    broadcast: broadcast,
+  );
+
+  Query$StudioFavorite? readQuery$StudioFavorite({
+    required Variables$Query$StudioFavorite variables,
+    bool optimistic = true,
+  }) {
+    final result = this.readQuery(
+      graphql.Request(
+        operation: graphql.Operation(document: documentNodeQueryStudioFavorite),
+        variables: variables.toJson(),
+      ),
+      optimistic: optimistic,
+    );
+    return result == null ? null : Query$StudioFavorite.fromJson(result);
+  }
+}
+
+class Query$StudioFavorite$findStudio {
+  Query$StudioFavorite$findStudio({
+    required this.id,
+    required this.favorite,
+    this.$__typename = 'Studio',
+  });
+
+  factory Query$StudioFavorite$findStudio.fromJson(Map<String, dynamic> json) {
+    final l$id = json['id'];
+    final l$favorite = json['favorite'];
+    final l$$__typename = json['__typename'];
+    return Query$StudioFavorite$findStudio(
+      id: (l$id as String),
+      favorite: (l$favorite as bool),
+      $__typename: (l$$__typename as String),
+    );
+  }
+
+  final String id;
+
+  final bool favorite;
+
+  final String $__typename;
+
+  Map<String, dynamic> toJson() {
+    final _resultData = <String, dynamic>{};
+    final l$id = id;
+    _resultData['id'] = l$id;
+    final l$favorite = favorite;
+    _resultData['favorite'] = l$favorite;
+    final l$$__typename = $__typename;
+    _resultData['__typename'] = l$$__typename;
+    return _resultData;
+  }
+
+  @override
+  int get hashCode {
+    final l$id = id;
+    final l$favorite = favorite;
+    final l$$__typename = $__typename;
+    return Object.hashAll([l$id, l$favorite, l$$__typename]);
+  }
+
+  @override
+  bool operator ==(Object other) {
+    if (identical(this, other)) {
+      return true;
+    }
+    if (other is! Query$StudioFavorite$findStudio ||
+        runtimeType != other.runtimeType) {
+      return false;
+    }
+    final l$id = id;
+    final lOther$id = other.id;
+    if (l$id != lOther$id) {
+      return false;
+    }
+    final l$favorite = favorite;
+    final lOther$favorite = other.favorite;
+    if (l$favorite != lOther$favorite) {
+      return false;
+    }
+    final l$$__typename = $__typename;
+    final lOther$$__typename = other.$__typename;
+    if (l$$__typename != lOther$$__typename) {
+      return false;
+    }
+    return true;
+  }
+}
+
+class Variables$Mutation$StudioSetFavorite {
+  factory Variables$Mutation$StudioSetFavorite({
+    required String id,
+    required bool favorite,
+  }) => Variables$Mutation$StudioSetFavorite._({
+    r'id': id,
+    r'favorite': favorite,
+  });
+
+  Variables$Mutation$StudioSetFavorite._(this._$data);
+
+  factory Variables$Mutation$StudioSetFavorite.fromJson(
+    Map<String, dynamic> data,
+  ) {
+    final result$data = <String, dynamic>{};
+    final l$id = data['id'];
+    result$data['id'] = (l$id as String);
+    final l$favorite = data['favorite'];
+    result$data['favorite'] = (l$favorite as bool);
+    return Variables$Mutation$StudioSetFavorite._(result$data);
+  }
+
+  Map<String, dynamic> _$data;
+
+  String get id => (_$data['id'] as String);
+
+  bool get favorite => (_$data['favorite'] as bool);
+
+  Map<String, dynamic> toJson() {
+    final result$data = <String, dynamic>{};
+    final l$id = id;
+    result$data['id'] = l$id;
+    final l$favorite = favorite;
+    result$data['favorite'] = l$favorite;
+    return result$data;
+  }
+
+  @override
+  bool operator ==(Object other) {
+    if (identical(this, other)) {
+      return true;
+    }
+    if (other is! Variables$Mutation$StudioSetFavorite ||
+        runtimeType != other.runtimeType) {
+      return false;
+    }
+    final l$id = id;
+    final lOther$id = other.id;
+    if (l$id != lOther$id) {
+      return false;
+    }
+    final l$favorite = favorite;
+    final lOther$favorite = other.favorite;
+    if (l$favorite != lOther$favorite) {
+      return false;
+    }
+    return true;
+  }
+
+  @override
+  int get hashCode {
+    final l$id = id;
+    final l$favorite = favorite;
+    return Object.hashAll([l$id, l$favorite]);
+  }
+}
+
+class Mutation$StudioSetFavorite {
+  Mutation$StudioSetFavorite({
+    this.studioUpdate,
+    this.$__typename = 'Mutation',
+  });
+
+  factory Mutation$StudioSetFavorite.fromJson(Map<String, dynamic> json) {
+    final l$studioUpdate = json['studioUpdate'];
+    final l$$__typename = json['__typename'];
+    return Mutation$StudioSetFavorite(
+      studioUpdate: l$studioUpdate == null
+          ? null
+          : Mutation$StudioSetFavorite$studioUpdate.fromJson(
+              (l$studioUpdate as Map<String, dynamic>),
+            ),
+      $__typename: (l$$__typename as String),
+    );
+  }
+
+  final Mutation$StudioSetFavorite$studioUpdate? studioUpdate;
+
+  final String $__typename;
+
+  Map<String, dynamic> toJson() {
+    final _resultData = <String, dynamic>{};
+    final l$studioUpdate = studioUpdate;
+    _resultData['studioUpdate'] = l$studioUpdate?.toJson();
+    final l$$__typename = $__typename;
+    _resultData['__typename'] = l$$__typename;
+    return _resultData;
+  }
+
+  @override
+  int get hashCode {
+    final l$studioUpdate = studioUpdate;
+    final l$$__typename = $__typename;
+    return Object.hashAll([l$studioUpdate, l$$__typename]);
+  }
+
+  @override
+  bool operator ==(Object other) {
+    if (identical(this, other)) {
+      return true;
+    }
+    if (other is! Mutation$StudioSetFavorite ||
+        runtimeType != other.runtimeType) {
+      return false;
+    }
+    final l$studioUpdate = studioUpdate;
+    final lOther$studioUpdate = other.studioUpdate;
+    if (l$studioUpdate != lOther$studioUpdate) {
+      return false;
+    }
+    final l$$__typename = $__typename;
+    final lOther$$__typename = other.$__typename;
+    if (l$$__typename != lOther$$__typename) {
+      return false;
+    }
+    return true;
+  }
+}
+
+const documentNodeMutationStudioSetFavorite = DocumentNode(
+  definitions: [
+    OperationDefinitionNode(
+      type: OperationType.mutation,
+      name: NameNode(value: 'StudioSetFavorite'),
+      variableDefinitions: [
+        VariableDefinitionNode(
+          variable: VariableNode(name: NameNode(value: 'id')),
+          type: NamedTypeNode(name: NameNode(value: 'ID'), isNonNull: true),
+          defaultValue: DefaultValueNode(value: null),
+          directives: [],
+        ),
+        VariableDefinitionNode(
+          variable: VariableNode(name: NameNode(value: 'favorite')),
+          type: NamedTypeNode(
+            name: NameNode(value: 'Boolean'),
+            isNonNull: true,
+          ),
+          defaultValue: DefaultValueNode(value: null),
+          directives: [],
+        ),
+      ],
+      directives: [],
+      selectionSet: SelectionSetNode(
+        selections: [
+          FieldNode(
+            name: NameNode(value: 'studioUpdate'),
+            alias: null,
+            arguments: [
+              ArgumentNode(
+                name: NameNode(value: 'input'),
+                value: ObjectValueNode(
+                  fields: [
+                    ObjectFieldNode(
+                      name: NameNode(value: 'id'),
+                      value: VariableNode(name: NameNode(value: 'id')),
+                    ),
+                    ObjectFieldNode(
+                      name: NameNode(value: 'favorite'),
+                      value: VariableNode(name: NameNode(value: 'favorite')),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+            directives: [],
+            selectionSet: SelectionSetNode(
+              selections: [
+                FieldNode(
+                  name: NameNode(value: 'id'),
+                  alias: null,
+                  arguments: [],
+                  directives: [],
+                  selectionSet: null,
+                ),
+                FieldNode(
+                  name: NameNode(value: 'favorite'),
+                  alias: null,
+                  arguments: [],
+                  directives: [],
+                  selectionSet: null,
+                ),
+                FieldNode(
+                  name: NameNode(value: '__typename'),
+                  alias: null,
+                  arguments: [],
+                  directives: [],
+                  selectionSet: null,
+                ),
+              ],
+            ),
+          ),
+          FieldNode(
+            name: NameNode(value: '__typename'),
+            alias: null,
+            arguments: [],
+            directives: [],
+            selectionSet: null,
+          ),
+        ],
+      ),
+    ),
+  ],
+);
+Mutation$StudioSetFavorite _parserFn$Mutation$StudioSetFavorite(
+  Map<String, dynamic> data,
+) => Mutation$StudioSetFavorite.fromJson(data);
+typedef OnMutationCompleted$Mutation$StudioSetFavorite =
+    FutureOr<void> Function(Map<String, dynamic>?, Mutation$StudioSetFavorite?);
+
+class Options$Mutation$StudioSetFavorite
+    extends graphql.MutationOptions<Mutation$StudioSetFavorite> {
+  Options$Mutation$StudioSetFavorite({
+    String? operationName,
+    required Variables$Mutation$StudioSetFavorite variables,
+    graphql.FetchPolicy? fetchPolicy,
+    graphql.ErrorPolicy? errorPolicy,
+    graphql.CacheRereadPolicy? cacheRereadPolicy,
+    Object? optimisticResult,
+    Mutation$StudioSetFavorite? typedOptimisticResult,
+    graphql.Context? context,
+    OnMutationCompleted$Mutation$StudioSetFavorite? onCompleted,
+    graphql.OnMutationUpdate<Mutation$StudioSetFavorite>? update,
+    graphql.OnError? onError,
+  }) : onCompletedWithParsed = onCompleted,
+       super(
+         variables: variables.toJson(),
+         operationName: operationName ?? 'StudioSetFavorite',
+         fetchPolicy: fetchPolicy,
+         errorPolicy: errorPolicy,
+         cacheRereadPolicy: cacheRereadPolicy,
+         optimisticResult: optimisticResult ?? typedOptimisticResult?.toJson(),
+         context: context,
+         onCompleted: onCompleted == null
+             ? null
+             : (data) => onCompleted(
+                 data,
+                 data == null
+                     ? null
+                     : _parserFn$Mutation$StudioSetFavorite(data),
+               ),
+         update: update,
+         onError: onError,
+         document: documentNodeMutationStudioSetFavorite,
+         parserFn: _parserFn$Mutation$StudioSetFavorite,
+       );
+
+  final OnMutationCompleted$Mutation$StudioSetFavorite? onCompletedWithParsed;
+
+  @override
+  List<Object?> get properties => [
+    ...super.onCompleted == null
+        ? super.properties
+        : super.properties.where((property) => property != onCompleted),
+    onCompletedWithParsed,
+  ];
+}
+
+class WatchOptions$Mutation$StudioSetFavorite
+    extends graphql.WatchQueryOptions<Mutation$StudioSetFavorite> {
+  WatchOptions$Mutation$StudioSetFavorite({
+    String? operationName,
+    required Variables$Mutation$StudioSetFavorite variables,
+    graphql.FetchPolicy? fetchPolicy,
+    graphql.ErrorPolicy? errorPolicy,
+    graphql.CacheRereadPolicy? cacheRereadPolicy,
+    Object? optimisticResult,
+    Mutation$StudioSetFavorite? typedOptimisticResult,
+    graphql.Context? context,
+    Duration? pollInterval,
+    bool? eagerlyFetchResults,
+    bool carryForwardDataOnException = true,
+    bool fetchResults = false,
+  }) : super(
+         variables: variables.toJson(),
+         operationName: operationName ?? 'StudioSetFavorite',
+         fetchPolicy: fetchPolicy,
+         errorPolicy: errorPolicy,
+         cacheRereadPolicy: cacheRereadPolicy,
+         optimisticResult: optimisticResult ?? typedOptimisticResult?.toJson(),
+         context: context,
+         document: documentNodeMutationStudioSetFavorite,
+         pollInterval: pollInterval,
+         eagerlyFetchResults: eagerlyFetchResults,
+         carryForwardDataOnException: carryForwardDataOnException,
+         fetchResults: fetchResults,
+         parserFn: _parserFn$Mutation$StudioSetFavorite,
+       );
+}
+
+extension ClientExtension$Mutation$StudioSetFavorite on graphql.GraphQLClient {
+  Future<graphql.QueryResult<Mutation$StudioSetFavorite>>
+  mutate$StudioSetFavorite(Options$Mutation$StudioSetFavorite options) async =>
+      await this.mutate(options);
+
+  graphql.ObservableQuery<Mutation$StudioSetFavorite>
+  watchMutation$StudioSetFavorite(
+    WatchOptions$Mutation$StudioSetFavorite options,
+  ) => this.watchMutation(options);
+}
+
+class Mutation$StudioSetFavorite$studioUpdate {
+  Mutation$StudioSetFavorite$studioUpdate({
+    required this.id,
+    required this.favorite,
+    this.$__typename = 'Studio',
+  });
+
+  factory Mutation$StudioSetFavorite$studioUpdate.fromJson(
+    Map<String, dynamic> json,
+  ) {
+    final l$id = json['id'];
+    final l$favorite = json['favorite'];
+    final l$$__typename = json['__typename'];
+    return Mutation$StudioSetFavorite$studioUpdate(
+      id: (l$id as String),
+      favorite: (l$favorite as bool),
+      $__typename: (l$$__typename as String),
+    );
+  }
+
+  final String id;
+
+  final bool favorite;
+
+  final String $__typename;
+
+  Map<String, dynamic> toJson() {
+    final _resultData = <String, dynamic>{};
+    final l$id = id;
+    _resultData['id'] = l$id;
+    final l$favorite = favorite;
+    _resultData['favorite'] = l$favorite;
+    final l$$__typename = $__typename;
+    _resultData['__typename'] = l$$__typename;
+    return _resultData;
+  }
+
+  @override
+  int get hashCode {
+    final l$id = id;
+    final l$favorite = favorite;
+    final l$$__typename = $__typename;
+    return Object.hashAll([l$id, l$favorite, l$$__typename]);
+  }
+
+  @override
+  bool operator ==(Object other) {
+    if (identical(this, other)) {
+      return true;
+    }
+    if (other is! Mutation$StudioSetFavorite$studioUpdate ||
+        runtimeType != other.runtimeType) {
+      return false;
+    }
+    final l$id = id;
+    final lOther$id = other.id;
+    if (l$id != lOther$id) {
+      return false;
+    }
+    final l$favorite = favorite;
+    final lOther$favorite = other.favorite;
+    if (l$favorite != lOther$favorite) {
+      return false;
+    }
+    final l$$__typename = $__typename;
+    final lOther$$__typename = other.$__typename;
+    if (l$$__typename != lOther$$__typename) {
+      return false;
+    }
+    return true;
+  }
 }

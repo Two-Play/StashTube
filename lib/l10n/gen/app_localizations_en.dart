@@ -199,6 +199,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get tabStudios => 'Studios';
 
   @override
+  String get tabSubscriptions => 'Favorites';
+
+  @override
   String get tabLibrary => 'Library';
 
   @override
@@ -212,6 +215,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get emptyDefault => 'Nothing here yet';
+
+  @override
+  String get loading => 'Loading';
 
   @override
   String get loadMoreFailed => 'Couldn\'t load more – tap to retry';
@@ -263,6 +269,68 @@ class AppLocalizationsEn extends AppLocalizations {
   String get sceneMenuPlay => 'Play';
 
   @override
+  String get sceneMoreOptions => 'More options';
+
+  @override
+  String durationHours(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count hours',
+      one: '1 hour',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String durationMinutes(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count minutes',
+      one: '1 minute',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String durationSeconds(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count seconds',
+      one: '1 second',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String starsCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count stars',
+      one: '1 star',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String watchedPercent(int percent) {
+    return '$percent% watched';
+  }
+
+  @override
+  String markerAt(String time) {
+    return 'Marker at $time';
+  }
+
+  @override
+  String markerFromTo(String start, String end) {
+    return 'Marker from $start to $end';
+  }
+
+  @override
   String get watchLaterRemove => 'Remove from Watch later';
 
   @override
@@ -278,6 +346,16 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get scenesEmpty => 'No scenes found';
+
+  @override
+  String get homeEmptyTitle => 'Your library is still empty';
+
+  @override
+  String get homeEmptyHint =>
+      'Stash has to scan your media folders before scenes show up here. Start a scan in the server tasks.';
+
+  @override
+  String get openServerTasks => 'Open server tasks';
 
   @override
   String savedFilterUnsupported(String name, String criteria) {
@@ -322,6 +400,12 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get retry => 'Retry';
+
+  @override
+  String get playbackFailed => 'Couldn\'t play this video';
+
+  @override
+  String get otherQuality => 'Other quality';
 
   @override
   String get sortRecentlyAdded => 'Recently added';
@@ -417,6 +501,44 @@ class AppLocalizationsEn extends AppLocalizations {
   String get groupNoScenes => 'This group has no scenes';
 
   @override
+  String get addToGroup => 'Add to group…';
+
+  @override
+  String get addToGroupTitle => 'Add to group';
+
+  @override
+  String get searchGroups => 'Search groups';
+
+  @override
+  String get groupsNoMatch => 'No groups match';
+
+  @override
+  String get newGroup => 'New group';
+
+  @override
+  String get groupName => 'Group name';
+
+  @override
+  String addedToGroup(String group) {
+    return 'Added to $group';
+  }
+
+  @override
+  String removedFromGroup(String group) {
+    return 'Removed from $group';
+  }
+
+  @override
+  String groupUpdateFailed(String error) {
+    return 'Couldn\'t change the group: $error';
+  }
+
+  @override
+  String groupCreateFailed(String error) {
+    return 'Couldn\'t create the group: $error';
+  }
+
+  @override
   String get playAll => 'Play all';
 
   @override
@@ -468,11 +590,102 @@ class AppLocalizationsEn extends AppLocalizations {
   String get statsOCount => 'O-count';
 
   @override
+  String get statsWatchHistory => 'Watch history';
+
+  @override
+  String get statsChartWeeks => '12 weeks';
+
+  @override
+  String get statsChartDays => '30 days';
+
+  @override
+  String get statsPlaysPerWeek => 'Plays per week';
+
+  @override
+  String get statsPlaysPerDay => 'Plays per day';
+
+  @override
+  String get statsChartTotal => 'Total';
+
+  @override
+  String get statsChartAverage => 'Average';
+
+  @override
+  String statsAveragePerWeek(String average) {
+    return '$average per week';
+  }
+
+  @override
+  String statsAveragePerDay(String average) {
+    return '$average per day';
+  }
+
+  @override
+  String statsChartSummaryWeek(int count, String average) {
+    final intl.NumberFormat countNumberFormat =
+        intl.NumberFormat.decimalPattern(localeName);
+    final String countString = countNumberFormat.format(count);
+
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$countString plays this week, $average on average',
+      one: '1 play this week, $average on average',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String statsChartSummaryDay(int count, String average) {
+    final intl.NumberFormat countNumberFormat =
+        intl.NumberFormat.decimalPattern(localeName);
+    final String countString = countNumberFormat.format(count);
+
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$countString plays today, $average on average',
+      one: '1 play today, $average on average',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String statsChartWeekOf(String date) {
+    return 'Week of $date';
+  }
+
+  @override
+  String statsChartBar(String period, String plays) {
+    return '$period: $plays';
+  }
+
+  @override
+  String get statsChartEmpty => 'No plays in this period';
+
+  @override
+  String get statsChartPlaysNote =>
+      'Stash keeps the watch time per scene, not per play, so the chart counts plays.';
+
+  @override
+  String statsChartTruncated(int count) {
+    final intl.NumberFormat countNumberFormat =
+        intl.NumberFormat.decimalPattern(localeName);
+    final String countString = countNumberFormat.format(count);
+
+    return 'Based on the $countString most recently played scenes.';
+  }
+
+  @override
   String get watchLaterEmpty => 'Nothing saved yet';
 
   @override
   String get watchLaterEmptyHint =>
       'Tap \"Later\" on a scene to watch it afterwards.';
+
+  @override
+  String get watchLaterDeviceOnly =>
+      'Saved on this device only, not on the server.';
 
   @override
   String favoriteUpdateFailed(String error) {
@@ -575,6 +788,41 @@ class AppLocalizationsEn extends AppLocalizations {
   String get newFromFavorites => 'New from favorites';
 
   @override
+  String get subscriptionsEmpty => 'No favorites yet';
+
+  @override
+  String get subscriptionsEmptyHint =>
+      'Mark performers as favorites to see their newest scenes here.';
+
+  @override
+  String performerHasNewScenes(String name) {
+    return '$name, new scenes';
+  }
+
+  @override
+  String newSinceLastVisit(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count new videos since your last visit',
+      one: '1 new video since your last visit',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get newSinceLastVisitTitle => 'New since your last visit';
+
+  @override
+  String get newSinceLastVisitEmpty => 'Nothing new since your last visit';
+
+  @override
+  String get randomScene => 'Play a random scene';
+
+  @override
+  String get randomSceneNone => 'There are no scenes to pick from';
+
+  @override
   String get searchHint => 'Search Stash';
 
   @override
@@ -608,6 +856,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get addServer => 'Add server';
 
   @override
+  String get addServerTitle => 'Add a server';
+
+  @override
   String get connectToStash => 'Connect to Stash';
 
   @override
@@ -636,13 +887,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get apiKeyOptional => 'API key (optional)';
 
   @override
-  String get apiKeyHelper =>
-      'For a server with a password: the API key (Stash → Settings → Security), or sign in below.';
-
-  @override
-  String get signInWithPassword => 'Sign in with username and password';
-
-  @override
   String get signInWithPasswordHint =>
       'Instead of an API key. Casting to a TV needs the API key.';
 
@@ -654,6 +898,34 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get loginIncomplete => 'Enter username and password.';
+
+  @override
+  String get apiKeyRequired => 'Enter the API key.';
+
+  @override
+  String get loginAuthTitle => 'This server needs a login';
+
+  @override
+  String loginAuthServer(String name, String host) {
+    return '$name · $host';
+  }
+
+  @override
+  String get loginAuthIntro =>
+      'Sign in with an API key or with your Stash username and password.';
+
+  @override
+  String get loginMethodPassword => 'Username & password';
+
+  @override
+  String get apiKeyWhere =>
+      'You find it in Stash under Settings → Security → API key.';
+
+  @override
+  String get signIn => 'Sign in';
+
+  @override
+  String get changeServerAddress => 'Change address';
 
   @override
   String get connect => 'Connect';
@@ -722,6 +994,11 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String castPlayFailed(String device, String error) {
+    return 'Couldn\'t play on $device: $error';
+  }
+
+  @override
   String get minimize => 'Minimize';
 
   @override
@@ -731,10 +1008,46 @@ class AppLocalizationsEn extends AppLocalizations {
   String get forward10 => 'Forward 10 s';
 
   @override
+  String seekForwardSeconds(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Forward $count seconds',
+      one: 'Forward 1 second',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String seekBackSeconds(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Back $count seconds',
+      one: 'Back 1 second',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get seekBar => 'Seek bar';
+
+  @override
+  String seekBarValue(String position, String duration) {
+    return '$position of $duration';
+  }
+
+  @override
   String get pause => 'Pause';
 
   @override
   String get play => 'Play';
+
+  @override
+  String get previousScene => 'Previous scene';
+
+  @override
+  String get nextScene => 'Next scene';
 
   @override
   String get navBarTitle => 'Navigation bar';
@@ -856,6 +1169,11 @@ class AppLocalizationsEn extends AppLocalizations {
       'Used when a scene offers it, otherwise the next lower one. Smaller videos play their original file. Also changes with HD in the player.';
 
   @override
+  String qualitySummary(String quality) {
+    return 'Quality: $quality';
+  }
+
+  @override
   String get sectionPrivacy => 'Privacy & security';
 
   @override
@@ -880,6 +1198,12 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get appLockSubtitle => 'Ask for a PIN when opening the app';
+
+  @override
+  String get appLockOnSummary => 'App lock on';
+
+  @override
+  String get appLockOffSummary => 'App lock off';
 
   @override
   String get unlockBiometric => 'Unlock with Face ID / fingerprint';
@@ -949,7 +1273,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get streamsLoadFailed => 'Couldn\'t load streams';
 
   @override
-  String get chapters => 'Chapters';
+  String get chapters => 'Markers';
 
   @override
   String get close => 'Close';
@@ -966,16 +1290,48 @@ class AppLocalizationsEn extends AppLocalizations {
   String get upNext => 'Up next';
 
   @override
+  String queuePosition(int position, int count) {
+    return '$position / $count';
+  }
+
+  @override
+  String queuePositionSemantics(int position, int count) {
+    return 'Scene $position of $count';
+  }
+
+  @override
   String get addTags => 'Add tags';
 
   @override
   String get editTags => 'Edit tags';
 
   @override
-  String get showLess => 'Show less';
+  String get showMore => '...more';
 
   @override
-  String get showMore => '...more';
+  String moreTags(int count) {
+    return '+$count';
+  }
+
+  @override
+  String moreTagsSemantics(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count more tags',
+      one: '1 more tag',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get showDescription => 'Show description';
+
+  @override
+  String get sceneDescription => 'Description';
+
+  @override
+  String get noDescription => 'No description';
 
   @override
   String saveFailed(String error) {
@@ -984,6 +1340,17 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get removeRating => 'Remove rating';
+
+  @override
+  String get rateScene => 'Rate';
+
+  @override
+  String get rateThisScene => 'Rate this scene';
+
+  @override
+  String ratingButtonSemantics(String rating) {
+    return 'Rating: $rating';
+  }
 
   @override
   String rateStars(int count) {
@@ -997,12 +1364,43 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get ratingLabel => 'Rating';
+
+  @override
+  String ratingValue(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count of 5 stars',
+      one: '1 of 5 stars',
+      zero: 'No rating',
+    );
+    return '$_temp0';
+  }
+
+  @override
   String get addO => 'Add O';
 
   @override
   String oCountValue(int count) {
     return 'O-count: $count';
   }
+
+  @override
+  String oCounterLabel(int count) {
+    return 'O · $count';
+  }
+
+  @override
+  String oCounterSemantics(int count) {
+    return 'O-counter: $count';
+  }
+
+  @override
+  String get oCounterTitle => 'O-counter';
+
+  @override
+  String get removeO => 'Remove one O';
 
   @override
   String get undo => 'Undo';
@@ -1039,6 +1437,34 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get addMarker => 'Add marker';
+
+  @override
+  String markerRange(String start, String end) {
+    return '$start–$end';
+  }
+
+  @override
+  String markerRangeWithLength(String range, String length) {
+    return '$range · $length';
+  }
+
+  @override
+  String get markerEndOptional => 'End (optional)';
+
+  @override
+  String get markerEndSet => 'Set end to current position';
+
+  @override
+  String get markerEndEarlier => 'End 5 seconds earlier';
+
+  @override
+  String get markerEndLater => 'End 5 seconds later';
+
+  @override
+  String get markerEndClear => 'Remove end';
+
+  @override
+  String get markerEndInvalid => 'The end must be after the start.';
 
   @override
   String get saved => 'Saved';
@@ -1202,6 +1628,14 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get connectionLostTitle => 'Server not reachable';
+
+  @override
+  String connectionLostBody(String server) {
+    return '$server doesn\'t answer. Are you outside your home network?';
+  }
+
+  @override
   String get errorUnauthorized =>
       'Not authorized – check the API key or login.';
 
@@ -1218,6 +1652,58 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get errorNotSaved => 'Nothing was saved.';
+
+  @override
+  String get errorLocalNetworkDenied =>
+      'StashTube can\'t reach your local network. Allow it in Settings → Privacy & Security → Local Network → StashTube.';
+
+  @override
+  String get errorLocalNetworkTitle => 'No access to the local network';
+
+  @override
+  String get errorUnreachableTitle => 'Can\'t reach the server';
+
+  @override
+  String get errorUnreachableHint =>
+      'Check that the server is running and that you\'re in its network or connected to your VPN.';
+
+  @override
+  String get errorUnauthorizedTitle => 'Access denied';
+
+  @override
+  String get errorUnauthorizedHint =>
+      'The server didn\'t accept the API key or login. Check them in the server settings.';
+
+  @override
+  String get errorInvalidCredentialsTitle => 'Sign-in failed';
+
+  @override
+  String get errorNotReadyTitle => 'Server not ready';
+
+  @override
+  String get errorNotReadyHint =>
+      'The server is running but not set up yet. Finish its setup in Stash\'s web interface.';
+
+  @override
+  String get errorNotFoundTitle => 'Not found';
+
+  @override
+  String get errorNotFoundHint =>
+      'It may have been deleted or moved on the server.';
+
+  @override
+  String get errorServerHint =>
+      'The server reported an error. The details may help.';
+
+  @override
+  String get errorUnexpectedHint =>
+      'Something unexpected happened. Try again, or look at the details.';
+
+  @override
+  String get errorShowDetails => 'Details';
+
+  @override
+  String get errorHideDetails => 'Hide details';
 
   @override
   String navBarCount(int count, int max) {
@@ -1272,6 +1758,30 @@ class AppLocalizationsEn extends AppLocalizations {
   String get fileModified => 'Modified';
 
   @override
+  String get imageInfo => 'Image info';
+
+  @override
+  String get imagePhotographer => 'Photographer';
+
+  @override
+  String get imageDimensions => 'Dimensions';
+
+  @override
+  String get imageOCounter => 'O-counter';
+
+  @override
+  String get imageTags => 'Tags';
+
+  @override
+  String get imageGalleries => 'Galleries';
+
+  @override
+  String get imageCreated => 'Added';
+
+  @override
+  String get imageUpdated => 'Updated';
+
+  @override
   String get copyPath => 'Copy path';
 
   @override
@@ -1319,7 +1829,32 @@ class AppLocalizationsEn extends AppLocalizations {
   String get shortsLengthTenMinutes => 'Up to 10 min';
 
   @override
+  String get shortsMaxLengthHint =>
+      'Only for videos: a marker plays its marked part.';
+
+  @override
   String get shortsPortraitOnly => 'Portrait videos only';
+
+  @override
+  String get shortsContent => 'Content';
+
+  @override
+  String get shortsContentHint =>
+      'Markers play the marked part of a scene as a short.';
+
+  @override
+  String get shortsContentVideos => 'Videos only';
+
+  @override
+  String get shortsContentMixed => 'Videos & markers';
+
+  @override
+  String get shortsContentMarkers => 'Markers only';
+
+  @override
+  String shortMarkerSemantics(String title) {
+    return 'Marker: $title';
+  }
 
   @override
   String get shortsEmpty => 'No shorts found';
@@ -1333,6 +1868,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get sectionSceneCards => 'Video cards';
+
+  @override
+  String get sectionPreviewsCards => 'Previews & cards';
 
   @override
   String get cardChannel => 'Channel on cards';
@@ -1363,6 +1901,66 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get fastForward2x => '2× speed';
+
+  @override
+  String get gestureTipsTitle => 'Player gestures';
+
+  @override
+  String gestureTipDoubleTap(int seconds) {
+    return 'Double-tap left or right: $seconds s back/forward, keep tapping to skip further';
+  }
+
+  @override
+  String get gestureTipHold => 'Hold: 2× speed';
+
+  @override
+  String get gestureTipPinch => 'Pinch: zoom';
+
+  @override
+  String get gestureTipSwipeDown => 'Swipe down: minimize';
+
+  @override
+  String get gestureTipsDone => 'Got it';
+
+  @override
+  String get showGestureTipsAgain => 'Show gesture tips again';
+
+  @override
+  String get showGestureTipsAgainSubtitle =>
+      'The next time the player\'s controls appear';
+
+  @override
+  String get sectionDoubleTapSeek => 'Double-tap to seek';
+
+  @override
+  String get doubleTapSeek => 'Double-tap seeking';
+
+  @override
+  String get doubleTapSeekSubtitle =>
+      'Double-tap the left or right side of the video. Off: a tap shows the controls right away.';
+
+  @override
+  String get seekStep => 'Skip by';
+
+  @override
+  String get seekCumulative => 'Keep tapping to skip further';
+
+  @override
+  String seekSequenceExample(String totals) {
+    return 'In total: $totals s …';
+  }
+
+  @override
+  String get lockTouch => 'Lock screen';
+
+  @override
+  String get touchLocked => 'Screen locked';
+
+  @override
+  String get holdToUnlock => 'Hold to unlock';
+
+  @override
+  String get unlockTouch => 'Unlock';
 
   @override
   String get unknownStudio => 'Unknown studio';
@@ -1399,10 +1997,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get airPlayHint => 'Apple TV and AirPlay TVs';
 
   @override
-  String get allViews => 'All views';
+  String get moreViews => 'More views';
 
   @override
-  String get tabAll => 'All';
+  String get tabYou => 'You';
 
   @override
   String get colorStashTube => 'StashTube';
@@ -1417,6 +2015,36 @@ class AppLocalizationsEn extends AppLocalizations {
   String searchNoResults(String term) {
     return 'Nothing matches \"$term\"';
   }
+
+  @override
+  String searchFor(String text) {
+    return 'Search for $text';
+  }
+
+  @override
+  String get searchFillIn => 'Fill in';
+
+  @override
+  String searchFillInText(String text) {
+    return 'Fill in $text';
+  }
+
+  @override
+  String searchRemoveFromHistory(String text) {
+    return 'Remove $text from recent searches';
+  }
+
+  @override
+  String get searchGoTo => 'Go to';
+
+  @override
+  String get searchOtherAreas => 'Search other areas';
+
+  @override
+  String get searchClearFilters => 'Clear filters';
+
+  @override
+  String get searchFiltersActiveHint => 'Active filters may hide results.';
 
   @override
   String get pictureInPicture => 'Picture-in-picture';
@@ -1450,6 +2078,93 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get channelTabVideos => 'Videos';
+
+  @override
+  String get channelTabShorts => 'Shorts';
+
+  @override
+  String get channelTabMarkers => 'Markers';
+
+  @override
+  String get channelTabImages => 'Images';
+
+  @override
+  String get channelTabGalleries => 'Galleries';
+
+  @override
+  String get channelTabAbout => 'About';
+
+  @override
+  String get channelAboutEmpty => 'Nothing here yet';
+
+  @override
+  String get channelLinks => 'Links';
+
+  @override
+  String get copyLink => 'Copy link';
+
+  @override
+  String get linkCopied => 'Link copied';
+
+  @override
+  String get openLink => 'Open link';
+
+  @override
+  String openLinkFailed(String url) {
+    return 'Couldn\'t open $url';
+  }
+
+  @override
+  String get openInStash => 'Open in Stash';
+
+  @override
+  String get fieldAliases => 'Also known as';
+
+  @override
+  String get fieldDeathDate => 'Died';
+
+  @override
+  String get fieldCountry => 'Country';
+
+  @override
+  String get fieldEthnicity => 'Ethnicity';
+
+  @override
+  String get fieldHairColor => 'Hair color';
+
+  @override
+  String get fieldEyeColor => 'Eye color';
+
+  @override
+  String get fieldHeight => 'Height';
+
+  @override
+  String get fieldWeight => 'Weight';
+
+  @override
+  String get fieldMeasurements => 'Measurements';
+
+  @override
+  String get fieldCareer => 'Career';
+
+  @override
+  String get fieldTattoos => 'Tattoos';
+
+  @override
+  String get fieldPiercings => 'Piercings';
+
+  @override
+  String heightCm(int cm) {
+    return '$cm cm';
+  }
+
+  @override
+  String weightKg(int kg) {
+    return '$kg kg';
+  }
+
+  @override
   String get themeWelcomeTitle => 'Choose your look';
 
   @override
@@ -1471,6 +2186,15 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get markersEmptyHint => 'Mark a moment in the player with \"Marker\".';
+
+  @override
+  String get markersPlayAsShorts => 'Play as shorts';
+
+  @override
+  String get markerPlayAsShort => 'Play as short';
+
+  @override
+  String get markerMoreOptions => 'Marker options';
 
   @override
   String markersCount(int count) {
@@ -1502,6 +2226,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get feedPreviews => 'Play previews in lists';
 
   @override
+  String get previewsOffSummary => 'Previews off';
+
+  @override
   String get feedPreviewsSubtitle =>
       'The first fully shown video plays a short preview.';
 
@@ -1523,6 +2250,12 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get markerPreviewsSubtitle =>
       'Markers loop a short clip instead of a still frame.';
+
+  @override
+  String get previewsWifiOnly => 'Only on Wi-Fi';
+
+  @override
+  String get previewsWifiOnlySubtitle => 'No previews play on mobile data.';
 
   @override
   String get previewsHint =>
@@ -1651,6 +2384,46 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get taskStarted => 'Task started on the server';
+
+  @override
+  String taskFinishedNamed(String task) {
+    return 'Finished: $task';
+  }
+
+  @override
+  String taskFailedNamed(String task) {
+    return 'Failed: $task';
+  }
+
+  @override
+  String get sectionNotifications => 'Notifications';
+
+  @override
+  String get systemNotifications => 'System notifications';
+
+  @override
+  String get systemNotificationsSubtitle =>
+      'Tells you when a server task you started ends while StashTube is in the background. Only while the system keeps the app running: Android ends it after a while, iOS pauses it soon after you leave it.';
+
+  @override
+  String get discreetNotifications => 'Discreet notifications';
+
+  @override
+  String get discreetNotificationsSubtitle =>
+      'Only “StashTube” and a neutral text, without task or server names. Hidden on the lock screen.';
+
+  @override
+  String get notificationsDenied => 'Notifications not allowed';
+
+  @override
+  String get notificationsDeniedBody =>
+      'StashTube may not show notifications. Allow them in the system settings, then switch them on here again.';
+
+  @override
+  String get notificationTaskFinished => 'A task has finished';
+
+  @override
+  String get notificationTaskFailed => 'A task has failed';
 
   @override
   String get sectionJobs => 'Running tasks';

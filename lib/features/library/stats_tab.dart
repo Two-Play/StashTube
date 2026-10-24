@@ -9,9 +9,10 @@ import '../../data/providers.dart';
 import '../../widgets/status_views.dart';
 import '../auth/server_switcher.dart';
 import '../../l10n/l10n.dart';
+import 'watch_chart.dart';
 
-/// The server in use, then library and watch statistics as stat tiles
-/// (headline numbers, no charts).
+/// The server in use, then library and watch statistics as stat tiles,
+/// and the plays per week or day as a chart ([WatchChartSection]).
 class StatsTab extends ConsumerWidget {
   const StatsTab({super.key});
 
@@ -22,6 +23,7 @@ class StatsTab extends ConsumerWidget {
 
     Future<void> refresh() async {
       ref.invalidate(activityStatsProvider);
+      ref.invalidate(playHistoryProvider);
       ref.invalidate(serverVersionProvider);
       try {
         final reloaded = ref.refresh(libraryStatsProvider.future);
@@ -46,6 +48,8 @@ class StatsTab extends ConsumerWidget {
           },
           // Activity stats are optional: hidden on servers that don't support them.
           if (activity.value case final value?) ..._activityTiles(context.l10n, value),
+          // Needs the play history of newer Stash versions; hidden otherwise.
+          const WatchChartSection(),
         ],
       ),
     );

@@ -12,6 +12,7 @@ import 'chip_bar.dart';
 import 'paged_sliver.dart';
 import 'scene_card.dart';
 import 'scene_filter_sheet.dart';
+import 'skeleton.dart';
 import '../l10n/l10n.dart';
 
 enum SceneFeedLayout {
@@ -27,7 +28,8 @@ enum SceneFeedLayout {
 
 /// A scrollable, refreshable, infinitely loading scene feed with sort chips.
 ///
-/// [headerSlivers] are placed above the chips (app bar, channel header, ...).
+/// [headerSlivers] are placed above the chips (app bar, channel header, ...),
+/// [belowChipsSlivers] between the chips and the scenes (shelves, ...).
 class SceneFeedView extends ConsumerStatefulWidget {
   const SceneFeedView({
     super.key,
@@ -44,6 +46,11 @@ class SceneFeedView extends ConsumerStatefulWidget {
     this.emptyIcon = Icons.movie_outlined,
     this.emptyHint,
     this.onRefresh,
+    this.belowChipsSlivers = const [],
+    this.pinChips = false,
+    this.chipsTopSpace = 0,
+    this.keepChipsTopSpace = false,
+    this.unfilteredEmptyView,
   });
 
   final SceneQuery initialQuery;
@@ -74,6 +81,25 @@ class SceneFeedView extends ConsumerStatefulWidget {
   /// Called on pull-to-refresh in addition to reloading the feed, e.g. to
   /// reload content in [headerSlivers].
   final VoidCallback? onRefresh;
+
+  /// Slivers between the chips and the scenes, e.g. the home shelves.
+  final List<Widget> belowChipsSlivers;
+
+  /// Keeps the filter button, sort chips and saved filters at the top while
+  /// the content scrolls beneath them (HOME-1).
+  final bool pinChips;
+
+  /// With [pinChips]: space above the chips, e.g. for an app bar laid over
+  /// the list. Scrolls away with the content unless [keepChipsTopSpace].
+  final double chipsTopSpace;
+
+  /// With [pinChips]: the pinned chips stay [chipsTopSpace] below the top,
+  /// e.g. while the overlaid app bar shows. Changes are animated.
+  final bool keepChipsTopSpace;
+
+  /// Shown instead of the empty message when there are no scenes at all:
+  /// no filter, no search term (e.g. a library Stash hasn't scanned yet).
+  final Widget? unfilteredEmptyView;
 
   @override
   ConsumerState<SceneFeedView> createState() => _SceneFeedViewState();
@@ -133,6 +159,64 @@ class _SceneFeedViewState extends ConsumerState<SceneFeedView> {
     }
   }
 
+  bool get hasSortRow => widget.sorts.length > 1 || widget.filterable;
+
+  /// The filter button and the sort chips.
+  Widget _sortRow(BuildContext context) => Row(
+        children: [
+          if (widget.filterable)
+            Padding(
+              padding: const EdgeInsets.only(left: 4),
+              child: IconButton(
+                tooltip: context.l10n.filter,
+                onPressed: _openFilters,
+                icon: Badge(
+                  isLabelVisible: _query.filter.activeCount > 0,
+                  label: Text('${_query.filter.activeCount}'),
+                  child: const Icon(Icons.tune),
+                ),
+              ),
+            ),
+          Expanded(
+            child: ChipBar<SceneSort>(
+              values: widget.sorts,
+              selected: _query.sort,
+              labelOf: (s) => s.label(context.l10n),
+              onSelected: (s) => setState(() => _query = _query.copyWith(sort: s)),
+            ),
+          ),
+        ],
+      );
+
+  /// The chips as a pinned header of a fixed height (a sliver header can't
+  /// size itself to its content).
+  Widget _pinnedChips(BuildContext context) {
+    final saved = widget.showSavedFilters &&
+        (ref.watch(savedSceneFiltersProvider).value ?? const <SavedFilter>[]).isNotEmpty;
+    final chips = Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        if (hasSortRow) SizedBox(height: ChipBar.height, child: _sortRow(context)),
+        if (saved) _SavedFilterChips(activeId: _savedFilterId, onSelected: _toggleSavedFilter),
+      ],
+    );
+    final height = (hasSortRow ? ChipBar.height : 0.0) + (saved ? _SavedFilterChips.height : 0.0);
+    return TweenAnimationBuilder<double>(
+      tween: Tween(end: widget.keepChipsTopSpace ? widget.chipsTopSpace : 0.0),
+      duration: MediaQuery.disableAnimationsOf(context) ? Duration.zero : const Duration(milliseconds: 200),
+      curve: Curves.easeOut,
+      builder: (context, inset, _) => SliverPersistentHeader(
+        pinned: true,
+        delegate: _PinnedChipsDelegate(
+          topSpace: widget.chipsTopSpace,
+          inset: inset.clamp(0.0, widget.chipsTopSpace),
+          height: height,
+          child: chips,
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final provider = sceneListProvider(_query);
@@ -148,38 +232,16 @@ class _SceneFeedViewState extends ConsumerState<SceneFeedView> {
           physics: widget.physics ?? const AlwaysScrollableScrollPhysics(),
           slivers: [
             ...widget.headerSlivers,
-            if (widget.sorts.length > 1 || widget.filterable)
-              SliverToBoxAdapter(
-                child: Row(
-                  children: [
-                    if (widget.filterable)
-                      Padding(
-                        padding: const EdgeInsets.only(left: 4),
-                        child: IconButton(
-                          tooltip: context.l10n.filter,
-                          onPressed: _openFilters,
-                          icon: Badge(
-                            isLabelVisible: _query.filter.activeCount > 0,
-                            label: Text('${_query.filter.activeCount}'),
-                            child: const Icon(Icons.tune),
-                          ),
-                        ),
-                      ),
-                    Expanded(
-                      child: ChipBar<SceneSort>(
-                        values: widget.sorts,
-                        selected: _query.sort,
-                        labelOf: (s) => s.label(context.l10n),
-                        onSelected: (s) => setState(() => _query = _query.copyWith(sort: s)),
-                      ),
-                    ),
-                  ],
+            if (widget.pinChips)
+              _pinnedChips(context)
+            else ...[
+              if (hasSortRow) SliverToBoxAdapter(child: _sortRow(context)),
+              if (widget.showSavedFilters)
+                SliverToBoxAdapter(
+                  child: _SavedFilterChips(activeId: _savedFilterId, onSelected: _toggleSavedFilter),
                 ),
-              ),
-            if (widget.showSavedFilters)
-              SliverToBoxAdapter(
-                child: _SavedFilterChips(activeId: _savedFilterId, onSelected: _toggleSavedFilter),
-              ),
+            ],
+            ...widget.belowChipsSlivers,
             if (widget.showCount && value.current != null)
               SliverToBoxAdapter(
                 child: Padding(
@@ -197,6 +259,7 @@ class _SceneFeedViewState extends ConsumerState<SceneFeedView> {
               emptyMessage: widget.emptyMessage ?? context.l10n.scenesEmpty,
               emptyIcon: widget.emptyIcon,
               emptyHint: widget.emptyHint,
+              emptyView: _query.filter.isEmpty && (_query.search ?? '').isEmpty ? widget.unfilteredEmptyView : null,
               onRetry: () => ref.invalidate(provider),
               onLoadMore: () => ref.read(provider.notifier).loadMore(retry: true),
               onGoToPage: (page) => ref.read(provider.notifier).goToPage(page),
@@ -211,6 +274,12 @@ class _SceneFeedViewState extends ConsumerState<SceneFeedView> {
                   : null,
               // Cards and rows get columns on tablets and in landscape (13.5).
               columnWidth: widget.layout == SceneFeedLayout.list ? 480 : 420,
+              skeletonCount: widget.layout == SceneFeedLayout.grid ? 8 : 4,
+              skeletonBuilder: (_) => switch (widget.layout) {
+                SceneFeedLayout.cards => const SceneCardSkeleton(),
+                SceneFeedLayout.list => const ListTileSkeleton(thumbnailWidth: 168),
+                SceneFeedLayout.grid => const GridTileSkeleton(),
+              },
               itemBuilder: (_, scene) => switch (widget.layout) {
                 SceneFeedLayout.cards => SceneCard(scene: scene),
                 SceneFeedLayout.list => SceneListTile(scene: scene),
@@ -237,6 +306,8 @@ class _SceneFeedViewState extends ConsumerState<SceneFeedView> {
 class _SavedFilterChips extends ConsumerWidget {
   const _SavedFilterChips({required this.activeId, required this.onSelected});
 
+  static const double height = 44;
+
   final String? activeId;
   final ValueChanged<SavedFilter> onSelected;
 
@@ -245,7 +316,7 @@ class _SavedFilterChips extends ConsumerWidget {
     final filters = ref.watch(savedSceneFiltersProvider).value ?? const <SavedFilter>[];
     if (filters.isEmpty) return const SizedBox.shrink();
     return SizedBox(
-      height: 44,
+      height: height,
       child: ListView.separated(
         scrollDirection: Axis.horizontal,
         padding: const EdgeInsets.symmetric(horizontal: 12),
@@ -265,4 +336,44 @@ class _SavedFilterChips extends ConsumerWidget {
       ),
     );
   }
+}
+
+/// The pinned chips: [topSpace] above them scrolls away down to [inset];
+/// the chips get the surface color and a hairline once content passes
+/// beneath them.
+class _PinnedChipsDelegate extends SliverPersistentHeaderDelegate {
+  _PinnedChipsDelegate({required this.topSpace, required this.inset, required this.height, required this.child});
+
+  final double topSpace;
+  final double inset;
+  final double height;
+  final Widget child;
+
+  @override
+  double get maxExtent => topSpace + height;
+
+  @override
+  double get minExtent => inset + height;
+
+  @override
+  Widget build(BuildContext context, double shrinkOffset, bool overlapsContent) {
+    final colors = Theme.of(context).colorScheme;
+    final pinned = shrinkOffset > 0 && shrinkOffset >= maxExtent - minExtent - 0.5;
+    return Align(
+      alignment: Alignment.bottomCenter,
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          color: colors.surface,
+          border: Border(
+            bottom: BorderSide(color: pinned ? colors.outlineVariant : colors.surface.withValues(alpha: 0), width: 0.5),
+          ),
+        ),
+        child: SizedBox(height: height, child: child),
+      ),
+    );
+  }
+
+  @override
+  bool shouldRebuild(_PinnedChipsDelegate old) =>
+      old.topSpace != topSpace || old.inset != inset || old.height != height || old.child != child;
 }

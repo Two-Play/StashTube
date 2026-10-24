@@ -3,7 +3,10 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import 'design_tokens.dart';
 import 'server_config.dart';
+
+export 'design_tokens.dart';
 
 class ThemeModeNotifier extends Notifier<ThemeMode> {
   static const _key = 'theme_mode';
@@ -88,8 +91,98 @@ class AccentColorNotifier extends Notifier<Color> {
 
 final accentColorProvider = NotifierProvider<AccentColorNotifier, Color>(AccentColorNotifier.new);
 
+/// App colors outside the [ColorScheme], registered in [AppTheme]. Read
+/// them with `AppColors.of(context)`.
+///
+/// The video colors are the same in both modes: video and images are dark
+/// whatever the theme, and the text over them is always white.
+@immutable
+class AppColors extends ThemeExtension<AppColors> {
+  const AppColors({
+    required this.rating,
+    this.videoScrim = Colors.black87,
+    this.videoScrimSoft = Colors.black54,
+    this.videoDim = Colors.black38,
+    this.badgeBackground = const Color(0xCC000000),
+    this.onBadge = Colors.white,
+  });
+
+  /// Filled rating stars on the page background: amber, darkened in light
+  /// mode until it reaches 3:1 against the surface (WCAG non-text contrast).
+  final Color rating;
+
+  /// Behind white text over video or images: the dark end of gradients
+  /// (titles over shorts and images) and the casting panel.
+  final Color videoScrim;
+
+  /// Lighter scrim: pills and labels over video (2× speed, scrub time) and
+  /// the gradient behind the shorts' top bar.
+  final Color videoScrimSoft;
+
+  /// Dims the whole video while the player's controls show.
+  final Color videoDim;
+
+  /// Duration, resolution and count badges on thumbnails.
+  final Color badgeBackground;
+
+  /// Text and icons on [badgeBackground].
+  final Color onBadge;
+
+  static AppColors of(BuildContext context) =>
+      Theme.of(context).extension<AppColors>() ?? AppColors.forBrightness(Theme.of(context).brightness);
+
+  static AppColors forBrightness(Brightness brightness) => AppColors(
+        rating: brightness == Brightness.dark
+            ? Colors.amber.shade600
+            : ensureContrast(Colors.amber.shade600, AppTheme.surfaceFor(brightness), minimum: 3),
+      );
+
+  @override
+  AppColors copyWith({
+    Color? rating,
+    Color? videoScrim,
+    Color? videoScrimSoft,
+    Color? videoDim,
+    Color? badgeBackground,
+    Color? onBadge,
+  }) =>
+      AppColors(
+        rating: rating ?? this.rating,
+        videoScrim: videoScrim ?? this.videoScrim,
+        videoScrimSoft: videoScrimSoft ?? this.videoScrimSoft,
+        videoDim: videoDim ?? this.videoDim,
+        badgeBackground: badgeBackground ?? this.badgeBackground,
+        onBadge: onBadge ?? this.onBadge,
+      );
+
+  @override
+  AppColors lerp(AppColors? other, double t) => other == null
+      ? this
+      : AppColors(
+          rating: Color.lerp(rating, other.rating, t)!,
+          videoScrim: Color.lerp(videoScrim, other.videoScrim, t)!,
+          videoScrimSoft: Color.lerp(videoScrimSoft, other.videoScrimSoft, t)!,
+          videoDim: Color.lerp(videoDim, other.videoDim, t)!,
+          badgeBackground: Color.lerp(badgeBackground, other.badgeBackground, t)!,
+          onBadge: Color.lerp(onBadge, other.onBadge, t)!,
+        );
+}
+
 /// YouTube-like look: neutral surfaces with a user-selectable accent
 /// (StashTube's blue by default).
+///
+/// Component rules: widgets pick the component by its role and leave the
+/// styling to this theme (no per-widget shapes, colors or densities).
+/// - Filters: `FilterChip` / `ChoiceChip` (selected chips are inverted).
+/// - Actions: `FilledButton.tonal` (or `FilledButton` for the one main
+///   action), pill-shaped; `ActionChip` only inside a row of chips.
+/// - Navigation: `ListTile`s, or avatar chips/tiles leading to a channel.
+/// - Destructive: `colorScheme.error` and always a confirmation first.
+/// - Choices between a few modes: `SegmentedButton`.
+/// - Tap targets stay at least 48 dp: no `VisualDensity.compact` or shrunk
+///   tap targets on primary actions.
+/// Sizes, spacing and radii come from `design_tokens.dart`, colors from the
+/// [ColorScheme] and [AppColors], text from the `textTheme`.
 abstract final class AppTheme {
   static ThemeData light(Color accent) => _build(Brightness.light, accent);
   static ThemeData dark(Color accent) => _build(Brightness.dark, accent);
@@ -133,8 +226,12 @@ abstract final class AppTheme {
       surface: surface,
     );
 
+    const pill = StadiumBorder();
+    const padded = MaterialTapTargetSize.padded;
+
     return ThemeData(
       colorScheme: scheme,
+      extensions: [AppColors.forBrightness(brightness)],
       scaffoldBackgroundColor: scheme.surface,
       appBarTheme: AppBarTheme(
         backgroundColor: scheme.surface,
@@ -151,13 +248,30 @@ abstract final class AppTheme {
       chipTheme: ChipThemeData(
         showCheckmark: false,
         side: BorderSide.none,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+        shape: const RoundedRectangleBorder(borderRadius: BorderRadius.all(Radius.circular(AppRadius.chip))),
         backgroundColor: scheme.surfaceContainerHighest,
         selectedColor: scheme.onSurface,
         // Selected chips are inverted (YouTube style), so their label needs
         // the surface color to stay readable. (Icons don't resolve states:
         // chips with avatars set their icon color themselves.)
         labelStyle: TextStyle(color: _onChip(scheme), fontWeight: FontWeight.w500),
+      ),
+      filledButtonTheme: FilledButtonThemeData(style: FilledButton.styleFrom(shape: pill, tapTargetSize: padded)),
+      outlinedButtonTheme: OutlinedButtonThemeData(style: OutlinedButton.styleFrom(shape: pill, tapTargetSize: padded)),
+      segmentedButtonTheme: SegmentedButtonThemeData(
+        style: SegmentedButton.styleFrom(shape: pill, tapTargetSize: padded),
+      ),
+      bottomSheetTheme: const BottomSheetThemeData(
+        showDragHandle: true,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.sheet))),
+      ),
+      snackBarTheme: const SnackBarThemeData(
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: AppRadius.thumbnailBorder),
+      ),
+      cardTheme: const CardThemeData(
+        clipBehavior: Clip.antiAlias,
+        shape: RoundedRectangleBorder(borderRadius: AppRadius.cardBorder),
       ),
     );
   }

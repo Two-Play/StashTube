@@ -1,21 +1,29 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/config/haptics.dart';
 import '../../data/models/list_queries.dart';
 import '../../data/providers.dart';
+import '../../data/repositories/stash_repository.dart';
 import '../../widgets/app_logo.dart';
 import '../../widgets/scene_feed.dart';
 import '../../widgets/scene_shelf.dart';
+import '../../widgets/status_views.dart';
 import '../cast/cast_ui.dart';
 import '../player/player_providers.dart';
 import '../shell/navigation.dart';
 import '../shorts/shorts_feed.dart';
-import '../shorts/shorts_page.dart';
 import '../shorts/shorts_shelf.dart';
+import '../subscriptions/last_visit.dart';
+import '../subscriptions/new_scenes.dart';
+import '../subscriptions/subscriptions_page.dart';
 import '../../l10n/l10n.dart';
+import '../server_tasks/server_tasks_page.dart';
+import '../auth/server_avatar.dart';
 import '../settings/settings_button.dart';
 
-/// YouTube-style home: logo app bar, filter chips and an endless scene feed.
+/// YouTube-style home: logo app bar, sticky filter chips, shelves and an
+/// endless scene feed.
 class HomePage extends ConsumerStatefulWidget {
   const HomePage({super.key});
 
@@ -41,7 +49,32 @@ class _HomePageState extends ConsumerState<HomePage> {
     return false;
   }
 
+  /// The dice: plays one scene from the whole library, picked by Stash
+  /// (a single page of one, sorted `random_<seed>`).
+  Future<void> _playRandom() async {
+    Haptics.medium();
+    final l = context.l10n;
+    final messenger = ScaffoldMessenger.of(context);
+    try {
+      final page = await ref
+          .read(stashRepositoryProvider)
+          .findScenes(SceneQuery(sort: SceneSort.random), perPage: 1);
+      if (!mounted) return;
+      final scene = page.items.firstOrNull;
+      if (scene == null) {
+        messenger.showSnackBar(SnackBar(content: Text(l.randomSceneNone)));
+      } else {
+        ref.read(nowPlayingProvider.notifier).play(scene);
+      }
+    } catch (e) {
+      if (!mounted) return;
+      Haptics.error();
+      messenger.showSnackBar(SnackBar(content: Text(errorText(l, e))));
+    }
+  }
+
   void _refreshShelves() {
+    ref.invalidate(newScenesSinceLastVisitProvider);
     ref.invalidate(shortsFeedFamily); // the shelf's queues
     ref.invalidate(sceneListProvider(_continueWatching));
     ref.invalidate(sceneListProvider(_fromFavorites));
@@ -74,8 +107,22 @@ class _HomePageState extends ConsumerState<HomePage> {
                 filterable: true,
                 showSavedFilters: true,
                 onRefresh: _refreshShelves,
-                headerSlivers: [
-                  const SliverToBoxAdapter(child: SizedBox(height: kToolbarHeight)),
+                // The chips stay under the app bar, or at the top while it
+                // is hidden (HOME-1).
+                pinChips: true,
+                chipsTopSpace: kToolbarHeight,
+                keepChipsTopSpace: _barVisible,
+                unfilteredEmptyView: EmptyView(
+                  message: context.l10n.homeEmptyTitle,
+                  hint: context.l10n.homeEmptyHint,
+                  icon: Icons.video_library_outlined,
+                  actionLabel: context.l10n.openServerTasks,
+                  actionIcon: Icons.manage_search,
+                  onAction: () => openSettings(context, ref, initialPage: const ServerTasksPage()),
+                ),
+                belowChipsSlivers: [
+                  // "N new videos since your last visit" (NOTIF-1).
+                  const SliverToBoxAdapter(child: NewSinceLastVisitBanner()),
                   SliverToBoxAdapter(
                     child: SceneShelf(
                       title: context.l10n.continueWatching,
@@ -90,6 +137,10 @@ class _HomePageState extends ConsumerState<HomePage> {
                       title: context.l10n.newFromFavorites,
                       icon: Icons.favorite_border,
                       query: _fromFavorites,
+                      onSeeAll: () {
+                        Haptics.selection();
+                        openPage(ref, const SubscriptionsPage());
+                      },
                     ),
                   ),
                 ],
@@ -131,16 +182,16 @@ class _HomePageState extends ConsumerState<HomePage> {
                         actions: [
                           const CastButton(),
                           IconButton(
-                            tooltip: context.l10n.tabShorts,
-                            icon: const Icon(Icons.slow_motion_video),
-                            onPressed: () => openPage(ref, const ShortsPage()),
+                            tooltip: context.l10n.randomScene,
+                            icon: const Icon(Icons.casino_outlined),
+                            onPressed: _playRandom,
                           ),
                           IconButton(
                             tooltip: context.l10n.search,
                             icon: const Icon(Icons.search),
                             onPressed: () => openSearch(ref),
                           ),
-                          const SettingsButton(),
+                          const ServerAvatarButton(),
                         ],
                       ),
                     ),

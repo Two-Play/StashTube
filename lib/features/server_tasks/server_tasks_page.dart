@@ -4,9 +4,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/config/haptics.dart';
+import '../../core/config/server_config.dart';
 import '../../data/models/server_task.dart';
 import '../../data/repositories/stash_repository.dart';
 import '../../l10n/l10n.dart';
+import '../notifications/notifications.dart';
+import '../settings/settings_button.dart';
 
 /// Stash's task queue, polled while someone watches it.
 class JobQueueNotifier extends AsyncNotifier<List<ServerJob>> {
@@ -37,14 +40,145 @@ final previewCheckProvider = FutureProvider.autoDispose<PreviewCheck>(
   (ref) => ref.watch(stashRepositoryProvider).checkPreviews(),
 );
 
+/// The jobs started from this app on the active server that haven't ended
+/// yet: job id → the task's name.
+class StartedJobsNotifier extends Notifier<Map<String, String>> {
+  @override
+  Map<String, String> build() {
+    ref.watch(activeServerIdProvider);
+    return const {};
+  }
+
+  void add(String id, String name) => state = {...state, id: name};
+
+  void remove(String id) => state = {...state}..remove(id);
+}
+
+final startedJobsProvider = NotifierProvider<StartedJobsNotifier, Map<String, String>>(StartedJobsNotifier.new);
+
 /// Settings → Server tasks: Stash's scan, generate, auto tag and clean, the
 /// running jobs, and whether the previews exist. Inside the settings sheet.
-class ServerTasksPage extends StatelessWidget {
+class ServerTasksPage extends StatefulWidget {
   const ServerTasksPage({super.key});
+
+  /// Whether the page is open: it shows the jobs' end itself.
+  static bool get isOpen => _open > 0;
+  static int _open = 0;
+
+  @override
+  State<ServerTasksPage> createState() => _ServerTasksPageState();
+}
+
+class _ServerTasksPageState extends State<ServerTasksPage> {
+  @override
+  void initState() {
+    super.initState();
+    ServerTasksPage._open++;
+  }
+
+  @override
+  void dispose() {
+    ServerTasksPage._open--;
+    super.dispose();
+  }
 
   // Its own messenger: the app's would show the snack bars under the sheet.
   @override
   Widget build(BuildContext context) => const ScaffoldMessenger(child: _ServerTasksView());
+}
+
+/// Reports when a job started from the app ends ("Finished: Scan library",
+/// NOTIF-1). Polls the queue only while such a job runs.
+///
+/// In the app it shows a snack bar, unless the tasks page, which shows it
+/// anyway, is open. In the background (hidden or paused) it posts a system
+/// notification instead when they are switched on ([notifyTaskEnded]);
+/// otherwise the job is reported when the app comes back. The app only
+/// notices it while the system lets it run: Android stops it after a
+/// while, iOS suspends it soon after it is left, so a job that ends then is
+/// reported in the app on return. Tapping the notification opens the tasks
+/// page. Placed once around the shell.
+class JobFinishedListener extends ConsumerStatefulWidget {
+  const JobFinishedListener({super.key, required this.child});
+
+  final Widget child;
+
+  @override
+  ConsumerState<JobFinishedListener> createState() => _JobFinishedListenerState();
+}
+
+class _JobFinishedListenerState extends ConsumerState<JobFinishedListener> {
+  StreamSubscription<String>? _taps;
+
+  @override
+  void initState() {
+    super.initState();
+    final service = ref.read(notificationServiceProvider);
+    if (!service.isSupported) return;
+    _taps = service.taps.listen(_open);
+    unawaited(service.launchPayload().then((payload) {
+      if (payload != null) _open(payload);
+    }));
+  }
+
+  @override
+  void dispose() {
+    _taps?.cancel();
+    super.dispose();
+  }
+
+  void _open(String payload) {
+    if (!mounted || payload != NotificationPayload.serverTasks) return;
+    // Already there, or the settings sheet is open anyway.
+    if (ServerTasksPage.isOpen || ref.read(settingsOpenProvider)) return;
+    openSettings(context, ref, initialPage: const ServerTasksPage());
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (ref.watch(startedJobsProvider).isNotEmpty) {
+      ref.listen(jobQueueProvider, (_, next) {
+        final jobs = next.value;
+        if (jobs != null) _report(jobs);
+      });
+    }
+    return widget.child;
+  }
+
+  bool get _notificationsOn =>
+      ref.read(notificationServiceProvider).isSupported && ref.read(notificationSettingsProvider).enabled;
+
+  void _report(List<ServerJob> jobs) {
+    final l = context.l10n;
+    final messenger = ScaffoldMessenger.maybeOf(context);
+    final lifecycle = WidgetsBinding.instance.lifecycleState;
+    final inApp = lifecycle == null || lifecycle == AppLifecycleState.resumed;
+    // Inactive (e.g. the app switcher): reported in the app when it's back.
+    final background = lifecycle == AppLifecycleState.hidden || lifecycle == AppLifecycleState.paused;
+    // In the background without system notifications: reported on return.
+    if (!inApp && !(background && _notificationsOn)) return;
+    for (final MapEntry(key: id, value: name) in ref.read(startedJobsProvider).entries) {
+      final job = jobs.where((j) => j.id == id).firstOrNull;
+      // Stash drops ended jobs from the queue after a while.
+      final state = job?.state ?? JobState.finished;
+      if (job != null && (job.isActive || state == JobState.stopping)) continue;
+      ref.read(startedJobsProvider.notifier).remove(id);
+      // Stopped by the user: nothing to report.
+      if (state == JobState.cancelled) continue;
+      final failed = state == JobState.failed;
+      if (!inApp) {
+        unawaited(notifyTaskEnded(ref, l, jobId: id, taskName: name, failed: failed));
+        continue;
+      }
+      if (ServerTasksPage.isOpen || messenger == null) continue;
+      if (failed) {
+        Haptics.error();
+      } else {
+        Haptics.medium();
+      }
+      messenger.showSnackBar(SnackBar(content: Text(failed ? l.taskFailedNamed(name) : l.taskFinishedNamed(name))));
+    }
+  }
 }
 
 class _ServerTasksView extends ConsumerWidget {
@@ -87,7 +221,7 @@ class _ServerTasksView extends ConsumerWidget {
                 label: (o) => o.label(l),
               );
               if (options != null && context.mounted) {
-                await _start(context, ref, (repo) => repo.scanLibrary(options));
+                await _start(context, ref, l.taskScan, (repo) => repo.scanLibrary(options));
               }
             },
           ),
@@ -104,7 +238,7 @@ class _ServerTasksView extends ConsumerWidget {
                 label: (o) => o.label(l),
               );
               if (options != null && context.mounted) {
-                await _start(context, ref, (repo) => repo.generate(options));
+                await _start(context, ref, l.taskGenerate, (repo) => repo.generate(options));
               }
             },
           ),
@@ -114,7 +248,7 @@ class _ServerTasksView extends ConsumerWidget {
             subtitle: Text(l.taskAutoTagSubtitle),
             onTap: () async {
               if (await _confirm(context, l.taskAutoTag, l.taskAutoTagSubtitle) && context.mounted) {
-                await _start(context, ref, (repo) => repo.autoTag());
+                await _start(context, ref, l.taskAutoTag, (repo) => repo.autoTag());
               }
             },
           ),
@@ -124,7 +258,7 @@ class _ServerTasksView extends ConsumerWidget {
             subtitle: Text(l.taskCleanSubtitle),
             onTap: () async {
               if (await _confirm(context, l.taskClean, l.taskCleanConfirm) && context.mounted) {
-                await _start(context, ref, (repo) => repo.clean());
+                await _start(context, ref, l.taskClean, (repo) => repo.clean());
               }
             },
           ),
@@ -137,12 +271,19 @@ class _ServerTasksView extends ConsumerWidget {
   }
 }
 
-/// Starts a job and reports it; the queue shows its progress.
-Future<void> _start(BuildContext context, WidgetRef ref, Future<String> Function(StashRepository repo) task) async {
+/// Starts a job and reports it; the queue shows its progress, and
+/// [JobFinishedListener] reports its end elsewhere in the app.
+Future<void> _start(
+  BuildContext context,
+  WidgetRef ref,
+  String name,
+  Future<String> Function(StashRepository repo) task,
+) async {
   final messenger = ScaffoldMessenger.of(context);
   final l = context.l10n;
   try {
-    await task(ref.read(stashRepositoryProvider));
+    final id = await task(ref.read(stashRepositoryProvider));
+    ref.read(startedJobsProvider.notifier).add(id, name);
     Haptics.medium();
     messenger.showSnackBar(SnackBar(content: Text(l.taskStarted)));
     await ref.read(jobQueueProvider.notifier).refresh();
@@ -240,7 +381,7 @@ class _PreviewCheckTiles extends ConsumerWidget {
               child: FilledButton.tonalIcon(
                 icon: const Icon(Icons.auto_awesome_motion_outlined),
                 label: Text(l.generateAnimatedPreviews),
-                onPressed: () => _start(context, ref, (repo) => repo.generate(GenerateOption.animatedPreviews)),
+                onPressed: () => _start(context, ref, l.generateAnimatedPreviews, (repo) => repo.generate(GenerateOption.animatedPreviews)),
               ),
             ),
           ],

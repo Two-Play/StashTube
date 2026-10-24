@@ -20,3 +20,22 @@ final castPlaybackProvider = StreamProvider<CastPlayback>(
 
 /// Whether playback currently happens on a cast device.
 final isCastingProvider = Provider<bool>((ref) => ref.watch(castConnectionProvider).value != null);
+
+/// A scene that couldn't be played on the cast device; the player shows it
+/// in a snack bar. Each failure is a new object, so the same error twice is
+/// reported twice.
+class CastFailure {
+  CastFailure(this.error, this.deviceName);
+
+  final Object error;
+  final String? deviceName;
+}
+
+class CastFailureNotifier extends Notifier<CastFailure?> {
+  @override
+  CastFailure? build() => null;
+
+  void report(Object error, String? deviceName) => state = CastFailure(error, deviceName);
+}
+
+final castFailureProvider = NotifierProvider<CastFailureNotifier, CastFailure?>(CastFailureNotifier.new);

@@ -6,6 +6,7 @@ import '../../data/models/group.dart';
 import '../../data/models/list_queries.dart';
 import '../../data/providers.dart';
 import '../../data/repositories/stash_repository.dart';
+import '../../widgets/channel_header.dart';
 import '../../widgets/paged_sliver.dart';
 import '../../widgets/scene_feed.dart';
 import '../../widgets/stash_image.dart';
@@ -113,8 +114,8 @@ class GroupPage extends ConsumerWidget {
     final group = ref.watch(groupProvider(groupId));
     final theme = Theme.of(context);
 
-    return Scaffold(
-      appBar: AppBar(title: Text(group.value?.name ?? '', maxLines: 1, overflow: TextOverflow.ellipsis)),
+    return ChannelScaffold(
+      title: Text(group.value?.name ?? '', maxLines: 1, overflow: TextOverflow.ellipsis),
       body: SceneFeedView(
         initialQuery: SceneQuery(groupId: groupId, sort: SceneSort.groupOrder),
         sorts: const [],
@@ -146,7 +147,14 @@ class GroupPage extends ConsumerWidget {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(g.name, maxLines: 3, overflow: TextOverflow.ellipsis, style: theme.textTheme.titleLarge),
+                          ChannelTitleAnchor(
+                            child: Text(
+                              g.name,
+                              maxLines: 3,
+                              overflow: TextOverflow.ellipsis,
+                              style: theme.textTheme.titleLarge,
+                            ),
+                          ),
                           const SizedBox(height: 4),
                           Text(
                             [

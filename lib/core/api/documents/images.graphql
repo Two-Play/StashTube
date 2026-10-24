@@ -12,3 +12,29 @@ query FindImages($filter: FindFilterType, $image_filter: ImageFilterType) {
     }
   }
 }
+
+# Everything the image viewer's info sheet shows; loaded per image when the
+# sheet opens, so the grid's query stays light. `photographer` and
+# `visual_files` need Stash v0.25+, older than the groups the app needs.
+query FindImageDetails($id: ID!) {
+  findImage(id: $id) {
+    id
+    title
+    date
+    details
+    photographer
+    rating100
+    o_counter
+    organized
+    created_at
+    updated_at
+    visual_files {
+      ... on ImageFile { path basename size format width height }
+      ... on VideoFile { path basename size format width height }
+    }
+    studio { ...StudioRef }
+    performers { ...PerformerRef }
+    tags { ...TagRef }
+    galleries { ...GalleryFields }
+  }
+}

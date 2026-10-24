@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/config/haptics.dart';
 import '../../core/config/server_config.dart';
+import '../../core/config/theme.dart';
 import '../../core/utils/format.dart';
 import '../../widgets/play_pause_icon.dart';
 import '../player/player_providers.dart';
@@ -41,7 +42,6 @@ class CastButton extends ConsumerWidget {
 Future<void> showCastSheet(BuildContext context) => showModalBottomSheet<void>(
   context: context,
   useRootNavigator: true,
-  showDragHandle: true,
   builder: (_) => const _CastSheet(),
 );
 
@@ -67,7 +67,7 @@ class _CastSheet extends ConsumerWidget {
               title: Text(context.l10n.castingTo(connection.deviceName)),
             ),
             Padding(
-              padding: const EdgeInsets.all(16),
+              padding: const EdgeInsets.all(AppSpacing.l),
               child: SizedBox(
                 width: double.infinity,
                 child: FilledButton.tonal(
@@ -94,7 +94,7 @@ class _CastSheet extends ConsumerWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Padding(
-                padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+                padding: const EdgeInsets.fromLTRB(AppSpacing.l, 0, AppSpacing.l, AppSpacing.s),
                 child: Text(context.l10n.castTo, style: theme.textTheme.titleMedium),
               ),
               // AirPlay devices are chosen in the system's picker.
@@ -135,7 +135,7 @@ class _CastSheet extends ConsumerWidget {
               // Cast devices can't send headers, so the key travels in the URL.
               if (ref.watch(serverConfigProvider)?.apiKey?.isNotEmpty ?? false)
                 Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+                  padding: const EdgeInsets.fromLTRB(AppSpacing.l, AppSpacing.s, AppSpacing.l, 0),
                   child: Text(
                     context.l10n.castApiKeyHint,
                     style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurfaceVariant),
@@ -171,7 +171,7 @@ class CastingControls extends ConsumerWidget {
     }
 
     return ColoredBox(
-      color: Colors.black87,
+      color: AppColors.of(context).videoScrim,
       child: IconTheme(
         data: const IconThemeData(color: Colors.white),
         child: Column(
@@ -193,7 +193,7 @@ class CastingControls extends ConsumerWidget {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Text(context.l10n.castingTo(connection.deviceName), style: const TextStyle(color: Colors.white70)),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: AppSpacing.s),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
@@ -202,7 +202,7 @@ class CastingControls extends ConsumerWidget {
                         icon: const Icon(Icons.replay_10),
                         onPressed: () => seekBy(-10),
                       ),
-                      const SizedBox(width: 16),
+                      const SizedBox(width: AppSpacing.l),
                       playback.loading
                           ? const SizedBox.square(dimension: 48, child: CircularProgressIndicator(color: Colors.white))
                           : IconButton(
@@ -214,7 +214,7 @@ class CastingControls extends ConsumerWidget {
                                 playback.playing ? service.pause() : service.play();
                               },
                             ),
-                      const SizedBox(width: 16),
+                      const SizedBox(width: AppSpacing.l),
                       IconButton(
                         tooltip: context.l10n.forward10,
                         icon: const Icon(Icons.forward_10),
@@ -227,7 +227,7 @@ class CastingControls extends ConsumerWidget {
             ),
             // The timeline stays usable while the video plays on the TV.
             Padding(
-              padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+              padding: const EdgeInsets.fromLTRB(AppSpacing.l, 0, AppSpacing.l, AppSpacing.s),
               child: Column(
                 children: [
                   Row(
@@ -237,7 +237,7 @@ class CastingControls extends ConsumerWidget {
                             ? '${formatDuration(playback.position.inMilliseconds / 1000)} / '
                                 '${formatDuration(duration.inMilliseconds / 1000)}'
                             : formatDuration(playback.position.inMilliseconds / 1000),
-                        style: const TextStyle(color: Colors.white, fontSize: 13),
+                        style: const TextStyle(color: Colors.white, fontSize: AppTextSize.overlayBody),
                       ),
                     ],
                   ),
