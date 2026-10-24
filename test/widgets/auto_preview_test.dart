@@ -42,9 +42,9 @@ void main() {
   List<String?> playing(WidgetTester tester) =>
       [for (final image in tester.widgetList<StashImage>(find.byType(StashImage))) image.url];
 
-  testWidgets('the first fully shown video plays after 1.5 s by default', (tester) async {
+  testWidgets('the first fully shown video plays after 0.5 s by default', (tester) async {
     await pumpList(tester);
-    await tester.pump(const Duration(milliseconds: 1400));
+    await tester.pump(const Duration(milliseconds: 400));
     expect(playing(tester), isEmpty, reason: 'not right away');
     await tester.pump(const Duration(milliseconds: 200));
     expect(playing(tester), ['http://s/0.webp']);
@@ -69,7 +69,7 @@ void main() {
     await c.read(markerPreviewsProvider.notifier).set(true);
     expect([c.read(feedPreviewsProvider), c.read(markerPreviewsProvider)], [false, true]);
 
-    expect(c.read(feedPreviewDelayProvider), const Duration(milliseconds: 1500));
+    expect(c.read(feedPreviewDelayProvider), const Duration(milliseconds: 500));
     await c.read(feedPreviewDelayProvider.notifier).set(const Duration(seconds: 3));
     expect(prefs.getInt('feed_preview_delay_ms'), 3000);
   });

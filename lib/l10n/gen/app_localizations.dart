@@ -2677,6 +2677,294 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'While casting, the cast device receives the stream address including your API key. Other devices on this Wi-Fi may be able to read it.'**
   String get castApiKeyHint;
+
+  /// No description provided for @serverTasks.
+  ///
+  /// In en, this message translates to:
+  /// **'Server tasks'**
+  String get serverTasks;
+
+  /// No description provided for @serverTasksSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Scan, generate, check previews'**
+  String get serverTasksSubtitle;
+
+  /// No description provided for @sectionPreviewCheck.
+  ///
+  /// In en, this message translates to:
+  /// **'Previews on the server'**
+  String get sectionPreviewCheck;
+
+  /// No description provided for @previewCheckAnimated.
+  ///
+  /// In en, this message translates to:
+  /// **'Animated previews (WebP)'**
+  String get previewCheckAnimated;
+
+  /// No description provided for @previewCheckVideo.
+  ///
+  /// In en, this message translates to:
+  /// **'Video previews (MP4)'**
+  String get previewCheckVideo;
+
+  /// No description provided for @previewCheckMarkers.
+  ///
+  /// In en, this message translates to:
+  /// **'Marker previews (WebP)'**
+  String get previewCheckMarkers;
+
+  /// No description provided for @previewCheckFound.
+  ///
+  /// In en, this message translates to:
+  /// **'Found for {found} of {checked} random samples'**
+  String previewCheckFound(int found, int checked);
+
+  /// No description provided for @previewCheckNothing.
+  ///
+  /// In en, this message translates to:
+  /// **'No scenes to check'**
+  String get previewCheckNothing;
+
+  /// No description provided for @previewCheckMissingHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Lists and markers play the animated previews, which Stash doesn\'t create by default. Generate them here, or switch the preview format to video in the settings.'**
+  String get previewCheckMissingHint;
+
+  /// No description provided for @generateAnimatedPreviews.
+  ///
+  /// In en, this message translates to:
+  /// **'Generate animated previews'**
+  String get generateAnimatedPreviews;
+
+  /// No description provided for @checkAgain.
+  ///
+  /// In en, this message translates to:
+  /// **'Check again'**
+  String get checkAgain;
+
+  /// No description provided for @sectionTasks.
+  ///
+  /// In en, this message translates to:
+  /// **'Tasks'**
+  String get sectionTasks;
+
+  /// No description provided for @taskScan.
+  ///
+  /// In en, this message translates to:
+  /// **'Scan library'**
+  String get taskScan;
+
+  /// No description provided for @taskScanSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Finds new and changed files'**
+  String get taskScanSubtitle;
+
+  /// No description provided for @taskGenerate.
+  ///
+  /// In en, this message translates to:
+  /// **'Generate'**
+  String get taskGenerate;
+
+  /// No description provided for @taskGenerateSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Previews, sprites, covers and more for files that lack them'**
+  String get taskGenerateSubtitle;
+
+  /// No description provided for @taskAutoTag.
+  ///
+  /// In en, this message translates to:
+  /// **'Auto tag'**
+  String get taskAutoTag;
+
+  /// No description provided for @taskAutoTagSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Assigns performers, studios and tags named in file paths'**
+  String get taskAutoTagSubtitle;
+
+  /// No description provided for @taskClean.
+  ///
+  /// In en, this message translates to:
+  /// **'Clean'**
+  String get taskClean;
+
+  /// No description provided for @taskCleanSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Removes entries of files that no longer exist'**
+  String get taskCleanSubtitle;
+
+  /// No description provided for @taskCleanConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove the entries of missing files from the library? Their ratings, play counts and markers are lost.'**
+  String get taskCleanConfirm;
+
+  /// No description provided for @taskScanGenerates.
+  ///
+  /// In en, this message translates to:
+  /// **'Also create for new files'**
+  String get taskScanGenerates;
+
+  /// No description provided for @startTask.
+  ///
+  /// In en, this message translates to:
+  /// **'Start'**
+  String get startTask;
+
+  /// No description provided for @taskStarted.
+  ///
+  /// In en, this message translates to:
+  /// **'Task started on the server'**
+  String get taskStarted;
+
+  /// No description provided for @sectionJobs.
+  ///
+  /// In en, this message translates to:
+  /// **'Running tasks'**
+  String get sectionJobs;
+
+  /// No description provided for @noJobs.
+  ///
+  /// In en, this message translates to:
+  /// **'No tasks running'**
+  String get noJobs;
+
+  /// No description provided for @stopJob.
+  ///
+  /// In en, this message translates to:
+  /// **'Stop task'**
+  String get stopJob;
+
+  /// No description provided for @jobReady.
+  ///
+  /// In en, this message translates to:
+  /// **'Waiting'**
+  String get jobReady;
+
+  /// No description provided for @jobRunning.
+  ///
+  /// In en, this message translates to:
+  /// **'Running'**
+  String get jobRunning;
+
+  /// No description provided for @jobFinished.
+  ///
+  /// In en, this message translates to:
+  /// **'Finished'**
+  String get jobFinished;
+
+  /// No description provided for @jobStopping.
+  ///
+  /// In en, this message translates to:
+  /// **'Stopping'**
+  String get jobStopping;
+
+  /// No description provided for @jobCancelled.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancelled'**
+  String get jobCancelled;
+
+  /// No description provided for @jobFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed'**
+  String get jobFailed;
+
+  /// No description provided for @optionRescan.
+  ///
+  /// In en, this message translates to:
+  /// **'Rescan unchanged files'**
+  String get optionRescan;
+
+  /// No description provided for @optionCovers.
+  ///
+  /// In en, this message translates to:
+  /// **'Covers'**
+  String get optionCovers;
+
+  /// No description provided for @optionPreviews.
+  ///
+  /// In en, this message translates to:
+  /// **'Video previews (MP4)'**
+  String get optionPreviews;
+
+  /// No description provided for @optionImagePreviews.
+  ///
+  /// In en, this message translates to:
+  /// **'Animated previews (WebP)'**
+  String get optionImagePreviews;
+
+  /// No description provided for @optionSprites.
+  ///
+  /// In en, this message translates to:
+  /// **'Seek bar thumbnails (sprites)'**
+  String get optionSprites;
+
+  /// No description provided for @optionMarkers.
+  ///
+  /// In en, this message translates to:
+  /// **'Marker previews (MP4)'**
+  String get optionMarkers;
+
+  /// No description provided for @optionMarkerImagePreviews.
+  ///
+  /// In en, this message translates to:
+  /// **'Marker animated previews (WebP)'**
+  String get optionMarkerImagePreviews;
+
+  /// No description provided for @optionMarkerScreenshots.
+  ///
+  /// In en, this message translates to:
+  /// **'Marker screenshots'**
+  String get optionMarkerScreenshots;
+
+  /// No description provided for @optionPhashes.
+  ///
+  /// In en, this message translates to:
+  /// **'Perceptual hashes (duplicates)'**
+  String get optionPhashes;
+
+  /// No description provided for @previewSource.
+  ///
+  /// In en, this message translates to:
+  /// **'Preview format'**
+  String get previewSource;
+
+  /// No description provided for @previewSourceAnimated.
+  ///
+  /// In en, this message translates to:
+  /// **'Animated image (WebP)'**
+  String get previewSourceAnimated;
+
+  /// No description provided for @previewSourceVideo.
+  ///
+  /// In en, this message translates to:
+  /// **'Video (MP4)'**
+  String get previewSourceVideo;
+
+  /// No description provided for @previewSourceVideoHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Video previews play in a video player of their own: more data, battery and memory than WebP, and slower to start on older devices. Markers keep playing the WebP previews.'**
+  String get previewSourceVideoHint;
+
+  /// No description provided for @previewsOnServer.
+  ///
+  /// In en, this message translates to:
+  /// **'Check previews on the server'**
+  String get previewsOnServer;
+
+  /// No description provided for @previewsOnServerSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Whether Stash has created them, and generate missing ones'**
+  String get previewsOnServerSubtitle;
 }
 
 class _AppLocalizationsDelegate
