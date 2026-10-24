@@ -1111,10 +1111,16 @@ class AppLocalizationsDe extends AppLocalizations {
   String get editTags => 'Tags bearbeiten';
 
   @override
-  String get showLess => 'Weniger anzeigen';
+  String get showMore => '...mehr';
 
   @override
-  String get showMore => '...mehr';
+  String get showDescription => 'Beschreibung anzeigen';
+
+  @override
+  String get sceneDescription => 'Beschreibung';
+
+  @override
+  String get noDescription => 'Keine Beschreibung';
 
   @override
   String saveFailed(String error) {
@@ -1123,6 +1129,17 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get removeRating => 'Bewertung entfernen';
+
+  @override
+  String get rateScene => 'Bewerten';
+
+  @override
+  String get rateThisScene => 'Szene bewerten';
+
+  @override
+  String ratingButtonSemantics(String rating) {
+    return 'Bewertung: $rating';
+  }
 
   @override
   String rateStars(int count) {
@@ -1577,10 +1594,10 @@ class AppLocalizationsDe extends AppLocalizations {
   String get airPlayHint => 'Apple TV und AirPlay-Fernseher';
 
   @override
-  String get allViews => 'Alle Ansichten';
+  String get moreViews => 'Weitere Ansichten';
 
   @override
-  String get tabAll => 'Alle';
+  String get tabYou => 'Du';
 
   @override
   String get colorStashTube => 'StashTube';
@@ -1657,6 +1674,79 @@ class AppLocalizationsDe extends AppLocalizations {
       one: '1 Short',
     );
     return '$_temp0';
+  }
+
+  @override
+  String get channelTabVideos => 'Videos';
+
+  @override
+  String get channelTabShorts => 'Shorts';
+
+  @override
+  String get channelTabImages => 'Bilder';
+
+  @override
+  String get channelTabGalleries => 'Galerien';
+
+  @override
+  String get channelTabAbout => 'Info';
+
+  @override
+  String get channelAboutEmpty => 'Hier gibt es noch nichts';
+
+  @override
+  String get channelLinks => 'Links';
+
+  @override
+  String get copyLink => 'Link kopieren';
+
+  @override
+  String get linkCopied => 'Link kopiert';
+
+  @override
+  String get fieldAliases => 'Auch bekannt als';
+
+  @override
+  String get fieldDeathDate => 'Gestorben';
+
+  @override
+  String get fieldCountry => 'Land';
+
+  @override
+  String get fieldEthnicity => 'Ethnie';
+
+  @override
+  String get fieldHairColor => 'Haarfarbe';
+
+  @override
+  String get fieldEyeColor => 'Augenfarbe';
+
+  @override
+  String get fieldHeight => 'Größe';
+
+  @override
+  String get fieldWeight => 'Gewicht';
+
+  @override
+  String get fieldMeasurements => 'Maße';
+
+  @override
+  String get fieldCareer => 'Karriere';
+
+  @override
+  String get fieldTattoos => 'Tattoos';
+
+  @override
+  String get fieldPiercings => 'Piercings';
+
+  @override
+  String heightCm(int cm) {
+    return '$cm cm';
+  }
+
+  @override
+  String weightKg(int kg) {
+    return '$kg kg';
   }
 
   @override

@@ -179,12 +179,12 @@ Alle Quick Wins sind auf `feature/ux-review` umgesetzt (Phase 2, Schritt 1).
 
 ### Major Refactors
 
-| ID | Änderung |
-|---|---|
-| NAV-1 + NAV-2 + NAV-3 | Neue IA: Home · Shorts · Suche · Bibliothek · Du; Server-Avatar statt Zahnrad; „Alle“ wird Teil von „Du“ (Migration gespeicherter Nav-Konfigurationen nötig) |
-| WATCH-2 | Watch-Seite neu gegliedert (Aktionsleiste, Beschreibungs-Sheet) – muss die stabile Widget-Struktur von `PlayerPanel` wahren, nur der Detailbereich ändert sich |
-| CH-2 | Kanalseiten mit Tabs |
-| NAV-4 | Adaptive Navigation (Rail/Drawer) für Tablets |
+| ID | Änderung | Status |
+|---|---|---|
+| NAV-1 + NAV-2 + NAV-3 | Neue IA: Home · Shorts · Suche · Bibliothek · Du; Server-Avatar statt Zahnrad; „Alle“ wird Teil von „Du“ (Migration gespeicherter Nav-Konfigurationen) | ✅ |
+| WATCH-2 | Watch-Seite neu gegliedert (Aktionsleiste, Beschreibungs-Sheet) | ✅ (ohne Favorit in der Kanalzeile und ohne Teilen) |
+| CH-2 | Kanalseiten mit Tabs | ✅ (Tabs nur antippen, nicht wischen; Links werden kopiert) |
+| NAV-4 | Adaptive Navigation für Tablets | ✅ (Rail ab 600 dp, erweiterte Rail ab 1240 dp) |
 
 ### New Feature Ideas
 

@@ -610,8 +610,13 @@ class Fragment$GalleryFields$folder {
 }
 
 class Variables$Query$FindGalleries {
-  factory Variables$Query$FindGalleries({Input$FindFilterType? filter}) =>
-      Variables$Query$FindGalleries._({if (filter != null) r'filter': filter});
+  factory Variables$Query$FindGalleries({
+    Input$FindFilterType? filter,
+    Input$GalleryFilterType? gallery_filter,
+  }) => Variables$Query$FindGalleries._({
+    if (filter != null) r'filter': filter,
+    if (gallery_filter != null) r'gallery_filter': gallery_filter,
+  });
 
   Variables$Query$FindGalleries._(this._$data);
 
@@ -623,6 +628,14 @@ class Variables$Query$FindGalleries {
           ? null
           : Input$FindFilterType.fromJson((l$filter as Map<String, dynamic>));
     }
+    if (data.containsKey('gallery_filter')) {
+      final l$gallery_filter = data['gallery_filter'];
+      result$data['gallery_filter'] = l$gallery_filter == null
+          ? null
+          : Input$GalleryFilterType.fromJson(
+              (l$gallery_filter as Map<String, dynamic>),
+            );
+    }
     return Variables$Query$FindGalleries._(result$data);
   }
 
@@ -631,11 +644,18 @@ class Variables$Query$FindGalleries {
   Input$FindFilterType? get filter =>
       (_$data['filter'] as Input$FindFilterType?);
 
+  Input$GalleryFilterType? get gallery_filter =>
+      (_$data['gallery_filter'] as Input$GalleryFilterType?);
+
   Map<String, dynamic> toJson() {
     final result$data = <String, dynamic>{};
     if (_$data.containsKey('filter')) {
       final l$filter = filter;
       result$data['filter'] = l$filter?.toJson();
+    }
+    if (_$data.containsKey('gallery_filter')) {
+      final l$gallery_filter = gallery_filter;
+      result$data['gallery_filter'] = l$gallery_filter?.toJson();
     }
     return result$data;
   }
@@ -657,13 +677,26 @@ class Variables$Query$FindGalleries {
     if (l$filter != lOther$filter) {
       return false;
     }
+    final l$gallery_filter = gallery_filter;
+    final lOther$gallery_filter = other.gallery_filter;
+    if (_$data.containsKey('gallery_filter') !=
+        other._$data.containsKey('gallery_filter')) {
+      return false;
+    }
+    if (l$gallery_filter != lOther$gallery_filter) {
+      return false;
+    }
     return true;
   }
 
   @override
   int get hashCode {
     final l$filter = filter;
-    return Object.hashAll([_$data.containsKey('filter') ? l$filter : const {}]);
+    final l$gallery_filter = gallery_filter;
+    return Object.hashAll([
+      _$data.containsKey('filter') ? l$filter : const {},
+      _$data.containsKey('gallery_filter') ? l$gallery_filter : const {},
+    ]);
   }
 }
 
@@ -741,6 +774,15 @@ const documentNodeQueryFindGalleries = DocumentNode(
           defaultValue: DefaultValueNode(value: null),
           directives: [],
         ),
+        VariableDefinitionNode(
+          variable: VariableNode(name: NameNode(value: 'gallery_filter')),
+          type: NamedTypeNode(
+            name: NameNode(value: 'GalleryFilterType'),
+            isNonNull: false,
+          ),
+          defaultValue: DefaultValueNode(value: null),
+          directives: [],
+        ),
       ],
       directives: [],
       selectionSet: SelectionSetNode(
@@ -752,6 +794,10 @@ const documentNodeQueryFindGalleries = DocumentNode(
               ArgumentNode(
                 name: NameNode(value: 'filter'),
                 value: VariableNode(name: NameNode(value: 'filter')),
+              ),
+              ArgumentNode(
+                name: NameNode(value: 'gallery_filter'),
+                value: VariableNode(name: NameNode(value: 'gallery_filter')),
               ),
             ],
             directives: [],

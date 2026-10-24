@@ -183,6 +183,31 @@ void main() {
     expect(activity!.scenesPlayed, 3);
   });
 
+  test('channel tabs: profile, counts and media by performer or studio (CH-2)', () async {
+    final profile = await repo.performerProfile('1');
+    expect(profile.aliases, ['Bunny']);
+    expect(profile.heightCm, 180);
+    expect(profile.career, isNotNull);
+    expect(profile.counts.images, media.images.length);
+    expect(profile.counts.galleries, 1);
+    expect((await repo.performerProfile('2')).counts.galleries, 0);
+
+    expect((await repo.findImages(ImageQuery(performerId: '1'))).totalCount, media.images.length);
+    expect((await repo.findImages(ImageQuery(performerId: '2'))).totalCount, 0);
+    expect((await repo.findGalleries(GalleryQuery(performerId: '1'))).items.single.title, 'Stills');
+    expect((await repo.findGalleries(GalleryQuery(performerId: '3'))).items, isEmpty);
+
+    // The stills belong to the sub-studio "Peach Open Movie" of Blender Studio.
+    final network = await repo.studioMediaCounts('1');
+    expect(network.images, media.images.length);
+    expect(network.galleries, 1);
+    expect((await repo.studioMediaCounts('3')).images, 0);
+    expect((await repo.findGalleries(GalleryQuery(studioId: '1'))).items, isEmpty);
+    expect((await repo.findGalleries(GalleryQuery(studioId: '1', includeSubStudios: true))).items, hasLength(1));
+    expect((await repo.findImages(ImageQuery(studioId: '2'))).totalCount, media.images.length);
+    expect((await repo.findImages(ImageQuery(studioId: '1', includeSubStudios: true))).totalCount, media.images.length);
+  });
+
   test('edits last while the app runs', () async {
     await repo.setSceneRating('1', 20);
     final edited = await repo.updateScene('1', {

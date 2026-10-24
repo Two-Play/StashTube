@@ -14,12 +14,17 @@ import '../../data/repositories/stash_repository.dart';
 import '../edit/edit_common.dart';
 import '../edit/edit_pages.dart';
 import '../library/watch_later.dart';
+import '../tags/tag_editor.dart';
+import 'file_info.dart';
 import 'player_providers.dart';
+import 'scene_description.dart';
 import 'scene_edits.dart';
 import '../../l10n/l10n.dart';
 
-/// Rating stars on their own row, then O-counter, watch later, edit and
-/// "add marker" as chips (epic 10).
+/// The one action bar under the channel row (WATCH-2): pill buttons for the
+/// rating, the O-counter, watch later and "add marker", then "More" with the
+/// rarer actions (edit, tags, file info). Scrolls sideways when it doesn't
+/// fit (epic 10).
 class SceneActions extends ConsumerWidget {
   const SceneActions({super.key, required this.scene});
 
@@ -30,91 +35,137 @@ class SceneActions extends ConsumerWidget {
     final stars = effectiveStars(ref, scene);
     final oCount = effectiveOCounter(ref, scene);
     final l = context.l10n;
+    final messenger = ScaffoldMessenger.of(context);
 
-    void showError(Object e) =>
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(l.saveFailed(errorText(l, e)))));
+    void showError(Object e) => messenger.showSnackBar(SnackBar(content: Text(l.saveFailed(errorText(l, e)))));
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 8),
-          child: _RatingStars(
-            stars: stars,
-            onRate: (value) {
-              Haptics.selection();
-              ref.read(sceneEditsProvider.notifier).rate(scene, value).catchError(showError);
-            },
+    const gap = SizedBox(width: AppSpacing.s);
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.l, vertical: AppSpacing.xs),
+      child: Row(
+        children: [
+          // "★ 4" or "Rate"; the stars themselves are in a small sheet.
+          FilledButton.tonalIcon(
+            icon: Icon(
+              stars > 0 ? Icons.star_rounded : Icons.star_outline_rounded,
+              color: stars > 0 ? AppColors.of(context).rating : null,
+            ),
+            label: Semantics(
+              label: l.ratingButtonSemantics(l.ratingValue(stars)),
+              excludeSemantics: true,
+              child: Text(stars > 0 ? '$stars' : l.rateScene),
+            ),
+            onPressed: () => showRatingSheet(context, scene: scene, onError: showError),
           ),
-        ),
-        SingleChildScrollView(
-          scrollDirection: Axis.horizontal,
-          padding: const EdgeInsets.symmetric(horizontal: 16),
-          child: Row(
-            children: [
-              ActionChip(
-                avatar: const Icon(Icons.water_drop_outlined, size: 18),
-                label: Semantics(
-                  label: l.oCounterSemantics(oCount),
-                  excludeSemantics: true,
-                  child: Text(l.oCounterLabel(oCount)),
-                ),
-                tooltip: l.addO,
-                onPressed: () async {
-                  Haptics.medium();
-                  final messenger = ScaffoldMessenger.of(context);
-                  try {
-                    final count = await ref.read(sceneEditsProvider.notifier).addO(scene);
-                    messenger.showSnackBar(SnackBar(
-                      content: Text(l.oCountValue(count)),
-                      // With an action, snack bars would stay until tapped.
-                      persist: false,
-                      action: SnackBarAction(
-                        label: l.undo,
-                        onPressed: () => ref.read(sceneEditsProvider.notifier).removeO(scene).catchError(showError),
-                      ),
-                    ));
-                  } catch (e) {
-                    showError(e);
-                  }
-                },
+          gap,
+          Tooltip(
+            message: l.addO,
+            child: FilledButton.tonalIcon(
+              icon: const Icon(Icons.water_drop_outlined),
+              label: Semantics(
+                label: l.oCounterSemantics(oCount),
+                excludeSemantics: true,
+                child: Text(l.oCounterLabel(oCount)),
               ),
-              const SizedBox(width: 8),
-              WatchLaterChip(sceneId: scene.id),
-              const SizedBox(width: 8),
-              ActionChip(
-                avatar: const Icon(Icons.edit_outlined, size: 18),
-                label: Text(l.edit),
-                tooltip: l.editSceneDetails,
-                onPressed: () => openEditor(context, ref, SceneEditPage(scene: scene)),
-              ),
-              const SizedBox(width: 8),
-              ActionChip(
-                avatar: const Icon(Icons.bookmark_add_outlined, size: 18),
-                label: Text(l.marker),
-                tooltip: l.addMarkerHere,
-                onPressed: () {
-                  // On the TV while casting, not in the paused local player.
-                  final position = ref.read(nowPlayingProvider.notifier).currentPosition();
-                  showAddMarkerSheet(context, scene: scene, seconds: position.inMilliseconds / 1000);
-                },
-              ),
-            ],
+              onPressed: () async {
+                Haptics.medium();
+                try {
+                  final count = await ref.read(sceneEditsProvider.notifier).addO(scene);
+                  messenger.showSnackBar(SnackBar(
+                    content: Text(l.oCountValue(count)),
+                    // With an action, snack bars would stay until tapped.
+                    persist: false,
+                    action: SnackBarAction(
+                      label: l.undo,
+                      onPressed: () => ref.read(sceneEditsProvider.notifier).removeO(scene).catchError(showError),
+                    ),
+                  ));
+                } catch (e) {
+                  showError(e);
+                }
+              },
+            ),
           ),
+          gap,
+          WatchLaterButton(sceneId: scene.id),
+          gap,
+          Tooltip(
+            message: l.addMarkerHere,
+            child: FilledButton.tonalIcon(
+              icon: const Icon(Icons.bookmark_add_outlined),
+              label: Text(l.marker),
+              onPressed: () {
+                // On the TV while casting, not in the paused local player.
+                final position = ref.read(nowPlayingProvider.notifier).currentPosition();
+                showAddMarkerSheet(context, scene: scene, seconds: position.inMilliseconds / 1000);
+              },
+            ),
+          ),
+          gap,
+          IconButton.filledTonal(
+            tooltip: l.moreActions,
+            icon: const Icon(Icons.more_horiz),
+            onPressed: () => showSceneMoreSheet(context, scene),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// The compact star picker behind the rating button: a tap rates and closes
+/// it, tapping the current rating removes it.
+Future<void> showRatingSheet(BuildContext context, {required Scene scene, required ValueChanged<Object> onError}) =>
+    showModalBottomSheet<void>(
+      context: context,
+      useRootNavigator: true,
+      showDragHandle: true,
+      builder: (_) => _RatingSheet(scene: scene, onError: onError),
+    );
+
+class _RatingSheet extends ConsumerWidget {
+  const _RatingSheet({required this.scene, required this.onError});
+
+  final Scene scene;
+  final ValueChanged<Object> onError;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final stars = effectiveStars(ref, scene);
+    return SafeArea(
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(AppSpacing.l, 0, AppSpacing.l, AppSpacing.l),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(context.l10n.rateThisScene, style: Theme.of(context).textTheme.titleMedium),
+            const SizedBox(height: AppSpacing.s),
+            _RatingStars(
+              stars: stars,
+              onRate: (value) {
+                Haptics.selection();
+                ref.read(sceneEditsProvider.notifier).rate(scene, value).catchError(onError);
+              },
+              onPicked: () => Navigator.pop(context),
+            ),
+          ],
         ),
-      ],
+      ),
     );
   }
 }
 
 /// Five stars for sighted users to tap (tapping the current rating removes
 /// it), and one adjustable element for screen readers: "Rating, 4 of 5
-/// stars", swiped up or down like a slider (A11Y-2).
+/// stars", swiped up or down like a slider (A11Y-2). [onPicked] follows a
+/// tap only, so adjusting with a screen reader keeps the picker open.
 class _RatingStars extends StatelessWidget {
-  const _RatingStars({required this.stars, required this.onRate});
+  const _RatingStars({required this.stars, required this.onRate, this.onPicked});
 
   final int stars;
   final ValueChanged<int> onRate;
+  final VoidCallback? onPicked;
 
   @override
   Widget build(BuildContext context) {
@@ -132,6 +183,7 @@ class _RatingStars extends StatelessWidget {
       onDecrease: stars > 0 ? () => onRate(stars - 1) : null,
       child: ExcludeSemantics(
         child: Row(
+          mainAxisSize: MainAxisSize.min,
           children: [
             // Full 48 dp targets: five fit in 256 dp, so even 320 dp wide
             // screens have room.
@@ -142,10 +194,71 @@ class _RatingStars extends StatelessWidget {
                   i <= stars ? Icons.star_rounded : Icons.star_outline_rounded,
                   color: i <= stars ? rating : colors.onSurfaceVariant,
                 ),
-                onPressed: () => onRate(i == stars ? 0 : i),
+                onPressed: () {
+                  onRate(i == stars ? 0 : i);
+                  onPicked?.call();
+                },
               ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+/// "More" of the action bar: the description, editing, tags and file info.
+/// The actions run on the navigator below the sheet once it is closed.
+Future<void> showSceneMoreSheet(BuildContext context, Scene scene) => showModalBottomSheet<void>(
+      context: context,
+      useRootNavigator: true,
+      showDragHandle: true,
+      builder: (_) => _SceneMoreSheet(scene: scene),
+    );
+
+class _SceneMoreSheet extends ConsumerWidget {
+  const _SceneMoreSheet({required this.scene});
+
+  final Scene scene;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l = context.l10n;
+    final files = ref.watch(sceneDetailsProvider(scene.id)).value?.files ?? const [];
+    final tags = effectiveTags(ref, scene);
+
+    // Closes the sheet, then runs [action] with a context that outlives it.
+    void then(void Function(BuildContext below) action) {
+      final navigator = Navigator.of(context);
+      navigator.pop();
+      action(navigator.context);
+    }
+
+    return SafeArea(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          ListTile(
+            leading: const Icon(Icons.notes),
+            title: Text(l.sceneDescription),
+            onTap: () => then((below) => showSceneDescription(below, scene)),
+          ),
+          ListTile(
+            leading: const Icon(Icons.edit_outlined),
+            title: Text(l.editScene),
+            onTap: () => then((below) => openEditor(below, ref, SceneEditPage(scene: scene))),
+          ),
+          ListTile(
+            leading: Icon(tags.isEmpty ? Icons.add : Icons.sell_outlined),
+            title: Text(tags.isEmpty ? l.addTags : l.editTags),
+            onTap: () => then((below) => showSceneTagEditor(below, scene, tags)),
+          ),
+          if (files.isNotEmpty)
+            ListTile(
+              leading: const Icon(Icons.info_outline),
+              title: Text(l.fileInfo),
+              onTap: () => then((below) => showFileInfoSheet(below, files)),
+            ),
+        ],
       ),
     );
   }
@@ -282,19 +395,25 @@ class _AddMarkerSheetState extends ConsumerState<AddMarkerSheet> {
 }
 
 /// Toggles the scene in "Watch later" (9.4).
-class WatchLaterChip extends ConsumerWidget {
-  const WatchLaterChip({super.key, required this.sceneId});
+class WatchLaterButton extends ConsumerWidget {
+  const WatchLaterButton({super.key, required this.sceneId});
 
   final String sceneId;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final saved = ref.watch(watchLaterProvider).contains(sceneId);
-    return ActionChip(
-      avatar: Icon(saved ? Icons.watch_later : Icons.watch_later_outlined, size: 18),
-      label: Text(saved ? context.l10n.saved : context.l10n.later),
-      tooltip: saved ? context.l10n.watchLaterRemove : context.l10n.watchLaterSave,
-      onPressed: () => ref.read(watchLaterProvider.notifier).toggle(sceneId),
+    final l = context.l10n;
+    return Tooltip(
+      message: saved ? l.watchLaterRemove : l.watchLaterSave,
+      child: FilledButton.tonalIcon(
+        icon: Icon(saved ? Icons.watch_later : Icons.watch_later_outlined),
+        label: Text(saved ? l.saved : l.later),
+        onPressed: () {
+          Haptics.light();
+          ref.read(watchLaterProvider.notifier).toggle(sceneId);
+        },
+      ),
     );
   }
 }

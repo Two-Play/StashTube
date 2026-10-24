@@ -22,6 +22,15 @@ query FindStudio($id: ID!) {
   findStudio(id: $id) { ...StudioDetails }
 }
 
+# Which of the studio channel's tabs have content (sub-studios included).
+query StudioMediaCounts($id: ID!) {
+  findStudio(id: $id) {
+    id
+    image_count(depth: -1)
+    gallery_count(depth: -1)
+  }
+}
+
 mutation StudioEdit($input: StudioUpdateInput!) {
   studioUpdate(input: $input) { ...StudioDetails }
 }

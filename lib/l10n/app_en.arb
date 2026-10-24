@@ -638,8 +638,10 @@
   },
   "addTags": "Add tags",
   "editTags": "Edit tags",
-  "showLess": "Show less",
   "showMore": "...more",
+  "showDescription": "Show description",
+  "sceneDescription": "Description",
+  "noDescription": "No description",
   "saveFailed": "Couldn't save: {error}",
   "@saveFailed": {
     "placeholders": {
@@ -649,6 +651,16 @@
     }
   },
   "removeRating": "Remove rating",
+  "rateScene": "Rate",
+  "rateThisScene": "Rate this scene",
+  "ratingButtonSemantics": "Rating: {rating}",
+  "@ratingButtonSemantics": {
+    "placeholders": {
+      "rating": {
+        "type": "String"
+      }
+    }
+  },
   "rateStars": "{count, plural, =1{Rate 1 star} other{Rate {count} stars}}",
   "@rateStars": {
     "placeholders": {
@@ -898,8 +910,8 @@
   "statsAndServer": "Stats & server",
   "airPlay": "AirPlay",
   "airPlayHint": "Apple TV and AirPlay TVs",
-  "allViews": "All views",
-  "tabAll": "All",
+  "moreViews": "More views",
+  "tabYou": "You",
   "colorStashTube": "StashTube",
   "searchScenes": "Search scenes",
   "searchGalleries": "Search galleries",
@@ -957,6 +969,46 @@
   "@performerShorts": {
     "placeholders": {
       "count": {
+        "type": "int"
+      }
+    }
+  },
+  "channelTabVideos": "Videos",
+  "channelTabShorts": "Shorts",
+  "channelTabImages": "Images",
+  "channelTabGalleries": "Galleries",
+  "channelTabAbout": "About",
+  "@channelTabAbout": {
+    "description": "Tab of a performer's or studio's page with their details and links."
+  },
+  "channelAboutEmpty": "Nothing here yet",
+  "channelLinks": "Links",
+  "copyLink": "Copy link",
+  "linkCopied": "Link copied",
+  "fieldAliases": "Also known as",
+  "fieldDeathDate": "Died",
+  "fieldCountry": "Country",
+  "fieldEthnicity": "Ethnicity",
+  "fieldHairColor": "Hair color",
+  "fieldEyeColor": "Eye color",
+  "fieldHeight": "Height",
+  "fieldWeight": "Weight",
+  "fieldMeasurements": "Measurements",
+  "fieldCareer": "Career",
+  "fieldTattoos": "Tattoos",
+  "fieldPiercings": "Piercings",
+  "heightCm": "{cm} cm",
+  "@heightCm": {
+    "placeholders": {
+      "cm": {
+        "type": "int"
+      }
+    }
+  },
+  "weightKg": "{kg} kg",
+  "@weightKg": {
+    "placeholders": {
+      "kg": {
         "type": "int"
       }
     }

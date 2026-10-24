@@ -10,11 +10,15 @@ import 'package:stash_app_mobile/data/models/page_result.dart';
 import 'package:stash_app_mobile/data/models/scene.dart';
 import 'package:stash_app_mobile/data/models/scene_details.dart';
 import 'package:stash_app_mobile/data/models/tag.dart';
+import 'package:stash_app_mobile/data/providers.dart';
 import 'package:stash_app_mobile/data/repositories/stash_repository.dart';
+import 'package:stash_app_mobile/features/edit/edit_pages.dart';
+import 'package:stash_app_mobile/features/library/watch_later.dart';
 import 'package:stash_app_mobile/features/player/player_providers.dart';
 import 'package:stash_app_mobile/features/player/scene_actions.dart';
 import 'package:stash_app_mobile/features/player/scene_edits.dart';
 
+import '../helpers.dart';
 import 'fake_player.dart';
 
 class FakeRepository implements StashRepository {
@@ -58,10 +62,15 @@ class FakeRepository implements StashRepository {
   }
 
   @override
+  Future<List<String>> sceneUrls(String sceneId) async => const [];
+
+  @override
   dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
 }
 
-const scene = Scene(id: 's1', title: 'A', rating100: 60, oCounter: 3);
+const scene = Scene(id: 's1', title: 'A', rating100: 60, oCounter: 3, tags: [Tag(id: '1', name: 'outdoor')]);
+
+const _details = SceneDetails(files: [SceneFile(path: '/data/a.mp4', size: 1000000)]);
 
 void main() {
   late FakeRepository repo;
@@ -72,6 +81,8 @@ void main() {
     final prefs = await SharedPreferences.getInstance();
     repo = FakeRepository();
     container = ProviderContainer(overrides: [
+      ...testServer,
+      sceneDetailsProvider('s1').overrideWith((ref) async => _details),
       sharedPreferencesProvider.overrideWithValue(prefs),
       stashRepositoryProvider.overrideWithValue(repo),
       playerProvider.overrideWithValue(FakePlayer(position: const Duration(seconds: 75))),
@@ -113,24 +124,49 @@ void main() {
         child: const MaterialApp(home: Scaffold(body: SceneActions(scene: scene))),
       ));
 
-  testWidgets('stars show the rating; tapping sets it, tapping again removes it', (tester) async {
+  Finder inSheet(Finder finder) => find.descendant(of: find.byType(BottomSheet), matching: finder);
+
+  Future<void> openRating(WidgetTester tester, String label) async {
+    await tester.tap(find.text(label));
+    await tester.pumpAndSettle();
+    expect(find.text('Rate this scene'), findsOneWidget);
+  }
+
+  testWidgets('the action bar has rating, O, watch later, marker and "More" (WATCH-2)', (tester) async {
     await pumpActions(tester);
-    expect(find.byIcon(Icons.star_rounded), findsNWidgets(3), reason: 'rating100 60 = 3 stars');
+    for (final label in ['3', 'O · 3', 'Later', 'Marker']) {
+      final button = find.ancestor(of: find.text(label), matching: find.byWidgetPredicate((w) => w is ButtonStyleButton));
+      expect(button, findsOneWidget, reason: '$label is a button');
+      expect(tester.getSize(button).height, greaterThanOrEqualTo(48), reason: '$label keeps a 48 dp target');
+    }
+    expect(find.byTooltip('More'), findsOneWidget);
+  });
+
+  testWidgets('the rating button opens a star picker; a tap rates and closes it, tapping the rating removes it',
+      (tester) async {
+    await pumpActions(tester);
+    expect(find.text('3'), findsOneWidget, reason: 'rating100 60 = 3 stars');
+    await openRating(tester, '3');
+    expect(inSheet(find.byIcon(Icons.star_rounded)), findsNWidgets(3));
 
     await tester.tap(find.byTooltip('Rate 4 stars'));
-    await tester.pump();
-    expect(find.byIcon(Icons.star_rounded), findsNWidgets(4));
+    await tester.pumpAndSettle();
+    expect(find.text('Rate this scene'), findsNothing, reason: 'closed after picking');
+    expect(find.text('4'), findsOneWidget);
     expect(repo.ratings, [80]);
 
+    await openRating(tester, '4');
     await tester.tap(find.byTooltip('Remove rating'));
-    await tester.pump();
-    expect(find.byIcon(Icons.star_rounded), findsNothing);
+    await tester.pumpAndSettle();
+    expect(find.text('Rate'), findsOneWidget);
     expect(repo.ratings, [80, null]);
   });
 
   testWidgets('screen readers get the rating as one adjustable element (A11Y-2)', (tester) async {
     final semantics = tester.ensureSemantics();
     await pumpActions(tester);
+    expect(find.bySemanticsLabel('Rating: 3 of 5 stars'), findsOneWidget, reason: 'the button says the rating');
+    await openRating(tester, '3');
     final rating = find.bySemanticsLabel('Rating');
     expect(rating, findsOneWidget);
     expect(
@@ -148,20 +184,56 @@ void main() {
     expect(find.bySemanticsLabel('Rate 4 stars'), findsNothing, reason: 'the single stars are hidden from screen readers');
 
     tester.semantics.increase(find.semantics.byLabel('Rating'));
-    await tester.pump();
+    await tester.pumpAndSettle();
     expect(repo.ratings, [80]);
-    expect(tester.getSemantics(rating).value, '4 of 5 stars');
+    expect(tester.getSemantics(rating).value, '4 of 5 stars', reason: 'the picker stays open while adjusting');
 
     tester.semantics.decrease(find.semantics.byLabel('Rating'));
-    await tester.pump();
+    await tester.pumpAndSettle();
     expect(repo.ratings, [80, 60]);
     semantics.dispose();
   });
 
   testWidgets('the stars are full-size tap targets', (tester) async {
     await pumpActions(tester);
-    final button = find.ancestor(of: find.byIcon(Icons.star_rounded).first, matching: find.byType(IconButton));
+    await openRating(tester, '3');
+    final button = find.ancestor(of: inSheet(find.byIcon(Icons.star_rounded)).first, matching: find.byType(IconButton));
     expect(tester.getSize(button), const Size(48, 48));
+  });
+
+  testWidgets('watch later toggles', (tester) async {
+    await pumpActions(tester);
+    await tester.tap(find.text('Later'));
+    await tester.pump();
+    expect(container.read(watchLaterProvider), ['s1']);
+    expect(find.text('Saved'), findsOneWidget);
+    await tester.tap(find.text('Saved'));
+    await tester.pump();
+    expect(container.read(watchLaterProvider), isEmpty);
+    expect(find.text('Later'), findsOneWidget);
+  });
+
+  testWidgets('"More" lists the rarer actions and opens the file info', (tester) async {
+    await pumpActions(tester);
+    await tester.tap(find.byTooltip('More'));
+    await tester.pumpAndSettle();
+    for (final label in ['Description', 'Edit scene', 'Edit tags', 'File info']) {
+      expect(inSheet(find.text(label)), findsOneWidget, reason: label);
+    }
+
+    await tester.tap(find.text('File info'));
+    await tester.pumpAndSettle();
+    expect(find.text('Edit scene'), findsNothing, reason: 'the menu closed');
+    expect(find.text('/data/a.mp4'), findsOneWidget, reason: 'the file info is open and expanded');
+  });
+
+  testWidgets('"More" opens the scene editor', (tester) async {
+    await pumpActions(tester);
+    await tester.tap(find.byTooltip('More'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Edit scene'));
+    await tester.pumpAndSettle();
+    expect(find.byType(SceneEditPage), findsOneWidget);
   });
 
   testWidgets('O button counts up and offers undo', (tester) async {

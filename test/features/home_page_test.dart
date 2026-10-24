@@ -9,9 +9,9 @@ import 'package:stash_app_mobile/data/models/saved_filter.dart';
 import 'package:stash_app_mobile/data/models/scene.dart';
 import 'package:stash_app_mobile/data/models/server_task.dart';
 import 'package:stash_app_mobile/data/repositories/stash_repository.dart';
+import 'package:stash_app_mobile/features/auth/server_avatar.dart';
 import 'package:stash_app_mobile/features/home/home_page.dart';
 import 'package:stash_app_mobile/features/server_tasks/server_tasks_page.dart';
-import 'package:stash_app_mobile/features/shell/all_views_page.dart';
 import 'package:stash_app_mobile/features/shorts/shorts_feed.dart';
 import 'package:stash_app_mobile/features/shorts/shorts_shelf.dart';
 
@@ -191,12 +191,10 @@ void main() {
     expect(picks[1]?.index, 1, reason: 'opens its queue where the tile\'s short is');
   });
 
-  testWidgets('"all views" lists only what is not in the bar, plus the settings', (tester) async {
-    await pumpHome(tester, home: const AllViewsPage());
-    expect(find.text('Studios'), findsOneWidget);
-    expect(find.text('Stats'), findsOneWidget);
-    expect(find.text('Settings'), findsOneWidget);
-    expect(find.text('Performers'), findsNothing, reason: 'in the standard bar');
-    expect(find.text('Home'), findsNothing);
+  testWidgets('the app bar has cast, search and the server avatar, but no shorts button', (tester) async {
+    await pumpHome(tester);
+    expect(find.byType(ServerAvatarButton), findsOneWidget);
+    expect(find.descendant(of: find.byType(AppBar), matching: find.byIcon(Icons.slow_motion_video)), findsNothing,
+        reason: 'shorts are a tab now');
   });
 }

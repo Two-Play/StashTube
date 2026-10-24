@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../data/models/list_queries.dart';
 import '../../data/models/scene.dart';
+import '../../data/models/scene_filter.dart';
 import '../../data/repositories/stash_repository.dart';
 import 'shorts_settings.dart';
 
@@ -84,23 +85,33 @@ class ShortsFeedState {
 }
 
 /// Where a shorts feed comes from: the mixed feed of the shorts tab, or one
-/// performer's short videos (their channel's "Shorts" button).
+/// performer's or studio's short videos (their channel's shorts tab).
 @immutable
 class ShortsSource {
   const ShortsSource.feed()
       : performerId = null,
+        studioId = null,
         title = null,
         lane = null;
 
-  const ShortsSource.performer(String this.performerId, {this.title}) : lane = null;
+  const ShortsSource.performer(String this.performerId, {this.title})
+      : studioId = null,
+        lane = null;
+
+  /// A studio's shorts, including its sub-studios'.
+  const ShortsSource.studio(String this.studioId, {this.title})
+      : performerId = null,
+        lane = null;
 
   /// One of the home shelf's queues: mixed like the feed, but shuffled on
   /// its own, so every tile continues differently.
   const ShortsSource.lane(int this.lane)
       : performerId = null,
+        studioId = null,
         title = null;
 
   final String? performerId;
+  final String? studioId;
 
   /// Which of the home shelf's queues (0–3).
   final int? lane;
@@ -108,13 +119,24 @@ class ShortsSource {
   /// Shown in the top bar, e.g. the performer's name.
   final String? title;
 
-  bool get isFeed => performerId == null && lane == null;
+  bool get isFeed => performerId == null && studioId == null && lane == null;
+
+  /// A channel's videos that fit the shorts settings' [filter] (length and
+  /// orientation); null for the mixed feeds.
+  SceneQuery? channelQuery(SceneFilter filter, {SceneSort sort = SceneSort.random}) {
+    if (performerId case final id?) return SceneQuery(sort: sort, performerId: id, filter: filter);
+    if (studioId case final id?) {
+      return SceneQuery(sort: sort, studioId: id, includeSubStudios: true, filter: filter);
+    }
+    return null;
+  }
 
   @override
-  bool operator ==(Object other) => other is ShortsSource && other.performerId == performerId && other.lane == lane;
+  bool operator ==(Object other) =>
+      other is ShortsSource && other.performerId == performerId && other.studioId == studioId && other.lane == lane;
 
   @override
-  int get hashCode => Object.hash(performerId, lane);
+  int get hashCode => Object.hash(performerId, studioId, lane);
 }
 
 /// Endless, shuffled feed of shorts built from [shortsSettingsProvider]:
@@ -142,10 +164,10 @@ class ShortsFeedNotifier extends Notifier<ShortsFeedState> {
   ShortsFeedState build() {
     final settings = ref.watch(shortsSettingsProvider);
     ref.watch(stashRepositoryProvider);
-    final performerId = source.performerId;
-    if (performerId != null) {
+    final channelQuery = source.channelQuery(settings.baseFilter);
+    if (channelQuery != null) {
       _preferredQuery = null;
-      _othersQuery = SceneQuery(sort: SceneSort.random, performerId: performerId, filter: settings.baseFilter);
+      _othersQuery = channelQuery;
     } else {
       final tagFilter = settings.tagFilter;
       _preferredQuery = tagFilter == null ? null : SceneQuery(sort: SceneSort.random, filter: tagFilter);
@@ -223,12 +245,17 @@ final shortsFeedFamily =
 final shortsFeedProvider = shortsFeedFamily(const ShortsSource.feed());
 
 /// How many of a performer's videos fit the shorts settings; the channel
-/// shows its "Shorts" button only when there are any.
-final performerShortsCountProvider = FutureProvider.autoDispose.family<int, String>((ref, performerId) async {
-  final filter = ref.watch(shortsSettingsProvider).baseFilter;
-  final result = await ref
-      .watch(stashRepositoryProvider)
-      .findScenes(SceneQuery(performerId: performerId, filter: filter), perPage: 1);
+/// shows its shorts tab only when there are any.
+final performerShortsCountProvider = FutureProvider.autoDispose.family<int, String>(
+  (ref, performerId) => ref.watch(channelShortsCountProvider(ShortsSource.performer(performerId)).future),
+);
+
+/// How many videos of a channel ([ShortsSource.performer] or
+/// [ShortsSource.studio]) fit the shorts settings; 0 for the mixed feeds.
+final channelShortsCountProvider = FutureProvider.autoDispose.family<int, ShortsSource>((ref, source) async {
+  final query = source.channelQuery(ref.watch(shortsSettingsProvider).baseFilter, sort: SceneSort.recentlyAdded);
+  if (query == null) return 0;
+  final result = await ref.watch(stashRepositoryProvider).findScenes(query, perPage: 1);
   return result.totalCount;
 });
 

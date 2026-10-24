@@ -14,6 +14,7 @@ import 'models/list_queries.dart';
 import 'models/marker.dart';
 import 'models/page_result.dart';
 import 'models/performer.dart';
+import 'models/performer_profile.dart';
 import 'models/saved_filter.dart';
 import 'models/scene.dart';
 import 'models/scene_details.dart';
@@ -68,6 +69,22 @@ final performerProvider = FutureProvider.autoDispose.family<Performer, String>(
 
 final studioProvider = FutureProvider.autoDispose.family<Studio, String>(
   (ref, id) => ref.watch(stashRepositoryProvider).findStudio(id),
+);
+
+/// A performer's details for their channel's about tab, with the counts
+/// that decide whether it shows the images and galleries tabs.
+final performerProfileProvider = FutureProvider.autoDispose.family<PerformerProfile, String>(
+  (ref, id) => ref.watch(stashRepositoryProvider).performerProfile(id),
+);
+
+/// A performer's links; null when the server has no URL lists.
+final performerUrlsProvider = FutureProvider.autoDispose.family<List<String>?, String>(
+  (ref, id) => ref.watch(stashRepositoryProvider).performerUrls(id),
+);
+
+/// Whether a studio channel shows the images and galleries tabs.
+final studioMediaCountsProvider = FutureProvider.autoDispose.family<ChannelMediaCounts, String>(
+  (ref, id) => ref.watch(stashRepositoryProvider).studioMediaCounts(id),
 );
 
 final serverVersionProvider = FutureProvider.autoDispose<String?>(

@@ -165,14 +165,32 @@ class _ChannelScaffoldState extends State<ChannelScaffold> {
 class _ChannelTitleScope extends InheritedWidget {
   const _ChannelTitleScope({required this.anchorKey, required super.child});
 
-  final GlobalKey anchorKey;
+  /// Null below a disabled [ChannelTitleAnchorScope].
+  final GlobalKey? anchorKey;
 
   @override
   bool updateShouldNotify(_ChannelTitleScope oldWidget) => anchorKey != oldWidget.anchorKey;
 }
 
+/// Turns the [ChannelTitleAnchor]s below it off unless [enabled], e.g. in
+/// the headers of a channel's hidden tabs (each tab scrolls its own copy of
+/// the header), so only the shown tab's header drives the title.
+class ChannelTitleAnchorScope extends StatelessWidget {
+  const ChannelTitleAnchorScope({super.key, required this.enabled, required this.child});
+
+  final bool enabled;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    final key = context.dependOnInheritedWidgetOfExactType<_ChannelTitleScope>()?.anchorKey;
+    return _ChannelTitleScope(anchorKey: enabled ? key : null, child: child);
+  }
+}
+
 /// Marks the name in a page's header: [ChannelScaffold] shows its app bar
-/// title once this has scrolled out of view. Use it once per page.
+/// title once this has scrolled out of view. Use it once per page (or once
+/// per enabled [ChannelTitleAnchorScope]).
 class ChannelTitleAnchor extends StatelessWidget {
   const ChannelTitleAnchor({super.key, required this.child});
 

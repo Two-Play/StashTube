@@ -10,6 +10,7 @@ import 'package:stash_app_mobile/data/models/gallery.dart';
 import 'package:stash_app_mobile/data/models/group.dart';
 import 'package:stash_app_mobile/data/models/image_item.dart';
 import 'package:stash_app_mobile/data/models/list_queries.dart';
+import 'package:stash_app_mobile/data/models/marker.dart';
 import 'package:stash_app_mobile/data/models/page_result.dart';
 import 'package:stash_app_mobile/data/models/performer.dart';
 import 'package:stash_app_mobile/data/models/saved_filter.dart';
@@ -21,14 +22,18 @@ import 'package:stash_app_mobile/data/models/tag.dart';
 import 'package:stash_app_mobile/data/providers.dart';
 import 'package:stash_app_mobile/data/repositories/stash_repository.dart';
 import 'package:stash_app_mobile/features/auth/login_page.dart';
+import 'package:stash_app_mobile/features/auth/server_avatar.dart';
 import 'package:stash_app_mobile/features/home/home_page.dart';
 import 'package:stash_app_mobile/features/library/library_page.dart';
 import 'package:stash_app_mobile/features/performers/performer_page.dart';
 import 'package:stash_app_mobile/features/search/search_page.dart';
 import 'package:stash_app_mobile/features/security/app_lock.dart';
-import 'package:stash_app_mobile/features/settings/settings_button.dart';
+import 'package:stash_app_mobile/features/player/player_providers.dart';
+import 'package:stash_app_mobile/features/shell/app_shell.dart';
 import 'package:stash_app_mobile/features/shell/navigation.dart';
+import 'package:stash_app_mobile/features/you/you_page.dart';
 import 'package:stash_app_mobile/l10n/gen/app_localizations.dart';
+import 'package:stash_app_mobile/widgets/sliver_columns.dart';
 
 import '../helpers.dart';
 import 'app_lock_test.dart' show FakeBiometrics;
@@ -106,8 +111,28 @@ class _Repo implements StashRepository {
       const PageResult(items: [], totalCount: 0);
 
   @override
-  Future<PageResult<Group>> findGroups(GroupQuery query, {int page = 1, int perPage = 24}) async =>
-      const PageResult(items: [], totalCount: 0);
+  Future<PageResult<Group>> findGroups(GroupQuery query, {int page = 1, int perPage = 24}) async => PageResult(
+        items: page > 1
+            ? const []
+            : const [Group(id: 'g1', name: 'A group with a name long enough to wrap', sceneCount: 12)],
+        totalCount: 1,
+      );
+
+  @override
+  Future<PageResult<Marker>> findMarkers(MarkerQuery query, {int page = 1, int perPage = 24}) async => PageResult(
+        items: page > 1
+            ? const []
+            : const [
+                Marker(
+                  id: 'm1',
+                  title: 'A marker title that goes on',
+                  seconds: 3600,
+                  tag: Tag(id: 't1', name: 'A long tag name'),
+                  scene: Scene(id: 'v1', title: 'A scene title long enough to need two lines'),
+                ),
+              ],
+        totalCount: 1,
+      );
 
   @override
   Future<List<SavedFilter>> savedSceneFilters() async => const [];
@@ -142,12 +167,14 @@ class _Case {
 }
 
 /// A11Y-3: the main pages at 100 %, 150 % and 200 % text on a 360×780
-/// phone and at 100 % and 200 % on a narrow 320×640 one, in English and
-/// German (longer labels), without overflow.
+/// phone, at 100 % and 200 % on a narrow 320×640 one and on a 1024×768
+/// tablet (columns, navigation rail; NAV-4), in English and German (longer
+/// labels), without overflow.
 void main() {
   const screens = [
     (Size(360, 780), [1.0, 1.5, 2.0]),
     (Size(320, 640), [1.0, 2.0]),
+    (Size(1024, 768), [1.0, 2.0]),
   ];
   final cases = [
     for (final (size, scales) in screens)
@@ -167,6 +194,8 @@ void main() {
     required _Case at,
     List<Override> overrides = const [],
     bool server = true,
+    // The shell brings the tab navigators itself.
+    bool tabNavigator = true,
   }) async {
     tester.view.physicalSize = at.size;
     tester.view.devicePixelRatio = 1;
@@ -185,7 +214,7 @@ void main() {
       ],
     );
     addTearDown(container.dispose);
-    final navigatorKey = server ? container.read(tabNavigatorKeysProvider)[container.read(currentTabProvider)] : null;
+    final navigatorKey = server && tabNavigator ? container.read(tabNavigatorKeysProvider)[container.read(currentTabProvider)] : null;
     await tester.pumpWidget(UncontrolledProviderScope(
       container: container,
       child: MaterialApp(
@@ -233,6 +262,20 @@ void main() {
   for (final at in cases) {
     final l = lookupAppLocalizations(Locale(at.locale));
     group('$at', () {
+      testScaled('navigation bar or rail', (tester) async {
+        await pumpPage(
+          tester,
+          AppShell(pageBuilder: (tab) => Scaffold(appBar: AppBar(title: Text(tab.title(l))))),
+          at: at,
+          overrides: [nowPlayingProvider.overrideWith(_NothingPlaying.new)],
+          tabNavigator: false,
+        );
+        final wide = at.size.width >= kWideLayoutBreakpoint;
+        expect(find.byType(NavigationRail), wide ? findsOneWidget : findsNothing);
+        expect(find.byType(NavigationBar), wide ? findsNothing : findsOneWidget);
+        expectNoOverflow(at, 'navigation');
+      });
+
       testScaled('home', (tester) async {
         await pumpPage(tester, const HomePage(), at: at);
         expect(find.textContaining('A scene title'), findsWidgets);
@@ -267,6 +310,15 @@ void main() {
         expectNoOverflow(at, 'library');
       });
 
+      testScaled('you', (tester) async {
+        await pumpPage(tester, const YouPage(), at: at);
+        expect(find.textContaining('A scene title'), findsWidgets);
+        expectNoOverflow(at, 'you');
+        await tester.scrollUntilVisible(find.text(l.settingsTitle), 400, scrollable: find.byType(Scrollable).first);
+        await settle(tester);
+        expectNoOverflow(at, 'you, scrolled');
+      });
+
       testScaled('performer channel', (tester) async {
         await pumpPage(tester, const PerformerPage(performerId: 'p1'), at: at);
         expect(find.text('Performer with a long name'), findsWidgets);
@@ -279,11 +331,17 @@ void main() {
       testScaled('settings and its pages', (tester) async {
         await pumpPage(
           tester,
-          Scaffold(appBar: AppBar(actions: const [SettingsButton()])),
+          Scaffold(appBar: AppBar(actions: const [ServerAvatarButton()])),
           at: at,
           overrides: [biometricAuthProvider.overrideWithValue(FakeBiometrics())],
         );
-        await tester.tap(find.byType(SettingsButton));
+        await tester.tap(find.byType(ServerAvatarButton));
+        await settle(tester);
+        expect(find.byType(AccountSheet), findsOneWidget);
+        expectNoOverflow(at, 'account sheet');
+        await tester.ensureVisible(find.text(l.settingsTitle));
+        await settle(tester);
+        await tester.tap(find.text(l.settingsTitle));
         await settle(tester);
         expectNoOverflow(at, 'settings');
 
@@ -340,6 +398,11 @@ void main() {
       });
     });
   }
+}
+
+class _NothingPlaying extends NowPlayingNotifier {
+  @override
+  Scene? build() => null;
 }
 
 /// A few frames: loading placeholders and previews never settle.
