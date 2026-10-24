@@ -42,11 +42,11 @@ final markerPreviewsProvider = NotifierProvider<_PreviewSwitch, bool>(() => _Pre
 /// How long a list rests before its first video plays the preview.
 class FeedPreviewDelayNotifier extends Notifier<Duration> {
   static const _key = 'feed_preview_delay_ms';
-  static const standard = Duration(milliseconds: 1500);
+  static const standard = Duration(milliseconds: 500);
   static const choices = [
-    Duration(milliseconds: 500),
-    Duration(seconds: 1),
     standard,
+    Duration(seconds: 1),
+    Duration(milliseconds: 1500),
     Duration(seconds: 2),
     Duration(seconds: 3),
   ];
