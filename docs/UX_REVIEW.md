@@ -163,19 +163,19 @@ Alle Quick Wins sind auf `feature/ux-review` umgesetzt (Phase 2, Schritt 1).
 
 ### Medium Improvements
 
-| ID | Änderung |
-|---|---|
-| HOME-1 | Shorts als horizontale Reihe, sticky Sortier-/Filter-Chips |
-| HOME-2 | Skeleton-Komponenten für Karten, Tiles, Regale, Up next |
-| HOME-3 | Geführter Leerzustand für neue Server |
-| WATCH-4 / A11Y-3 | Feste Höhen entfernen, Trefferflächen ≥ 48 dp, Textskalierungs-Tests |
-| A11Y-2 | Bewertung als ein zugängliches Element |
-| CTRL-4 | Queue-Navigation in den Controls |
-| SEARCH-1/2 | Typeahead, Auswege bei leeren Treffern |
-| SET-1 | Einstellungen in Kategorien |
-| ONB-1 | Zweistufiger Login |
-| STATE-1 | Globales Verbindungsbanner |
-| DS-1 / DS-2 | Komponentenregeln und Tokens |
+| ID | Änderung | Status |
+|---|---|---|
+| HOME-1 | Shorts als horizontale Reihe, sticky Sortier-/Filter-Chips | ✅ |
+| HOME-2 | Skeleton-Komponenten für Karten, Tiles, Regale, Up next | ✅ (Up next noch Spinner) |
+| HOME-3 | Geführter Leerzustand für neue Server | ✅ |
+| WATCH-4 / A11Y-3 | Feste Höhen entfernen, Trefferflächen ≥ 48 dp, Textskalierungs-Tests | ✅ Player; Tests für weitere Seiten offen |
+| A11Y-2 | Bewertung als ein zugängliches Element | ✅ |
+| CTRL-4 | Queue-Navigation in den Controls | ✅ (Sperrbildschirm nur „weiter“) |
+| SEARCH-1/2 | Typeahead, Auswege bei leeren Treffern | ✅ (Filter-Button der Suche in der App-Bar) |
+| SET-1 | Einstellungen in Kategorien | ✅ |
+| ONB-1 | Zweistufiger Login | ✅ |
+| STATE-1 | Globales Verbindungsbanner | ✅ (Listen behalten alten Inhalt noch nicht) |
+| DS-1 / DS-2 | Komponentenregeln und Tokens | offen |
 
 ### Major Refactors
 

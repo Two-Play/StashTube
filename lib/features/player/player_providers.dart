@@ -155,6 +155,8 @@ class PlayQueue {
 
   bool get hasNext => index + 1 < scenes.length;
 
+  bool get hasPrevious => index > 0;
+
   PlayQueue at(int index) => PlayQueue(title: title, scenes: scenes, index: index);
 }
 
@@ -325,6 +327,27 @@ class NowPlayingNotifier extends Notifier<Scene?> {
     if (queue == null || !queue.hasNext) return;
     ref.read(playQueueProvider.notifier).set(queue.at(queue.index + 1));
     play(queue.scenes[queue.index + 1]);
+  }
+
+  /// How far into a scene "previous" restarts it instead of going back.
+  static const restartThreshold = Duration(seconds: 3);
+
+  /// Back in the queue like a media player: restarts the scene once more
+  /// than [restartThreshold] has played (or at the queue's start), else
+  /// plays the previous scene.
+  void playPrevious() {
+    if (state == null) return;
+    final queue = ref.read(playQueueProvider);
+    if (queue == null || !queue.hasPrevious || currentPosition() > restartThreshold) {
+      if (ref.read(isCastingProvider)) {
+        unawaited(ref.read(castServiceProvider).seek(Duration.zero));
+      } else {
+        ref.read(playerProvider).seek(Duration.zero);
+      }
+      return;
+    }
+    ref.read(playQueueProvider.notifier).set(queue.at(queue.index - 1));
+    play(queue.scenes[queue.index - 1]);
   }
 
   /// Plays [scene]. Inside the active queue this moves the queue position;

@@ -15,6 +15,7 @@ import '../../core/api/documents/tasks.graphql.dart';
 import '../../core/api/stash_schema.graphql.dart';
 import '../../core/config/server_config.dart';
 import '../../features/player/playback_tracker.dart';
+import '../connection_status.dart';
 import '../models/gallery.dart';
 import '../models/group.dart';
 import '../models/image_item.dart';
@@ -87,10 +88,15 @@ GraphQLClient createGraphQLClient(ServerConfig config, {http.Client? httpClient,
 
 /// All access to the Stash GraphQL API goes through this class.
 class StashRepository implements PlaybackActivityApi {
-  StashRepository(this._client, {this._authHeaders = const {}, http.Client? httpClient})
+  StashRepository(this._client, {this._authHeaders = const {}, http.Client? httpClient, this._onReachability})
     : _http = httpClient ?? http.Client();
 
   final GraphQLClient _client;
+
+  /// Told after every call whether the server answered (true) or couldn't be
+  /// reached (false); feeds [connectionStatusProvider]. Server and auth
+  /// errors aren't reported.
+  final void Function(bool reachable)? _onReachability;
   final Map<String, String> _authHeaders;
 
   /// For non-GraphQL server files such as the sprite VTT.
@@ -647,6 +653,17 @@ class StashRepository implements PlaybackActivityApi {
   Future<T> _mutate<T>(MutationOptions<T> options) => _run(() => _client.mutate(options));
 
   Future<T> _run<T>(Future<QueryResult<T>> Function() request) async {
+    try {
+      final data = await _send(request);
+      _onReachability?.call(true);
+      return data;
+    } on StashApiException catch (e) {
+      if (e.isNetworkError) _onReachability?.call(false);
+      rethrow;
+    }
+  }
+
+  Future<T> _send<T>(Future<QueryResult<T>> Function() request) async {
     final QueryResult<T> result;
     try {
       result = await request();
@@ -712,10 +729,18 @@ final graphQLClientProvider = Provider<GraphQLClient>((ref) {
 
 // Not on authHeadersProvider: a renewed session cookie must not rebuild the
 // repository and everything loaded through it; the client adds the cookie.
-final stashRepositoryProvider = Provider<StashRepository>(
-  (ref) => StashRepository(
+final stashRepositoryProvider = Provider<StashRepository>((ref) {
+  final serverId = ref.watch(activeServerIdProvider);
+  return StashRepository(
     ref.watch(graphQLClientProvider),
     authHeaders: ref.watch(serverConfigProvider)?.authHeaders ?? const {},
     httpClient: ref.watch(stashHttpClientProvider),
-  ),
-);
+    // Read on each report, not watched: the status doesn't rebuild the
+    // repository. Calls that end after a server switch report nothing.
+    onReachability: (reachable) {
+      if (ref.mounted && ref.read(activeServerIdProvider) == serverId) {
+        ref.read(connectionStatusProvider.notifier).report(reachable: reachable);
+      }
+    },
+  );
+});

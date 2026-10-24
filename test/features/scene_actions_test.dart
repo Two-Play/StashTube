@@ -128,6 +128,42 @@ void main() {
     expect(repo.ratings, [80, null]);
   });
 
+  testWidgets('screen readers get the rating as one adjustable element (A11Y-2)', (tester) async {
+    final semantics = tester.ensureSemantics();
+    await pumpActions(tester);
+    final rating = find.bySemanticsLabel('Rating');
+    expect(rating, findsOneWidget);
+    expect(
+      tester.getSemantics(rating),
+      matchesSemantics(
+        label: 'Rating',
+        value: '3 of 5 stars',
+        increasedValue: '4 of 5 stars',
+        decreasedValue: '2 of 5 stars',
+        isSlider: true,
+        hasIncreaseAction: true,
+        hasDecreaseAction: true,
+      ),
+    );
+    expect(find.bySemanticsLabel('Rate 4 stars'), findsNothing, reason: 'the single stars are hidden from screen readers');
+
+    tester.semantics.increase(find.semantics.byLabel('Rating'));
+    await tester.pump();
+    expect(repo.ratings, [80]);
+    expect(tester.getSemantics(rating).value, '4 of 5 stars');
+
+    tester.semantics.decrease(find.semantics.byLabel('Rating'));
+    await tester.pump();
+    expect(repo.ratings, [80, 60]);
+    semantics.dispose();
+  });
+
+  testWidgets('the stars are full-size tap targets', (tester) async {
+    await pumpActions(tester);
+    final button = find.ancestor(of: find.byIcon(Icons.star_rounded).first, matching: find.byType(IconButton));
+    expect(tester.getSize(button), const Size(48, 48));
+  });
+
   testWidgets('O button counts up and offers undo', (tester) async {
     await pumpActions(tester);
     expect(find.bySemanticsLabel('O-counter 3, add one'), findsOneWidget);

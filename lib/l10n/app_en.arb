@@ -114,6 +114,7 @@
   "tabTags": "Tags",
   "tabSearch": "Search",
   "emptyDefault": "Nothing here yet",
+  "loading": "Loading",
   "loadMoreFailed": "Couldn't load more – tap to retry",
   "pageOf": "Page {page} of {count}",
   "@pageOf": {
@@ -207,6 +208,9 @@
     }
   },
   "scenesEmpty": "No scenes found",
+  "homeEmptyTitle": "Your library is still empty",
+  "homeEmptyHint": "Stash has to scan your media folders before scenes show up here. Start a scan in the server tasks.",
+  "openServerTasks": "Open server tasks",
   "savedFilterUnsupported": "\"{name}\": ignored unsupported criteria ({criteria})",
   "@savedFilterUnsupported": {
     "placeholders": {
@@ -391,12 +395,17 @@
   "serverUrl": "Server URL",
   "serverUrlInvalid": "Enter a valid http(s) URL",
   "apiKeyOptional": "API key (optional)",
-  "apiKeyHelper": "For a server with a password: the API key (Stash → Settings → Security), or sign in below.",
-  "signInWithPassword": "Sign in with username and password",
   "signInWithPasswordHint": "Instead of an API key. Casting to a TV needs the API key.",
   "username": "Username",
   "password": "Password",
   "loginIncomplete": "Enter username and password.",
+  "apiKeyRequired": "Enter the API key.",
+  "loginAuthTitle": "This server needs a login",
+  "loginAuthIntro": "Sign in with an API key or with your Stash username and password.",
+  "loginMethodPassword": "Username & password",
+  "apiKeyWhere": "You find it in Stash under Settings → Security → API key.",
+  "signIn": "Sign in",
+  "changeServerAddress": "Change address",
   "connect": "Connect",
   "tryDemo": "Try the demo",
   "tryDemoHint": "No Stash server at hand? Explore the app with sample videos from Big Buck Bunny, the open movie by the Blender Foundation (CC BY 3.0).",
@@ -456,6 +465,8 @@
   "forward10": "Forward 10 s",
   "pause": "Pause",
   "play": "Play",
+  "previousScene": "Previous scene",
+  "nextScene": "Next scene",
   "navBarTitle": "Navigation bar",
   "navBarIntro": "Choose up to {max} tabs and drag them into order. The first tab opens when the app starts.",
   "@navBarIntro": {
@@ -527,6 +538,14 @@
   "preferredQuality": "Preferred quality",
   "qualityOriginal": "Original",
   "preferredQualityHint": "Used when a scene offers it, otherwise the next lower one. Smaller videos play their original file. Also changes with HD in the player.",
+  "qualitySummary": "Quality: {quality}",
+  "@qualitySummary": {
+    "placeholders": {
+      "quality": {
+        "type": "String"
+      }
+    }
+  },
   "sectionPrivacy": "Privacy & security",
   "removeThisServer": "Remove this server",
   "lockImmediately": "Immediately",
@@ -540,6 +559,8 @@
   },
   "appLock": "App lock",
   "appLockSubtitle": "Ask for a PIN when opening the app",
+  "appLockOnSummary": "App lock on",
+  "appLockOffSummary": "App lock off",
   "unlockBiometric": "Unlock with Face ID / fingerprint",
   "lockNow": "Lock",
   "changePin": "Change PIN",
@@ -580,6 +601,28 @@
     }
   },
   "upNext": "Up next",
+  "queuePosition": "{position} / {count}",
+  "@queuePosition": {
+    "placeholders": {
+      "position": {
+        "type": "int"
+      },
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "queuePositionSemantics": "Scene {position} of {count}",
+  "@queuePositionSemantics": {
+    "placeholders": {
+      "position": {
+        "type": "int"
+      },
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "addTags": "Add tags",
   "editTags": "Edit tags",
   "showLess": "Show less",
@@ -595,6 +638,15 @@
   "removeRating": "Remove rating",
   "rateStars": "{count, plural, =1{Rate 1 star} other{Rate {count} stars}}",
   "@rateStars": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "ratingLabel": "Rating",
+  "ratingValue": "{count, plural, =0{No rating} =1{1 of 5 stars} other{{count} of 5 stars}}",
+  "@ratingValue": {
     "placeholders": {
       "count": {
         "type": "int"
@@ -717,6 +769,18 @@
       }
     }
   },
+  "connectionLostTitle": "Server not reachable",
+  "@connectionLostTitle": {
+    "description": "Banner at the top of the app while the server can't be reached."
+  },
+  "connectionLostBody": "{server} doesn't answer. Are you outside your home network?",
+  "@connectionLostBody": {
+    "placeholders": {
+      "server": {
+        "type": "String"
+      }
+    }
+  },
   "errorUnauthorized": "Not authorized – check the API key or login.",
   "errorInvalidCredentials": "Wrong username or password.",
   "errorNotReady": "Server is reachable but not ready (status: {status}).",
@@ -793,6 +857,7 @@
   "shortsEmptyHint": "Shorts are short portrait videos. Try a longer maximum length or other tags.",
   "shortsFullVideo": "Full video",
   "sectionSceneCards": "Video cards",
+  "sectionPreviewsCards": "Previews & cards",
   "cardChannel": "Channel on cards",
   "cardChannelStudio": "Studio",
   "cardChannelPerformers": "Performers",
@@ -833,6 +898,20 @@
       }
     }
   },
+  "searchSubmitIn": "{scope, select, images{Search images for \"{term}\"} galleries{Search galleries for \"{term}\"} performers{Search performers for \"{term}\"} studios{Search studios for \"{term}\"} other{Search scenes for \"{term}\"}}",
+  "@searchSubmitIn": {
+    "placeholders": {
+      "scope": {
+        "type": "String"
+      },
+      "term": {
+        "type": "String"
+      }
+    }
+  },
+  "searchOtherAreas": "Search other areas",
+  "searchClearFilters": "Clear filters",
+  "searchFiltersActiveHint": "Active filters may hide results.",
   "pictureInPicture": "Picture-in-picture",
   "pipUnavailable": "Picture-in-picture isn't available for this video.",
   "autoPip": "Picture-in-picture when leaving the app",
@@ -868,6 +947,7 @@
   "hapticsLight": "Light",
   "hapticsNormal": "Normal",
   "feedPreviews": "Play previews in lists",
+  "previewsOffSummary": "Previews off",
   "feedPreviewsSubtitle": "The first fully shown video plays a short preview.",
   "feedPreviewDelay": "Preview starts after",
   "secondsValue": "{seconds} s",

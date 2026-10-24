@@ -5,6 +5,7 @@ import 'package:miniplayer/miniplayer.dart';
 
 import '../../core/config/haptics.dart';
 import '../../l10n/l10n.dart';
+import '../../widgets/connection_banner.dart';
 import '../home/home_page.dart';
 import '../library/library_page.dart';
 import '../performers/performers_page.dart';
@@ -94,22 +95,26 @@ class AppShell extends ConsumerWidget {
               padding: EdgeInsets.only(bottom: scene == null || hidePlayer || closing ? 0 : kMiniPlayerHeight),
               duration: ClosingSlide.defaultDuration,
               curve: ClosingSlide.curve,
-              // Only the tabs in the bar; the GlobalKeys keep each navigator's
-              // pages when the tabs are reordered.
-              child: IndexedStack(
-                index: tabs.indexOf(currentTab).clamp(0, tabs.length - 1),
-                children: [
-                  for (final tab in tabs)
-                    Navigator(
-                      key: navigatorKeys[tab],
-                      onGenerateRoute: (_) => MaterialPageRoute(
-                        builder: (_) => PrimaryScrollController(
-                          controller: scrollControllers[tab]!,
-                          child: rootPage(tab),
+              // The connection banner (STATE-1) sits above the tabs, below
+              // the player, which covers it when expanded.
+              child: ConnectionBannerScope(
+                // Only the tabs in the bar; the GlobalKeys keep each
+                // navigator's pages when the tabs are reordered.
+                child: IndexedStack(
+                  index: tabs.indexOf(currentTab).clamp(0, tabs.length - 1),
+                  children: [
+                    for (final tab in tabs)
+                      Navigator(
+                        key: navigatorKeys[tab],
+                        onGenerateRoute: (_) => MaterialPageRoute(
+                          builder: (_) => PrimaryScrollController(
+                            controller: scrollControllers[tab]!,
+                            child: rootPage(tab),
+                          ),
                         ),
                       ),
-                    ),
-                ],
+                  ],
+                ),
               ),
             ),
             if (scene != null)

@@ -7,11 +7,12 @@ import '../data/models/scene.dart';
 import '../data/providers.dart';
 import '../features/player/player_providers.dart';
 import 'scene_card.dart';
+import 'skeleton.dart';
 
 /// Horizontal row of scenes with a heading, like YouTube's home shelves.
 ///
-/// Renders nothing while loading, on errors or when empty, so a shelf never
-/// pushes the main feed down with placeholders.
+/// Shows placeholders while loading (HOME-2) and renders nothing on errors
+/// or when empty.
 class SceneShelf extends ConsumerWidget {
   const SceneShelf({super.key, required this.title, required this.query, this.icon, this.hideFinished = false});
 
@@ -22,14 +23,19 @@ class SceneShelf extends ConsumerWidget {
   /// Drop scenes finished during this session (their saved resume time is 0).
   final bool hideFinished;
 
+  static const double _height = 230;
+  static const double _cardWidth = 240;
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    var scenes = ref.watch(sceneListProvider(query)).current?.items ?? const <Scene>[];
+    final value = ref.watch(sceneListProvider(query));
+    final loading = value.current == null && !value.hasError;
+    var scenes = value.current?.items ?? const <Scene>[];
     if (hideFinished) {
       final resumeTimes = ref.watch(resumeTimesProvider);
       scenes = scenes.where((s) => (resumeTimes[s.id] ?? s.resumeTime) > 0).toList();
     }
-    if (scenes.isEmpty) return const SizedBox.shrink();
+    if (scenes.isEmpty && !loading) return const SizedBox.shrink();
 
     final theme = Theme.of(context);
     return Column(
@@ -44,16 +50,19 @@ class SceneShelf extends ConsumerWidget {
             ],
           ),
         ),
-        SizedBox(
-          height: 230,
-          child: ListView.separated(
-            scrollDirection: Axis.horizontal,
-            padding: const EdgeInsets.symmetric(horizontal: 12),
-            itemCount: scenes.length,
-            separatorBuilder: (_, _) => const SizedBox(width: 12),
-            itemBuilder: (_, i) => _ShelfCard(scene: scenes[i]),
+        if (loading)
+          const ShelfSkeleton(height: _height, itemWidth: _cardWidth)
+        else
+          SizedBox(
+            height: _height,
+            child: ListView.separated(
+              scrollDirection: Axis.horizontal,
+              padding: const EdgeInsets.symmetric(horizontal: 12),
+              itemCount: scenes.length,
+              separatorBuilder: (_, _) => const SizedBox(width: 12),
+              itemBuilder: (_, i) => _ShelfCard(scene: scenes[i]),
+            ),
           ),
-        ),
         const Divider(height: 16),
       ],
     );
@@ -71,7 +80,7 @@ class _ShelfCard extends ConsumerWidget {
     final muted = theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurfaceVariant);
     final meta = sceneMetaLine(context, ref, scene, withDate: false);
     return SizedBox(
-      width: 240,
+      width: SceneShelf._cardWidth,
       child: TileSemantics(
         label: sceneSemanticsLabel(context, ref, scene),
         child: InkWell(

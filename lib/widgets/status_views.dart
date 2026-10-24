@@ -2,13 +2,28 @@ import 'package:flutter/material.dart';
 import '../l10n/l10n.dart';
 
 /// Shown when a list has no entries: a symbol for what is missing in a soft
-/// accent-tinted circle, a title and an optional hint.
+/// accent-tinted circle, a title, an optional hint and an optional action
+/// (e.g. what to do about it).
 class EmptyView extends StatelessWidget {
-  const EmptyView({super.key, required this.message, this.icon = Icons.inbox_outlined, this.hint});
+  const EmptyView({
+    super.key,
+    required this.message,
+    this.icon = Icons.inbox_outlined,
+    this.hint,
+    this.actionLabel,
+    this.actionIcon,
+    this.onAction,
+  });
 
   final String message;
   final IconData icon;
   final String? hint;
+
+  /// A button under the hint; shown when both [actionLabel] and [onAction]
+  /// are set.
+  final String? actionLabel;
+  final IconData? actionIcon;
+  final VoidCallback? onAction;
 
   @override
   Widget build(BuildContext context) {
@@ -41,6 +56,12 @@ class EmptyView extends StatelessWidget {
               textAlign: TextAlign.center,
               style: theme.textTheme.bodyMedium?.copyWith(color: colors.onSurfaceVariant),
             ),
+          ],
+          if (actionLabel != null && onAction != null) ...[
+            const SizedBox(height: 20),
+            actionIcon != null
+                ? FilledButton.tonalIcon(onPressed: onAction, icon: Icon(actionIcon), label: Text(actionLabel!))
+                : FilledButton.tonal(onPressed: onAction, child: Text(actionLabel!)),
           ],
         ],
       ),

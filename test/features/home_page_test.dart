@@ -7,27 +7,40 @@ import 'package:stash_app_mobile/data/models/list_queries.dart';
 import 'package:stash_app_mobile/data/models/page_result.dart';
 import 'package:stash_app_mobile/data/models/saved_filter.dart';
 import 'package:stash_app_mobile/data/models/scene.dart';
+import 'package:stash_app_mobile/data/models/server_task.dart';
 import 'package:stash_app_mobile/data/repositories/stash_repository.dart';
 import 'package:stash_app_mobile/features/home/home_page.dart';
+import 'package:stash_app_mobile/features/server_tasks/server_tasks_page.dart';
 import 'package:stash_app_mobile/features/shell/all_views_page.dart';
 import 'package:stash_app_mobile/features/shorts/shorts_feed.dart';
 import 'package:stash_app_mobile/features/shorts/shorts_shelf.dart';
 
 import '../helpers.dart';
 
-/// 30 scenes for every list, portrait ones for the shorts.
+/// 30 scenes for every list ([videos]), 6 portrait ones for the shorts.
 class _Repo implements StashRepository {
+  _Repo({this.videos = 30});
+
+  final int videos;
+
+  @override
+  Future<List<ServerJob>> jobQueue() async => const [];
+
+  @override
+  Future<PreviewCheck> checkPreviews({int sample = 8}) async => const PreviewCheck();
+
   @override
   Future<PageResult<Scene>> findScenes(SceneQuery query, {int page = 1, int perPage = 24}) async {
     final shorts = query.filter.portraitOnly;
+    final count = shorts ? 6 : videos;
     return PageResult(
       items: page > 1
           ? const []
           : [
-              for (var i = 0; i < (shorts ? 6 : 30); i++)
+              for (var i = 0; i < count; i++)
                 Scene(id: '${shorts ? 's' : 'v'}$i', title: '${shorts ? 'Short' : 'Video'} $i', streamUrl: 'http://s/$i'),
             ],
-      totalCount: shorts ? 6 : 30,
+      totalCount: count,
     );
   }
 
@@ -41,7 +54,12 @@ class _Repo implements StashRepository {
 void main() {
   late ProviderContainer container;
 
-  Future<void> pumpHome(WidgetTester tester, {Map<String, Object> prefs = const {}, Widget home = const HomePage()}) async {
+  Future<void> pumpHome(
+    WidgetTester tester, {
+    Map<String, Object> prefs = const {},
+    Widget home = const HomePage(),
+    _Repo? repo,
+  }) async {
     final instance = (await tester.runAsync(() async {
       SharedPreferences.setMockInitialValues(prefs);
       return SharedPreferences.getInstance();
@@ -50,7 +68,7 @@ void main() {
       overrides: [
         ...testServer,
         sharedPreferencesProvider.overrideWithValue(instance),
-        stashRepositoryProvider.overrideWithValue(_Repo()),
+        stashRepositoryProvider.overrideWithValue(repo ?? _Repo()),
       ],
       child: MaterialApp(home: home),
     ));
@@ -77,13 +95,80 @@ void main() {
     expect(tester.widget<IconButton>(find.widgetWithIcon(IconButton, Icons.search)).onPressed, isNotNull);
   });
 
-  testWidgets('shows four shorts on the home page', (tester) async {
+  void phoneSize(WidgetTester tester) {
+    tester.view.physicalSize = const Size(390 * 3, 844 * 3);
+    tester.view.devicePixelRatio = 3;
+    addTearDown(tester.view.reset);
+  }
+
+  testWidgets('shows a row of four portrait shorts on a phone', (tester) async {
+    phoneSize(tester);
     await pumpHome(tester);
     expect(find.byType(ShortsShelf), findsOneWidget);
-    for (var i = 0; i < 4; i++) {
+    final row = find.descendant(of: find.byType(ShortsShelf), matching: find.byType(ListView));
+    expect(tester.widget<ListView>(row).scrollDirection, Axis.horizontal);
+    expect(tester.getSize(row).height, ShortsShelf.height, reason: 'a row, not a 2×2 grid');
+    final tile = tester.getSize(find.ancestor(of: find.text('Short 0'), matching: find.byType(ClipRRect)).first);
+    expect(tile.width / tile.height, closeTo(9 / 16, 0.01));
+    await tester.drag(row, const Offset(-600, 0));
+    await tester.pumpAndSettle();
+    expect(find.text('Short 3'), findsOneWidget);
+    expect(find.text('Short 4'), findsNothing);
+  });
+
+  testWidgets('wide layouts fill the row with more shorts', (tester) async {
+    tester.view.physicalSize = const Size(1200, 900);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+    await pumpHome(tester);
+    for (var i = 0; i < 6; i++) {
       expect(find.text('Short $i'), findsOneWidget);
     }
-    expect(find.text('Short 4'), findsNothing);
+  });
+
+  test('more tiles than lanes take further shorts from the lanes in turn', () {
+    Scene short(String id) => Scene(id: id, title: id);
+    final lane = [short('a'), short('b'), short('c')];
+    final picks = shelfPicks([lane, lane], tiles: 4);
+    expect([for (final p in picks) p?.scene.id], ['a', 'b', 'c', null]);
+    expect([for (final p in picks) p?.lane], [0, 1, 0, null]);
+    expect(picks[2]?.index, 2);
+  });
+
+  testWidgets('the sort chips and the filter button stay reachable while scrolling', (tester) async {
+    phoneSize(tester);
+    await pumpHome(tester);
+    final filter = find.byIcon(Icons.tune);
+    expect(tester.getTopLeft(filter).dy, greaterThanOrEqualTo(kToolbarHeight), reason: 'under the app bar');
+
+    await tester.drag(find.byType(CustomScrollView), const Offset(0, -1500));
+    await tester.pumpAndSettle();
+    expect(barOffset(tester), -1);
+    expect(filter.hitTestable(), findsOneWidget);
+    expect(tester.getTopLeft(filter).dy, lessThan(kToolbarHeight), reason: 'at the top while the bar is hidden');
+
+    await tester.drag(find.byType(CustomScrollView), const Offset(0, 100));
+    await tester.pumpAndSettle();
+    expect(barOffset(tester), 0);
+    expect(tester.getTopLeft(filter).dy, greaterThanOrEqualTo(kToolbarHeight), reason: 'back under the app bar');
+    expect(filter.hitTestable(), findsOneWidget);
+  });
+
+  testWidgets('an empty library explains the scan and opens the server tasks', (tester) async {
+    phoneSize(tester);
+    await pumpHome(tester, repo: _Repo(videos: 0));
+    expect(find.text('Your library is still empty'), findsOneWidget);
+    await tester.scrollUntilVisible(find.text('Open server tasks'), 200, scrollable: find.byType(Scrollable).first);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Open server tasks'));
+    await tester.pumpAndSettle();
+    expect(find.byType(ServerTasksPage), findsOneWidget);
+
+    // Back leads to the settings.
+    await tester.pageBack();
+    await tester.pumpAndSettle();
+    expect(find.byType(ServerTasksPage), findsNothing);
+    expect(find.text('Settings'), findsWidgets);
   });
 
   testWidgets('every tile of the shelf has a queue of its own', (tester) async {

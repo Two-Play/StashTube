@@ -1,3 +1,4 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -6,6 +7,7 @@ import '../../data/providers.dart';
 import '../../widgets/app_logo.dart';
 import '../../widgets/scene_feed.dart';
 import '../../widgets/scene_shelf.dart';
+import '../../widgets/status_views.dart';
 import '../cast/cast_ui.dart';
 import '../player/player_providers.dart';
 import '../shell/navigation.dart';
@@ -13,9 +15,12 @@ import '../shorts/shorts_feed.dart';
 import '../shorts/shorts_page.dart';
 import '../shorts/shorts_shelf.dart';
 import '../../l10n/l10n.dart';
+import '../server_tasks/server_tasks_page.dart';
 import '../settings/settings_button.dart';
+import '../settings/settings_page.dart';
 
-/// YouTube-style home: logo app bar, filter chips and an endless scene feed.
+/// YouTube-style home: logo app bar, sticky filter chips, shelves and an
+/// endless scene feed.
 class HomePage extends ConsumerStatefulWidget {
   const HomePage({super.key});
 
@@ -48,6 +53,25 @@ class _HomePageState extends ConsumerState<HomePage> {
     ref.invalidate(savedSceneFiltersProvider);
   }
 
+  /// The settings sheet with the server tasks on top, as if picked there:
+  /// back leads to the settings, the X or a swipe down closes it.
+  Future<void> _openServerTasks() async {
+    final open = ref.read(settingsOpenProvider.notifier);
+    open.set(true);
+    try {
+      await showCupertinoSheet<void>(
+        context: context,
+        useNestedNavigation: true,
+        scrollableBuilder: (_, controller) => _PushOnStart(
+          page: const ServerTasksPage(),
+          child: SettingsPage(scrollController: controller),
+        ),
+      );
+    } finally {
+      open.set(false);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
 
@@ -74,8 +98,20 @@ class _HomePageState extends ConsumerState<HomePage> {
                 filterable: true,
                 showSavedFilters: true,
                 onRefresh: _refreshShelves,
-                headerSlivers: [
-                  const SliverToBoxAdapter(child: SizedBox(height: kToolbarHeight)),
+                // The chips stay under the app bar, or at the top while it
+                // is hidden (HOME-1).
+                pinChips: true,
+                chipsTopSpace: kToolbarHeight,
+                keepChipsTopSpace: _barVisible,
+                unfilteredEmptyView: EmptyView(
+                  message: context.l10n.homeEmptyTitle,
+                  hint: context.l10n.homeEmptyHint,
+                  icon: Icons.video_library_outlined,
+                  actionLabel: context.l10n.openServerTasks,
+                  actionIcon: Icons.manage_search,
+                  onAction: _openServerTasks,
+                ),
+                belowChipsSlivers: [
                   SliverToBoxAdapter(
                     child: SceneShelf(
                       title: context.l10n.continueWatching,
@@ -153,4 +189,28 @@ class _HomePageState extends ConsumerState<HomePage> {
       ),
     );
   }
+}
+
+/// Pushes [page] over [child] once it is shown.
+class _PushOnStart extends StatefulWidget {
+  const _PushOnStart({required this.page, required this.child});
+
+  final Widget page;
+  final Widget child;
+
+  @override
+  State<_PushOnStart> createState() => _PushOnStartState();
+}
+
+class _PushOnStartState extends State<_PushOnStart> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => widget.page));
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) => widget.child;
 }

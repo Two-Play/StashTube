@@ -290,6 +290,12 @@ abstract class AppLocalizations {
   /// **'Nothing here yet'**
   String get emptyDefault;
 
+  /// No description provided for @loading.
+  ///
+  /// In en, this message translates to:
+  /// **'Loading'**
+  String get loading;
+
   /// No description provided for @loadMoreFailed.
   ///
   /// In en, this message translates to:
@@ -451,6 +457,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'No scenes found'**
   String get scenesEmpty;
+
+  /// No description provided for @homeEmptyTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Your library is still empty'**
+  String get homeEmptyTitle;
+
+  /// No description provided for @homeEmptyHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Stash has to scan your media folders before scenes show up here. Start a scan in the server tasks.'**
+  String get homeEmptyHint;
+
+  /// No description provided for @openServerTasks.
+  ///
+  /// In en, this message translates to:
+  /// **'Open server tasks'**
+  String get openServerTasks;
 
   /// No description provided for @savedFilterUnsupported.
   ///
@@ -1112,18 +1136,6 @@ abstract class AppLocalizations {
   /// **'API key (optional)'**
   String get apiKeyOptional;
 
-  /// No description provided for @apiKeyHelper.
-  ///
-  /// In en, this message translates to:
-  /// **'For a server with a password: the API key (Stash → Settings → Security), or sign in below.'**
-  String get apiKeyHelper;
-
-  /// No description provided for @signInWithPassword.
-  ///
-  /// In en, this message translates to:
-  /// **'Sign in with username and password'**
-  String get signInWithPassword;
-
   /// No description provided for @signInWithPasswordHint.
   ///
   /// In en, this message translates to:
@@ -1147,6 +1159,48 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Enter username and password.'**
   String get loginIncomplete;
+
+  /// No description provided for @apiKeyRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter the API key.'**
+  String get apiKeyRequired;
+
+  /// No description provided for @loginAuthTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'This server needs a login'**
+  String get loginAuthTitle;
+
+  /// No description provided for @loginAuthIntro.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign in with an API key or with your Stash username and password.'**
+  String get loginAuthIntro;
+
+  /// No description provided for @loginMethodPassword.
+  ///
+  /// In en, this message translates to:
+  /// **'Username & password'**
+  String get loginMethodPassword;
+
+  /// No description provided for @apiKeyWhere.
+  ///
+  /// In en, this message translates to:
+  /// **'You find it in Stash under Settings → Security → API key.'**
+  String get apiKeyWhere;
+
+  /// No description provided for @signIn.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign in'**
+  String get signIn;
+
+  /// No description provided for @changeServerAddress.
+  ///
+  /// In en, this message translates to:
+  /// **'Change address'**
+  String get changeServerAddress;
 
   /// No description provided for @connect.
   ///
@@ -1297,6 +1351,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Play'**
   String get play;
+
+  /// No description provided for @previousScene.
+  ///
+  /// In en, this message translates to:
+  /// **'Previous scene'**
+  String get previousScene;
+
+  /// No description provided for @nextScene.
+  ///
+  /// In en, this message translates to:
+  /// **'Next scene'**
+  String get nextScene;
 
   /// No description provided for @navBarTitle.
   ///
@@ -1514,6 +1580,12 @@ abstract class AppLocalizations {
   /// **'Used when a scene offers it, otherwise the next lower one. Smaller videos play their original file. Also changes with HD in the player.'**
   String get preferredQualityHint;
 
+  /// No description provided for @qualitySummary.
+  ///
+  /// In en, this message translates to:
+  /// **'Quality: {quality}'**
+  String qualitySummary(String quality);
+
   /// No description provided for @sectionPrivacy.
   ///
   /// In en, this message translates to:
@@ -1549,6 +1621,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Ask for a PIN when opening the app'**
   String get appLockSubtitle;
+
+  /// No description provided for @appLockOnSummary.
+  ///
+  /// In en, this message translates to:
+  /// **'App lock on'**
+  String get appLockOnSummary;
+
+  /// No description provided for @appLockOffSummary.
+  ///
+  /// In en, this message translates to:
+  /// **'App lock off'**
+  String get appLockOffSummary;
 
   /// No description provided for @unlockBiometric.
   ///
@@ -1706,6 +1790,18 @@ abstract class AppLocalizations {
   /// **'Up next'**
   String get upNext;
 
+  /// No description provided for @queuePosition.
+  ///
+  /// In en, this message translates to:
+  /// **'{position} / {count}'**
+  String queuePosition(int position, int count);
+
+  /// No description provided for @queuePositionSemantics.
+  ///
+  /// In en, this message translates to:
+  /// **'Scene {position} of {count}'**
+  String queuePositionSemantics(int position, int count);
+
   /// No description provided for @addTags.
   ///
   /// In en, this message translates to:
@@ -1747,6 +1843,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'{count, plural, =1{Rate 1 star} other{Rate {count} stars}}'**
   String rateStars(int count);
+
+  /// No description provided for @ratingLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Rating'**
+  String get ratingLabel;
+
+  /// No description provided for @ratingValue.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =0{No rating} =1{1 of 5 stars} other{{count} of 5 stars}}'**
+  String ratingValue(int count);
 
   /// No description provided for @addO.
   ///
@@ -2150,6 +2258,18 @@ abstract class AppLocalizations {
   /// **'Could not reach the server: {detail}'**
   String errorUnreachable(String detail);
 
+  /// Banner at the top of the app while the server can't be reached.
+  ///
+  /// In en, this message translates to:
+  /// **'Server not reachable'**
+  String get connectionLostTitle;
+
+  /// No description provided for @connectionLostBody.
+  ///
+  /// In en, this message translates to:
+  /// **'{server} doesn\'t answer. Are you outside your home network?'**
+  String connectionLostBody(String server);
+
   /// No description provided for @errorUnauthorized.
   ///
   /// In en, this message translates to:
@@ -2378,6 +2498,12 @@ abstract class AppLocalizations {
   /// **'Video cards'**
   String get sectionSceneCards;
 
+  /// No description provided for @sectionPreviewsCards.
+  ///
+  /// In en, this message translates to:
+  /// **'Previews & cards'**
+  String get sectionPreviewsCards;
+
   /// No description provided for @cardChannel.
   ///
   /// In en, this message translates to:
@@ -2528,6 +2654,30 @@ abstract class AppLocalizations {
   /// **'Nothing matches \"{term}\"'**
   String searchNoResults(String term);
 
+  /// No description provided for @searchSubmitIn.
+  ///
+  /// In en, this message translates to:
+  /// **'{scope, select, images{Search images for \"{term}\"} galleries{Search galleries for \"{term}\"} performers{Search performers for \"{term}\"} studios{Search studios for \"{term}\"} other{Search scenes for \"{term}\"}}'**
+  String searchSubmitIn(String scope, String term);
+
+  /// No description provided for @searchOtherAreas.
+  ///
+  /// In en, this message translates to:
+  /// **'Search other areas'**
+  String get searchOtherAreas;
+
+  /// No description provided for @searchClearFilters.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear filters'**
+  String get searchClearFilters;
+
+  /// No description provided for @searchFiltersActiveHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Active filters may hide results.'**
+  String get searchFiltersActiveHint;
+
   /// No description provided for @pictureInPicture.
   ///
   /// In en, this message translates to:
@@ -2653,6 +2803,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Play previews in lists'**
   String get feedPreviews;
+
+  /// No description provided for @previewsOffSummary.
+  ///
+  /// In en, this message translates to:
+  /// **'Previews off'**
+  String get previewsOffSummary;
 
   /// No description provided for @feedPreviewsSubtitle.
   ///

@@ -11,6 +11,7 @@ import 'package:stash_app_mobile/features/player/video_controls.dart';
 import 'package:stash_app_mobile/features/player/video_zoom.dart';
 import 'package:stash_app_mobile/widgets/hold_detector.dart';
 
+import '../helpers.dart';
 import 'fake_player.dart';
 
 void main() {
@@ -22,6 +23,8 @@ void main() {
     fullscreenToggles = 0;
     await tester.pumpWidget(ProviderScope(
       overrides: [
+        // The queue buttons watch the (per-server) play queue.
+        ...testServer,
         playerProvider.overrideWithValue(player),
         scrubThumbnailsProvider('1').overrideWith((ref) async => null),
         authHeadersProvider.overrideWithValue(const {}),

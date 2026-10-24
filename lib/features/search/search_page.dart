@@ -5,12 +5,16 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../data/models/list_queries.dart';
 import '../../data/models/performer.dart';
+import '../../data/models/scene_filter.dart';
 import '../../data/models/studio.dart';
 import '../../data/providers.dart';
 import '../../widgets/chip_bar.dart';
 import '../../widgets/paged_sliver.dart';
 import '../../widgets/performer_tile.dart';
 import '../../widgets/scene_feed.dart';
+import '../../widgets/scene_filter_sheet.dart';
+import '../../widgets/stash_image.dart';
+import '../../widgets/status_views.dart';
 import '../library/galleries_tab.dart';
 import '../library/images_tab.dart';
 import '../shell/navigation.dart';
@@ -62,22 +66,61 @@ class SearchPage extends ConsumerStatefulWidget {
 
 class _SearchPageState extends ConsumerState<SearchPage> {
   final _controller = TextEditingController();
+  final _focus = FocusNode();
   Timer? _debounce;
   Timer? _record;
   String _term = '';
   late var _scope = widget.initialScope;
 
+  /// The scene filters; kept here (not in the result view) so the empty
+  /// results can offer to clear them (SEARCH-2).
+  SceneFilter _sceneFilter = const SceneFilter();
+
+  /// Whether the typeahead suggestions (SEARCH-1) are shown: from typing until
+  /// the term is submitted, a suggestion is picked or the field loses focus.
+  bool _suggest = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _focus.addListener(_onFocusChanged);
+  }
+
   @override
   void dispose() {
     _debounce?.cancel();
     _record?.cancel();
+    _focus.dispose();
     _controller.dispose();
     super.dispose();
   }
 
+  void _onFocusChanged() {
+    if (!_focus.hasFocus && _suggest) setState(() => _suggest = false);
+  }
+
   void _onChanged(String value) {
+    if (!_suggest) setState(() => _suggest = true);
     _debounce?.cancel();
     _debounce = Timer(const Duration(milliseconds: 400), () => _search(value));
+  }
+
+  void _submit(String value) {
+    _debounce?.cancel();
+    setState(() => _suggest = false);
+    _search(value, submitted: true);
+  }
+
+  /// Leaves the search for a suggested performer, tag or studio.
+  void _openSuggestion(void Function(WidgetRef ref, String id) open, String id) {
+    setState(() => _suggest = false);
+    _focus.unfocus();
+    open(ref, id);
+  }
+
+  Future<void> _openFilters() async {
+    final next = await showSceneFilterSheet(context, _sceneFilter);
+    if (next != null && mounted) setState(() => _sceneFilter = next);
   }
 
   /// Shows results for [value]. A term goes into the history once its results
@@ -113,13 +156,11 @@ class _SearchPageState extends ConsumerState<SearchPage> {
         titleSpacing: (ModalRoute.of(context)?.canPop ?? false) ? 0 : null,
         title: TextField(
           controller: _controller,
+          focusNode: _focus,
           autofocus: widget.autofocus,
           textInputAction: TextInputAction.search,
           onChanged: _onChanged,
-          onSubmitted: (v) {
-            _debounce?.cancel();
-            _search(v, submitted: true);
-          },
+          onSubmitted: _submit,
           decoration: InputDecoration(
             hintText: _scope.hint(context.l10n),
             border: InputBorder.none,
@@ -143,20 +184,99 @@ class _SearchPageState extends ConsumerState<SearchPage> {
             onSelected: (s) => setState(() => _scope = s),
           ),
         ),
+        actions: [
+          if (_scope == SearchScope.scenes && _term.isNotEmpty)
+            IconButton(
+              tooltip: context.l10n.filter,
+              onPressed: _openFilters,
+              icon: Badge(
+                isLabelVisible: _sceneFilter.activeCount > 0,
+                label: Text('${_sceneFilter.activeCount}'),
+                child: const Icon(Icons.tune),
+              ),
+            ),
+        ],
       ),
-      body: _term.isEmpty ? _Discover(onPick: _pick) : _results(context),
+      body: Stack(
+        children: [
+          Positioned.fill(
+            child: _term.isEmpty
+                ? _Discover(onPick: _pick)
+                // Scrolling the results closes the keyboard and the suggestions.
+                : NotificationListener<ScrollStartNotification>(
+                    onNotification: (n) {
+                      if (n.dragDetails != null) _focus.unfocus();
+                      return false;
+                    },
+                    child: _results(context),
+                  ),
+          ),
+          if (_suggest && _term.isNotEmpty)
+            Positioned(
+              left: 0,
+              right: 0,
+              top: 0,
+              child: _Suggestions(
+                term: _term,
+                scope: _scope,
+                controller: _controller,
+                onSubmit: () => _submit(_controller.text),
+                onPerformer: (id) => _openSuggestion(openPerformer, id),
+                onTag: (id) => _openSuggestion(openTag, id),
+                onStudio: (id) => _openSuggestion(openStudio, id),
+              ),
+            ),
+        ],
+      ),
     );
   }
 
+  /// Whether the results of [_term] in [_scope] are known to be empty. Looks
+  /// at the default-sorted list, which the result view shares unless the user
+  /// picked another sort (the count doesn't depend on the sort).
+  bool _resultsEmpty() {
+    bool empty<T>(AsyncValue<PagedState<T>> value) {
+      final state = value.current;
+      return state != null && state.items.isEmpty;
+    }
+
+    return switch (_scope) {
+      SearchScope.scenes => empty(ref.watch(sceneListProvider(SceneQuery(search: _term, filter: _sceneFilter)))),
+      SearchScope.images => empty(ref.watch(imageListProvider(ImageQuery(search: _term)))),
+      SearchScope.galleries => empty(ref.watch(galleryListProvider(GalleryQuery(search: _term)))),
+      SearchScope.performers => empty(ref.watch(performerListProvider(PerformerQuery(search: _term)))),
+      SearchScope.studios => empty(ref.watch(studioListProvider(StudioQuery(search: _term)))),
+    };
+  }
+
   /// The results for [_term] in [_scope]. Each view keeps its sort and
-  /// filters while the term changes.
+  /// filters while the term changes; with no results it stays mounted (so it
+  /// keeps them) behind a message with ways out (SEARCH-2).
   Widget _results(BuildContext context) {
+    final empty = _resultsEmpty();
+    return Stack(
+      children: [
+        Positioned.fill(child: Offstage(offstage: empty, child: _resultView(context))),
+        if (empty)
+          Positioned.fill(
+            child: _NoResults(
+              term: _term,
+              scope: _scope,
+              filtersActive: _scope == SearchScope.scenes && !_sceneFilter.isEmpty,
+              onClearFilters: () => setState(() => _sceneFilter = const SceneFilter()),
+              onScope: (s) => setState(() => _scope = s),
+            ),
+          ),
+      ],
+    );
+  }
+
+  Widget _resultView(BuildContext context) {
     final l = context.l10n;
     return switch (_scope) {
       SearchScope.scenes => SceneFeedView(
           layout: SceneFeedLayout.list,
-          initialQuery: SceneQuery(search: _term),
-          filterable: true,
+          initialQuery: SceneQuery(search: _term, filter: _sceneFilter),
           showCount: true,
           emptyMessage: l.searchNoScenes(_term),
           emptyIcon: Icons.search_off,
@@ -174,6 +294,163 @@ class _SearchPageState extends ConsumerState<SearchPage> {
       SearchScope.performers => _PerformerGrid(term: _term),
       SearchScope.studios => _StudioList(term: _term),
     };
+  }
+}
+
+/// Typeahead under the search field (SEARCH-1): a row that submits the term,
+/// then up to three matching performers, tags and studios. Shows only the
+/// lists for [term] (the debounced term), so results of older terms never
+/// appear; their providers are dropped as soon as the term changes.
+class _Suggestions extends ConsumerWidget {
+  const _Suggestions({
+    required this.term,
+    required this.scope,
+    required this.controller,
+    required this.onSubmit,
+    required this.onPerformer,
+    required this.onTag,
+    required this.onStudio,
+  });
+
+  final String term;
+  final SearchScope scope;
+  final TextEditingController controller;
+  final VoidCallback onSubmit;
+  final ValueChanged<String> onPerformer;
+  final ValueChanged<String> onTag;
+  final ValueChanged<String> onStudio;
+
+  static const _perKind = 3;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l = context.l10n;
+    final theme = Theme.of(context);
+    List<T> first<T>(AsyncValue<PagedState<T>> value) => (value.current?.items ?? <T>[]).take(_perKind).toList();
+    final performers = first(ref.watch(performerListProvider(PerformerQuery(search: term))));
+    final tags = first(ref.watch(tagListProvider(TagQuery(search: term))));
+    final studios = first(ref.watch(studioListProvider(StudioQuery(search: term))));
+
+    Widget header(String text) => Padding(
+          padding: const EdgeInsets.fromLTRB(16, 8, 16, 2),
+          child: Text(text, style: theme.textTheme.labelMedium?.copyWith(color: theme.colorScheme.onSurfaceVariant)),
+        );
+
+    // Taps here count as taps on the field, so it keeps its focus.
+    return TextFieldTapRegion(
+      child: Material(
+        color: theme.colorScheme.surfaceContainer,
+        elevation: 4,
+        child: ConstrainedBox(
+          constraints: BoxConstraints(maxHeight: MediaQuery.sizeOf(context).height * 0.5),
+          child: ListView(
+            shrinkWrap: true,
+            padding: const EdgeInsets.only(bottom: 8),
+            children: [
+              ValueListenableBuilder(
+                valueListenable: controller,
+                builder: (_, value, _) => ListTile(
+                  leading: const Icon(Icons.search),
+                  title: Text(l.searchSubmitIn(scope.name, value.text.trim())),
+                  onTap: onSubmit,
+                ),
+              ),
+              if (performers.isNotEmpty) ...[
+                header(l.performersTitle),
+                for (final p in performers)
+                  ListTile(
+                    dense: true,
+                    leading: ChannelAvatar(name: p.name, imageUrl: p.imageUrl),
+                    title: Text(p.name, maxLines: 1, overflow: TextOverflow.ellipsis),
+                    onTap: () => onPerformer(p.id),
+                  ),
+              ],
+              if (tags.isNotEmpty) ...[
+                header(l.tagsTitle),
+                for (final t in tags)
+                  ListTile(
+                    dense: true,
+                    leading: const SizedBox(width: 36, child: Icon(Icons.sell_outlined)),
+                    title: Text(t.name, maxLines: 1, overflow: TextOverflow.ellipsis),
+                    onTap: () => onTag(t.id),
+                  ),
+              ],
+              if (studios.isNotEmpty) ...[
+                header(l.studiosTitle),
+                for (final s in studios)
+                  ListTile(
+                    dense: true,
+                    leading: ChannelAvatar(name: s.name, imageUrl: s.imageUrl),
+                    title: Text(s.name, maxLines: 1, overflow: TextOverflow.ellipsis),
+                    onTap: () => onStudio(s.id),
+                  ),
+              ],
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// No results for [term] in [scope] (SEARCH-2): offers the other areas and,
+/// with active scene filters, to clear them.
+class _NoResults extends StatelessWidget {
+  const _NoResults({
+    required this.term,
+    required this.scope,
+    required this.filtersActive,
+    required this.onClearFilters,
+    required this.onScope,
+  });
+
+  final String term;
+  final SearchScope scope;
+  final bool filtersActive;
+  final VoidCallback onClearFilters;
+  final ValueChanged<SearchScope> onScope;
+
+  @override
+  Widget build(BuildContext context) {
+    final l = context.l10n;
+    final theme = Theme.of(context);
+    return ColoredBox(
+      color: theme.colorScheme.surface,
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.only(bottom: 24),
+        child: Column(
+          children: [
+            EmptyView(
+              message: scope == SearchScope.scenes ? l.searchNoScenes(term) : l.searchNoResults(term),
+              icon: Icons.search_off,
+              hint: filtersActive ? l.searchFiltersActiveHint : l.searchNoScenesHint,
+            ),
+            if (filtersActive) ...[
+              FilledButton.tonalIcon(
+                onPressed: onClearFilters,
+                icon: const Icon(Icons.filter_alt_off_outlined),
+                label: Text(l.searchClearFilters),
+              ),
+              const SizedBox(height: 24),
+            ],
+            Text(l.searchOtherAreas, style: theme.textTheme.titleSmall),
+            const SizedBox(height: 8),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Wrap(
+                alignment: WrapAlignment.center,
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  for (final s in SearchScope.values)
+                    if (s != scope) ActionChip(label: Text(s.label(l)), onPressed: () => onScope(s)),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }
 

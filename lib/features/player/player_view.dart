@@ -159,7 +159,7 @@ class _PlayerPanelState extends ConsumerState<PlayerPanel> {
                                     // Ink of the list tiles above the panel's color.
                                     child: Material(
                                       type: MaterialType.transparency,
-                                      child: _SceneDetails(scene: scene, topSpacer: t.extraVideoHeight),
+                                      child: PlayerDetails(scene: scene, topSpacer: t.extraVideoHeight),
                                     ),
                                   ),
                                 )
@@ -263,69 +263,73 @@ class _MiniInfo extends ConsumerWidget {
     final casting = ref.watch(isCastingProvider);
     final failed = !casting && ref.watch(playbackErrorProvider) != null;
 
-    return Row(
-      children: [
-        Expanded(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 12),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(scene.title, maxLines: 1, overflow: TextOverflow.ellipsis, style: theme.textTheme.bodyMedium),
-                Text(
-                  scene.studio?.name ?? scene.performers.firstOrNull?.name ?? '',
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurfaceVariant),
-                ),
-              ],
+    // The bar has a fixed height: two lines of text fit up to 1.3×.
+    return MediaQuery.withClampedTextScaling(
+      maxScaleFactor: 1.3,
+      child: Row(
+        children: [
+          Expanded(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 12),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(scene.title, maxLines: 1, overflow: TextOverflow.ellipsis, style: theme.textTheme.bodyMedium),
+                  Text(
+                    scene.studio?.name ?? scene.performers.firstOrNull?.name ?? '',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+                  ),
+                ],
+              ),
             ),
           ),
-        ),
-        if (failed)
-          // Playback failed: tapping tries again.
+          if (failed)
+            // Playback failed: tapping tries again.
+            IconButton(
+              tooltip: l.retry,
+              icon: Icon(Icons.error_outline, color: theme.colorScheme.error),
+              onPressed: () {
+                Haptics.light();
+                ref.read(playbackErrorProvider.notifier).retry();
+              },
+            )
+          else if (casting)
+            // Controls the cast device while casting.
+            Builder(builder: (_) {
+              final playing = ref.watch(castPlaybackProvider).value?.playing ?? false;
+              final cast = ref.watch(castServiceProvider);
+              return IconButton(
+                tooltip: playing ? l.pause : l.play,
+                icon: PlayPauseIcon(playing: playing),
+                onPressed: () {
+                  Haptics.light();
+                  playing ? cast.pause() : cast.play();
+                },
+              );
+            })
+          else
+            StreamBuilder<bool>(
+              stream: player.stream.playing,
+              initialData: player.state.playing,
+              builder: (_, snapshot) => IconButton(
+                tooltip: snapshot.data == true ? l.pause : l.play,
+                icon: PlayPauseIcon(playing: snapshot.data == true),
+                onPressed: () {
+                  Haptics.light();
+                  player.playOrPause();
+                },
+              ),
+            ),
           IconButton(
-            tooltip: l.retry,
-            icon: Icon(Icons.error_outline, color: theme.colorScheme.error),
-            onPressed: () {
-              Haptics.light();
-              ref.read(playbackErrorProvider.notifier).retry();
-            },
-          )
-        else if (casting)
-          // Controls the cast device while casting.
-          Builder(builder: (_) {
-            final playing = ref.watch(castPlaybackProvider).value?.playing ?? false;
-            final cast = ref.watch(castServiceProvider);
-            return IconButton(
-              tooltip: playing ? l.pause : l.play,
-              icon: PlayPauseIcon(playing: playing),
-              onPressed: () {
-                Haptics.light();
-                playing ? cast.pause() : cast.play();
-              },
-            );
-          })
-        else
-          StreamBuilder<bool>(
-            stream: player.stream.playing,
-            initialData: player.state.playing,
-            builder: (_, snapshot) => IconButton(
-              tooltip: snapshot.data == true ? l.pause : l.play,
-              icon: PlayPauseIcon(playing: snapshot.data == true),
-              onPressed: () {
-                Haptics.light();
-                player.playOrPause();
-              },
-            ),
+            tooltip: context.l10n.close,
+            icon: const Icon(Icons.close),
+            onPressed: () => ref.read(nowPlayingProvider.notifier).dismiss(),
           ),
-        IconButton(
-          tooltip: context.l10n.close,
-          icon: const Icon(Icons.close),
-          onPressed: () => ref.read(nowPlayingProvider.notifier).dismiss(),
-        ),
-      ],
+        ],
+      ),
     );
   }
 }
@@ -434,8 +438,8 @@ class _ProgressBar extends ConsumerWidget {
 
 /// Everything below the video: title, channel, performers, tags, description
 /// and "Up next".
-class _SceneDetails extends ConsumerWidget {
-  const _SceneDetails({required this.scene, this.topSpacer = 0});
+class PlayerDetails extends ConsumerWidget {
+  const PlayerDetails({super.key, required this.scene, this.topSpacer = 0});
 
   final Scene scene;
 
@@ -494,6 +498,7 @@ class _QueueDetails extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final l = context.l10n;
     return CustomScrollView(
       key: ValueKey(scene.id),
       physics: const ClampingScrollPhysics(),
@@ -509,11 +514,18 @@ class _QueueDetails extends StatelessWidget {
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
-                    '${queue.title} · ${queue.index + 1} / ${queue.scenes.length}',
+                    queue.title,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: theme.textTheme.titleMedium,
                   ),
+                ),
+                const SizedBox(width: 8),
+                // Where the queue stands: "3 / 12".
+                Text(
+                  l.queuePosition(queue.index + 1, queue.scenes.length),
+                  semanticsLabel: l.queuePositionSemantics(queue.index + 1, queue.scenes.length),
+                  style: theme.textTheme.titleSmall?.copyWith(color: theme.colorScheme.onSurfaceVariant),
                 ),
               ],
             ),
@@ -593,48 +605,33 @@ class _SceneInfoState extends ConsumerState<_SceneInfo> {
             onTap: () => openStudio(ref, studio.id),
           ),
         if (scene.performers.isNotEmpty)
-          SizedBox(
-            height: 48,
-            child: ListView.separated(
-              scrollDirection: Axis.horizontal,
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              itemCount: scene.performers.length,
-              separatorBuilder: (_, _) => const SizedBox(width: 8),
-              itemBuilder: (_, i) {
-                final p = scene.performers[i];
-                return ActionChip(
+          // Rows as tall as their chips, so large text isn't cut off.
+          _ChipRow(
+            spacing: 8,
+            children: [
+              for (final p in scene.performers)
+                ActionChip(
                   avatar: ChannelAvatar(name: p.name, imageUrl: p.imageUrl, radius: 12),
                   label: Text(p.name),
                   onPressed: () => openPerformer(ref, p.id),
-                );
-              },
-            ),
+                ),
+            ],
           ),
-        SizedBox(
-          height: 44,
-          child: ListView.separated(
-            scrollDirection: Axis.horizontal,
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            itemCount: tags.length + 1,
-            separatorBuilder: (_, _) => const SizedBox(width: 6),
-            itemBuilder: (_, i) {
-              if (i == tags.length) {
-                return ActionChip(
-                  avatar: Icon(tags.isEmpty ? Icons.add : Icons.edit_outlined, size: 16),
-                  label: Text(tags.isEmpty ? context.l10n.addTags : context.l10n.editTags),
-                  visualDensity: VisualDensity.compact,
-                  onPressed: () => showSceneTagEditor(context, scene, tags),
-                );
-              }
-              final tag = tags[i];
-              return ActionChip(
+        _ChipRow(
+          spacing: 6,
+          children: [
+            for (final tag in tags)
+              ActionChip(
                 label: Text('#${tag.name}'),
                 labelStyle: TextStyle(color: theme.colorScheme.primary),
-                visualDensity: VisualDensity.compact,
                 onPressed: () => openTag(ref, tag.id),
-              );
-            },
-          ),
+              ),
+            ActionChip(
+              avatar: Icon(tags.isEmpty ? Icons.add : Icons.edit_outlined, size: 16),
+              label: Text(tags.isEmpty ? context.l10n.addTags : context.l10n.editTags),
+              onPressed: () => showSceneTagEditor(context, scene, tags),
+            ),
+          ],
         ),
         if (details != null && details.markers.isNotEmpty) ChapterList(details: details),
         if (scene.details != null)
@@ -669,4 +666,27 @@ class _SceneInfoState extends ConsumerState<_SceneInfo> {
       ],
     );
   }
+}
+
+/// A horizontally scrolling row of chips that takes their height (which
+/// grows with the text size) instead of a fixed one.
+class _ChipRow extends StatelessWidget {
+  const _ChipRow({required this.spacing, required this.children});
+
+  final double spacing;
+  final List<Widget> children;
+
+  @override
+  Widget build(BuildContext context) => SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        child: Row(
+          children: [
+            for (final (i, child) in children.indexed) ...[
+              if (i > 0) SizedBox(width: spacing),
+              child,
+            ],
+          ],
+        ),
+      );
 }
