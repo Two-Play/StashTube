@@ -1568,4 +1568,157 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get castApiKeyHint =>
       'While casting, the cast device receives the stream address including your API key. Other devices on this Wi-Fi may be able to read it.';
+
+  @override
+  String get serverTasks => 'Server tasks';
+
+  @override
+  String get serverTasksSubtitle => 'Scan, generate, check previews';
+
+  @override
+  String get sectionPreviewCheck => 'Previews on the server';
+
+  @override
+  String get previewCheckAnimated => 'Animated previews (WebP)';
+
+  @override
+  String get previewCheckVideo => 'Video previews (MP4)';
+
+  @override
+  String get previewCheckMarkers => 'Marker previews (WebP)';
+
+  @override
+  String previewCheckFound(int found, int checked) {
+    return 'Found for $found of $checked random samples';
+  }
+
+  @override
+  String get previewCheckNothing => 'No scenes to check';
+
+  @override
+  String get previewCheckMissingHint =>
+      'Lists and markers play the animated previews, which Stash doesn\'t create by default. Generate them here, or switch the preview format to video in the settings.';
+
+  @override
+  String get generateAnimatedPreviews => 'Generate animated previews';
+
+  @override
+  String get checkAgain => 'Check again';
+
+  @override
+  String get sectionTasks => 'Tasks';
+
+  @override
+  String get taskScan => 'Scan library';
+
+  @override
+  String get taskScanSubtitle => 'Finds new and changed files';
+
+  @override
+  String get taskGenerate => 'Generate';
+
+  @override
+  String get taskGenerateSubtitle =>
+      'Previews, sprites, covers and more for files that lack them';
+
+  @override
+  String get taskAutoTag => 'Auto tag';
+
+  @override
+  String get taskAutoTagSubtitle =>
+      'Assigns performers, studios and tags named in file paths';
+
+  @override
+  String get taskClean => 'Clean';
+
+  @override
+  String get taskCleanSubtitle =>
+      'Removes entries of files that no longer exist';
+
+  @override
+  String get taskCleanConfirm =>
+      'Remove the entries of missing files from the library? Their ratings, play counts and markers are lost.';
+
+  @override
+  String get taskScanGenerates => 'Also create for new files';
+
+  @override
+  String get startTask => 'Start';
+
+  @override
+  String get taskStarted => 'Task started on the server';
+
+  @override
+  String get sectionJobs => 'Running tasks';
+
+  @override
+  String get noJobs => 'No tasks running';
+
+  @override
+  String get stopJob => 'Stop task';
+
+  @override
+  String get jobReady => 'Waiting';
+
+  @override
+  String get jobRunning => 'Running';
+
+  @override
+  String get jobFinished => 'Finished';
+
+  @override
+  String get jobStopping => 'Stopping';
+
+  @override
+  String get jobCancelled => 'Cancelled';
+
+  @override
+  String get jobFailed => 'Failed';
+
+  @override
+  String get optionRescan => 'Rescan unchanged files';
+
+  @override
+  String get optionCovers => 'Covers';
+
+  @override
+  String get optionPreviews => 'Video previews (MP4)';
+
+  @override
+  String get optionImagePreviews => 'Animated previews (WebP)';
+
+  @override
+  String get optionSprites => 'Seek bar thumbnails (sprites)';
+
+  @override
+  String get optionMarkers => 'Marker previews (MP4)';
+
+  @override
+  String get optionMarkerImagePreviews => 'Marker animated previews (WebP)';
+
+  @override
+  String get optionMarkerScreenshots => 'Marker screenshots';
+
+  @override
+  String get optionPhashes => 'Perceptual hashes (duplicates)';
+
+  @override
+  String get previewSource => 'Preview format';
+
+  @override
+  String get previewSourceAnimated => 'Animated image (WebP)';
+
+  @override
+  String get previewSourceVideo => 'Video (MP4)';
+
+  @override
+  String get previewSourceVideoHint =>
+      'Video previews play in a video player of their own: more data, battery and memory than WebP, and slower to start on older devices. Markers keep playing the WebP previews.';
+
+  @override
+  String get previewsOnServer => 'Check previews on the server';
+
+  @override
+  String get previewsOnServerSubtitle =>
+      'Whether Stash has created them, and generate missing ones';
 }

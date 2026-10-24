@@ -837,5 +837,63 @@
     }
   },
   "connectAnyway": "Connect anyway",
-  "castApiKeyHint": "While casting, the cast device receives the stream address including your API key. Other devices on this Wi-Fi may be able to read it."
+  "castApiKeyHint": "While casting, the cast device receives the stream address including your API key. Other devices on this Wi-Fi may be able to read it.",
+  "serverTasks": "Server tasks",
+  "serverTasksSubtitle": "Scan, generate, check previews",
+  "sectionPreviewCheck": "Previews on the server",
+  "previewCheckAnimated": "Animated previews (WebP)",
+  "previewCheckVideo": "Video previews (MP4)",
+  "previewCheckMarkers": "Marker previews (WebP)",
+  "previewCheckFound": "Found for {found} of {checked} random samples",
+  "@previewCheckFound": {
+    "placeholders": {
+      "found": {
+        "type": "int"
+      },
+      "checked": {
+        "type": "int"
+      }
+    }
+  },
+  "previewCheckNothing": "No scenes to check",
+  "previewCheckMissingHint": "Lists and markers play the animated previews, which Stash doesn't create by default. Generate them here, or switch the preview format to video in the settings.",
+  "generateAnimatedPreviews": "Generate animated previews",
+  "checkAgain": "Check again",
+  "sectionTasks": "Tasks",
+  "taskScan": "Scan library",
+  "taskScanSubtitle": "Finds new and changed files",
+  "taskGenerate": "Generate",
+  "taskGenerateSubtitle": "Previews, sprites, covers and more for files that lack them",
+  "taskAutoTag": "Auto tag",
+  "taskAutoTagSubtitle": "Assigns performers, studios and tags named in file paths",
+  "taskClean": "Clean",
+  "taskCleanSubtitle": "Removes entries of files that no longer exist",
+  "taskCleanConfirm": "Remove the entries of missing files from the library? Their ratings, play counts and markers are lost.",
+  "taskScanGenerates": "Also create for new files",
+  "startTask": "Start",
+  "taskStarted": "Task started on the server",
+  "sectionJobs": "Running tasks",
+  "noJobs": "No tasks running",
+  "stopJob": "Stop task",
+  "jobReady": "Waiting",
+  "jobRunning": "Running",
+  "jobFinished": "Finished",
+  "jobStopping": "Stopping",
+  "jobCancelled": "Cancelled",
+  "jobFailed": "Failed",
+  "optionRescan": "Rescan unchanged files",
+  "optionCovers": "Covers",
+  "optionPreviews": "Video previews (MP4)",
+  "optionImagePreviews": "Animated previews (WebP)",
+  "optionSprites": "Seek bar thumbnails (sprites)",
+  "optionMarkers": "Marker previews (MP4)",
+  "optionMarkerImagePreviews": "Marker animated previews (WebP)",
+  "optionMarkerScreenshots": "Marker screenshots",
+  "optionPhashes": "Perceptual hashes (duplicates)",
+  "previewSource": "Preview format",
+  "previewSourceAnimated": "Animated image (WebP)",
+  "previewSourceVideo": "Video (MP4)",
+  "previewSourceVideoHint": "Video previews play in a video player of their own: more data, battery and memory than WebP, and slower to start on older devices. Markers keep playing the WebP previews.",
+  "previewsOnServer": "Check previews on the server",
+  "previewsOnServerSubtitle": "Whether Stash has created them, and generate missing ones"
 }

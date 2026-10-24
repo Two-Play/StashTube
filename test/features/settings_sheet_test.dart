@@ -59,7 +59,12 @@ void main() {
     await tester.tap(find.byType(SettingsButton));
     await tester.pumpAndSettle();
 
-    await tester.ensureVisible(find.byIcon(Icons.space_dashboard_outlined));
+    // The list builds lazily.
+    await tester.scrollUntilVisible(
+      find.byIcon(Icons.space_dashboard_outlined),
+      200,
+      scrollable: find.descendant(of: find.byType(SettingsPage), matching: find.byType(Scrollable)).first,
+    );
     await tester.pumpAndSettle();
     await tester.tap(find.byIcon(Icons.space_dashboard_outlined));
     await tester.pumpAndSettle();
