@@ -127,3 +127,11 @@ extension GenerateOptionLabel on GenerateOption {
         GenerateOption.phashes => l.optionPhashes,
       };
 }
+
+extension ShortsMarkersLabel on ShortsMarkers {
+  String label(AppLocalizations l) => switch (this) {
+        ShortsMarkers.off => l.shortsMarkersOff,
+        ShortsMarkers.mixed => l.shortsMarkersMixed,
+        ShortsMarkers.only => l.shortsMarkersOnly,
+      };
+}

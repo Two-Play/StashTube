@@ -188,6 +188,14 @@ void main() {
     );
     expect(await repo.countMarkers(MarkerQuery(studioId: '1', includeSubStudios: true)), 5);
 
+    // The shorts' markers: those with one of the preferred tags.
+    final markers = (await repo.findMarkers(MarkerQuery())).items;
+    final tagId = markers.first.tag.id;
+    expect((await repo.findMarkers(MarkerQuery(tagIds: [tagId]))).items.map((m) => m.id), [
+      for (final m in markers)
+        if (m.tag.id == tagId) m.id,
+    ]);
+
     final performers = await repo.findPerformers(PerformerQuery(sort: PerformerSort.mostScenes));
     expect(performers.items.first.name, 'Big Buck Bunny');
     expect((await repo.findPerformers(PerformerQuery(sort: PerformerSort.favorites))).items, hasLength(1));

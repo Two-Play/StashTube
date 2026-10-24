@@ -515,8 +515,10 @@ class DemoLibrary {
       // Markers have the performers of their scene (as in Stash).
       final filter = args['scene_marker_filter'] as Map<String, dynamic>?;
       final ids = (args['ids'] as List?)?.map((id) => '$id').toSet();
+      final tagIds = ((filter?['tags'] as Map<String, dynamic>?)?['value'] as List?)?.cast<String>();
       final matching = _markers.where((m) {
         if (ids != null && !ids.contains(m.id)) return false;
+        if (tagIds != null && !tagIds.contains(m.tagId)) return false;
         if (filter == null) return true;
         final scene = _scene(m.sceneId);
         return scene != null &&

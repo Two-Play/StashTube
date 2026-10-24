@@ -1,5 +1,7 @@
 import 'dart:math';
 
+import 'package:flutter/foundation.dart' show listEquals;
+
 import 'scene_filter.dart';
 
 /// Sort orders offered for scene lists, mapped to Stash `FindFilterType.sort`.
@@ -429,8 +431,9 @@ class GalleryQuery {
   int get hashCode => Object.hash(sort, search, performerId, studioId, includeSubStudios, seed);
 }
 
-/// Arguments for the markers page (scene markers of all scenes), or a
-/// channel's markers tab (those of a performer's or studio's scenes).
+/// Arguments for the markers page (scene markers of all scenes), a
+/// channel's markers tab (those of a performer's or studio's scenes), and
+/// the markers in the shorts ([tagIds]).
 class MarkerQuery {
   MarkerQuery({
     this.sort = MarkerSort.recentlyAdded,
@@ -438,6 +441,7 @@ class MarkerQuery {
     this.performerId,
     this.studioId,
     this.includeSubStudios = false,
+    this.tagIds = const [],
     int? seed,
   }) : seed = seed ?? (sort == MarkerSort.random ? newRandomSeed() : 0);
 
@@ -453,17 +457,23 @@ class MarkerQuery {
   /// of its sub-studios.
   final String? studioId;
   final bool includeSubStudios;
+
+  /// Markers with at least one of these tags (as primary tag or one of
+  /// their other tags); all markers when empty.
+  final List<String> tagIds;
   final int seed;
 
   String get sortField => sort == MarkerSort.random ? 'random_$seed' : sort.field;
   String get direction => sort == MarkerSort.title ? 'ASC' : 'DESC';
 
-  /// Stash's `SceneMarkerFilterType`: markers have their scene's
-  /// performers; the studio goes through the scene (`scene_filter`).
+  /// Stash's `SceneMarkerFilterType`, or null without criteria: markers
+  /// have their scene's performers; the studio goes through the scene
+  /// (`scene_filter`).
   Map<String, dynamic>? toMarkerFilter() {
     final criteria = {
       ..._channelCriteria(performerId, null, false),
       if (studioId != null) 'scene_filter': _channelCriteria(null, studioId, includeSubStudios),
+      if (tagIds.isNotEmpty) 'tags': {'value': tagIds, 'modifier': 'INCLUDES', 'depth': 0},
     };
     return criteria.isEmpty ? null : criteria;
   }
@@ -475,6 +485,7 @@ class MarkerQuery {
         performerId: performerId,
         studioId: studioId,
         includeSubStudios: includeSubStudios,
+        tagIds: tagIds,
       );
 
   @override
@@ -485,8 +496,9 @@ class MarkerQuery {
       other.performerId == performerId &&
       other.studioId == studioId &&
       other.includeSubStudios == includeSubStudios &&
-      other.seed == seed;
+      other.seed == seed &&
+      listEquals(other.tagIds, tagIds);
 
   @override
-  int get hashCode => Object.hash(sort, search, performerId, studioId, includeSubStudios, seed);
+  int get hashCode => Object.hash(sort, search, performerId, studioId, includeSubStudios, seed, Object.hashAll(tagIds));
 }

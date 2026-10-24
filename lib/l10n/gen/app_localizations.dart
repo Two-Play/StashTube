@@ -2954,6 +2954,36 @@ abstract class AppLocalizations {
   /// **'Portrait videos only'**
   String get shortsPortraitOnly;
 
+  /// No description provided for @shortsMarkers.
+  ///
+  /// In en, this message translates to:
+  /// **'Markers'**
+  String get shortsMarkers;
+
+  /// No description provided for @shortsMarkersHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Plays scene markers as clips from the original video, looping until the marker ends. With tags, only markers with one of them. Length and orientation don\'t apply.'**
+  String get shortsMarkersHint;
+
+  /// No description provided for @shortsMarkersOff.
+  ///
+  /// In en, this message translates to:
+  /// **'Off'**
+  String get shortsMarkersOff;
+
+  /// No description provided for @shortsMarkersMixed.
+  ///
+  /// In en, this message translates to:
+  /// **'With videos'**
+  String get shortsMarkersMixed;
+
+  /// No description provided for @shortsMarkersOnly.
+  ///
+  /// In en, this message translates to:
+  /// **'Only markers'**
+  String get shortsMarkersOnly;
+
   /// No description provided for @shortsEmpty.
   ///
   /// In en, this message translates to:

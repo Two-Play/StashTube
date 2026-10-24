@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:stash_app_mobile/core/config/server_config.dart';
 import 'package:stash_app_mobile/data/models/list_queries.dart';
+import 'package:stash_app_mobile/data/models/marker.dart';
 import 'package:stash_app_mobile/data/models/page_result.dart';
 import 'package:stash_app_mobile/data/models/scene.dart';
 import 'package:stash_app_mobile/data/models/scene_filter.dart';
@@ -10,6 +11,7 @@ import 'package:stash_app_mobile/data/models/tag.dart';
 import 'package:stash_app_mobile/data/repositories/stash_repository.dart';
 import 'package:stash_app_mobile/features/shell/nav_bar_config.dart';
 import 'package:stash_app_mobile/features/shell/navigation.dart';
+import 'package:stash_app_mobile/features/shorts/short.dart';
 import 'package:stash_app_mobile/features/shorts/shorts_feed.dart';
 import 'package:stash_app_mobile/features/shorts/shorts_settings.dart';
 
@@ -19,13 +21,27 @@ Scene _scene(String id) => Scene(id: id, title: id, streamUrl: 'http://s/$id');
 
 List<Scene> _scenes(String prefix, int count) => [for (var i = 0; i < count; i++) _scene('$prefix$i')];
 
-/// Tagged scenes are `t<n>`, all others `o<n>`; pages of [perPage].
+List<Short> _shorts(String prefix, int count) => [for (final s in _scenes(prefix, count)) Short.video(s)];
+
+Marker _marker(String id, {double seconds = 30, double? end, double duration = 600}) => Marker(
+  id: id,
+  title: 'Marker $id',
+  seconds: seconds,
+  endSeconds: end,
+  tag: const Tag(id: '1', name: 'Beach'),
+  scene: Scene(id: 's$id', title: 'Scene $id', streamUrl: 'http://s/s$id', duration: duration),
+);
+
+/// Tagged scenes are `t<n>`, all others `o<n>`, markers `marker:m<n>`;
+/// pages of [perPage].
 class _ShortsRepository implements StashRepository {
-  _ShortsRepository({this.tagged = 10, this.others = 10});
+  _ShortsRepository({this.tagged = 10, this.others = 10, this.markers = 0});
 
   final int tagged;
   final int others;
+  final int markers;
   final queries = <SceneQuery>[];
+  final markerQueries = <MarkerQuery>[];
   final pages = <int>[];
   bool failNext = false;
 
@@ -43,17 +59,26 @@ class _ShortsRepository implements StashRepository {
   }
 
   @override
+  Future<PageResult<Marker>> findMarkers(MarkerQuery query, {int page = 1, int perPage = 24}) async {
+    markerQueries.add(query);
+    final all = [for (var i = 0; i < markers; i++) _marker('m$i')];
+    return PageResult(items: all.skip((page - 1) * perPage).take(perPage).toList(), totalCount: all.length);
+  }
+
+  @override
   dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
 }
 
 Future<ProviderContainer> _container(_ShortsRepository repo, [ShortsSettings? settings]) async {
   SharedPreferences.setMockInitialValues({});
   final prefs = await SharedPreferences.getInstance();
-  final c = ProviderContainer(overrides: [
-    ...testServer,
-    sharedPreferencesProvider.overrideWithValue(prefs),
-    stashRepositoryProvider.overrideWithValue(repo),
-  ]);
+  final c = ProviderContainer(
+    overrides: [
+      ...testServer,
+      sharedPreferencesProvider.overrideWithValue(prefs),
+      stashRepositoryProvider.overrideWithValue(repo),
+    ],
+  );
   addTearDown(c.dispose);
   if (settings != null) await c.read(shortsSettingsProvider.notifier).set(settings);
   return c;
@@ -73,33 +98,37 @@ void main() {
   group('ShortsMixer', () {
     test('shows three tagged videos, then one other', () {
       final mixer = ShortsMixer(hasPreferred: true, hasOthers: true)
-        ..addPreferred(_scenes('t', 6))
-        ..addOthers(_scenes('o', 6));
-      expect(mixer.take(8).map((s) => s.id), ['t0', 't1', 't2', 'o0', 't3', 't4', 't5', 'o1']);
+        ..addPreferred(_shorts('t', 6))
+        ..addOthers(_shorts('o', 6));
+      expect(mixer.take(8).map((s) => s.key), ['t0', 't1', 't2', 'o0', 't3', 't4', 't5', 'o1']);
     });
 
     test('skips videos that were already shown', () {
       final mixer = ShortsMixer(hasPreferred: true, hasOthers: true)
-        ..addPreferred([_scene('a'), _scene('b'), _scene('c')])
-        ..addOthers([_scene('a'), _scene('d')]);
-      expect(mixer.take(4).map((s) => s.id), ['a', 'b', 'c', 'd']);
+        ..addPreferred([
+          for (final id in ['a', 'b', 'c']) Short.video(_scene(id)),
+        ])
+        ..addOthers([
+          for (final id in ['a', 'd']) Short.video(_scene(id)),
+        ]);
+      expect(mixer.take(4).map((s) => s.key), ['a', 'b', 'c', 'd']);
     });
 
     test('waits for the next page of the source whose turn it is', () {
       final mixer = ShortsMixer(hasPreferred: true, hasOthers: true)
-        ..addPreferred(_scenes('t', 1))
-        ..addOthers(_scenes('o', 5));
-      expect(mixer.take(5).map((s) => s.id), ['t0']);
+        ..addPreferred(_shorts('t', 1))
+        ..addOthers(_shorts('o', 5));
+      expect(mixer.take(5).map((s) => s.key), ['t0']);
       expect(mixer.needsPreferred, isTrue);
     });
 
     test('continues with the other source when one runs out', () {
       final mixer = ShortsMixer(hasPreferred: true, hasOthers: true)
-        ..addPreferred(_scenes('t', 1))
-        ..addOthers(_scenes('o', 3))
+        ..addPreferred(_shorts('t', 1))
+        ..addOthers(_shorts('o', 3))
         ..preferredDone = true
         ..othersDone = true;
-      expect(mixer.take(10).map((s) => s.id), ['t0', 'o0', 'o1', 'o2']);
+      expect(mixer.take(10).map((s) => s.key), ['t0', 'o0', 'o1', 'o2']);
       expect(mixer.isExhausted, isTrue);
     });
   });
@@ -132,7 +161,9 @@ void main() {
       final prefs = c.read(sharedPreferencesProvider);
       expect(prefs.getString('shorts_settings:test-server'), isNotNull);
 
-      final reloaded = ProviderContainer(overrides: [...testServer, sharedPreferencesProvider.overrideWithValue(prefs)]);
+      final reloaded = ProviderContainer(
+        overrides: [...testServer, sharedPreferencesProvider.overrideWithValue(prefs)],
+      );
       addTearDown(reloaded.dispose);
       final settings = reloaded.read(shortsSettingsProvider);
       expect(settings.tags.single.name, 'Beach');
@@ -142,7 +173,78 @@ void main() {
     });
 
     test('unreadable values fall back to the defaults', () {
-      expect(ShortsSettings.fromJson({'length': 'forever', 'tags': 'x'}), const ShortsSettings());
+      expect(ShortsSettings.fromJson({'length': 'forever', 'tags': 'x', 'markers': 'some'}), const ShortsSettings());
+    });
+
+    test('keep the marker choice', () {
+      const settings = ShortsSettings(markers: ShortsMarkers.only);
+      expect(ShortsSettings.fromJson(settings.toJson()), settings);
+      expect(settings, isNot(const ShortsSettings()));
+    });
+  });
+
+  group('markers in the shorts', () {
+    test('a marker plays from its start to its end, by default 20 s', () {
+      final short = Short.marker(_marker('1', seconds: 30));
+      expect(short.key, 'marker:1', reason: 'apart from its scene as a short video');
+      expect(short.start, const Duration(seconds: 30));
+      expect(short.end, const Duration(seconds: 50));
+      expect(short.duration, 20);
+      expect(Short.marker(_marker('2', seconds: 30, end: 42)).end, const Duration(seconds: 42));
+      expect(Short.marker(_marker('3', seconds: 590)).end, const Duration(seconds: 600), reason: 'not past the scene');
+      expect(Short.video(_scene('a')).start, isNull);
+    });
+
+    test('marker queries filter by any of the tags', () {
+      expect(MarkerQuery().toMarkerFilter(), isNull);
+      expect(MarkerQuery(tagIds: ['1', '2']).toMarkerFilter(), {
+        'tags': {
+          'value': ['1', '2'],
+          'modifier': 'INCLUDES',
+          'depth': 0,
+        },
+      });
+      expect(MarkerQuery(tagIds: ['1'], seed: 3), MarkerQuery(tagIds: ['1'], seed: 3));
+      expect(MarkerQuery(tagIds: ['1'], seed: 3), isNot(MarkerQuery(tagIds: ['2'], seed: 3)));
+    });
+
+    test('off by default: no markers are loaded', () async {
+      final repo = _ShortsRepository(markers: 5);
+      final c = await _container(repo);
+      await _loaded(c);
+      expect(repo.markerQueries, isEmpty);
+    });
+
+    test('"only markers" shows random markers with the chosen tags', () async {
+      final repo = _ShortsRepository(markers: 3);
+      final c = await _container(repo, const ShortsSettings(tags: [beach], markers: ShortsMarkers.only));
+      final feed = await _loaded(c);
+      expect(feed.items.map((s) => s.key), ['marker:m0', 'marker:m1', 'marker:m2']);
+      expect(feed.hasMore, isFalse);
+      expect(repo.queries, isEmpty, reason: 'no whole videos');
+      final query = repo.markerQueries.single;
+      expect(query.sort, MarkerSort.random);
+      expect(query.tagIds, ['1']);
+    });
+
+    test('"with videos" takes turns, then continues with what is left', () async {
+      final c = await _container(
+        _ShortsRepository(others: 4, markers: 2),
+        const ShortsSettings(markers: ShortsMarkers.mixed),
+      );
+      expect((await _loaded(c)).items.map((s) => s.key), ['o0', 'marker:m0', 'o1', 'marker:m1', 'o2', 'o3']);
+    });
+
+    test('performer shorts leave the markers out', () async {
+      final repo = _ShortsRepository(others: 2, markers: 2);
+      final c = await _container(repo, const ShortsSettings(markers: ShortsMarkers.only));
+      final provider = shortsFeedFamily(const ShortsSource.performer('7'));
+      c.listen(provider, (_, _) {});
+      for (var i = 0; i < 20 && c.read(provider).isLoading; i++) {
+        await Future<void>.delayed(Duration.zero);
+      }
+      expect(c.read(provider).items.map((s) => s.key), ['o0', 'o1']);
+      expect(repo.markerQueries, isEmpty);
     });
   });
 
@@ -151,7 +253,7 @@ void main() {
       final repo = _ShortsRepository();
       final c = await _container(repo);
       final feed = await _loaded(c);
-      expect(feed.items.map((s) => s.id), _scenes('o', 10).map((s) => s.id));
+      expect(feed.items.map((s) => s.key), _scenes('o', 10).map((s) => s.id));
       expect(feed.hasMore, isFalse);
       final query = repo.queries.single;
       expect(query.sort, SceneSort.random);
@@ -161,7 +263,7 @@ void main() {
 
     test('mixes the chosen tags in more often', () async {
       final c = await _container(_ShortsRepository(tagged: 6, others: 4), const ShortsSettings(tags: [beach]));
-      final ids = (await _loaded(c)).items.map((s) => s.id).toList();
+      final ids = (await _loaded(c)).items.map((s) => s.key).toList();
       expect(ids.take(4), ['t0', 't1', 't2', 'o0']);
       expect(ids, hasLength(10));
     });
@@ -169,7 +271,7 @@ void main() {
     test('with "only these tags" leaves the others out', () async {
       final repo = _ShortsRepository(tagged: 3);
       final c = await _container(repo, const ShortsSettings(tags: [beach], onlyTags: true));
-      expect((await _loaded(c)).items.map((s) => s.id), ['t0', 't1', 't2']);
+      expect((await _loaded(c)).items.map((s) => s.key), ['t0', 't1', 't2']);
       expect(repo.queries.every((q) => q.filter.tags.isNotEmpty), isTrue);
     });
 
