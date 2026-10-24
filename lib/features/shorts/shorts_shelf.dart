@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../core/config/theme.dart';
 
 import '../../core/utils/format.dart';
 import '../../data/models/scene.dart';
@@ -153,7 +154,7 @@ class _ShortTile extends StatelessWidget {
   // 9:16 (sized by the row); the screenshot is cropped to fill it.
   Widget build(BuildContext context) => SizedBox.expand(
     child: ClipRRect(
-      borderRadius: BorderRadius.circular(8),
+      borderRadius: AppRadius.thumbnailBorder,
       child: Material(
         color: Colors.black,
         child: TileSemantics(
@@ -165,12 +166,12 @@ class _ShortTile extends StatelessWidget {
                 fit: StackFit.expand,
                 children: [
                   StashImage(scene.screenshotUrl, fallbackIcon: Icons.slow_motion_video),
-                  const DecoratedBox(
+                  DecoratedBox(
                     decoration: BoxDecoration(
                       gradient: LinearGradient(
                         begin: Alignment.bottomCenter,
                         end: Alignment.center,
-                        colors: [Colors.black87, Colors.transparent],
+                        colors: [AppColors.of(context).videoScrim, Colors.transparent],
                       ),
                     ),
                   ),
@@ -186,12 +187,16 @@ class _ShortTile extends StatelessWidget {
                           scene.title,
                           maxLines: 2,
                           overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w600),
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: AppTextSize.overlayLabel,
+                            fontWeight: FontWeight.w600,
+                          ),
                         ),
                         if (scene.duration > 0)
                           Text(
                             formatDuration(scene.duration),
-                            style: const TextStyle(color: Colors.white70, fontSize: 11),
+                            style: const TextStyle(color: Colors.white70, fontSize: AppTextSize.overlayCaption),
                           ),
                       ],
                     ),

@@ -424,15 +424,10 @@ class _NoResults extends StatelessWidget {
               message: scope == SearchScope.scenes ? l.searchNoScenes(term) : l.searchNoResults(term),
               icon: Icons.search_off,
               hint: filtersActive ? l.searchFiltersActiveHint : l.searchNoScenesHint,
+              actionLabel: filtersActive ? l.searchClearFilters : null,
+              actionIcon: Icons.filter_alt_off_outlined,
+              onAction: filtersActive ? onClearFilters : null,
             ),
-            if (filtersActive) ...[
-              FilledButton.tonalIcon(
-                onPressed: onClearFilters,
-                icon: const Icon(Icons.filter_alt_off_outlined),
-                label: Text(l.searchClearFilters),
-              ),
-              const SizedBox(height: 24),
-            ],
             Text(l.searchOtherAreas, style: theme.textTheme.titleSmall),
             const SizedBox(height: 8),
             Padding(
@@ -635,7 +630,7 @@ class _Discover extends ConsumerWidget {
           SliverPadding(
             padding: const EdgeInsets.symmetric(horizontal: 12),
             sliver: SliverGrid(
-              gridDelegate: tagGridDelegate,
+              gridDelegate: tagGridDelegate(context),
               delegate: SliverChildBuilderDelegate(
                 (_, i) => TagTile(tag: tags[i]),
                 childCount: tags.length.clamp(0, _shown),

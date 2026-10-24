@@ -39,6 +39,85 @@ class SettingsSubPage extends StatelessWidget {
   );
 }
 
+/// A setting picked from a menu: the menu sits at the end of the tile, or
+/// under the title when it would take more than half the row, e.g. with
+/// large text (A11Y-3), where it would squeeze the title out.
+class SettingsDropdownTile<T> extends StatelessWidget {
+  const SettingsDropdownTile({
+    super.key,
+    required this.leading,
+    required this.title,
+    required this.dropdown,
+    this.subtitle,
+    this.enabled = true,
+    this.isThreeLine = false,
+  });
+
+  final Widget leading;
+  final Widget title;
+  final Widget? subtitle;
+  final DropdownButton<T> dropdown;
+  final bool enabled;
+  final bool isThreeLine;
+
+  /// From this text scale on the menu always moves under the title.
+  static const largeTextScale = 1.3;
+
+  /// The menu's width from its widest text label, or null if an item isn't
+  /// plain text.
+  double? _menuWidth(BuildContext context) {
+    final style = dropdown.style ?? Theme.of(context).textTheme.titleMedium;
+    var widest = 0.0;
+    for (final item in dropdown.items ?? <DropdownMenuItem<T>>[]) {
+      final child = item.child;
+      if (child is! Text || child.data == null) return null;
+      final painter = TextPainter(
+        text: TextSpan(text: child.data, style: style),
+        textDirection: Directionality.of(context),
+        textScaler: MediaQuery.textScalerOf(context),
+      )..layout();
+      if (painter.width > widest) widest = painter.width;
+      painter.dispose();
+    }
+    return widest + dropdown.iconSize + 8;
+  }
+
+  @override
+  Widget build(BuildContext context) => LayoutBuilder(builder: (context, constraints) {
+        final scale = MediaQuery.textScalerOf(context).scale(10) / 10;
+        final menuWidth = _menuWidth(context);
+        final below = scale >= largeTextScale || (menuWidth != null && menuWidth > constraints.maxWidth / 2);
+        if (!below) {
+          return ListTile(
+            leading: leading,
+            title: title,
+            subtitle: subtitle,
+            enabled: enabled,
+            isThreeLine: isThreeLine,
+            trailing: dropdown,
+          );
+        }
+        return ListTile(
+          leading: leading,
+          title: title,
+          enabled: enabled,
+          subtitle: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              ?subtitle,
+              DropdownButton<T>(
+                value: dropdown.value,
+                items: dropdown.items,
+                onChanged: dropdown.onChanged,
+                underline: dropdown.underline,
+                isExpanded: true,
+              ),
+            ],
+          ),
+        );
+      });
+}
+
 /// Inside the settings sheet.
 void openServerTasks(BuildContext context) =>
     Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => const ServerTasksPage()));
@@ -150,10 +229,10 @@ class AppearanceSettingsPage extends ConsumerWidget {
           // Inside the settings sheet.
           onTap: () => Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => const NavBarSettingsPage())),
         ),
-        ListTile(
+        SettingsDropdownTile(
           leading: const Icon(Icons.translate),
           title: Text(l.language),
-          trailing: DropdownButton<String>(
+          dropdown: DropdownButton<String>(
             value: locale?.languageCode ?? '',
             underline: const SizedBox.shrink(),
             items: [
@@ -166,10 +245,10 @@ class AppearanceSettingsPage extends ConsumerWidget {
                 ref.read(appLocaleProvider.notifier).set(code == null || code.isEmpty ? null : Locale(code)),
           ),
         ),
-        ListTile(
+        SettingsDropdownTile(
           leading: const Icon(Icons.view_agenda_outlined),
           title: Text(l.listPaging),
-          trailing: DropdownButton<PagingMode>(
+          dropdown: DropdownButton<PagingMode>(
             value: ref.watch(pagingModeProvider),
             underline: const SizedBox.shrink(),
             items: [
@@ -181,10 +260,10 @@ class AppearanceSettingsPage extends ConsumerWidget {
             },
           ),
         ),
-        ListTile(
+        SettingsDropdownTile(
           leading: const Icon(Icons.vibration),
           title: Text(l.haptics),
-          trailing: DropdownButton<HapticLevel>(
+          dropdown: DropdownButton<HapticLevel>(
             value: ref.watch(hapticLevelProvider),
             underline: const SizedBox.shrink(),
             items: [
@@ -236,11 +315,11 @@ class PreviewSettingsPage extends ConsumerWidget {
           value: previewsOn,
           onChanged: withHaptic((v) => ref.read(feedPreviewsProvider.notifier).set(v)),
         ),
-        ListTile(
+        SettingsDropdownTile(
           leading: const Icon(Icons.movie_filter_outlined),
           title: Text(l.previewSource),
           enabled: previewsOn,
-          trailing: DropdownButton<PreviewSource>(
+          dropdown: DropdownButton<PreviewSource>(
             value: ref.watch(previewSourceProvider),
             underline: const SizedBox.shrink(),
             items: [
@@ -260,11 +339,11 @@ class PreviewSettingsPage extends ConsumerWidget {
             leading: Icon(Icons.info_outline, color: theme.colorScheme.tertiary),
             subtitle: Text(l.previewSourceVideoHint),
           ),
-        ListTile(
+        SettingsDropdownTile(
           leading: const Icon(Icons.timer_outlined),
           title: Text(l.feedPreviewDelay),
           enabled: previewsOn,
-          trailing: DropdownButton<Duration>(
+          dropdown: DropdownButton<Duration>(
             value: ref.watch(feedPreviewDelayProvider),
             underline: const SizedBox.shrink(),
             items: [
@@ -299,10 +378,10 @@ class PreviewSettingsPage extends ConsumerWidget {
           onTap: () => openServerTasks(context),
         ),
         SettingsSectionTitle(l.sectionSceneCards),
-        ListTile(
+        SettingsDropdownTile(
           leading: const Icon(Icons.account_circle_outlined),
           title: Text(l.cardChannel),
-          trailing: DropdownButton<CardChannel>(
+          dropdown: DropdownButton<CardChannel>(
             value: cardConfig.channel,
             underline: const SizedBox.shrink(),
             items: [
@@ -422,12 +501,12 @@ class _QualityTile extends ConsumerWidget {
       if (height != null && !_heights.contains(height)) height,
       ..._heights,
     ];
-    return ListTile(
+    return SettingsDropdownTile(
       leading: const Icon(Icons.high_quality_outlined),
       title: Text(l.preferredQuality),
       subtitle: Text(l.preferredQualityHint),
       isThreeLine: true,
-      trailing: DropdownButton<int>(
+      dropdown: DropdownButton<int>(
         // 0 = the original file.
         value: height ?? 0,
         underline: const SizedBox.shrink(),
@@ -490,10 +569,10 @@ class _SecuritySettings extends ConsumerWidget {
                 await notifier.setBiometrics(on);
               }),
             ),
-          ListTile(
+          SettingsDropdownTile(
             leading: const Icon(Icons.timer_outlined),
             title: Text(l.lockNow),
-            trailing: DropdownButton<Duration>(
+            dropdown: DropdownButton<Duration>(
               value: delays.containsKey(settings.lockAfter) ? settings.lockAfter : Duration.zero,
               underline: const SizedBox.shrink(),
               items: [

@@ -1,4 +1,3 @@
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -17,7 +16,6 @@ import '../shorts/shorts_shelf.dart';
 import '../../l10n/l10n.dart';
 import '../server_tasks/server_tasks_page.dart';
 import '../settings/settings_button.dart';
-import '../settings/settings_page.dart';
 
 /// YouTube-style home: logo app bar, sticky filter chips, shelves and an
 /// endless scene feed.
@@ -51,25 +49,6 @@ class _HomePageState extends ConsumerState<HomePage> {
     ref.invalidate(sceneListProvider(_continueWatching));
     ref.invalidate(sceneListProvider(_fromFavorites));
     ref.invalidate(savedSceneFiltersProvider);
-  }
-
-  /// The settings sheet with the server tasks on top, as if picked there:
-  /// back leads to the settings, the X or a swipe down closes it.
-  Future<void> _openServerTasks() async {
-    final open = ref.read(settingsOpenProvider.notifier);
-    open.set(true);
-    try {
-      await showCupertinoSheet<void>(
-        context: context,
-        useNestedNavigation: true,
-        scrollableBuilder: (_, controller) => _PushOnStart(
-          page: const ServerTasksPage(),
-          child: SettingsPage(scrollController: controller),
-        ),
-      );
-    } finally {
-      open.set(false);
-    }
   }
 
   @override
@@ -109,7 +88,7 @@ class _HomePageState extends ConsumerState<HomePage> {
                   icon: Icons.video_library_outlined,
                   actionLabel: context.l10n.openServerTasks,
                   actionIcon: Icons.manage_search,
-                  onAction: _openServerTasks,
+                  onAction: () => openSettings(context, ref, initialPage: const ServerTasksPage()),
                 ),
                 belowChipsSlivers: [
                   SliverToBoxAdapter(
@@ -189,28 +168,4 @@ class _HomePageState extends ConsumerState<HomePage> {
       ),
     );
   }
-}
-
-/// Pushes [page] over [child] once it is shown.
-class _PushOnStart extends StatefulWidget {
-  const _PushOnStart({required this.page, required this.child});
-
-  final Widget page;
-  final Widget child;
-
-  @override
-  State<_PushOnStart> createState() => _PushOnStartState();
-}
-
-class _PushOnStartState extends State<_PushOnStart> {
-  @override
-  void initState() {
-    super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => widget.page));
-    });
-  }
-
-  @override
-  Widget build(BuildContext context) => widget.child;
 }

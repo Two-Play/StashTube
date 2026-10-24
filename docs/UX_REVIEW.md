@@ -166,16 +166,16 @@ Alle Quick Wins sind auf `feature/ux-review` umgesetzt (Phase 2, Schritt 1).
 | ID | Änderung | Status |
 |---|---|---|
 | HOME-1 | Shorts als horizontale Reihe, sticky Sortier-/Filter-Chips | ✅ |
-| HOME-2 | Skeleton-Komponenten für Karten, Tiles, Regale, Up next | ✅ (Up next noch Spinner) |
+| HOME-2 | Skeleton-Komponenten für Karten, Tiles, Regale, Up next | ✅ |
 | HOME-3 | Geführter Leerzustand für neue Server | ✅ |
-| WATCH-4 / A11Y-3 | Feste Höhen entfernen, Trefferflächen ≥ 48 dp, Textskalierungs-Tests | ✅ Player; Tests für weitere Seiten offen |
+| WATCH-4 / A11Y-3 | Feste Höhen entfernen, Trefferflächen ≥ 48 dp, Textskalierungs-Tests | ✅ (`text_scale_test.dart`: Home, Suche, Bibliothek, Performer, Einstellungen, Login bei 1,0/1,5/2,0×; nur Englisch) |
 | A11Y-2 | Bewertung als ein zugängliches Element | ✅ |
 | CTRL-4 | Queue-Navigation in den Controls | ✅ (Sperrbildschirm nur „weiter“) |
 | SEARCH-1/2 | Typeahead, Auswege bei leeren Treffern | ✅ (Filter-Button der Suche in der App-Bar) |
 | SET-1 | Einstellungen in Kategorien | ✅ |
 | ONB-1 | Zweistufiger Login | ✅ |
-| STATE-1 | Globales Verbindungsbanner | ✅ (Listen behalten alten Inhalt noch nicht) |
-| DS-1 / DS-2 | Komponentenregeln und Tokens | offen |
+| STATE-1 | Globales Verbindungsbanner; Listen behalten bei Netzwerkfehlern ihren Inhalt | ✅ |
+| DS-1 / DS-2 | Komponentenregeln und Tokens | ✅ (`design_tokens.dart`, `AppColors`, zentrale Komponenten-Themes) |
 
 ### Major Refactors
 

@@ -444,18 +444,18 @@ class _TopBar extends StatelessWidget {
       );
     }
     return DecoratedBox(
-      decoration: const BoxDecoration(
+      decoration: BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
-          colors: [Colors.black54, Colors.transparent],
+          colors: [AppColors.of(context).videoScrimSoft, Colors.transparent],
         ),
       ),
       child: SafeArea(
         bottom: false,
         child: Row(
           children: [
-            if (Navigator.of(context).canPop()) const BackButton(color: Colors.white) else const SizedBox(width: 16),
+            if (Navigator.of(context).canPop()) const BackButton(color: Colors.white) else const SizedBox(width: AppSpacing.l),
             Expanded(
               child: title == null
                   ? const SizedBox.shrink()
@@ -663,7 +663,7 @@ class _ShortViewState extends ConsumerState<_ShortView> {
             child: Center(child: _Pill(child: Text(l.fastForward2x, style: const TextStyle(color: Colors.white)))),
           ),
         if (!widget.fullscreen) ...[
-          const Positioned(
+          Positioned(
             left: 0,
             right: 0,
             bottom: 0,
@@ -674,16 +674,16 @@ class _ShortViewState extends ConsumerState<_ShortView> {
                   gradient: LinearGradient(
                     begin: Alignment.bottomCenter,
                     end: Alignment.topCenter,
-                    colors: [Colors.black87, Colors.transparent],
+                    colors: [AppColors.of(context).videoScrim, Colors.transparent],
                   ),
                 ),
               ),
             ),
           ),
           Positioned(
-            left: 16,
+            left: AppSpacing.l,
             right: 88,
-            bottom: bottom + 32,
+            bottom: bottom + AppSpacing.xxl,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisSize: MainAxisSize.min,
@@ -706,7 +706,7 @@ class _ShortViewState extends ConsumerState<_ShortView> {
                   scene.title,
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(color: Colors.white, fontSize: 15, shadows: _shadow),
+                  style: const TextStyle(color: Colors.white, fontSize: AppTextSize.overlayTitle, shadows: _shadow),
                 ),
                 if (tags.isNotEmpty) ...[
                   const SizedBox(height: 4),
@@ -723,7 +723,7 @@ class _ShortViewState extends ConsumerState<_ShortView> {
                     l.playsCount(scene.playCount),
                     if (scene.duration > 0) formatDuration(scene.duration),
                   ].join(' • '),
-                  style: const TextStyle(color: Colors.white70, fontSize: 12, shadows: _shadow),
+                  style: const TextStyle(color: Colors.white70, fontSize: AppTextSize.overlayLabel, shadows: _shadow),
                 ),
               ],
             ),
@@ -796,8 +796,8 @@ class _ShortViewState extends ConsumerState<_ShortView> {
         ],
         if (controller != null)
           Positioned(
-            left: 8,
-            right: 8,
+            left: AppSpacing.s,
+            right: AppSpacing.s,
             bottom: bottom,
             // The player's seek bar: sprite thumbnails and marker dots, loaded
             // once touched. In fullscreen it hides after a few seconds; a tap
@@ -890,7 +890,6 @@ class _StarPicker extends StatelessWidget {
           children: [
             for (var i = 1; i <= 5; i++)
               IconButton(
-                visualDensity: VisualDensity.compact,
                 tooltip: i == stars ? l.removeRating : l.rateStars(i),
                 icon: Icon(
                   i <= stars ? Icons.star_rounded : Icons.star_outline_rounded,
@@ -912,7 +911,7 @@ class _Pill extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => DecoratedBox(
-        decoration: BoxDecoration(color: Colors.black54, borderRadius: BorderRadius.circular(24)),
+        decoration: BoxDecoration(color: AppColors.of(context).videoScrimSoft, borderRadius: AppRadius.pillBorder),
         child: Padding(padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4), child: child),
       );
 }
@@ -962,7 +961,12 @@ class _Action extends StatelessWidget {
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               textAlign: TextAlign.center,
-              style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w600, shadows: _shadow),
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: AppTextSize.overlayLabel,
+                fontWeight: FontWeight.w600,
+                shadows: _shadow,
+              ),
             ),
           ],
         ),

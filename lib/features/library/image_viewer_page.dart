@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../core/config/theme.dart';
 
 import '../../core/utils/format.dart';
 import '../../data/models/image_item.dart';
@@ -178,14 +179,16 @@ class _Overlay extends ConsumerWidget {
       if (image?.date != null) formatDate(image!.date!),
     ].join(' • ');
 
+    final scrim = AppColors.of(context).videoScrim;
+
     return Column(
       children: [
         DecoratedBox(
-          decoration: const BoxDecoration(
+          decoration: BoxDecoration(
             gradient: LinearGradient(
               begin: Alignment.topCenter,
               end: Alignment.bottomCenter,
-              colors: [Colors.black87, Colors.transparent],
+              colors: [scrim, Colors.transparent],
             ),
           ),
           child: SafeArea(
@@ -206,17 +209,17 @@ class _Overlay extends ConsumerWidget {
         const Spacer(),
         if (image != null)
           DecoratedBox(
-            decoration: const BoxDecoration(
+            decoration: BoxDecoration(
               gradient: LinearGradient(
                 begin: Alignment.bottomCenter,
                 end: Alignment.topCenter,
-                colors: [Colors.black87, Colors.transparent],
+                colors: [scrim, Colors.transparent],
               ),
             ),
             child: SafeArea(
               top: false,
               child: Padding(
-                padding: const EdgeInsets.fromLTRB(16, 24, 16, 16),
+                padding: const EdgeInsets.fromLTRB(AppSpacing.l, AppSpacing.xl, AppSpacing.l, AppSpacing.l),
                 child: SizedBox(
                   width: double.infinity,
                   child: Column(
@@ -227,13 +230,17 @@ class _Overlay extends ConsumerWidget {
                         image.title,
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w600),
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: AppTextSize.overlayTitle,
+                          fontWeight: FontWeight.w600,
+                        ),
                       ),
                       Text(meta, style: const TextStyle(color: Colors.white70)),
-                      const SizedBox(height: 12),
+                      const SizedBox(height: AppSpacing.m),
                       Wrap(
-                        spacing: 8,
-                        runSpacing: 8,
+                        spacing: AppSpacing.s,
+                        runSpacing: AppSpacing.s,
                         children: [
                           if (image.performers.isEmpty) _PerformerChip(name: l.unknownPerformer),
                           for (final performer in image.performers)
@@ -277,12 +284,12 @@ class _PerformerChip extends StatelessWidget {
     child: InkWell(
       onTap: onTap,
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(4, 4, 12, 4),
+        padding: const EdgeInsets.fromLTRB(AppSpacing.xs, AppSpacing.xs, AppSpacing.m, AppSpacing.xs),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
             ChannelAvatar(name: onTap == null ? '?' : name, imageUrl: imageUrl, radius: 14),
-            const SizedBox(width: 8),
+            const SizedBox(width: AppSpacing.s),
             Text(name, style: TextStyle(color: onTap == null ? Colors.white70 : Colors.white)),
           ],
         ),

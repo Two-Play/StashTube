@@ -1,18 +1,24 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:stash_app_mobile/core/config/server_config.dart';
+import 'package:stash_app_mobile/data/models/list_queries.dart';
+import 'package:stash_app_mobile/data/models/page_result.dart';
 import 'package:stash_app_mobile/data/models/performer.dart';
 import 'package:stash_app_mobile/data/models/scene.dart';
 import 'package:stash_app_mobile/data/models/scene_details.dart';
 import 'package:stash_app_mobile/data/models/studio.dart';
 import 'package:stash_app_mobile/data/models/tag.dart';
 import 'package:stash_app_mobile/data/providers.dart';
+import 'package:stash_app_mobile/data/repositories/stash_repository.dart';
 import 'package:stash_app_mobile/data/repositories/stash_session.dart';
 import 'package:stash_app_mobile/features/player/player_providers.dart';
 import 'package:stash_app_mobile/features/player/player_view.dart';
 import 'package:stash_app_mobile/l10n/gen/app_localizations.dart';
+import 'package:stash_app_mobile/widgets/skeleton.dart';
 
 import '../../helpers.dart';
 import '../fake_player.dart';
@@ -31,6 +37,16 @@ const _scene = Scene(
   ],
   tags: [Tag(id: '1', name: 'outdoor'), Tag(id: '2', name: 'summer'), Tag(id: '3', name: 'beach')],
 );
+
+/// "Up next" that never finishes loading.
+class _LoadingRepository implements StashRepository {
+  @override
+  Future<PageResult<Scene>> findScenes(SceneQuery query, {int page = 1, int perPage = 24}) =>
+      Completer<PageResult<Scene>>().future;
+
+  @override
+  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
+}
 
 const _details = SceneDetails(
   markers: [
@@ -116,5 +132,25 @@ void main() {
     final button = find.ancestor(of: star, matching: find.byType(IconButton));
     expect(tester.getSize(button).height, greaterThanOrEqualTo(48));
     expect(tester.getSize(button).width, greaterThanOrEqualTo(48));
+  });
+
+  testWidgets('"Up next" loads with placeholders instead of a spinner (HOME-2)', (tester) async {
+    container.dispose();
+    SharedPreferences.setMockInitialValues({});
+    final prefs = await SharedPreferences.getInstance();
+    container = ProviderContainer(overrides: [
+      ...testServer,
+      sharedPreferencesProvider.overrideWithValue(prefs),
+      playerProvider.overrideWithValue(FakePlayer()),
+      authHeadersProvider.overrideWithValue(const {}),
+      sceneDetailsProvider('s1').overrideWith((ref) async => _details),
+      stashRepositoryProvider.overrideWithValue(_LoadingRepository()),
+    ]);
+    await pumpDetails(tester);
+    await tester.drag(find.byType(Scrollable).first, const Offset(0, -2000));
+    await tester.pump();
+    expect(find.text('More from Some Studio'), findsOneWidget);
+    expect(find.byType(ListTileSkeleton), findsWidgets);
+    expect(find.byType(CircularProgressIndicator), findsNothing);
   });
 }

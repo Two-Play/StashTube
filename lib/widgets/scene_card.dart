@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../core/config/haptics.dart';
+import '../core/config/theme.dart';
 import '../core/utils/format.dart';
 import '../data/models/scene.dart';
 import '../features/edit/edit_common.dart';
@@ -131,13 +132,13 @@ class SceneCard extends ConsumerWidget {
       child: InkWell(
         onTap: () => ref.read(nowPlayingProvider.notifier).play(scene),
         child: Padding(
-          padding: const EdgeInsets.only(bottom: 16),
+          padding: const EdgeInsets.only(bottom: AppSpacing.l),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               ExcludeSemantics(child: SceneThumbnail(scene: scene)),
               Padding(
-                padding: const EdgeInsets.fromLTRB(12, 12, 0, 0),
+                padding: const EdgeInsets.fromLTRB(AppSpacing.m, AppSpacing.m, 0, 0),
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -154,7 +155,7 @@ class SceneCard extends ConsumerWidget {
                         child: ChannelAvatar(name: channel.name, imageUrl: channel.imageUrl),
                       ),
                     ),
-                    const SizedBox(width: 12),
+                    const SizedBox(width: AppSpacing.m),
                     Expanded(
                       child: ExcludeSemantics(
                         child: Column(
@@ -164,7 +165,7 @@ class SceneCard extends ConsumerWidget {
                               scene.title,
                               maxLines: 2,
                               overflow: TextOverflow.ellipsis,
-                              style: theme.textTheme.titleSmall?.copyWith(fontSize: 15),
+                              style: theme.textTheme.titleMedium,
                             ),
                             const SizedBox(height: 4),
                             Text(
@@ -220,11 +221,11 @@ class SceneListTile extends ConsumerWidget {
                       SizedBox(
                         width: 168,
                         child: ClipRRect(
-                          borderRadius: BorderRadius.circular(8),
+                          borderRadius: AppRadius.thumbnailBorder,
                           child: SceneThumbnail(scene: scene, compact: true),
                         ),
                       ),
-                      const SizedBox(width: 12),
+                      const SizedBox(width: AppSpacing.m),
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -279,7 +280,7 @@ class SceneGridTile extends ConsumerWidget {
     return TileSemantics(
       label: sceneSemanticsLabel(context, ref, scene),
       child: InkWell(
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: AppRadius.thumbnailBorder,
         onTap: () => ref.read(nowPlayingProvider.notifier).play(scene),
         // A shortcut for the ⋮ next to the title.
         onLongPress: () {
@@ -291,7 +292,7 @@ class SceneGridTile extends ConsumerWidget {
           children: [
             ExcludeSemantics(
               child: ClipRRect(
-                borderRadius: BorderRadius.circular(8),
+                borderRadius: AppRadius.thumbnailBorder,
                 child: SceneThumbnail(scene: scene, compact: true),
               ),
             ),
@@ -358,11 +359,12 @@ class SceneThumbnail extends ConsumerWidget {
             videoUrl: scene.previewUrl,
             child: StashImage(scene.screenshotUrl, fallbackIcon: Icons.movie_outlined),
           ),
-          if (resolution != null && !compact) Positioned(left: 8, bottom: 8, child: _Badge(text: resolution)),
+          if (resolution != null && !compact)
+            Positioned(left: AppSpacing.s, bottom: AppSpacing.s, child: _Badge(text: resolution)),
           if (scene.duration > 0)
             Positioned(
-              right: compact ? 4 : 8,
-              bottom: (compact ? 4 : 8) + (progress > 0 ? 3 : 0),
+              right: compact ? AppSpacing.xs : AppSpacing.s,
+              bottom: (compact ? AppSpacing.xs : AppSpacing.s) + (progress > 0 ? 3 : 0),
               child: _Badge(text: formatDuration(scene.duration)),
             ),
           // "Continue watching" progress, like YouTube's red bar.
@@ -390,21 +392,23 @@ class _Badge extends StatelessWidget {
   final String text;
 
   @override
-  Widget build(BuildContext context) => Container(
-    padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
-    decoration: BoxDecoration(color: Colors.black.withValues(alpha: 0.8), borderRadius: BorderRadius.circular(4)),
-    child: Text(
-      text,
-      style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w500),
-    ),
-  );
+  Widget build(BuildContext context) {
+    final colors = AppColors.of(context);
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xs, vertical: 1),
+      decoration: BoxDecoration(color: colors.badgeBackground, borderRadius: AppRadius.badgeBorder),
+      child: Text(
+        text,
+        style: TextStyle(color: colors.onBadge, fontSize: AppTextSize.overlayLabel, fontWeight: FontWeight.w500),
+      ),
+    );
+  }
 }
 
 /// Bottom sheet with actions for a scene: play and go to its channels.
 void showSceneMenu(BuildContext context, WidgetRef ref, Scene scene) => showModalBottomSheet<void>(
   context: context,
   useRootNavigator: true,
-  showDragHandle: true,
   builder: (sheetContext) {
     void go(VoidCallback action) {
       Navigator.pop(sheetContext);
