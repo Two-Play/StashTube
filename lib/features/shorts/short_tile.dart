@@ -24,7 +24,8 @@ class ShortTile extends StatelessWidget {
       ].join(', ');
 
   @override
-  // Sized by its parent (9:16); the still is cropped to fill it.
+  // Sized by its parent (9:16); the still fills it when that crops little,
+  // else it shows whole on black (a landscape scene).
   Widget build(BuildContext context) {
     final colors = AppColors.of(context);
     return SizedBox.expand(
@@ -40,9 +41,16 @@ class ShortTile extends StatelessWidget {
                 child: Stack(
                   fit: StackFit.expand,
                   children: [
-                    StashImage(
-                      short.marker?.screenshotUrl ?? short.scene.screenshotUrl,
-                      fallbackIcon: short.isMarker ? Icons.bookmark_outline : Icons.slow_motion_video,
+                    // Cropped only as far as the video page would crop it.
+                    LayoutBuilder(
+                      builder: (context, box) => StashImage(
+                        short.marker?.screenshotUrl ?? short.scene.screenshotUrl,
+                        fit: Short.fitFor(
+                          short.aspect,
+                          box.maxHeight > 0 && box.maxHeight.isFinite ? box.maxWidth / box.maxHeight : 9 / 16,
+                        ),
+                        fallbackIcon: short.isMarker ? Icons.bookmark_outline : Icons.slow_motion_video,
+                      ),
                     ),
                     DecoratedBox(
                       decoration: BoxDecoration(

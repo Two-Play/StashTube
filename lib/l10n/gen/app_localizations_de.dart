@@ -1842,6 +1842,19 @@ class AppLocalizationsDe extends AppLocalizations {
   String get shortsOnlyTagsHint => 'Videos ohne einen der Tags weglassen';
 
   @override
+  String get shortsModeShorts => 'Shorts';
+
+  @override
+  String get shortsModeLoops => 'Loops';
+
+  @override
+  String get shortsModeSemantics => 'Shorts oder Loops';
+
+  @override
+  String get shortsLoopsHint =>
+      'Loops spielen Szenenmarker, jeder für sich in Schleife; die Tags und „Nur Hochkant“ gelten für sie, die Länge nicht.';
+
+  @override
   String get shortsMaxLength => 'Maximale Länge';
 
   @override
@@ -1859,22 +1872,6 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get shortsPortraitOnly => 'Nur Hochkant-Videos';
-
-  @override
-  String get shortsContent => 'Inhalt';
-
-  @override
-  String get shortsContentHint =>
-      'Marker spielen die markierte Stelle einer Szene als Short.';
-
-  @override
-  String get shortsContentVideos => 'Nur Videos';
-
-  @override
-  String get shortsContentMixed => 'Videos & Marker';
-
-  @override
-  String get shortsContentMarkers => 'Nur Marker';
 
   @override
   String shortMarkerSemantics(String title) {
@@ -2215,10 +2212,10 @@ class AppLocalizationsDe extends AppLocalizations {
   String get markersEmptyHint => 'Markiere eine Stelle im Player mit „Marker“.';
 
   @override
-  String get markersPlayAsShorts => 'Als Shorts abspielen';
+  String get markersPlayAsShorts => 'Als Loops abspielen';
 
   @override
-  String get markerPlayAsShort => 'Als Short abspielen';
+  String get markerPlayAsShort => 'Als Loop abspielen';
 
   @override
   String get markerMoreOptions => 'Marker-Optionen';

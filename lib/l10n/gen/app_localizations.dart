@@ -2972,6 +2972,30 @@ abstract class AppLocalizations {
   /// **'Leave out videos without any of the tags'**
   String get shortsOnlyTagsHint;
 
+  /// No description provided for @shortsModeShorts.
+  ///
+  /// In en, this message translates to:
+  /// **'Shorts'**
+  String get shortsModeShorts;
+
+  /// No description provided for @shortsModeLoops.
+  ///
+  /// In en, this message translates to:
+  /// **'Loops'**
+  String get shortsModeLoops;
+
+  /// No description provided for @shortsModeSemantics.
+  ///
+  /// In en, this message translates to:
+  /// **'Shorts or loops'**
+  String get shortsModeSemantics;
+
+  /// No description provided for @shortsLoopsHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Loops play scene markers, each one repeating on its own; the tags and \"portrait only\" apply to them, the length doesn\'t.'**
+  String get shortsLoopsHint;
+
   /// No description provided for @shortsMaxLength.
   ///
   /// In en, this message translates to:
@@ -3007,36 +3031,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Portrait videos only'**
   String get shortsPortraitOnly;
-
-  /// No description provided for @shortsContent.
-  ///
-  /// In en, this message translates to:
-  /// **'Content'**
-  String get shortsContent;
-
-  /// No description provided for @shortsContentHint.
-  ///
-  /// In en, this message translates to:
-  /// **'Markers play the marked part of a scene as a short.'**
-  String get shortsContentHint;
-
-  /// No description provided for @shortsContentVideos.
-  ///
-  /// In en, this message translates to:
-  /// **'Videos only'**
-  String get shortsContentVideos;
-
-  /// No description provided for @shortsContentMixed.
-  ///
-  /// In en, this message translates to:
-  /// **'Videos & markers'**
-  String get shortsContentMixed;
-
-  /// No description provided for @shortsContentMarkers.
-  ///
-  /// In en, this message translates to:
-  /// **'Markers only'**
-  String get shortsContentMarkers;
 
   /// No description provided for @shortMarkerSemantics.
   ///
@@ -3629,13 +3623,13 @@ abstract class AppLocalizations {
   /// No description provided for @markersPlayAsShorts.
   ///
   /// In en, this message translates to:
-  /// **'Play as shorts'**
+  /// **'Play as loops'**
   String get markersPlayAsShorts;
 
   /// No description provided for @markerPlayAsShort.
   ///
   /// In en, this message translates to:
-  /// **'Play as short'**
+  /// **'Play as loop'**
   String get markerPlayAsShort;
 
   /// No description provided for @markerMoreOptions.

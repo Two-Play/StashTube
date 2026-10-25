@@ -41,7 +41,7 @@ class _MarkersTabState extends State<MarkersTab> with AutomaticKeepAliveClientMi
 
 /// Markers as a grid of [MarkerTile]s with sort chips, paging and
 /// pull-to-refresh: the library's markers and a channel's markers tab.
-/// "Play as shorts" (and a tile's "Play as short") plays exactly these
+/// "Play as loops" (and a tile's "Play as loop") plays exactly these
 /// markers, in this order, in [ShortsPage].
 class MarkerGridView extends ConsumerStatefulWidget {
   const MarkerGridView({super.key, required this.initialQuery, this.headerSlivers = const []});

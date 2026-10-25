@@ -264,7 +264,7 @@ void main() {
       return page;
     }
 
-    await tester.tap(find.text('Play as shorts'));
+    await tester.tap(find.text('Play as loops'));
     var page = pushed();
     expect(page.source, ShortsSource.markers(grid), reason: 'the grid\'s markers, filter and sort');
     expect(page.initialIndex, 0);
@@ -275,7 +275,7 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('Play'), findsOneWidget);
     observer.routes.clear();
-    await tester.tap(find.text('Play as short'));
+    await tester.tap(find.text('Play as loop'));
     page = pushed();
     expect(page.source, ShortsSource.markers(grid));
     expect(page.initialIndex, 2);

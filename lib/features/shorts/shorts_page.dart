@@ -26,6 +26,7 @@ import '../security/app_lock.dart';
 import '../shell/navigation.dart';
 import 'short.dart';
 import 'shorts_feed.dart';
+import 'shorts_settings.dart';
 import 'shorts_settings_sheet.dart';
 
 /// True while the shorts are on screen; the shell then hides the miniplayer.
@@ -88,7 +89,14 @@ class ShortsPage extends ConsumerStatefulWidget {
 class _ShortsPageState extends ConsumerState<ShortsPage> {
   static const _poolSize = 3;
 
-  late final _feed = shortsFeedFamily(widget.source);
+  /// The feed playing: the tab's follows the shorts/loops switch
+  /// ([shortsModeProvider]); switching swaps it in place.
+  late ShortsSource _source = _sourceFor(ref.read(shortsModeProvider));
+
+  ShortsSource _sourceFor(ShortsMode mode) =>
+      widget.source.isFeed && mode == ShortsMode.loops ? const ShortsSource.loops() : widget.source;
+
+  NotifierProvider<ShortsFeedNotifier, ShortsFeedState> get _feed => shortsFeedFamily(_source);
 
   /// The tab this page lives in; it stays mounted (IndexedStack) while
   /// another tab is shown. Found through the tab's navigator, because a tab
@@ -138,7 +146,6 @@ class _ShortsPageState extends ConsumerState<ShortsPage> {
   bool _handedToPlayer = false;
 
   StreamSubscription<Duration>? _positionSub;
-  StreamSubscription<Duration>? _windowSub;
   String? _watchedShort;
   final _counted = <String>{};
 
@@ -165,7 +172,6 @@ class _ShortsPageState extends ConsumerState<ShortsPage> {
     _miniplayerHeight.removeListener(_onMiniplayerHeight);
     _lifecycle.dispose();
     _positionSub?.cancel();
-    _windowSub?.cancel();
     _pageController.dispose();
     for (final player in _players ?? const <Player>[]) {
       player.dispose();
@@ -210,10 +216,10 @@ class _ShortsPageState extends ConsumerState<ShortsPage> {
       reassigned = true;
       final player = players[slot];
       unawaited(player.setVolume(_muted ? 0 : 100));
-      _setLoop(player, short);
       player
           .open(
-            Media(short.scene.streamUrl!, httpHeaders: ref.read(authHeadersProvider), start: short.start),
+            // A marker opens only its clip (Short.playbackUrl), from 0.
+            Media(short.playbackUrl!, httpHeaders: ref.read(authHeadersProvider)),
             play: false,
           )
           .then((_) {
@@ -225,16 +231,6 @@ class _ShortsPageState extends ConsumerState<ShortsPage> {
     if (reassigned) setState(() {});
     if (_index < items.length) _watchPosition(items[_index]);
     _applyPlayback();
-  }
-
-  /// A marker loops between its start and end (mpv's A-B loop, kept across
-  /// files, so a whole video clears it); a whole video loops as a file.
-  static void _setLoop(Player player, Short short) {
-    final platform = player.platform;
-    if (platform is! NativePlayer) return;
-    String point(Duration? at) => at == null ? 'no' : (at.inMilliseconds / 1000).toStringAsFixed(3);
-    unawaited(platform.setProperty('ab-loop-a', point(short.start)));
-    unawaited(platform.setProperty('ab-loop-b', point(short.end)));
   }
 
   /// Plays the current short if it may play; pauses all others.
@@ -261,30 +257,10 @@ class _ShortsPageState extends ConsumerState<ShortsPage> {
     });
     // Start the short from the beginning when coming back to it.
     final slot = _slot(index);
-    if (_slotReady[slot]) _players?[slot].seek(items[index].start ?? Duration.zero);
+    if (_slotReady[slot]) _players?[slot].seek(Duration.zero);
     _sync(items);
     final feed = ref.read(_feed);
     if (index >= feed.items.length - 5) ref.read(_feed.notifier).loadMore();
-  }
-
-  /// Keeps the current marker short inside its clip: the seek bar can't
-  /// leave it and the A-B loop holds, but mpv may still end up outside.
-  void _guardWindow(Short short, Player player, int slot) {
-    _windowSub?.cancel();
-    _windowSub = null;
-    if (!short.isMarker) return;
-    var seeking = false;
-    _windowSub = player.stream.position.listen((position) {
-      // Not before the file is open: until then mpv reports 0.
-      if (!_slotReady[slot] || _slotShort[slot] != short.key) return;
-      final target = short.correctionFor(position);
-      if (target == null) {
-        seeking = false;
-      } else if (!seeking) {
-        seeking = true;
-        unawaited(player.seek(target));
-      }
-    });
   }
 
   /// Counts a play of its scene once the short was watched halfway (at
@@ -292,14 +268,12 @@ class _ShortsPageState extends ConsumerState<ShortsPage> {
   void _watchPosition(Short short) {
     if (_watchedShort == short.key) return;
     _watchedShort = short.key;
-    final current = _players?[_slot(_index)];
-    if (current != null) _guardWindow(short, current, _slot(_index));
     _positionSub?.cancel();
     final scene = short.scene;
     final player = _players?[_slot(_index)];
     if (player == null || _counted.contains(scene.id)) return;
-    final start = short.start ?? Duration.zero;
-    final threshold = start + Duration(milliseconds: (short.duration * 500).round().clamp(1000, 15000));
+    // Positions run from 0 for a marker's clip too (Short.playbackUrl).
+    final threshold = Duration(milliseconds: (short.duration * 500).round().clamp(1000, 15000));
     _positionSub = player.stream.position.listen((position) {
       if (position < threshold || !_counted.add(scene.id)) return;
       _positionSub?.cancel();
@@ -351,8 +325,22 @@ class _ShortsPageState extends ConsumerState<ShortsPage> {
     if (_pageController.hasClients) _pageController.jumpToPage(0);
   }
 
+  /// Switches between shorts and loops: the pool's players open the new
+  /// feed's first shorts.
+  void _onModeChanged(ShortsMode mode) {
+    final source = _sourceFor(mode);
+    if (source == _source) return;
+    _positionSub?.cancel();
+    setState(() {
+      _source = source;
+      _paused = false;
+      _resetFeed();
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
+    if (widget.source.isFeed) ref.listen(shortsModeProvider, (_, mode) => _onModeChanged(mode));
     final nowPlaying = ref.watch(nowPlayingProvider);
     final mainCovers = nowPlaying != null && (_mainExpanded || _handedToPlayer);
     final tab = _tabOf(context);
@@ -439,6 +427,11 @@ class _ShortsPageState extends ConsumerState<ShortsPage> {
                   ),
                 _TopBar(
                   title: widget.source.title,
+                  mode: widget.source.isFeed ? ref.watch(shortsModeProvider) : null,
+                  onMode: (mode) {
+                    Haptics.selection();
+                    ref.read(shortsModeProvider.notifier).set(mode);
+                  },
                   fullscreen: _fullscreen,
                   onToggleFullscreen: _toggleFullscreen,
                   muted: _muted,
@@ -459,6 +452,8 @@ class _ShortsPageState extends ConsumerState<ShortsPage> {
 class _TopBar extends StatelessWidget {
   const _TopBar({
     this.title,
+    this.mode,
+    this.onMode,
     required this.fullscreen,
     required this.onToggleFullscreen,
     required this.muted,
@@ -472,6 +467,11 @@ class _TopBar extends StatelessWidget {
 
   /// E.g. the performer whose shorts these are.
   final String? title;
+
+  /// The shorts tab's shorts/loops switch, in place of a title; null
+  /// elsewhere (a channel's shorts, a markers grid's loops).
+  final ShortsMode? mode;
+  final ValueChanged<ShortsMode>? onMode;
   final bool fullscreen;
   final VoidCallback onToggleFullscreen;
   final bool muted;
@@ -512,7 +512,9 @@ class _TopBar extends StatelessWidget {
           children: [
             if (Navigator.of(context).canPop()) const BackButton(color: Colors.white) else const SizedBox(width: AppSpacing.l),
             Expanded(
-              child: title == null
+              child: mode != null
+                  ? Align(alignment: AlignmentDirectional.centerStart, child: _ModeSwitch(mode: mode!, onMode: onMode!))
+                  : title == null
                   ? const SizedBox.shrink()
                   : Text(
                       title!,
@@ -556,6 +558,68 @@ class _TopBar extends StatelessWidget {
 
 // A small blur: the overlay is drawn anew with every video frame, and a
 // wide blur behind every label and icon cost raster time.
+/// "Shorts | Loops" at the top of the shorts tab, like TikTok's feeds:
+/// the chosen one bold and underlined.
+class _ModeSwitch extends StatelessWidget {
+  const _ModeSwitch({required this.mode, required this.onMode});
+
+  final ShortsMode mode;
+  final ValueChanged<ShortsMode> onMode;
+
+  @override
+  Widget build(BuildContext context) {
+    final l = context.l10n;
+    final style = Theme.of(context).textTheme.titleMedium?.copyWith(color: Colors.white, shadows: _shadow);
+    return Semantics(
+      label: l.shortsModeSemantics,
+      container: true,
+      child: SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            for (final m in ShortsMode.values)
+              Semantics(
+                selected: m == mode,
+                button: true,
+                child: InkWell(
+                  borderRadius: AppRadius.badgeBorder,
+                  onTap: m == mode ? null : () => onMode(m),
+                  child: ConstrainedBox(
+                    // A 48 dp target.
+                    constraints: const BoxConstraints(minHeight: 48),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.m),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text(
+                            m.label(l),
+                            style: style?.copyWith(
+                              fontWeight: m == mode ? FontWeight.w700 : FontWeight.w400,
+                              color: m == mode ? Colors.white : Colors.white70,
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          AnimatedContainer(
+                            duration: const Duration(milliseconds: 200),
+                            height: 2,
+                            width: m == mode ? 20 : 0,
+                            color: Colors.white,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
 const _shadow = [Shadow(offset: Offset(0, 1), blurRadius: 2, color: Colors.black54)];
 
 /// One page: the video (or its screenshot until it is loaded), the info at
@@ -678,10 +742,10 @@ class _ShortViewState extends ConsumerState<_ShortView> {
     final short = widget.short;
     final scene = short.scene;
     final marker = short.marker;
-    final width = scene.width;
-    final height = scene.height;
-    // Fill the screen with portrait videos; show wide ones whole.
-    final fit = width != null && height != null && height > width ? BoxFit.cover : BoxFit.contain;
+    // Fill the screen when that crops little (a portrait video on a phone);
+    // else show it whole (wide videos, any video on a landscape tablet).
+    final screen = MediaQuery.sizeOf(context);
+    final fit = Short.fitFor(short.aspect, screen.height <= 0 ? 1 : screen.width / screen.height);
     final saved = ref.watch(watchLaterProvider.select((ids) => ids.contains(scene.id)));
     final stars = effectiveStars(ref, scene);
     final oCount = effectiveOCounter(ref, scene);
@@ -902,6 +966,8 @@ class _ShortViewState extends ConsumerState<_ShortView> {
                       player: controller.player,
                       // A marker's bar covers only its clip.
                       window: short.isMarker ? (start: short.start!, end: short.end!) : null,
+                      // The player knows only the clip: its 0 is the window's start.
+                      windowRelative: true,
                       visible: false,
                       onInteractionStart: () {
                         _scrubbing = true;

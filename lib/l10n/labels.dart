@@ -128,10 +128,9 @@ extension GenerateOptionLabel on GenerateOption {
       };
 }
 
-extension ShortsMarkersLabel on ShortsMarkers {
+extension ShortsModeLabel on ShortsMode {
   String label(AppLocalizations l) => switch (this) {
-        ShortsMarkers.off => l.shortsContentVideos,
-        ShortsMarkers.mixed => l.shortsContentMixed,
-        ShortsMarkers.only => l.shortsContentMarkers,
+        ShortsMode.shorts => l.shortsModeShorts,
+        ShortsMode.loops => l.shortsModeLoops,
       };
 }

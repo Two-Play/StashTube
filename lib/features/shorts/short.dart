@@ -1,4 +1,6 @@
-import 'package:flutter/foundation.dart';
+import 'dart:convert';
+
+import 'package:flutter/widgets.dart';
 
 import '../../data/models/marker.dart';
 import '../../data/models/scene.dart';
@@ -40,19 +42,37 @@ class Short {
 
   String get title => marker?.title ?? scene.title;
 
-  /// How far playback may stray from a marker's clip before
-  /// [correctionFor] brings it back: the A-B loop jumps back a moment after
-  /// the end.
-  static const clipTolerance = Duration(seconds: 1);
+  /// What the player opens: the scene's stream for a whole video; for a
+  /// marker an mpv EDL of only its clip (`edl://%<length>%<url>,start=…,length=…`),
+  /// which mpv plays and loops as a file of its own (position 0
+  /// to the clip's length). An A-B loop inside the whole scene kept leaving
+  /// the clip (scene ends, seeks, the loop surviving the next file).
+  String? get playbackUrl {
+    final url = scene.streamUrl;
+    if (url == null || marker == null) return url;
+    String seconds(Duration d) => (d.inMilliseconds / 1000).toStringAsFixed(3);
+    return 'edl://%${utf8.encode(url).length}%$url,start=${seconds(start!)},length=${seconds(end! - start!)}';
+  }
 
-  /// Where a marker short's player has to go when it is at [position]: the
-  /// clip's start once the position left the clip (e.g. the scene ended
-  /// and looped to 0); null while inside, and always for a whole video.
-  Duration? correctionFor(Duration position) {
-    final start = this.start;
-    final end = this.end;
-    if (start == null || end == null) return null;
-    return position >= start - clipTolerance && position <= end + clipTolerance ? null : start;
+  /// How much of a video [BoxFit.cover] may crop before it is shown whole
+  /// ([BoxFit.contain]) instead.
+  static const maxCrop = 0.3;
+
+  /// Cover a box of [boxAspect] (width / height) with a picture of
+  /// [aspect] when that crops at most [maxCrop] of it, else show it whole:
+  /// a portrait video fills a phone, but not a landscape tablet, where
+  /// covering zoomed it to the full width.
+  static BoxFit fitFor(double? aspect, double boxAspect) {
+    if (aspect == null || aspect <= 0 || boxAspect <= 0) return BoxFit.contain;
+    final shown = aspect < boxAspect ? aspect / boxAspect : boxAspect / aspect;
+    return 1 - shown <= maxCrop ? BoxFit.cover : BoxFit.contain;
+  }
+
+  /// The scene's width / height, null when Stash doesn't know it.
+  double? get aspect {
+    final width = scene.width;
+    final height = scene.height;
+    return width == null || height == null || width <= 0 || height <= 0 ? null : width / height;
   }
 
   static Duration _duration(double seconds) => Duration(milliseconds: (seconds * 1000).round());

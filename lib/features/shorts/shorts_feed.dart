@@ -87,9 +87,9 @@ class ShortsFeedState {
       );
 }
 
-/// Where a shorts feed comes from: the mixed feed of the shorts tab, one
-/// performer's or studio's short videos (their channel's shorts tab), or a
-/// markers grid's markers.
+/// Where a shorts feed comes from: the shorts tab's videos or its loops
+/// (scene markers), one performer's or studio's short videos (their
+/// channel's shorts tab), or a markers grid's markers.
 @immutable
 class ShortsSource {
   const ShortsSource.feed()
@@ -98,12 +98,25 @@ class ShortsSource {
         title = null,
         lane = null,
         markers = null,
+        loops = false,
+        startPage = 1;
+
+  /// The shorts tab's loops: random scene markers following the shorts
+  /// settings' tags and orientation, each looping on its own.
+  const ShortsSource.loops()
+      : performerId = null,
+        studioId = null,
+        title = null,
+        lane = null,
+        markers = null,
+        loops = true,
         startPage = 1;
 
   const ShortsSource.performer(String this.performerId, {this.title})
       : studioId = null,
         lane = null,
         markers = null,
+        loops = false,
         startPage = 1;
 
   /// A studio's shorts, including its sub-studios'.
@@ -111,15 +124,17 @@ class ShortsSource {
       : performerId = null,
         lane = null,
         markers = null,
+        loops = false,
         startPage = 1;
 
-  /// One of the home shelf's queues: mixed like the feed, but shuffled on
+  /// One of the home shelf's queues: videos like the feed, but shuffled on
   /// its own, so every tile continues differently.
   const ShortsSource.lane(int this.lane)
       : performerId = null,
         studioId = null,
         title = null,
         markers = null,
+        loops = false,
         startPage = 1;
 
   /// Exactly the markers of a markers grid (the library's, a channel's), in
@@ -128,7 +143,8 @@ class ShortsSource {
   const ShortsSource.markers(MarkerQuery this.markers, {this.startPage = 1, this.title})
       : performerId = null,
         studioId = null,
-        lane = null;
+        lane = null,
+        loops = false;
 
   final String? performerId;
   final String? studioId;
@@ -139,12 +155,20 @@ class ShortsSource {
   /// The markers grid's query, for [ShortsSource.markers].
   final MarkerQuery? markers;
 
+  /// [ShortsSource.loops].
+  final bool loops;
+
+  /// Whether it plays scene markers (loops), not whole videos.
+  bool get playsMarkers => loops || markers != null;
+
   /// The first page of [markers] the feed plays.
   final int startPage;
 
   /// Shown in the top bar, e.g. the performer's name.
   final String? title;
 
+  /// The shorts tab's own feed (videos or loops), which the shorts/loops
+  /// switch changes.
   bool get isFeed => performerId == null && studioId == null && lane == null && markers == null;
 
   /// A channel's videos that fit the shorts settings' [filter] (length and
@@ -164,10 +188,11 @@ class ShortsSource {
       other.studioId == studioId &&
       other.lane == lane &&
       other.markers == markers &&
+      other.loops == loops &&
       other.startPage == startPage;
 
   @override
-  int get hashCode => Object.hash(performerId, studioId, lane, markers, startPage);
+  int get hashCode => Object.hash(performerId, studioId, lane, markers, loops, startPage);
 }
 
 /// Where a tapped marker is in the shorts of [ShortsSource.markers]: the
@@ -191,9 +216,8 @@ class ShortsSource {
 
 /// Endless, shuffled feed of shorts built from [shortsSettingsProvider]:
 /// the length and orientation always apply, the preferred tags only to the
-/// mixed feed. Following [ShortsSettings.markers] the mixed feed also plays
-/// scene markers, taking turns with the videos. Rebuilding (settings change,
-/// server switch, [refresh]) reshuffles.
+/// tab's feeds. [ShortsSource.loops] plays scene markers instead of videos.
+/// Rebuilding (settings change, server switch, [refresh]) reshuffles.
 class ShortsFeedNotifier extends Notifier<ShortsFeedState> {
   ShortsFeedNotifier(this.source);
 
@@ -234,13 +258,15 @@ class ShortsFeedNotifier extends Notifier<ShortsFeedState> {
       _preferredQuery = null;
       _othersQuery = channelQuery;
       _markerQuery = null;
+    } else if (source.loops) {
+      _preferredQuery = null;
+      _othersQuery = null;
+      _markerQuery = settings.markerQuery;
     } else {
       final tagFilter = settings.tagFilter;
-      final videos = settings.showsVideos;
-      _preferredQuery = !videos || tagFilter == null ? null : SceneQuery(sort: SceneSort.random, filter: tagFilter);
-      _othersQuery =
-          videos && settings.mixesOthers ? SceneQuery(sort: SceneSort.random, filter: settings.baseFilter) : null;
-      _markerQuery = settings.markerQuery;
+      _preferredQuery = tagFilter == null ? null : SceneQuery(sort: SceneSort.random, filter: tagFilter);
+      _othersQuery = settings.mixesOthers ? SceneQuery(sort: SceneSort.random, filter: settings.baseFilter) : null;
+      _markerQuery = null;
     }
     _mixer = ShortsMixer(hasPreferred: _preferredQuery != null, hasOthers: _othersQuery != null);
     _preferredPage = 0;
