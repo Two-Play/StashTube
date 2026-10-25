@@ -108,9 +108,12 @@ class _AutoPreviewInherited extends InheritedWidget {
 /// [AutoPreviewScope]'s pick. Just [child] without a scope, without a
 /// preview, or when previews are off.
 class AutoPreview extends ConsumerStatefulWidget {
-  const AutoPreview({super.key, required this.url, this.videoUrl, required this.child});
+  const AutoPreview({super.key, required this.url, this.videoUrl, this.fit = BoxFit.cover, required this.child});
 
   final String? url;
+
+  /// How the preview fills the thumbnail, like the still under it.
+  final BoxFit fit;
   final String? videoUrl;
   final Widget child;
 
@@ -160,7 +163,8 @@ class _AutoPreviewState extends ConsumerState<AutoPreview> {
           child!,
           // Loops by itself; the thumbnail shows until it loaded, and if
           // it fails.
-          if (active == this) video ? PreviewVideo(url) : StashImage(url, standIn: const SizedBox.shrink()),
+          if (active == this)
+            video ? PreviewVideo(url, fit: widget.fit) : StashImage(url, fit: widget.fit, standIn: const SizedBox.shrink()),
         ],
       ),
     );

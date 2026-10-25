@@ -49,6 +49,13 @@ class Scene {
   final double duration;
   final int? width;
   final int? height;
+
+  /// Width / height of the video; null when Stash doesn't know the size.
+  double? get aspect {
+    final w = width;
+    final h = height;
+    return w == null || h == null || w <= 0 || h <= 0 ? null : w / h;
+  }
   final String? screenshotUrl;
   final String? previewUrl;
 
