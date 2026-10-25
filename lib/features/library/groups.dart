@@ -12,6 +12,7 @@ import '../../widgets/scene_feed.dart';
 import '../../widgets/stash_image.dart';
 import '../../widgets/status_views.dart';
 import '../player/player_providers.dart';
+import '../edit/create_dialog.dart';
 import '../shell/navigation.dart';
 import '../../l10n/l10n.dart';
 
@@ -24,31 +25,46 @@ class GroupsTab extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final provider = groupListProvider(_query);
-    return RefreshIndicator(
-      onRefresh: () => refreshFuture(ref, provider.future),
-      child: LoadMoreListener(
-        onLoadMore: () => ref.read(provider.notifier).loadMore(),
-        child: CustomScrollView(
-          physics: const AlwaysScrollableScrollPhysics(),
-          slivers: [
-            PagedSliver<Group>(
-              value: ref.watch(provider),
-              emptyMessage: context.l10n.groupsEmpty,
-              emptyIcon: Icons.video_library_outlined,
-              emptyHint: context.l10n.groupsEmptyHint,
-              padding: const EdgeInsets.all(12),
-              gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
-                maxCrossAxisExtent: 160,
-                childAspectRatio: 0.52,
-                mainAxisSpacing: 12,
-                crossAxisSpacing: 12,
+    // A scaffold of its own for the button: the tab sits in the library's.
+    return Scaffold(
+      floatingActionButton: FloatingActionButton.extended(
+        icon: const Icon(Icons.playlist_add),
+        label: Text(context.l10n.newGroup),
+        onPressed: () async {
+          final group = await showCreateDialog(
+            context,
+            title: context.l10n.newGroup,
+            create: (name) => createGroup(ref, name),
+          );
+          if (group != null) openPage(ref, GroupPage(groupId: group.id));
+        },
+      ),
+      body: RefreshIndicator(
+        onRefresh: () => refreshFuture(ref, provider.future),
+        child: LoadMoreListener(
+          onLoadMore: () => ref.read(provider.notifier).loadMore(),
+          child: CustomScrollView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            slivers: [
+              PagedSliver<Group>(
+                value: ref.watch(provider),
+                emptyMessage: context.l10n.groupsEmpty,
+                emptyIcon: Icons.video_library_outlined,
+                emptyHint: context.l10n.groupsEmptyHint,
+                padding: const EdgeInsets.all(12),
+                gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
+                  maxCrossAxisExtent: 160,
+                  childAspectRatio: 0.52,
+                  mainAxisSpacing: 12,
+                  crossAxisSpacing: 12,
+                ),
+                onRetry: () => ref.invalidate(provider),
+                onLoadMore: () => ref.read(provider.notifier).loadMore(retry: true),
+                onGoToPage: (page) => ref.read(provider.notifier).goToPage(page),
+                itemBuilder: (_, group) => GroupTile(group: group),
               ),
-              onRetry: () => ref.invalidate(provider),
-              onLoadMore: () => ref.read(provider.notifier).loadMore(retry: true),
-              onGoToPage: (page) => ref.read(provider.notifier).goToPage(page),
-              itemBuilder: (_, group) => GroupTile(group: group),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

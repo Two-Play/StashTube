@@ -44,3 +44,17 @@ query StudioFavorite($id: ID!) {
 mutation StudioSetFavorite($id: ID!, $favorite: Boolean!) {
   studioUpdate(input: { id: $id, favorite: $favorite }) { id favorite }
 }
+
+# Queried separately like the favorite, so a server without studio ratings
+# only loses the studio's stars.
+query StudioRating($id: ID!) {
+  findStudio(id: $id) { id rating100 }
+}
+
+mutation StudioSetRating($id: ID!, $rating100: Int) {
+  studioUpdate(input: { id: $id, rating100: $rating100 }) { id rating100 }
+}
+
+mutation StudioCreate($name: String!) {
+  studioCreate(input: { name: $name }) { ...StudioDetails }
+}

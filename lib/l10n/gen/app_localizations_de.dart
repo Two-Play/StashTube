@@ -739,6 +739,12 @@ class AppLocalizationsDe extends AppLocalizations {
       'Studios erscheinen hier, sobald Szenen in Stash eines haben.';
 
   @override
+  String get newPerformer => 'Neuer Darsteller';
+
+  @override
+  String get newStudio => 'Neues Studio';
+
+  @override
   String get newTag => 'Neuer Tag';
 
   @override
@@ -1001,6 +1007,12 @@ class AppLocalizationsDe extends AppLocalizations {
   String castPlayFailed(String device, String error) {
     return 'Wiedergabe auf $device fehlgeschlagen: $error';
   }
+
+  @override
+  String get backToPreviousVideo => 'Zurück zum vorherigen Video';
+
+  @override
+  String get forwardToNextVideo => 'Weiter zum nächsten Video';
 
   @override
   String get minimize => 'Minimieren';
@@ -1347,6 +1359,12 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get rateScene => 'Bewerten';
+
+  @override
+  String get rateThisPerformer => 'Darsteller bewerten';
+
+  @override
+  String get rateThisStudio => 'Studio bewerten';
 
   @override
   String get rateThisScene => 'Szene bewerten';

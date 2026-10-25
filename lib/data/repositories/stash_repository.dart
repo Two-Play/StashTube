@@ -717,6 +717,21 @@ class StashRepository implements PlaybackActivityApi {
     }
   }
 
+  Future<Performer> createPerformer(String name) async {
+    final data =
+        await _mutate(Options$Mutation$PerformerCreate(variables: Variables$Mutation$PerformerCreate(name: name)));
+    final performer = data.performerCreate;
+    if (performer == null) throw const StashApiException('Performer was not created.', kind: StashErrorKind.notSaved);
+    return Performer.fromFields(performer);
+  }
+
+  Future<Studio> createStudio(String name) async {
+    final data = await _mutate(Options$Mutation$StudioCreate(variables: Variables$Mutation$StudioCreate(name: name)));
+    final studio = data.studioCreate;
+    if (studio == null) throw const StashApiException('Studio was not created.', kind: StashErrorKind.notSaved);
+    return Studio.fromFields(studio);
+  }
+
   Future<Tag> createTag(String name) async {
     final data = await _mutate(Options$Mutation$TagCreate(variables: Variables$Mutation$TagCreate(name: name)));
     final tag = data.tagCreate;
@@ -791,6 +806,33 @@ class StashRepository implements PlaybackActivityApi {
   Future<void> setStudioFavorite(String studioId, bool favorite) => _mutate(
     Options$Mutation$StudioSetFavorite(
       variables: Variables$Mutation$StudioSetFavorite(id: studioId, favorite: favorite),
+    ),
+  );
+
+  /// [rating100] null removes the rating.
+  Future<void> setPerformerRating(String performerId, int? rating100) => _mutate(
+    Options$Mutation$PerformerSetRating(
+      variables: Variables$Mutation$PerformerSetRating(id: performerId, rating100: rating100),
+    ),
+  );
+
+  /// The studio's rating (its `rating100` null when unrated); null when the
+  /// server has no studio ratings or doesn't know the studio.
+  Future<({int? rating100})?> studioRating(String studioId) async {
+    try {
+      final data = await _query(Options$Query$StudioRating(variables: Variables$Query$StudioRating(id: studioId)));
+      final studio = data.findStudio;
+      return studio == null ? null : (rating100: studio.rating100);
+    } on StashApiException catch (e) {
+      if (e.isNetworkError) rethrow;
+      return null;
+    }
+  }
+
+  /// [rating100] null removes the rating.
+  Future<void> setStudioRating(String studioId, int? rating100) => _mutate(
+    Options$Mutation$StudioSetRating(
+      variables: Variables$Mutation$StudioSetRating(id: studioId, rating100: rating100),
     ),
   );
 

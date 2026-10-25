@@ -2774,3 +2774,1031 @@ class Mutation$StudioSetFavorite$studioUpdate {
     return true;
   }
 }
+
+class Variables$Query$StudioRating {
+  factory Variables$Query$StudioRating({required String id}) =>
+      Variables$Query$StudioRating._({r'id': id});
+
+  Variables$Query$StudioRating._(this._$data);
+
+  factory Variables$Query$StudioRating.fromJson(Map<String, dynamic> data) {
+    final result$data = <String, dynamic>{};
+    final l$id = data['id'];
+    result$data['id'] = (l$id as String);
+    return Variables$Query$StudioRating._(result$data);
+  }
+
+  Map<String, dynamic> _$data;
+
+  String get id => (_$data['id'] as String);
+
+  Map<String, dynamic> toJson() {
+    final result$data = <String, dynamic>{};
+    final l$id = id;
+    result$data['id'] = l$id;
+    return result$data;
+  }
+
+  @override
+  bool operator ==(Object other) {
+    if (identical(this, other)) {
+      return true;
+    }
+    if (other is! Variables$Query$StudioRating ||
+        runtimeType != other.runtimeType) {
+      return false;
+    }
+    final l$id = id;
+    final lOther$id = other.id;
+    if (l$id != lOther$id) {
+      return false;
+    }
+    return true;
+  }
+
+  @override
+  int get hashCode {
+    final l$id = id;
+    return Object.hashAll([l$id]);
+  }
+}
+
+class Query$StudioRating {
+  Query$StudioRating({this.findStudio, this.$__typename = 'Query'});
+
+  factory Query$StudioRating.fromJson(Map<String, dynamic> json) {
+    final l$findStudio = json['findStudio'];
+    final l$$__typename = json['__typename'];
+    return Query$StudioRating(
+      findStudio: l$findStudio == null
+          ? null
+          : Query$StudioRating$findStudio.fromJson(
+              (l$findStudio as Map<String, dynamic>),
+            ),
+      $__typename: (l$$__typename as String),
+    );
+  }
+
+  final Query$StudioRating$findStudio? findStudio;
+
+  final String $__typename;
+
+  Map<String, dynamic> toJson() {
+    final _resultData = <String, dynamic>{};
+    final l$findStudio = findStudio;
+    _resultData['findStudio'] = l$findStudio?.toJson();
+    final l$$__typename = $__typename;
+    _resultData['__typename'] = l$$__typename;
+    return _resultData;
+  }
+
+  @override
+  int get hashCode {
+    final l$findStudio = findStudio;
+    final l$$__typename = $__typename;
+    return Object.hashAll([l$findStudio, l$$__typename]);
+  }
+
+  @override
+  bool operator ==(Object other) {
+    if (identical(this, other)) {
+      return true;
+    }
+    if (other is! Query$StudioRating || runtimeType != other.runtimeType) {
+      return false;
+    }
+    final l$findStudio = findStudio;
+    final lOther$findStudio = other.findStudio;
+    if (l$findStudio != lOther$findStudio) {
+      return false;
+    }
+    final l$$__typename = $__typename;
+    final lOther$$__typename = other.$__typename;
+    if (l$$__typename != lOther$$__typename) {
+      return false;
+    }
+    return true;
+  }
+}
+
+const documentNodeQueryStudioRating = DocumentNode(
+  definitions: [
+    OperationDefinitionNode(
+      type: OperationType.query,
+      name: NameNode(value: 'StudioRating'),
+      variableDefinitions: [
+        VariableDefinitionNode(
+          variable: VariableNode(name: NameNode(value: 'id')),
+          type: NamedTypeNode(name: NameNode(value: 'ID'), isNonNull: true),
+          defaultValue: DefaultValueNode(value: null),
+          directives: [],
+        ),
+      ],
+      directives: [],
+      selectionSet: SelectionSetNode(
+        selections: [
+          FieldNode(
+            name: NameNode(value: 'findStudio'),
+            alias: null,
+            arguments: [
+              ArgumentNode(
+                name: NameNode(value: 'id'),
+                value: VariableNode(name: NameNode(value: 'id')),
+              ),
+            ],
+            directives: [],
+            selectionSet: SelectionSetNode(
+              selections: [
+                FieldNode(
+                  name: NameNode(value: 'id'),
+                  alias: null,
+                  arguments: [],
+                  directives: [],
+                  selectionSet: null,
+                ),
+                FieldNode(
+                  name: NameNode(value: 'rating100'),
+                  alias: null,
+                  arguments: [],
+                  directives: [],
+                  selectionSet: null,
+                ),
+                FieldNode(
+                  name: NameNode(value: '__typename'),
+                  alias: null,
+                  arguments: [],
+                  directives: [],
+                  selectionSet: null,
+                ),
+              ],
+            ),
+          ),
+          FieldNode(
+            name: NameNode(value: '__typename'),
+            alias: null,
+            arguments: [],
+            directives: [],
+            selectionSet: null,
+          ),
+        ],
+      ),
+    ),
+  ],
+);
+Query$StudioRating _parserFn$Query$StudioRating(Map<String, dynamic> data) =>
+    Query$StudioRating.fromJson(data);
+typedef OnQueryComplete$Query$StudioRating = FutureOr<void> Function(
+  Map<String, dynamic>?,
+  Query$StudioRating?,
+);
+
+class Options$Query$StudioRating
+    extends graphql.QueryOptions<Query$StudioRating> {
+  Options$Query$StudioRating({
+    String? operationName,
+    required Variables$Query$StudioRating variables,
+    graphql.FetchPolicy? fetchPolicy,
+    graphql.ErrorPolicy? errorPolicy,
+    graphql.CacheRereadPolicy? cacheRereadPolicy,
+    Object? optimisticResult,
+    Query$StudioRating? typedOptimisticResult,
+    Duration? pollInterval,
+    graphql.Context? context,
+    OnQueryComplete$Query$StudioRating? onComplete,
+    graphql.OnQueryError? onError,
+  }) : onCompleteWithParsed = onComplete,
+       super(
+         variables: variables.toJson(),
+         operationName: operationName ?? 'StudioRating',
+         fetchPolicy: fetchPolicy,
+         errorPolicy: errorPolicy,
+         cacheRereadPolicy: cacheRereadPolicy,
+         optimisticResult: optimisticResult ?? typedOptimisticResult?.toJson(),
+         pollInterval: pollInterval,
+         context: context,
+         onComplete: onComplete == null
+             ? null
+             : (data) => onComplete(
+                 data,
+                 data == null ? null : _parserFn$Query$StudioRating(data),
+               ),
+         onError: onError,
+         document: documentNodeQueryStudioRating,
+         parserFn: _parserFn$Query$StudioRating,
+       );
+
+  final OnQueryComplete$Query$StudioRating? onCompleteWithParsed;
+
+  @override
+  List<Object?> get properties => [
+    ...super.onComplete == null
+        ? super.properties
+        : super.properties.where((property) => property != onComplete),
+    onCompleteWithParsed,
+  ];
+}
+
+class WatchOptions$Query$StudioRating
+    extends graphql.WatchQueryOptions<Query$StudioRating> {
+  WatchOptions$Query$StudioRating({
+    String? operationName,
+    required Variables$Query$StudioRating variables,
+    graphql.FetchPolicy? fetchPolicy,
+    graphql.ErrorPolicy? errorPolicy,
+    graphql.CacheRereadPolicy? cacheRereadPolicy,
+    Object? optimisticResult,
+    Query$StudioRating? typedOptimisticResult,
+    graphql.Context? context,
+    Duration? pollInterval,
+    bool? eagerlyFetchResults,
+    bool carryForwardDataOnException = true,
+    bool fetchResults = false,
+  }) : super(
+         variables: variables.toJson(),
+         operationName: operationName ?? 'StudioRating',
+         fetchPolicy: fetchPolicy,
+         errorPolicy: errorPolicy,
+         cacheRereadPolicy: cacheRereadPolicy,
+         optimisticResult: optimisticResult ?? typedOptimisticResult?.toJson(),
+         context: context,
+         document: documentNodeQueryStudioRating,
+         pollInterval: pollInterval,
+         eagerlyFetchResults: eagerlyFetchResults,
+         carryForwardDataOnException: carryForwardDataOnException,
+         fetchResults: fetchResults,
+         parserFn: _parserFn$Query$StudioRating,
+       );
+}
+
+class FetchMoreOptions$Query$StudioRating extends graphql.FetchMoreOptions {
+  FetchMoreOptions$Query$StudioRating({
+    required graphql.UpdateQuery updateQuery,
+    required Variables$Query$StudioRating variables,
+  }) : super(
+         updateQuery: updateQuery,
+         variables: variables.toJson(),
+         document: documentNodeQueryStudioRating,
+       );
+}
+
+extension ClientExtension$Query$StudioRating on graphql.GraphQLClient {
+  Future<graphql.QueryResult<Query$StudioRating>> query$StudioRating(
+    Options$Query$StudioRating options,
+  ) async => await this.query(options);
+
+  graphql.ObservableQuery<Query$StudioRating> watchQuery$StudioRating(
+    WatchOptions$Query$StudioRating options,
+  ) => this.watchQuery(options);
+
+  void writeQuery$StudioRating({
+    required Query$StudioRating data,
+    required Variables$Query$StudioRating variables,
+    bool broadcast = true,
+  }) => this.writeQuery(
+    graphql.Request(
+      operation: graphql.Operation(document: documentNodeQueryStudioRating),
+      variables: variables.toJson(),
+    ),
+    data: data.toJson(),
+    broadcast: broadcast,
+  );
+
+  Query$StudioRating? readQuery$StudioRating({
+    required Variables$Query$StudioRating variables,
+    bool optimistic = true,
+  }) {
+    final result = this.readQuery(
+      graphql.Request(
+        operation: graphql.Operation(document: documentNodeQueryStudioRating),
+        variables: variables.toJson(),
+      ),
+      optimistic: optimistic,
+    );
+    return result == null ? null : Query$StudioRating.fromJson(result);
+  }
+}
+
+class Query$StudioRating$findStudio {
+  Query$StudioRating$findStudio({
+    required this.id,
+    this.rating100,
+    this.$__typename = 'Studio',
+  });
+
+  factory Query$StudioRating$findStudio.fromJson(Map<String, dynamic> json) {
+    final l$id = json['id'];
+    final l$rating100 = json['rating100'];
+    final l$$__typename = json['__typename'];
+    return Query$StudioRating$findStudio(
+      id: (l$id as String),
+      rating100: (l$rating100 as int?),
+      $__typename: (l$$__typename as String),
+    );
+  }
+
+  final String id;
+
+  final int? rating100;
+
+  final String $__typename;
+
+  Map<String, dynamic> toJson() {
+    final _resultData = <String, dynamic>{};
+    final l$id = id;
+    _resultData['id'] = l$id;
+    final l$rating100 = rating100;
+    _resultData['rating100'] = l$rating100;
+    final l$$__typename = $__typename;
+    _resultData['__typename'] = l$$__typename;
+    return _resultData;
+  }
+
+  @override
+  int get hashCode {
+    final l$id = id;
+    final l$rating100 = rating100;
+    final l$$__typename = $__typename;
+    return Object.hashAll([l$id, l$rating100, l$$__typename]);
+  }
+
+  @override
+  bool operator ==(Object other) {
+    if (identical(this, other)) {
+      return true;
+    }
+    if (other is! Query$StudioRating$findStudio ||
+        runtimeType != other.runtimeType) {
+      return false;
+    }
+    final l$id = id;
+    final lOther$id = other.id;
+    if (l$id != lOther$id) {
+      return false;
+    }
+    final l$rating100 = rating100;
+    final lOther$rating100 = other.rating100;
+    if (l$rating100 != lOther$rating100) {
+      return false;
+    }
+    final l$$__typename = $__typename;
+    final lOther$$__typename = other.$__typename;
+    if (l$$__typename != lOther$$__typename) {
+      return false;
+    }
+    return true;
+  }
+}
+
+class Variables$Mutation$StudioSetRating {
+  factory Variables$Mutation$StudioSetRating({
+    required String id,
+    int? rating100,
+  }) => Variables$Mutation$StudioSetRating._({
+    r'id': id,
+    if (rating100 != null) r'rating100': rating100,
+  });
+
+  Variables$Mutation$StudioSetRating._(this._$data);
+
+  factory Variables$Mutation$StudioSetRating.fromJson(
+    Map<String, dynamic> data,
+  ) {
+    final result$data = <String, dynamic>{};
+    final l$id = data['id'];
+    result$data['id'] = (l$id as String);
+    if (data.containsKey('rating100')) {
+      final l$rating100 = data['rating100'];
+      result$data['rating100'] = (l$rating100 as int?);
+    }
+    return Variables$Mutation$StudioSetRating._(result$data);
+  }
+
+  Map<String, dynamic> _$data;
+
+  String get id => (_$data['id'] as String);
+
+  int? get rating100 => (_$data['rating100'] as int?);
+
+  Map<String, dynamic> toJson() {
+    final result$data = <String, dynamic>{};
+    final l$id = id;
+    result$data['id'] = l$id;
+    if (_$data.containsKey('rating100')) {
+      final l$rating100 = rating100;
+      result$data['rating100'] = l$rating100;
+    }
+    return result$data;
+  }
+
+  @override
+  bool operator ==(Object other) {
+    if (identical(this, other)) {
+      return true;
+    }
+    if (other is! Variables$Mutation$StudioSetRating ||
+        runtimeType != other.runtimeType) {
+      return false;
+    }
+    final l$id = id;
+    final lOther$id = other.id;
+    if (l$id != lOther$id) {
+      return false;
+    }
+    final l$rating100 = rating100;
+    final lOther$rating100 = other.rating100;
+    if (_$data.containsKey('rating100') !=
+        other._$data.containsKey('rating100')) {
+      return false;
+    }
+    if (l$rating100 != lOther$rating100) {
+      return false;
+    }
+    return true;
+  }
+
+  @override
+  int get hashCode {
+    final l$id = id;
+    final l$rating100 = rating100;
+    return Object.hashAll([
+      l$id,
+      _$data.containsKey('rating100') ? l$rating100 : const {},
+    ]);
+  }
+}
+
+class Mutation$StudioSetRating {
+  Mutation$StudioSetRating({this.studioUpdate, this.$__typename = 'Mutation'});
+
+  factory Mutation$StudioSetRating.fromJson(Map<String, dynamic> json) {
+    final l$studioUpdate = json['studioUpdate'];
+    final l$$__typename = json['__typename'];
+    return Mutation$StudioSetRating(
+      studioUpdate: l$studioUpdate == null
+          ? null
+          : Mutation$StudioSetRating$studioUpdate.fromJson(
+              (l$studioUpdate as Map<String, dynamic>),
+            ),
+      $__typename: (l$$__typename as String),
+    );
+  }
+
+  final Mutation$StudioSetRating$studioUpdate? studioUpdate;
+
+  final String $__typename;
+
+  Map<String, dynamic> toJson() {
+    final _resultData = <String, dynamic>{};
+    final l$studioUpdate = studioUpdate;
+    _resultData['studioUpdate'] = l$studioUpdate?.toJson();
+    final l$$__typename = $__typename;
+    _resultData['__typename'] = l$$__typename;
+    return _resultData;
+  }
+
+  @override
+  int get hashCode {
+    final l$studioUpdate = studioUpdate;
+    final l$$__typename = $__typename;
+    return Object.hashAll([l$studioUpdate, l$$__typename]);
+  }
+
+  @override
+  bool operator ==(Object other) {
+    if (identical(this, other)) {
+      return true;
+    }
+    if (other is! Mutation$StudioSetRating ||
+        runtimeType != other.runtimeType) {
+      return false;
+    }
+    final l$studioUpdate = studioUpdate;
+    final lOther$studioUpdate = other.studioUpdate;
+    if (l$studioUpdate != lOther$studioUpdate) {
+      return false;
+    }
+    final l$$__typename = $__typename;
+    final lOther$$__typename = other.$__typename;
+    if (l$$__typename != lOther$$__typename) {
+      return false;
+    }
+    return true;
+  }
+}
+
+const documentNodeMutationStudioSetRating = DocumentNode(
+  definitions: [
+    OperationDefinitionNode(
+      type: OperationType.mutation,
+      name: NameNode(value: 'StudioSetRating'),
+      variableDefinitions: [
+        VariableDefinitionNode(
+          variable: VariableNode(name: NameNode(value: 'id')),
+          type: NamedTypeNode(name: NameNode(value: 'ID'), isNonNull: true),
+          defaultValue: DefaultValueNode(value: null),
+          directives: [],
+        ),
+        VariableDefinitionNode(
+          variable: VariableNode(name: NameNode(value: 'rating100')),
+          type: NamedTypeNode(name: NameNode(value: 'Int'), isNonNull: false),
+          defaultValue: DefaultValueNode(value: null),
+          directives: [],
+        ),
+      ],
+      directives: [],
+      selectionSet: SelectionSetNode(
+        selections: [
+          FieldNode(
+            name: NameNode(value: 'studioUpdate'),
+            alias: null,
+            arguments: [
+              ArgumentNode(
+                name: NameNode(value: 'input'),
+                value: ObjectValueNode(
+                  fields: [
+                    ObjectFieldNode(
+                      name: NameNode(value: 'id'),
+                      value: VariableNode(name: NameNode(value: 'id')),
+                    ),
+                    ObjectFieldNode(
+                      name: NameNode(value: 'rating100'),
+                      value: VariableNode(name: NameNode(value: 'rating100')),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+            directives: [],
+            selectionSet: SelectionSetNode(
+              selections: [
+                FieldNode(
+                  name: NameNode(value: 'id'),
+                  alias: null,
+                  arguments: [],
+                  directives: [],
+                  selectionSet: null,
+                ),
+                FieldNode(
+                  name: NameNode(value: 'rating100'),
+                  alias: null,
+                  arguments: [],
+                  directives: [],
+                  selectionSet: null,
+                ),
+                FieldNode(
+                  name: NameNode(value: '__typename'),
+                  alias: null,
+                  arguments: [],
+                  directives: [],
+                  selectionSet: null,
+                ),
+              ],
+            ),
+          ),
+          FieldNode(
+            name: NameNode(value: '__typename'),
+            alias: null,
+            arguments: [],
+            directives: [],
+            selectionSet: null,
+          ),
+        ],
+      ),
+    ),
+  ],
+);
+Mutation$StudioSetRating _parserFn$Mutation$StudioSetRating(
+  Map<String, dynamic> data,
+) => Mutation$StudioSetRating.fromJson(data);
+typedef OnMutationCompleted$Mutation$StudioSetRating = FutureOr<void> Function(
+  Map<String, dynamic>?,
+  Mutation$StudioSetRating?,
+);
+
+class Options$Mutation$StudioSetRating
+    extends graphql.MutationOptions<Mutation$StudioSetRating> {
+  Options$Mutation$StudioSetRating({
+    String? operationName,
+    required Variables$Mutation$StudioSetRating variables,
+    graphql.FetchPolicy? fetchPolicy,
+    graphql.ErrorPolicy? errorPolicy,
+    graphql.CacheRereadPolicy? cacheRereadPolicy,
+    Object? optimisticResult,
+    Mutation$StudioSetRating? typedOptimisticResult,
+    graphql.Context? context,
+    OnMutationCompleted$Mutation$StudioSetRating? onCompleted,
+    graphql.OnMutationUpdate<Mutation$StudioSetRating>? update,
+    graphql.OnError? onError,
+  }) : onCompletedWithParsed = onCompleted,
+       super(
+         variables: variables.toJson(),
+         operationName: operationName ?? 'StudioSetRating',
+         fetchPolicy: fetchPolicy,
+         errorPolicy: errorPolicy,
+         cacheRereadPolicy: cacheRereadPolicy,
+         optimisticResult: optimisticResult ?? typedOptimisticResult?.toJson(),
+         context: context,
+         onCompleted: onCompleted == null
+             ? null
+             : (data) => onCompleted(
+                 data,
+                 data == null ? null : _parserFn$Mutation$StudioSetRating(data),
+               ),
+         update: update,
+         onError: onError,
+         document: documentNodeMutationStudioSetRating,
+         parserFn: _parserFn$Mutation$StudioSetRating,
+       );
+
+  final OnMutationCompleted$Mutation$StudioSetRating? onCompletedWithParsed;
+
+  @override
+  List<Object?> get properties => [
+    ...super.onCompleted == null
+        ? super.properties
+        : super.properties.where((property) => property != onCompleted),
+    onCompletedWithParsed,
+  ];
+}
+
+class WatchOptions$Mutation$StudioSetRating
+    extends graphql.WatchQueryOptions<Mutation$StudioSetRating> {
+  WatchOptions$Mutation$StudioSetRating({
+    String? operationName,
+    required Variables$Mutation$StudioSetRating variables,
+    graphql.FetchPolicy? fetchPolicy,
+    graphql.ErrorPolicy? errorPolicy,
+    graphql.CacheRereadPolicy? cacheRereadPolicy,
+    Object? optimisticResult,
+    Mutation$StudioSetRating? typedOptimisticResult,
+    graphql.Context? context,
+    Duration? pollInterval,
+    bool? eagerlyFetchResults,
+    bool carryForwardDataOnException = true,
+    bool fetchResults = false,
+  }) : super(
+         variables: variables.toJson(),
+         operationName: operationName ?? 'StudioSetRating',
+         fetchPolicy: fetchPolicy,
+         errorPolicy: errorPolicy,
+         cacheRereadPolicy: cacheRereadPolicy,
+         optimisticResult: optimisticResult ?? typedOptimisticResult?.toJson(),
+         context: context,
+         document: documentNodeMutationStudioSetRating,
+         pollInterval: pollInterval,
+         eagerlyFetchResults: eagerlyFetchResults,
+         carryForwardDataOnException: carryForwardDataOnException,
+         fetchResults: fetchResults,
+         parserFn: _parserFn$Mutation$StudioSetRating,
+       );
+}
+
+extension ClientExtension$Mutation$StudioSetRating on graphql.GraphQLClient {
+  Future<graphql.QueryResult<Mutation$StudioSetRating>> mutate$StudioSetRating(
+    Options$Mutation$StudioSetRating options,
+  ) async => await this.mutate(options);
+
+  graphql.ObservableQuery<Mutation$StudioSetRating>
+  watchMutation$StudioSetRating(
+    WatchOptions$Mutation$StudioSetRating options,
+  ) => this.watchMutation(options);
+}
+
+class Mutation$StudioSetRating$studioUpdate {
+  Mutation$StudioSetRating$studioUpdate({
+    required this.id,
+    this.rating100,
+    this.$__typename = 'Studio',
+  });
+
+  factory Mutation$StudioSetRating$studioUpdate.fromJson(
+    Map<String, dynamic> json,
+  ) {
+    final l$id = json['id'];
+    final l$rating100 = json['rating100'];
+    final l$$__typename = json['__typename'];
+    return Mutation$StudioSetRating$studioUpdate(
+      id: (l$id as String),
+      rating100: (l$rating100 as int?),
+      $__typename: (l$$__typename as String),
+    );
+  }
+
+  final String id;
+
+  final int? rating100;
+
+  final String $__typename;
+
+  Map<String, dynamic> toJson() {
+    final _resultData = <String, dynamic>{};
+    final l$id = id;
+    _resultData['id'] = l$id;
+    final l$rating100 = rating100;
+    _resultData['rating100'] = l$rating100;
+    final l$$__typename = $__typename;
+    _resultData['__typename'] = l$$__typename;
+    return _resultData;
+  }
+
+  @override
+  int get hashCode {
+    final l$id = id;
+    final l$rating100 = rating100;
+    final l$$__typename = $__typename;
+    return Object.hashAll([l$id, l$rating100, l$$__typename]);
+  }
+
+  @override
+  bool operator ==(Object other) {
+    if (identical(this, other)) {
+      return true;
+    }
+    if (other is! Mutation$StudioSetRating$studioUpdate ||
+        runtimeType != other.runtimeType) {
+      return false;
+    }
+    final l$id = id;
+    final lOther$id = other.id;
+    if (l$id != lOther$id) {
+      return false;
+    }
+    final l$rating100 = rating100;
+    final lOther$rating100 = other.rating100;
+    if (l$rating100 != lOther$rating100) {
+      return false;
+    }
+    final l$$__typename = $__typename;
+    final lOther$$__typename = other.$__typename;
+    if (l$$__typename != lOther$$__typename) {
+      return false;
+    }
+    return true;
+  }
+}
+
+class Variables$Mutation$StudioCreate {
+  factory Variables$Mutation$StudioCreate({required String name}) =>
+      Variables$Mutation$StudioCreate._({r'name': name});
+
+  Variables$Mutation$StudioCreate._(this._$data);
+
+  factory Variables$Mutation$StudioCreate.fromJson(Map<String, dynamic> data) {
+    final result$data = <String, dynamic>{};
+    final l$name = data['name'];
+    result$data['name'] = (l$name as String);
+    return Variables$Mutation$StudioCreate._(result$data);
+  }
+
+  Map<String, dynamic> _$data;
+
+  String get name => (_$data['name'] as String);
+
+  Map<String, dynamic> toJson() {
+    final result$data = <String, dynamic>{};
+    final l$name = name;
+    result$data['name'] = l$name;
+    return result$data;
+  }
+
+  @override
+  bool operator ==(Object other) {
+    if (identical(this, other)) {
+      return true;
+    }
+    if (other is! Variables$Mutation$StudioCreate ||
+        runtimeType != other.runtimeType) {
+      return false;
+    }
+    final l$name = name;
+    final lOther$name = other.name;
+    if (l$name != lOther$name) {
+      return false;
+    }
+    return true;
+  }
+
+  @override
+  int get hashCode {
+    final l$name = name;
+    return Object.hashAll([l$name]);
+  }
+}
+
+class Mutation$StudioCreate {
+  Mutation$StudioCreate({this.studioCreate, this.$__typename = 'Mutation'});
+
+  factory Mutation$StudioCreate.fromJson(Map<String, dynamic> json) {
+    final l$studioCreate = json['studioCreate'];
+    final l$$__typename = json['__typename'];
+    return Mutation$StudioCreate(
+      studioCreate: l$studioCreate == null
+          ? null
+          : Fragment$StudioDetails.fromJson(
+              (l$studioCreate as Map<String, dynamic>),
+            ),
+      $__typename: (l$$__typename as String),
+    );
+  }
+
+  final Fragment$StudioDetails? studioCreate;
+
+  final String $__typename;
+
+  Map<String, dynamic> toJson() {
+    final _resultData = <String, dynamic>{};
+    final l$studioCreate = studioCreate;
+    _resultData['studioCreate'] = l$studioCreate?.toJson();
+    final l$$__typename = $__typename;
+    _resultData['__typename'] = l$$__typename;
+    return _resultData;
+  }
+
+  @override
+  int get hashCode {
+    final l$studioCreate = studioCreate;
+    final l$$__typename = $__typename;
+    return Object.hashAll([l$studioCreate, l$$__typename]);
+  }
+
+  @override
+  bool operator ==(Object other) {
+    if (identical(this, other)) {
+      return true;
+    }
+    if (other is! Mutation$StudioCreate || runtimeType != other.runtimeType) {
+      return false;
+    }
+    final l$studioCreate = studioCreate;
+    final lOther$studioCreate = other.studioCreate;
+    if (l$studioCreate != lOther$studioCreate) {
+      return false;
+    }
+    final l$$__typename = $__typename;
+    final lOther$$__typename = other.$__typename;
+    if (l$$__typename != lOther$$__typename) {
+      return false;
+    }
+    return true;
+  }
+}
+
+const documentNodeMutationStudioCreate = DocumentNode(
+  definitions: [
+    OperationDefinitionNode(
+      type: OperationType.mutation,
+      name: NameNode(value: 'StudioCreate'),
+      variableDefinitions: [
+        VariableDefinitionNode(
+          variable: VariableNode(name: NameNode(value: 'name')),
+          type: NamedTypeNode(name: NameNode(value: 'String'), isNonNull: true),
+          defaultValue: DefaultValueNode(value: null),
+          directives: [],
+        ),
+      ],
+      directives: [],
+      selectionSet: SelectionSetNode(
+        selections: [
+          FieldNode(
+            name: NameNode(value: 'studioCreate'),
+            alias: null,
+            arguments: [
+              ArgumentNode(
+                name: NameNode(value: 'input'),
+                value: ObjectValueNode(
+                  fields: [
+                    ObjectFieldNode(
+                      name: NameNode(value: 'name'),
+                      value: VariableNode(name: NameNode(value: 'name')),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+            directives: [],
+            selectionSet: SelectionSetNode(
+              selections: [
+                FragmentSpreadNode(
+                  name: NameNode(value: 'StudioDetails'),
+                  directives: [],
+                ),
+                FieldNode(
+                  name: NameNode(value: '__typename'),
+                  alias: null,
+                  arguments: [],
+                  directives: [],
+                  selectionSet: null,
+                ),
+              ],
+            ),
+          ),
+          FieldNode(
+            name: NameNode(value: '__typename'),
+            alias: null,
+            arguments: [],
+            directives: [],
+            selectionSet: null,
+          ),
+        ],
+      ),
+    ),
+    fragmentDefinitionStudioDetails,
+    fragmentDefinitionStudioFields,
+    fragmentDefinitionStudioRef,
+  ],
+);
+Mutation$StudioCreate _parserFn$Mutation$StudioCreate(
+  Map<String, dynamic> data,
+) => Mutation$StudioCreate.fromJson(data);
+typedef OnMutationCompleted$Mutation$StudioCreate = FutureOr<void> Function(
+  Map<String, dynamic>?,
+  Mutation$StudioCreate?,
+);
+
+class Options$Mutation$StudioCreate
+    extends graphql.MutationOptions<Mutation$StudioCreate> {
+  Options$Mutation$StudioCreate({
+    String? operationName,
+    required Variables$Mutation$StudioCreate variables,
+    graphql.FetchPolicy? fetchPolicy,
+    graphql.ErrorPolicy? errorPolicy,
+    graphql.CacheRereadPolicy? cacheRereadPolicy,
+    Object? optimisticResult,
+    Mutation$StudioCreate? typedOptimisticResult,
+    graphql.Context? context,
+    OnMutationCompleted$Mutation$StudioCreate? onCompleted,
+    graphql.OnMutationUpdate<Mutation$StudioCreate>? update,
+    graphql.OnError? onError,
+  }) : onCompletedWithParsed = onCompleted,
+       super(
+         variables: variables.toJson(),
+         operationName: operationName ?? 'StudioCreate',
+         fetchPolicy: fetchPolicy,
+         errorPolicy: errorPolicy,
+         cacheRereadPolicy: cacheRereadPolicy,
+         optimisticResult: optimisticResult ?? typedOptimisticResult?.toJson(),
+         context: context,
+         onCompleted: onCompleted == null
+             ? null
+             : (data) => onCompleted(
+                 data,
+                 data == null ? null : _parserFn$Mutation$StudioCreate(data),
+               ),
+         update: update,
+         onError: onError,
+         document: documentNodeMutationStudioCreate,
+         parserFn: _parserFn$Mutation$StudioCreate,
+       );
+
+  final OnMutationCompleted$Mutation$StudioCreate? onCompletedWithParsed;
+
+  @override
+  List<Object?> get properties => [
+    ...super.onCompleted == null
+        ? super.properties
+        : super.properties.where((property) => property != onCompleted),
+    onCompletedWithParsed,
+  ];
+}
+
+class WatchOptions$Mutation$StudioCreate
+    extends graphql.WatchQueryOptions<Mutation$StudioCreate> {
+  WatchOptions$Mutation$StudioCreate({
+    String? operationName,
+    required Variables$Mutation$StudioCreate variables,
+    graphql.FetchPolicy? fetchPolicy,
+    graphql.ErrorPolicy? errorPolicy,
+    graphql.CacheRereadPolicy? cacheRereadPolicy,
+    Object? optimisticResult,
+    Mutation$StudioCreate? typedOptimisticResult,
+    graphql.Context? context,
+    Duration? pollInterval,
+    bool? eagerlyFetchResults,
+    bool carryForwardDataOnException = true,
+    bool fetchResults = false,
+  }) : super(
+         variables: variables.toJson(),
+         operationName: operationName ?? 'StudioCreate',
+         fetchPolicy: fetchPolicy,
+         errorPolicy: errorPolicy,
+         cacheRereadPolicy: cacheRereadPolicy,
+         optimisticResult: optimisticResult ?? typedOptimisticResult?.toJson(),
+         context: context,
+         document: documentNodeMutationStudioCreate,
+         pollInterval: pollInterval,
+         eagerlyFetchResults: eagerlyFetchResults,
+         carryForwardDataOnException: carryForwardDataOnException,
+         fetchResults: fetchResults,
+         parserFn: _parserFn$Mutation$StudioCreate,
+       );
+}
+
+extension ClientExtension$Mutation$StudioCreate on graphql.GraphQLClient {
+  Future<graphql.QueryResult<Mutation$StudioCreate>> mutate$StudioCreate(
+    Options$Mutation$StudioCreate options,
+  ) async => await this.mutate(options);
+
+  graphql.ObservableQuery<Mutation$StudioCreate> watchMutation$StudioCreate(
+    WatchOptions$Mutation$StudioCreate options,
+  ) => this.watchMutation(options);
+}

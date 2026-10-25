@@ -20,7 +20,11 @@ class PlayerTransition {
     required double topInset,
     double videoAspect = 16 / 9,
     double progressBarHeight = 2,
+    double? expandedWidth,
   }) {
+    // The video's column when expanded: the whole width, or its share on
+    // wide windows ([splitShare]).
+    final width = expandedWidth ?? screenWidth;
     final range = maxHeight - minHeight;
     final progress = range <= 0 ? 1.0 : ((height - minHeight) / range).clamp(0.0, 1.0);
     final grow = Curves.easeOut.transform((progress / growPhase).clamp(0.0, 1.0));
@@ -29,15 +33,15 @@ class PlayerTransition {
     final miniVideoWidth = miniVideoHeight * 16 / 9;
     // Wider than 16:9 keeps the 16:9 box (letterboxed), portrait videos get
     // more height.
-    final expandedVideoHeight = (screenWidth / videoAspect)
-        .clamp(screenWidth * 9 / 16, (maxHeight * maxVideoShare).clamp(screenWidth * 9 / 16, double.infinity));
+    final expandedVideoHeight =
+        (width / videoAspect).clamp(width * 9 / 16, (maxHeight * maxVideoShare).clamp(width * 9 / 16, double.infinity));
 
     final topPadding = topInset * grow;
     // Never taller than the space the panel currently has.
     final maxVideoHeight = (height - topPadding - progressBarHeight).clamp(0.0, double.infinity);
     final videoHeight = lerpDouble(miniVideoHeight, expandedVideoHeight, grow)!.clamp(0.0, maxVideoHeight);
-    final baseVideoHeight = lerpDouble(miniVideoHeight, screenWidth * 9 / 16, grow)!.clamp(0.0, videoHeight);
-    final videoWidth = lerpDouble(miniVideoWidth, screenWidth, grow)!.clamp(0.0, screenWidth);
+    final baseVideoHeight = lerpDouble(miniVideoHeight, width * 9 / 16, grow)!.clamp(0.0, videoHeight);
+    final videoWidth = lerpDouble(miniVideoWidth, width, grow)!.clamp(0.0, width);
 
     return PlayerTransition._(
       progress: progress,
@@ -59,6 +63,17 @@ class PlayerTransition {
     required this.miniBarOpacity,
     required this.detailsOpacity,
   });
+
+  /// From this window width the expanded player puts the video and its
+  /// details in a column on the left and "Up next" on the right (tablets).
+  static const splitBreakpoint = 840.0;
+
+  /// The left column's share of the width in that layout: half the width,
+  /// so the video takes a quarter of a 16:9 screen instead of all of it.
+  static const splitShare = 0.5;
+
+  /// The width of the expanded video's column for a window [width].
+  static double columnWidth(double width) => width >= splitBreakpoint ? width * splitShare : width;
 
   /// Share of the drag distance after which the video has its full size.
   static const growPhase = 0.4;

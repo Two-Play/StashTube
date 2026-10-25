@@ -168,6 +168,62 @@ class PlayQueueNotifier extends Notifier<PlayQueue?> {
 
 final playQueueProvider = NotifierProvider<PlayQueueNotifier, PlayQueue?>(PlayQueueNotifier.new);
 
+/// A scene left in the open player, and where.
+typedef PlayerHistoryEntry = ({Scene scene, double at});
+
+/// The scenes left in the open player, like a browser's history: [back]
+/// (newest last) and, after going back, [forward] (next one last).
+class PlayerHistory {
+  const PlayerHistory({this.back = const [], this.forward = const []});
+
+  final List<PlayerHistoryEntry> back;
+  final List<PlayerHistoryEntry> forward;
+
+  bool get canGoBack => back.isNotEmpty;
+  bool get canGoForward => forward.isNotEmpty;
+  bool get isEmpty => back.isEmpty && forward.isEmpty;
+}
+
+/// See [PlayerHistory]; [NowPlayingNotifier.goBack]/[NowPlayingNotifier.goForward]
+/// move through it.
+class PlayerHistoryNotifier extends Notifier<PlayerHistory> {
+  /// Enough to retrace a browsing session, not a whole evening.
+  static const limit = 20;
+
+  @override
+  PlayerHistory build() => const PlayerHistory();
+
+  static List<PlayerHistoryEntry> _add(List<PlayerHistoryEntry> list, PlayerHistoryEntry entry) {
+    final kept = [for (final e in list) if (e.scene.id != entry.scene.id) e, entry];
+    return kept.length > limit ? kept.sublist(kept.length - limit) : kept;
+  }
+
+  /// A new scene was picked: [left] goes back, the way forward is gone.
+  void push(PlayerHistoryEntry left) => state = PlayerHistory(back: _add(state.back, left));
+
+  /// The scene to go back to; [current] becomes the way forward.
+  PlayerHistoryEntry? back(PlayerHistoryEntry current) {
+    if (!state.canGoBack) return null;
+    final target = state.back.last;
+    state = PlayerHistory(back: state.back.sublist(0, state.back.length - 1), forward: _add(state.forward, current));
+    return target;
+  }
+
+  /// The scene to go forward to; [current] goes back again.
+  PlayerHistoryEntry? forward(PlayerHistoryEntry current) {
+    if (!state.canGoForward) return null;
+    final target = state.forward.last;
+    state = PlayerHistory(back: _add(state.back, current), forward: state.forward.sublist(0, state.forward.length - 1));
+    return target;
+  }
+
+  void clear() {
+    if (!state.isEmpty) state = const PlayerHistory();
+  }
+}
+
+final playerHistoryProvider = NotifierProvider<PlayerHistoryNotifier, PlayerHistory>(PlayerHistoryNotifier.new);
+
 /// Emits true when the current media played to the end.
 final playerCompletedProvider = StreamProvider<bool>((ref) => ref.watch(playerProvider).stream.completed);
 
@@ -314,7 +370,7 @@ class NowPlayingNotifier extends Notifier<Scene?> {
     });
     final queue = PlayQueue(title: title, scenes: scenes, index: start.clamp(0, scenes.length - 1));
     ref.read(playQueueProvider.notifier).set(queue);
-    play(queue.scenes[queue.index]);
+    play(queue.scenes[queue.index], remember: false);
   }
 
   /// Next scene of the queue, if any.
@@ -322,7 +378,7 @@ class NowPlayingNotifier extends Notifier<Scene?> {
     final queue = ref.read(playQueueProvider);
     if (queue == null || !queue.hasNext) return;
     ref.read(playQueueProvider.notifier).set(queue.at(queue.index + 1));
-    play(queue.scenes[queue.index + 1]);
+    play(queue.scenes[queue.index + 1], remember: false);
   }
 
   /// How far into a scene "previous" restarts it instead of going back.
@@ -343,16 +399,25 @@ class NowPlayingNotifier extends Notifier<Scene?> {
       return;
     }
     ref.read(playQueueProvider.notifier).set(queue.at(queue.index - 1));
-    play(queue.scenes[queue.index - 1]);
+    play(queue.scenes[queue.index - 1], remember: false);
   }
 
   /// Plays [scene]. Inside the active queue this moves the queue position;
   /// any other scene ends the queue.
   /// Plays [scene], from [at] seconds if given (e.g. a marker), else from
   /// its resume position.
-  void play(Scene scene, {double? at}) {
+  ///
+  /// Picked in the open player ("Up next", a channel opened from it), the
+  /// scene it replaces goes into [playerHistoryProvider] unless [remember]
+  /// is false (queue moves, going back or forward).
+  void play(Scene scene, {double? at, bool remember = true}) {
     final url = scene.streamUrl;
     if (url == null) return;
+
+    final here = _here;
+    if (remember && here != null && here.scene.id != scene.id && _isOpen) {
+      ref.read(playerHistoryProvider.notifier).push(here);
+    }
 
     final queue = ref.read(playQueueProvider);
     if (queue != null) {
@@ -465,6 +530,36 @@ class NowPlayingNotifier extends Notifier<Scene?> {
         );
   }
 
+  /// Whether the panel is open, not just the mini bar.
+  bool get _isOpen => ref.read(miniplayerHeightProvider).value > kMiniPlayerHeight;
+
+  /// The current scene and position, for the history.
+  PlayerHistoryEntry? get _here {
+    final scene = state;
+    return scene == null ? null : (scene: scene, at: currentPosition().inMilliseconds / 1000);
+  }
+
+  /// Back to the scene left last in the open player, where it was; false
+  /// when there is none.
+  bool goBack() {
+    if (!ref.read(playerHistoryProvider).canGoBack) return false;
+    final here = _here;
+    final entry = here == null ? null : ref.read(playerHistoryProvider.notifier).back(here);
+    if (entry == null) return false;
+    play(entry.scene, at: entry.at, remember: false);
+    return true;
+  }
+
+  /// Forward again after [goBack]; false when there is nothing.
+  bool goForward() {
+    if (!ref.read(playerHistoryProvider).canGoForward) return false;
+    final here = _here;
+    final entry = here == null ? null : ref.read(playerHistoryProvider.notifier).forward(here);
+    if (entry == null) return false;
+    play(entry.scene, at: entry.at, remember: false);
+    return true;
+  }
+
   void expand() => ref.read(miniplayerControllerProvider).expand();
 
   void collapse() => ref.read(miniplayerControllerProvider).collapse();
@@ -485,6 +580,7 @@ class NowPlayingNotifier extends Notifier<Scene?> {
   void close() {
     ref.read(playerClosingProvider.notifier).set(false);
     ref.read(playQueueProvider.notifier).set(null);
+    ref.read(playerHistoryProvider.notifier).clear();
     _autoplay?.close();
     _autoplay = null;
     unawaited(ref.read(playbackTrackerProvider).stop());

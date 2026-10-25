@@ -54,3 +54,11 @@ mutation PerformerEdit($input: PerformerUpdateInput!) {
 mutation PerformerSetFavorite($id: ID!, $favorite: Boolean!) {
   performerUpdate(input: { id: $id, favorite: $favorite }) { id favorite }
 }
+
+mutation PerformerSetRating($id: ID!, $rating100: Int) {
+  performerUpdate(input: { id: $id, rating100: $rating100 }) { id rating100 }
+}
+
+mutation PerformerCreate($name: String!) {
+  performerCreate(input: { name: $name }) { ...PerformerFields }
+}

@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/config/design_tokens.dart';
+import '../performers/favorite_button.dart';
+import '../channel/channel_rating.dart';
 import '../../core/config/haptics.dart';
 import '../../data/models/list_queries.dart';
 import '../../data/models/studio.dart';
@@ -90,6 +93,12 @@ class _StudioPageState extends ConsumerState<StudioPage> {
                   context.l10n.scenesCount(s.sceneCount),
                   if (s.children.isNotEmpty) context.l10n.subStudiosCount(s.children.length),
                 ].join(' • '),
+                // Each only on servers that have it.
+                action: Wrap(
+                  spacing: AppSpacing.s,
+                  runSpacing: AppSpacing.xs,
+                  children: [StudioFavoriteButton(studioId: s.id), _StudioRating(studioId: s.id)],
+                ),
               ),
               if (s.parent case final parent?) _ParentChip(parent: parent),
               if (s.children.isNotEmpty) ...[
@@ -241,6 +250,23 @@ class _SubStudios extends ConsumerWidget {
           ),
         ),
       ],
+    );
+  }
+}
+
+/// The studio's stars, on servers with studio ratings.
+class _StudioRating extends ConsumerWidget {
+  const _StudioRating({required this.studioId});
+
+  final String studioId;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    if (effectiveStudioStars(ref, studioId) == null) return const SizedBox.shrink();
+    return ChannelRatingButton(
+      kind: ChannelKind.studio,
+      id: studioId,
+      stars: (ref) => effectiveStudioStars(ref, studioId) ?? 0,
     );
   }
 }
