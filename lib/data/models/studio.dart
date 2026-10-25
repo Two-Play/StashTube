@@ -27,7 +27,7 @@ class Studio {
   final List<Studio> children;
 
   factory Studio.fromRef(Fragment$StudioRef s, {int sceneCount = 0}) =>
-      Studio(id: s.id, name: s.name, imageUrl: nonEmpty(s.image_path), sceneCount: sceneCount);
+      Studio(id: s.id, name: s.name, imageUrl: stashImageUrl(s.image_path), sceneCount: sceneCount);
 
   factory Studio.fromFields(Fragment$StudioFields s) {
     final parent = s.parent_studio;
@@ -35,7 +35,7 @@ class Studio {
     return Studio(
       id: s.id,
       name: s.name,
-      imageUrl: nonEmpty(s.image_path),
+      imageUrl: stashImageUrl(s.image_path),
       url: nonEmpty(s.url),
       details: nonEmpty(details?.details),
       sceneCount: s.scene_count,

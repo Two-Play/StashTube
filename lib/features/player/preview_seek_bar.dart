@@ -80,6 +80,10 @@ class _PreviewSeekBarState extends ConsumerState<PreviewSeekBar> {
   final _subscriptions = <StreamSubscription<Object?>>[];
 
   Duration _position = Duration.zero;
+
+  /// [_position] as a fraction of the bar, for the painter: mpv reports the
+  /// position every frame, which repaints the bar without rebuilding it.
+  final _played = ValueNotifier<double>(0);
   Duration _duration = Duration.zero;
   Duration _buffer = Duration.zero;
 
@@ -129,10 +133,18 @@ class _PreviewSeekBarState extends ConsumerState<PreviewSeekBar> {
     _duration = player.state.duration;
     _buffer = player.state.buffer;
     _subscriptions.addAll([
-      player.stream.position.listen((v) => setState(() => _position = v)),
+      player.stream.position.listen(_onPosition),
       player.stream.duration.listen((v) => setState(() => _duration = v)),
       player.stream.buffer.listen((v) => setState(() => _buffer = v)),
     ]);
+  }
+
+  void _onPosition(Duration position) {
+    final second = _position.inSeconds;
+    _position = position;
+    _played.value = _fractionOf(position);
+    // A rebuild only for the spoken value (screen readers), once a second.
+    if (position.inSeconds != second) setState(() {});
   }
 
   @override
@@ -148,6 +160,7 @@ class _PreviewSeekBarState extends ConsumerState<PreviewSeekBar> {
     for (final s in _subscriptions) {
       s.cancel();
     }
+    _played.dispose();
     super.dispose();
   }
 
@@ -224,6 +237,8 @@ class _PreviewSeekBarState extends ConsumerState<PreviewSeekBar> {
     final colors = Theme.of(context).colorScheme;
     final remote = widget.remote;
     final played = _drag ?? _fractionOf(remote?.position ?? _position);
+    // The duration or the window may have changed since the last position.
+    if (remote == null) _played.value = _fractionOf(_position);
     final headers = ref.watch(authHeadersProvider);
     final thumbs = _loadThumbnails ? ref.watch(scrubThumbnailsProvider(widget.sceneId)).value : null;
     if (thumbs != null && thumbs.spriteUrl != _precachedSprite) {
@@ -304,6 +319,8 @@ class _PreviewSeekBarState extends ConsumerState<PreviewSeekBar> {
                   child: CustomPaint(
                     painter: SeekBarPainter(
                       played: played,
+                      // Follows the player between rebuilds.
+                      progress: _drag == null && remote == null ? _played : null,
                       buffered: remote == null ? _fractionOf(_buffer) : 0,
                       dragging: _drag != null,
                       playedColor: colors.primary,
@@ -453,16 +470,24 @@ class SpriteFrame extends StatelessWidget {
 @visibleForTesting
 class SeekBarPainter extends CustomPainter {
   SeekBarPainter({
-    required this.played,
+    required this._played,
     required this.buffered,
     required this.dragging,
     required this.playedColor,
     Color? rangeColor,
     this.chapters = const [],
     this.ranges = const [],
-  }) : rangeColor = rangeColor ?? playedColor;
+    this.progress,
+  })  : rangeColor = rangeColor ?? playedColor,
+        super(repaint: progress);
 
-  final double played;
+  final double _played;
+
+  /// When given, the played fraction is read from it at paint time, and a
+  /// change repaints without a new painter.
+  final ValueListenable<double>? progress;
+
+  double get played => progress?.value ?? _played;
   final double buffered;
   final bool dragging;
   final Color playedColor;
@@ -530,6 +555,7 @@ class SeekBarPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(SeekBarPainter old) =>
+      old.progress != progress ||
       old.played != played ||
       old.buffered != buffered ||
       old.dragging != dragging ||

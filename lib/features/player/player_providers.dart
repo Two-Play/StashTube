@@ -4,7 +4,6 @@ import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:media_kit/media_kit.dart';
 import 'package:media_kit_video/media_kit_video.dart';
-import 'package:miniplayer/miniplayer.dart';
 
 import '../../core/config/server_config.dart';
 import '../../data/models/scene.dart';
@@ -16,6 +15,7 @@ import '../cast/cast_media.dart';
 import '../cast/cast_providers.dart';
 import '../cast/cast_service.dart' show CastKind;
 import 'playback_tracker.dart';
+import 'sliding_panel.dart';
 import 'video_zoom.dart';
 
 const double kMiniPlayerHeight = 64;
@@ -32,11 +32,7 @@ final videoControllerProvider = Provider<VideoController>(
   (ref) => VideoController(ref.watch(playerProvider)),
 );
 
-final miniplayerControllerProvider = Provider<MiniplayerController>((ref) {
-  final controller = MiniplayerController();
-  ref.onDispose(controller.dispose);
-  return controller;
-});
+final miniplayerControllerProvider = Provider<SlidingPanelController>((ref) => SlidingPanelController());
 
 /// Current miniplayer height in pixels; drives the bottom navigation bar.
 final miniplayerHeightProvider = Provider<ValueNotifier<double>>((ref) {
@@ -469,9 +465,9 @@ class NowPlayingNotifier extends Notifier<Scene?> {
         );
   }
 
-  void expand() => ref.read(miniplayerControllerProvider).animateToHeight(state: PanelState.MAX);
+  void expand() => ref.read(miniplayerControllerProvider).expand();
 
-  void collapse() => ref.read(miniplayerControllerProvider).animateToHeight(state: PanelState.MIN);
+  void collapse() => ref.read(miniplayerControllerProvider).collapse();
 
   /// Shows edited metadata for the playing scene without reopening it.
   void replaceScene(Scene scene) {
