@@ -3,7 +3,6 @@ import 'dart:math' show max;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../core/utils/picture_fit.dart';
 import '../core/config/haptics.dart';
 import '../core/config/theme.dart';
 import '../core/utils/format.dart';
@@ -363,10 +362,10 @@ class SceneThumbnail extends ConsumerWidget {
             child: AutoPreview(
               url: scene.webpUrl,
               videoUrl: scene.previewUrl,
-              fit: pictureFit(scene.aspect, 16 / 9),
+              fit: thumbnailFit(ref, scene.aspect, 16 / 9),
               child: StashImage(
                 scene.screenshotUrl,
-                fit: pictureFit(scene.aspect, 16 / 9),
+                fit: thumbnailFit(ref, scene.aspect, 16 / 9),
                 fallbackIcon: Icons.movie_outlined,
               ),
             ),

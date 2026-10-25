@@ -61,6 +61,20 @@ void main() {
     expect(fit(), BoxFit.cover, reason: 'crops a quarter at most');
   });
 
+  testWidgets('with "fill" in the settings every thumbnail is filled', (tester) async {
+    await tester.pumpWidget(ProviderScope(
+      overrides: [...testServerOnly, sceneCardConfigProvider.overrideWith(_FillCards.new)],
+      child: const MaterialApp(
+        home: Scaffold(
+          body: SceneThumbnail(
+            scene: Scene(id: '1', title: 'Tall', width: 1080, height: 1920, screenshotUrl: 'http://s/1.jpg'),
+          ),
+        ),
+      ),
+    ));
+    expect(tester.widget<StashImage>(find.byType(StashImage)).fit, BoxFit.cover);
+  });
+
   test('pictureFit covers only when it crops little', () {
     expect(pictureFit(16 / 9, 16 / 9), BoxFit.cover);
     expect(pictureFit(9 / 16, 16 / 9), BoxFit.contain);
@@ -123,4 +137,9 @@ class _Fixed extends SceneCardConfigNotifier {
 
   @override
   SceneCardConfig build() => config;
+}
+
+class _FillCards extends SceneCardConfigNotifier {
+  @override
+  SceneCardConfig build() => const SceneCardConfig(thumbnailFit: ThumbnailFit.fill);
 }

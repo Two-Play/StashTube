@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../core/utils/picture_fit.dart';
+import '../settings/scene_card_config.dart';
 import '../../core/config/haptics.dart';
 import '../../core/config/theme.dart';
 import '../../core/pagination/paging_mode.dart';
@@ -206,7 +206,7 @@ class MarkerTile extends ConsumerWidget {
     final theme = Theme.of(context);
     final muted = theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurfaceVariant);
     // A portrait scene's marker shows whole instead of zoomed to the width.
-    final fit = pictureFit(marker.scene.aspect, 16 / 9);
+    final fit = thumbnailFit(ref, marker.scene.aspect, 16 / 9);
     final still = StashImage(
       marker.screenshotUrl ?? marker.scene.screenshotUrl,
       fit: fit,

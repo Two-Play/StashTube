@@ -1897,6 +1897,15 @@ class AppLocalizationsEn extends AppLocalizations {
   String get cardChannelPerformers => 'Performers';
 
   @override
+  String get thumbnailFit => 'Thumbnails';
+
+  @override
+  String get thumbnailFitWhole => 'Show whole';
+
+  @override
+  String get thumbnailFitFill => 'Fill (crop)';
+
+  @override
   String get cardShowPlays => 'Show plays';
 
   @override
@@ -2513,4 +2522,67 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get previewsOnServerSubtitle =>
       'Whether Stash has created them, and generate missing ones';
+
+  @override
+  String get introSkip => 'Skip';
+
+  @override
+  String get introNext => 'Next';
+
+  @override
+  String get introDone => 'Let\'s go';
+
+  @override
+  String introProgress(int current, int total) {
+    return 'Step $current of $total';
+  }
+
+  @override
+  String get introTour => 'App tour';
+
+  @override
+  String get introTourSubtitle =>
+      'How StashTube works: player, shorts and loops, library';
+
+  @override
+  String get introWelcomeTitle => 'Welcome to StashTube';
+
+  @override
+  String get introWelcomeText =>
+      'Your Stash library, browsed like YouTube. Home shows new and random scenes with filters and sort chips; search finds scenes, images, galleries, performers and studios in one place.';
+
+  @override
+  String get introPlayerTitle => 'The player';
+
+  @override
+  String get introPlayerText =>
+      'Tap a video to play it; swipe the player down to keep it running in the mini bar. Double-tap the left or right of the video to skip, hold it for 2× speed, pinch to zoom. Open another video from \"Up next\" and the arrows beside play take you back and forth between them.';
+
+  @override
+  String get introShortsTitle => 'Shorts and loops';
+
+  @override
+  String get introShortsText =>
+      'The Shorts tab has two feeds, switched at its top: Shorts are short (portrait) videos to swipe through. Loops are scene markers, each repeating on its own like a GIF. The tune button picks your favorite tags, the length and \"portrait only\".';
+
+  @override
+  String get introLibraryTitle => 'Library and You';
+
+  @override
+  String get introLibraryText =>
+      'The library holds all scenes, images and galleries. \"You\" collects your history, watch later, groups, markers, performers, studios, tags and stats. Which tabs the bottom bar shows is up to you, in the settings.';
+
+  @override
+  String get introFavoritesTitle => 'Favorites and ratings';
+
+  @override
+  String get introFavoritesText =>
+      'Mark performers and studios as favorites and rate them and your scenes with stars. Favorites get their own feed, and long-pressing a tile or tapping its ⋮ shows more actions. You can also edit metadata and create performers, studios, tags and groups.';
+
+  @override
+  String get introSettingsTitle => 'Make it yours';
+
+  @override
+  String get introSettingsText =>
+      'Your avatar at the top right switches servers and opens the settings: app lock, previews, how thumbnails fit, haptics, playback and more. This tour is there too, under About.';
 }

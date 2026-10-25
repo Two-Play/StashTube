@@ -54,7 +54,11 @@ void main() {
     // The theme picker after the first login.
     await tap(tester, find.text('Dark'), wait: 1);
     await shot(tester, 'theme');
-    await tap(tester, find.text('Done'), wait: 5);
+    await tap(tester, find.text('Done'), wait: 2);
+
+    // Then the tour through the app.
+    await shot(tester, 'tour');
+    await tap(tester, find.text('Skip'), wait: 5);
 
     await shot(tester, 'home');
 
