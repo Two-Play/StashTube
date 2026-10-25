@@ -6,14 +6,31 @@ import '../../core/config/theme.dart';
 import '../../l10n/l10n.dart';
 import '../settings/theme_welcome.dart';
 
-/// One announcement: what a release brought, as bullet points.
-typedef ChangelogEntry = ({int id, String title, List<String> items});
+/// One announcement: what a release brought, one line per item, each with
+/// a fitting icon ([icons], as many as [items]).
+typedef ChangelogEntry = ({int id, String title, List<String> items, List<IconData> icons});
 
 /// The announcements, newest first. Add one per release with a higher [id]
 /// (not the version: the pipeline picks that only when it releases) and
-/// its texts in both ARB files, one bullet per line.
+/// its texts in both ARB files, one item per line, and an icon per item.
 List<ChangelogEntry> changelog(AppLocalizations l) => [
-      (id: 1, title: l.whatsNew1Title, items: _lines(l.whatsNew1)),
+      (
+        id: 1,
+        title: l.whatsNew1Title,
+        items: _lines(l.whatsNew1),
+        icons: const [
+          Icons.loop, // loops
+          Icons.swap_horiz, // back and forward
+          Icons.smart_display_outlined, // player, tablets
+          Icons.star_outline, // stars, favorites, creating
+          Icons.open_in_full, // full video from a short
+          Icons.fast_forward_outlined, // double tap to skip
+          Icons.dns_outlined, // server tasks
+          Icons.notifications_none, // favorites tab, ranges, notification
+          Icons.crop_outlined, // thumbnails, previews
+          Icons.search, // search, tour, fixes
+        ],
+      ),
     ];
 
 List<String> _lines(String text) => [
@@ -91,17 +108,23 @@ class WhatsNewSheet extends StatelessWidget {
                     const SizedBox(height: AppSpacing.l),
                     Text(entry.title, style: theme.textTheme.titleMedium),
                     const SizedBox(height: AppSpacing.s),
-                    for (final item in entry.items)
+                    for (var i = 0; i < entry.items.length; i++)
                       Padding(
-                        padding: const EdgeInsets.only(bottom: AppSpacing.s),
+                        padding: const EdgeInsets.only(bottom: AppSpacing.m),
                         child: Row(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Padding(
-                              padding: const EdgeInsets.only(top: 2, right: AppSpacing.m),
-                              child: Icon(Icons.auto_awesome, size: 16, color: theme.colorScheme.primary),
+                              padding: const EdgeInsets.only(right: AppSpacing.m),
+                              child: Icon(
+                                // A plain bullet if a translation has more lines
+                                // than icons.
+                                i < entry.icons.length ? entry.icons[i] : Icons.circle,
+                                size: i < entry.icons.length ? 20 : 6,
+                                color: theme.colorScheme.primary,
+                              ),
                             ),
-                            Expanded(child: Text(item, style: theme.textTheme.bodyMedium)),
+                            Expanded(child: Text(entry.items[i], style: theme.textTheme.bodyMedium)),
                           ],
                         ),
                       ),
