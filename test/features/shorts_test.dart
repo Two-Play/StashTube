@@ -90,12 +90,13 @@ Future<ProviderContainer> _container(_ShortsRepository repo, [ShortsSettings? se
   return c;
 }
 
-Future<ShortsFeedState> _loaded(ProviderContainer c) async {
-  c.listen(shortsFeedProvider, (_, _) {});
-  for (var i = 0; i < 20 && c.read(shortsFeedProvider).isLoading; i++) {
+Future<ShortsFeedState> _loaded(ProviderContainer c, [ShortsSource source = const ShortsSource.feed()]) async {
+  final provider = shortsFeedFamily(source);
+  c.listen(provider, (_, _) {});
+  for (var i = 0; i < 20 && c.read(provider).isLoading; i++) {
     await Future<void>.delayed(Duration.zero);
   }
-  return c.read(shortsFeedProvider);
+  return c.read(provider);
 }
 
 void main() {
@@ -182,14 +183,20 @@ void main() {
       expect(ShortsSettings.fromJson({'length': 'forever', 'tags': 'x', 'markers': 'some'}), const ShortsSettings());
     });
 
-    test('keep the marker choice', () {
-      const settings = ShortsSettings(markers: ShortsMarkers.only);
-      expect(ShortsSettings.fromJson(settings.toJson()), settings);
-      expect(settings, isNot(const ShortsSettings()));
+    test('the former "markers" choice is dropped: the markers are the loops now', () {
+      expect(ShortsSettings.fromJson({'markers': 'only'}), const ShortsSettings());
+      expect(const ShortsSettings().toJson().containsKey('markers'), isFalse);
+    });
+
+    test('the shorts/loops switch is stored, shorts by default', () async {
+      final c = await _container(_ShortsRepository());
+      expect(c.read(shortsModeProvider), ShortsMode.shorts);
+      await c.read(shortsModeProvider.notifier).set(ShortsMode.loops);
+      expect(c.read(sharedPreferencesProvider).getString('shorts_mode'), 'loops');
     });
   });
 
-  group('markers in the shorts', () {
+  group('loops (markers)', () {
     test('a marker plays from its start to its end, by default 20 s', () {
       final short = Short.marker(_marker('1', seconds: 30));
       expect(short.key, 'marker:1', reason: 'apart from its scene as a short video');
@@ -214,17 +221,24 @@ void main() {
       expect(MarkerQuery(tagIds: ['1'], seed: 3), isNot(MarkerQuery(tagIds: ['2'], seed: 3)));
     });
 
-    test('off by default: no markers are loaded', () async {
-      final repo = _ShortsRepository(markers: 5);
+    test('a marker opens only its clip, as an mpv EDL', () {
+      final short = Short.marker(_marker('1', seconds: 30));
+      final url = short.scene.streamUrl!;
+      expect(short.playbackUrl, 'edl://%${url.length}%$url,start=30.000,length=20.000');
+      expect(Short.video(_scene('a')).playbackUrl, _scene('a').streamUrl);
+    });
+
+    test('the shorts play no markers', () async {
+      final repo = _ShortsRepository(others: 2, markers: 5);
       final c = await _container(repo);
-      await _loaded(c);
+      expect((await _loaded(c)).items.map((s) => s.key), ['o0', 'o1']);
       expect(repo.markerQueries, isEmpty);
     });
 
-    test('"only markers" shows random markers with the chosen tags', () async {
-      final repo = _ShortsRepository(markers: 3);
-      final c = await _container(repo, const ShortsSettings(tags: [beach], markers: ShortsMarkers.only));
-      final feed = await _loaded(c);
+    test('the loops show random markers with the chosen tags, no videos', () async {
+      final repo = _ShortsRepository(others: 2, markers: 3);
+      final c = await _container(repo, const ShortsSettings(tags: [beach]));
+      final feed = await _loaded(c, const ShortsSource.loops());
       expect(feed.items.map((s) => s.key), ['marker:m0', 'marker:m1', 'marker:m2']);
       expect(feed.hasMore, isFalse);
       expect(repo.queries, isEmpty, reason: 'no whole videos');
@@ -233,17 +247,8 @@ void main() {
       expect(query.tagIds, ['1']);
     });
 
-    test('"with videos" takes turns, then continues with what is left', () async {
-      final c = await _container(
-        _ShortsRepository(others: 4, markers: 2),
-        const ShortsSettings(markers: ShortsMarkers.mixed),
-      );
-      expect((await _loaded(c)).items.map((s) => s.key), ['o0', 'marker:m0', 'o1', 'marker:m1', 'o2', 'o3']);
-    });
-
     test('"portrait videos only" applies to the markers, the length does not', () {
-      final query = const ShortsSettings(tags: [beach], markers: ShortsMarkers.mixed, length: ShortsLength.oneMinute)
-          .markerQuery!;
+      final query = const ShortsSettings(tags: [beach], length: ShortsLength.oneMinute).markerQuery;
       expect(query.portraitOnly, isTrue);
       expect(query.toMarkerFilter(), {
         'scene_filter': {
@@ -258,7 +263,7 @@ void main() {
         },
       });
       expect(
-        const ShortsSettings(markers: ShortsMarkers.only, portraitOnly: false).markerQuery!.toMarkerFilter(),
+        const ShortsSettings(portraitOnly: false).markerQuery.toMarkerFilter(),
         isNull,
       );
       // A studio's markers in portrait videos: one scene filter.
@@ -277,45 +282,24 @@ void main() {
       expect(MarkerQuery(portraitOnly: true, seed: 1), isNot(MarkerQuery(seed: 1)));
     });
 
-    test('the stored content choice reads as before', () {
-      for (final (stored, markers) in [
-        ('off', ShortsMarkers.off),
-        ('mixed', ShortsMarkers.mixed),
-        ('only', ShortsMarkers.only),
-      ]) {
-        expect(ShortsSettings.fromJson({'markers': stored}).markers, markers);
-      }
-    });
-
-    test('a server rejecting the marker query leaves the videos', () async {
-      final repo = _ShortsRepository(others: 3, markers: 2)
-        ..markerError = const StashApiException('Unknown field orientation');
-      final c = await _container(repo, const ShortsSettings(markers: ShortsMarkers.mixed));
-      final feed = await _loaded(c);
-      expect(feed.error, isNull);
-      expect(feed.items.map((s) => s.key), ['o0', 'o1', 'o2']);
-      expect(feed.hasMore, isFalse);
-      expect(repo.markerQueries, hasLength(1), reason: 'not asked again');
-    });
-
-    test('only markers show the server error', () async {
+    test('the loops show a server error', () async {
       final repo = _ShortsRepository(markers: 2)..markerError = const StashApiException('Unknown field orientation');
-      final c = await _container(repo, const ShortsSettings(markers: ShortsMarkers.only));
-      final feed = await _loaded(c);
+      final c = await _container(repo);
+      final feed = await _loaded(c, const ShortsSource.loops());
       expect(feed.items, isEmpty);
       expect(feed.error, isA<StashApiException>());
     });
 
-    test('without a connection the mixed feed shows the error', () async {
-      final repo = _ShortsRepository(others: 3, markers: 2)
-        ..markerError = const StashApiException('offline', isNetworkError: true);
-      final c = await _container(repo, const ShortsSettings(markers: ShortsMarkers.mixed));
-      expect((await _loaded(c)).error, isA<StashApiException>());
+    test('loops and shorts are different feeds of the tab', () {
+      expect(const ShortsSource.loops(), isNot(const ShortsSource.feed()));
+      expect(const ShortsSource.loops().isFeed, isTrue);
+      expect(const ShortsSource.loops().playsMarkers, isTrue);
+      expect(const ShortsSource.feed().playsMarkers, isFalse);
     });
 
     test('performer shorts leave the markers out', () async {
       final repo = _ShortsRepository(others: 2, markers: 2);
-      final c = await _container(repo, const ShortsSettings(markers: ShortsMarkers.only));
+      final c = await _container(repo);
       final provider = shortsFeedFamily(const ShortsSource.performer('7'));
       c.listen(provider, (_, _) {});
       for (var i = 0; i < 20 && c.read(provider).isLoading; i++) {
@@ -436,7 +420,7 @@ void main() {
       final repo = _ShortsRepository(others: 5, markers: 30);
       final c = await _container(
         repo,
-        const ShortsSettings(tags: [beach], markers: ShortsMarkers.off, length: ShortsLength.oneMinute),
+        const ShortsSettings(tags: [beach], length: ShortsLength.oneMinute),
       );
       final grid = MarkerQuery(sort: MarkerSort.title, performerId: '7');
       final feed = await loaded(c, ShortsSource.markers(grid));

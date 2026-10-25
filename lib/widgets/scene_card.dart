@@ -355,10 +355,20 @@ class SceneThumbnail extends ConsumerWidget {
         fit: StackFit.expand,
         children: [
           // In lists, the first fully shown video plays its preview.
-          AutoPreview(
-            url: scene.webpUrl,
-            videoUrl: scene.previewUrl,
-            child: StashImage(scene.screenshotUrl, fallbackIcon: Icons.movie_outlined),
+          // A portrait video shows whole on black instead of zoomed to the
+          // width (pictureFit), its preview too.
+          ColoredBox(
+            color: Colors.black,
+            child: AutoPreview(
+              url: scene.webpUrl,
+              videoUrl: scene.previewUrl,
+              fit: thumbnailFit(ref, scene.aspect, 16 / 9),
+              child: StashImage(
+                scene.screenshotUrl,
+                fit: thumbnailFit(ref, scene.aspect, 16 / 9),
+                fallbackIcon: Icons.movie_outlined,
+              ),
+            ),
           ),
           if (resolution != null && !compact)
             Positioned(left: AppSpacing.s, bottom: AppSpacing.s, child: _Badge(text: resolution)),

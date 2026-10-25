@@ -202,6 +202,22 @@ void main() {
     expect(seconds(player.seeks).last, 30);
   });
 
+  testWidgets('the other side counts from where the last seek went, though mpv lags', (tester) async {
+    await pump(tester);
+    // mpv reports the old position for a moment after a seek.
+    player.lagging = true;
+    await tap(tester, left(tester));
+    await tap(tester, left(tester));
+    await tap(tester, left(tester));
+    expect(seconds(player.seeks), [25, 20]);
+    await tap(tester, right(tester));
+    expect(seconds(player.seeks).last, 25, reason: '5 s on from 0:20, not from the stale 0:30');
+    expect(find.text('5 seconds'), findsOneWidget);
+    await tap(tester, right(tester));
+    expect(seconds(player.seeks).last, 30);
+    expect(find.text('10 seconds'), findsOneWidget, reason: 'counts up from the start again');
+  });
+
   testWidgets('a tap in the middle ends the sequence and toggles the controls', (tester) async {
     await pump(tester);
     await tap(tester, right(tester));
@@ -266,7 +282,7 @@ void main() {
 
     await tap(tester, left(tester));
     await tap(tester, left(tester));
-    expect(seconds(cast.seeks).last, 15);
+    expect(seconds(cast.seeks).last, 25, reason: 'back from where the last seek went, not the TV\'s late report');
     await tester.pump(StashVideoControls.seekSequenceWindow);
   });
 

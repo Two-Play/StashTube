@@ -22,6 +22,7 @@ import '../security/app_lock.dart';
 import '../security/app_lock_gate.dart';
 import '../server_tasks/server_tasks_page.dart';
 import '../shell/nav_bar_config.dart';
+import '../intro/intro_tour.dart';
 import 'about.dart';
 import 'appearance_picker.dart';
 import 'nav_bar_settings_page.dart';
@@ -466,6 +467,19 @@ class PreviewSettingsPage extends ConsumerWidget {
             onChanged: (channel) => ref.read(sceneCardConfigProvider.notifier).set(cardConfig.copyWith(channel: channel)),
           ),
         ),
+        SettingsDropdownTile(
+          leading: const Icon(Icons.crop_outlined),
+          title: Text(l.thumbnailFit),
+          dropdown: DropdownButton<ThumbnailFit>(
+            value: cardConfig.thumbnailFit,
+            underline: const SizedBox.shrink(),
+            items: [
+              DropdownMenuItem(value: ThumbnailFit.whole, child: Text(l.thumbnailFitWhole)),
+              DropdownMenuItem(value: ThumbnailFit.fill, child: Text(l.thumbnailFitFill)),
+            ],
+            onChanged: (fit) => ref.read(sceneCardConfigProvider.notifier).set(cardConfig.copyWith(thumbnailFit: fit)),
+          ),
+        ),
         SwitchListTile(
           secondary: const Icon(Icons.visibility_outlined),
           title: Text(l.cardShowPlays),
@@ -503,7 +517,19 @@ class AboutSettingsPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) =>
-      SettingsSubPage(title: context.l10n.sectionAbout, children: const [AboutSettings()]);
+      SettingsSubPage(
+        title: context.l10n.sectionAbout,
+        children: [
+          // The tour from the first login, again.
+          ListTile(
+            leading: const Icon(Icons.tour_outlined),
+            title: Text(context.l10n.introTour),
+            subtitle: Text(context.l10n.introTourSubtitle),
+            onTap: () => showIntroTour(context),
+          ),
+          const AboutSettings(),
+        ],
+      );
 }
 
 class SettingsSectionTitle extends StatelessWidget {
