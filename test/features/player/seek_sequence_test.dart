@@ -127,6 +127,22 @@ void main() {
 
   List<int> seconds(List<Duration> seeks) => [for (final s in seeks) s.inSeconds];
 
+  testWidgets('fingers still down when the controls go away cause no errors', (tester) async {
+    // A swipe down collapses the player and removes the controls while the
+    // fingers are still on the screen; their events keep arriving.
+    await pump(tester);
+    final one = await tester.startGesture(left(tester));
+    final two = await tester.startGesture(right(tester), pointer: 2);
+    await one.moveBy(const Offset(10, 0));
+    await tester.pumpWidget(const SizedBox());
+    await one.moveBy(const Offset(0, 40));
+    await two.moveBy(const Offset(0, 40));
+    await one.up();
+    await two.up();
+    await tester.pump(const Duration(seconds: 1)); // gesture timers run out
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('every further tap skips further: 5, 10, 20, 30, 40 s', (tester) async {
     await pump(tester);
     await tap(tester, right(tester));

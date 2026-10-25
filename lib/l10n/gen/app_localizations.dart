@@ -4115,7 +4115,7 @@ abstract class AppLocalizations {
   /// No description provided for @previewSourceVideoHint.
   ///
   /// In en, this message translates to:
-  /// **'Video previews play in a video player of their own: more data, battery and memory than WebP, and slower to start on older devices. Markers keep playing the WebP previews.'**
+  /// **'Video previews use the phone\'s video decoder and play smoothly; each one opens a short-lived video player of its own. Animated images are decoded frame by frame and can stutter with large previews. Markers keep playing the WebP previews.'**
   String get previewSourceVideoHint;
 
   /// No description provided for @previewsOnServer.

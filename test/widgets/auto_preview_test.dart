@@ -20,7 +20,13 @@ void main() {
     List<Override> overrides = const [],
   }) =>
       tester.pumpWidget(ProviderScope(
-        overrides: [...testServer, feedPreviewsProvider.overrideWithBuild((ref, notifier) => previews), ...overrides],
+        overrides: [
+          ...testServer,
+          feedPreviewsProvider.overrideWithBuild((ref, notifier) => previews),
+          // The WebP: a video preview would need the native player.
+          previewSourceProvider.overrideWithBuild((ref, notifier) => PreviewSource.animatedImage),
+          ...overrides,
+        ],
         child: MaterialApp(
           home: Scaffold(
             body: AutoPreviewScope(
@@ -140,6 +146,16 @@ void main() {
       await tester.pump(const Duration(seconds: 1));
       expect(playing(tester), ['http://s/0.webp']);
       expect(asked, isFalse);
+    });
+
+    test('previews play the MP4 by default; a stored choice wins', () async {
+      SharedPreferences.setMockInitialValues({});
+      final prefs = await SharedPreferences.getInstance();
+      final c = ProviderContainer(overrides: [sharedPreferencesProvider.overrideWithValue(prefs)]);
+      addTearDown(c.dispose);
+      expect(c.read(previewSourceProvider), PreviewSource.video);
+      await c.read(previewSourceProvider.notifier).set(PreviewSource.animatedImage);
+      expect(prefs.getString('preview_source'), 'animatedImage');
     });
 
     test('the setting is stored, off by default', () async {

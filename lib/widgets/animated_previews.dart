@@ -115,9 +115,11 @@ bool previewsPlay(BuildContext context, WidgetRef ref, NotifierProvider<Notifier
     !MediaQuery.disableAnimationsOf(context) &&
     (!ref.watch(previewsWifiOnlyProvider) || ref.watch(unmeteredConnectionProvider));
 
-/// What the lists' previews play: Stash's animated WebP (light, but Stash
-/// only creates them when asked) or its MP4 preview (created by default,
-/// but needs a video player). Markers always play the WebP.
+/// What the lists' previews play: Stash's MP4 preview (the default: Stash
+/// creates it by default, and the hardware decoder plays it smoothly) or its
+/// animated WebP (only created when asked; Flutter decodes every frame in
+/// software, which dropped frames with large portrait previews). Markers
+/// always play the WebP.
 enum PreviewSource { animatedImage, video }
 
 class PreviewSourceNotifier extends Notifier<PreviewSource> {
@@ -127,9 +129,9 @@ class PreviewSourceNotifier extends Notifier<PreviewSource> {
   PreviewSource build() {
     try {
       final name = ref.watch(sharedPreferencesProvider).getString(_key);
-      return PreviewSource.values.where((s) => s.name == name).firstOrNull ?? PreviewSource.animatedImage;
+      return PreviewSource.values.where((s) => s.name == name).firstOrNull ?? PreviewSource.video;
     } catch (_) {
-      return PreviewSource.animatedImage;
+      return PreviewSource.video;
     }
   }
 

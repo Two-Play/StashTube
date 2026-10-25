@@ -35,7 +35,7 @@ class Performer {
   factory Performer.fromRef(Fragment$PerformerRef p, {String? country, bool favorite = false}) => Performer(
         id: p.id,
         name: p.name,
-        imageUrl: nonEmpty(p.image_path),
+        imageUrl: stashImageUrl(p.image_path),
         country: nonEmpty(country),
         favorite: favorite,
       );
@@ -44,7 +44,7 @@ class Performer {
         id: p.id,
         name: p.name,
         disambiguation: nonEmpty(p.disambiguation),
-        imageUrl: nonEmpty(p.image_path),
+        imageUrl: stashImageUrl(p.image_path),
         country: nonEmpty(p.country),
         birthdate: parseDate(p.birthdate),
         gender: p.gender == null ? null : toJson$Enum$GenderEnum(p.gender!),
