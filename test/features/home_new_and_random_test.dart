@@ -48,7 +48,7 @@ class _Playing extends NowPlayingNotifier {
   Scene? build() => null;
 
   @override
-  void play(Scene scene, {double? at}) => played.add(scene.id);
+  void play(Scene scene, {double? at, bool remember = true}) => played.add(scene.id);
 }
 
 void main() {

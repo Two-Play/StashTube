@@ -43,7 +43,7 @@ class _Playing extends NowPlayingNotifier {
   Scene? build() => null;
 
   @override
-  void play(Scene scene, {double? at}) => played.add((scene.id, at));
+  void play(Scene scene, {double? at, bool remember = true}) => played.add((scene.id, at));
 }
 
 class _TagRepository implements StashRepository {

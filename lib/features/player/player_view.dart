@@ -71,9 +71,10 @@ class _PlayerPanelState extends ConsumerState<PlayerPanel> {
   /// expanding doesn't build and load "Up next" mid-animation.
   bool _keepDetails = false;
 
-  /// The details widget, reused while only the panel's height changes, so
-  /// the frames of the transition don't rebuild the list.
-  PlayerDetails? _details;
+  /// The details widgets (info and list, or both in one), reused while only
+  /// the panel's height changes, so the frames of the transition don't
+  /// rebuild them.
+  final _details = <PlayerDetailsPart, PlayerDetails>{};
 
   @override
   void didUpdateWidget(PlayerPanel oldWidget) {
@@ -81,11 +82,26 @@ class _PlayerPanelState extends ConsumerState<PlayerPanel> {
     if (oldWidget.scene.id != widget.scene.id) _detailsScroll.value = 0;
   }
 
-  PlayerDetails _detailsFor(Scene scene, double topSpacer) {
-    final details = _details;
+  PlayerDetails _detailsFor(Scene scene, double topSpacer, PlayerDetailsPart part) {
+    final details = _details[part];
     if (details != null && details.scene == scene && details.topSpacer == topSpacer) return details;
-    return _details = PlayerDetails(scene: scene, topSpacer: topSpacer);
+    return _details[part] = PlayerDetails(scene: scene, topSpacer: topSpacer, part: part);
   }
+
+  /// Hidden while collapsed (kept, see [_keepDetails]), faded in as the
+  /// panel opens.
+  Widget _fading(PlayerTransition t, Widget child) => Visibility(
+        visible: t.showDetails,
+        maintainState: true,
+        child: Opacity(
+          opacity: t.detailsOpacity,
+          // Fading repaints only the opacity, not the list.
+          child: RepaintBoundary(
+            // Ink of the list tiles above the panel's color.
+            child: Material(type: MaterialType.transparency, child: child),
+          ),
+        ),
+      );
 
   @override
   void dispose() {
@@ -107,6 +123,10 @@ class _PlayerPanelState extends ConsumerState<PlayerPanel> {
     });
     final colors = Theme.of(context).colorScheme;
     final media = MediaQuery.of(context);
+    // Tablets: the video and its info in a column on the left, "Up next"
+    // on the right, instead of a video across the whole width.
+    final columnWidth = PlayerTransition.columnWidth(media.size.width);
+    final split = columnWidth < media.size.width;
     final t = PlayerTransition(
       height: height,
       minHeight: kMiniPlayerHeight,
@@ -115,6 +135,7 @@ class _PlayerPanelState extends ConsumerState<PlayerPanel> {
       topInset: media.padding.top,
       // Portrait videos get a taller video area (4.20).
       videoAspect: ref.watch(_videoAspectProvider(scene)) ?? 16 / 9,
+      expandedWidth: columnWidth,
     );
 
     // Only status bar fields: the collapsed panel sits over Android's
@@ -129,7 +150,7 @@ class _PlayerPanelState extends ConsumerState<PlayerPanel> {
     final detailsTop = t.topPadding + t.baseVideoHeight + progressLineHeight;
     // The details keep their expanded height during the transition (the
     // panel clips them), so their list isn't laid out anew every frame.
-    final detailsHeight = math.max(0.0, widget.maxHeight - media.padding.top - media.size.width * 9 / 16);
+    final detailsHeight = math.max(0.0, widget.maxHeight - media.padding.top - columnWidth * 9 / 16);
     // Built while the panel rests (collapsed or open), not in the middle of
     // its animation: building and loading the list there dropped frames.
     if (t.isExpanded || t.isCollapsed) _keepDetails = true;
@@ -164,29 +185,22 @@ class _PlayerPanelState extends ConsumerState<PlayerPanel> {
                       Positioned(
                         top: detailsTop,
                         left: 0,
-                        right: 0,
+                        width: columnWidth,
                         height: detailsHeight,
                         child: _keepDetails
-                            ? Visibility(
-                                visible: t.showDetails,
-                                maintainState: true,
-                                child: NotificationListener<ScrollNotification>(
-                                  onNotification: (n) {
-                                    if (n.depth == 0 && n.metrics.axis == Axis.vertical) {
-                                      _detailsScroll.value = n.metrics.pixels;
-                                    }
-                                    return false;
-                                  },
-                                  child: Opacity(
-                                    opacity: t.detailsOpacity,
-                                    // Fading repaints only the opacity, not the list.
-                                    child: RepaintBoundary(
-                                      // Ink of the list tiles above the panel's color.
-                                      child: Material(
-                                        type: MaterialType.transparency,
-                                        child: _detailsFor(scene, t.extraVideoHeight),
-                                      ),
-                                    ),
+                            ? NotificationListener<ScrollNotification>(
+                                onNotification: (n) {
+                                  if (n.depth == 0 && n.metrics.axis == Axis.vertical) {
+                                    _detailsScroll.value = n.metrics.pixels;
+                                  }
+                                  return false;
+                                },
+                                child: _fading(
+                                  t,
+                                  _detailsFor(
+                                    scene,
+                                    t.extraVideoHeight,
+                                    split ? PlayerDetailsPart.info : PlayerDetailsPart.all,
                                   ),
                                 ),
                               )
@@ -256,6 +270,18 @@ class _PlayerPanelState extends ConsumerState<PlayerPanel> {
                             ),
                           ],
                         ),
+                      ),
+                      // "Up next" beside the video's column on tablets. Always in
+                      // the tree (empty on phones), so turning a tablet doesn't
+                      // move the video to another place in it.
+                      Positioned(
+                        top: t.topPadding,
+                        left: columnWidth,
+                        right: 0,
+                        height: math.max(0.0, widget.maxHeight - media.padding.top),
+                        child: split && _keepDetails
+                            ? _fading(t, _detailsFor(scene, 0, PlayerDetailsPart.list))
+                            : const SizedBox.shrink(),
                       ),
                     ],
                   ),
@@ -379,20 +405,47 @@ class _ProgressBar extends ConsumerWidget {
   }
 }
 
+/// Which part of [PlayerDetails] to show.
+enum PlayerDetailsPart {
+  /// Info, then "Up next" (or the queue) in one list (phones).
+  all,
+
+  /// Only the scene's info, under the video's column (tablets).
+  info,
+
+  /// Only "Up next" (or the queue), beside the video (tablets).
+  list,
+}
+
 /// Everything below the video: the scene's title, channel, actions,
-/// performers and chapters, then "Up next" (or the queue).
+/// performers and chapters, then "Up next" (or the queue). On wide windows
+/// the panel shows the [PlayerDetailsPart.info] and [PlayerDetailsPart.list]
+/// side by side.
 class PlayerDetails extends ConsumerWidget {
-  const PlayerDetails({super.key, required this.scene, this.topSpacer = 0});
+  const PlayerDetails({super.key, required this.scene, this.topSpacer = 0, this.part = PlayerDetailsPart.all});
 
   final Scene scene;
+  final PlayerDetailsPart part;
 
   /// Room at the top for a portrait video's extra height.
   final double topSpacer;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    if (part == PlayerDetailsPart.info) {
+      return CustomScrollView(
+        key: ValueKey(scene.id),
+        physics: const ClampingScrollPhysics(),
+        slivers: [
+          SliverToBoxAdapter(child: SizedBox(height: topSpacer)),
+          SliverToBoxAdapter(child: _SceneInfo(scene: scene)),
+          const SliverToBoxAdapter(child: SizedBox(height: 24)),
+        ],
+      );
+    }
+    final withInfo = part == PlayerDetailsPart.all;
     final queue = ref.watch(playQueueProvider);
-    if (queue != null) return _QueueDetails(scene: scene, queue: queue, topSpacer: topSpacer);
+    if (queue != null) return _QueueDetails(scene: scene, queue: queue, topSpacer: topSpacer, withInfo: withInfo);
 
     // Prefer more scenes from the same studio, then performer, else random.
     final upNext = SceneQuery(
@@ -414,8 +467,10 @@ class PlayerDetails extends ConsumerWidget {
       emptyMessage: context.l10n.upNextEmpty,
       emptyIcon: Icons.playlist_play,
       headerSlivers: [
-        SliverToBoxAdapter(child: SizedBox(height: topSpacer)),
-        SliverToBoxAdapter(child: _SceneInfo(scene: scene)),
+        if (withInfo) ...[
+          SliverToBoxAdapter(child: SizedBox(height: topSpacer)),
+          SliverToBoxAdapter(child: _SceneInfo(scene: scene)),
+        ],
         SliverToBoxAdapter(
           child: Padding(
             padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
@@ -432,11 +487,14 @@ class PlayerDetails extends ConsumerWidget {
 
 /// Details plus the queue being played (watch later, a group).
 class _QueueDetails extends StatelessWidget {
-  const _QueueDetails({required this.scene, required this.queue, this.topSpacer = 0});
+  const _QueueDetails({required this.scene, required this.queue, this.topSpacer = 0, this.withInfo = true});
 
   final Scene scene;
   final PlayQueue queue;
   final double topSpacer;
+
+  /// False beside the video on tablets, where the info has its own column.
+  final bool withInfo;
 
   @override
   Widget build(BuildContext context) {
@@ -446,8 +504,10 @@ class _QueueDetails extends StatelessWidget {
       key: ValueKey(scene.id),
       physics: const ClampingScrollPhysics(),
       slivers: [
-        SliverToBoxAdapter(child: SizedBox(height: topSpacer)),
-        SliverToBoxAdapter(child: _SceneInfo(scene: scene)),
+        if (withInfo) ...[
+          SliverToBoxAdapter(child: SizedBox(height: topSpacer)),
+          SliverToBoxAdapter(child: _SceneInfo(scene: scene)),
+        ],
         SliverToBoxAdapter(
           child: Padding(
             padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),

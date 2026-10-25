@@ -8,6 +8,7 @@ import '../../widgets/chip_bar.dart';
 import '../../widgets/paged_sliver.dart';
 import '../../widgets/performer_tile.dart';
 import '../search/search_page.dart';
+import '../edit/create_dialog.dart';
 import '../shell/navigation.dart';
 import '../../l10n/l10n.dart';
 import '../auth/server_avatar.dart';
@@ -33,6 +34,18 @@ class _PerformersPageState extends ConsumerState<PerformersPage> {
           IconButton(icon: const Icon(Icons.search), onPressed: () => openSearch(ref, scope: SearchScope.performers)),
           const ServerAvatarButton(),
         ],
+      ),
+      floatingActionButton: FloatingActionButton.extended(
+        icon: const Icon(Icons.person_add_alt_1_outlined),
+        label: Text(context.l10n.newPerformer),
+        onPressed: () async {
+          final performer = await showCreateDialog(
+            context,
+            title: context.l10n.newPerformer,
+            create: (name) => createPerformer(ref, name),
+          );
+          if (performer != null) openPerformer(ref, performer.id);
+        },
       ),
       body: RefreshIndicator(
         onRefresh: () => refreshFuture(ref, provider.future),

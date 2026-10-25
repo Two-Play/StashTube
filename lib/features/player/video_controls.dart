@@ -811,7 +811,9 @@ class _PlaybackErrorOverlay extends ConsumerWidget {
 }
 
 /// Previous/next around [child] (play/pause) while a queue plays (9.3,
-/// 9.4); just [child] otherwise. Disabled at the queue's ends.
+/// 9.4), disabled at the queue's ends. Without a queue, back and forward
+/// through the videos picked in the player (4.25), when there are any.
+/// Just [child] otherwise.
 class _QueueButtons extends ConsumerWidget {
   const _QueueButtons({required this.act, required this.child});
 
@@ -821,9 +823,44 @@ class _QueueButtons extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final queue = ref.watch(playQueueProvider);
-    if (queue == null) return child;
     final l = context.l10n;
     final notifier = ref.read(nowPlayingProvider.notifier);
+    if (queue == null) {
+      final history = ref.watch(playerHistoryProvider);
+      if (history.isEmpty) return child;
+      return Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          IconButton(
+            iconSize: 36,
+            disabledColor: Colors.white38,
+            tooltip: l.backToPreviousVideo,
+            icon: const Icon(Icons.arrow_back_rounded),
+            onPressed: history.canGoBack
+                ? () => act(() {
+                      Haptics.light();
+                      notifier.goBack();
+                    })
+                : null,
+          ),
+          const SizedBox(width: AppSpacing.l),
+          child,
+          const SizedBox(width: AppSpacing.l),
+          IconButton(
+            iconSize: 36,
+            disabledColor: Colors.white38,
+            tooltip: l.forwardToNextVideo,
+            icon: const Icon(Icons.arrow_forward_rounded),
+            onPressed: history.canGoForward
+                ? () => act(() {
+                      Haptics.light();
+                      notifier.goForward();
+                    })
+                : null,
+          ),
+        ],
+      );
+    }
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
