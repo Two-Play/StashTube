@@ -1012,6 +1012,9 @@ class AppLocalizationsDe extends AppLocalizations {
   String get backToPreviousVideo => 'Zurück zum vorherigen Video';
 
   @override
+  String get forwardToNextVideo => 'Weiter zum nächsten Video';
+
+  @override
   String get minimize => 'Minimieren';
 
   @override

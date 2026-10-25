@@ -255,6 +255,7 @@
   "castConnectFailed": "Verbindung zu {device} fehlgeschlagen: {error}",
   "castPlayFailed": "Wiedergabe auf {device} fehlgeschlagen: {error}",
   "backToPreviousVideo": "Zurück zum vorherigen Video",
+  "forwardToNextVideo": "Weiter zum nächsten Video",
   "minimize": "Minimieren",
   "back10": "10 s zurück",
   "forward10": "10 s vor",

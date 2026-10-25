@@ -100,6 +100,7 @@ void main() {
     Size size = const Size(320, 640),
     double videoHeight = 0,
     Scene scene = _scene,
+    PlayerDetailsPart part = PlayerDetailsPart.all,
   }) async {
     tester.view.physicalSize = size;
     tester.view.devicePixelRatio = 1;
@@ -120,7 +121,7 @@ void main() {
             children: [
               // Where the video would be.
               SizedBox(height: videoHeight),
-              Expanded(child: PlayerDetails(scene: scene)),
+              Expanded(child: PlayerDetails(scene: scene, part: part)),
             ],
           ),
         ),
@@ -128,6 +129,27 @@ void main() {
     ));
     await tester.pump();
   }
+
+  testWidgets('tablets split the details: the info under the video, "Up next" beside it', (tester) async {
+    container.dispose();
+    SharedPreferences.setMockInitialValues({});
+    final prefs = await SharedPreferences.getInstance();
+    container = ProviderContainer(overrides: [
+      ...testServer,
+      sharedPreferencesProvider.overrideWithValue(prefs),
+      playerProvider.overrideWithValue(FakePlayer()),
+      authHeadersProvider.overrideWithValue(const {}),
+      sceneDetailsProvider('s1').overrideWith((ref) async => _details),
+      stashRepositoryProvider.overrideWithValue(_LoadingRepository()),
+    ]);
+    await pumpDetails(tester, size: const Size(600, 800), part: PlayerDetailsPart.info);
+    expect(find.text(_scene.title), findsOneWidget);
+    expect(find.text('More from Some Studio'), findsNothing);
+
+    await pumpDetails(tester, size: const Size(600, 800), part: PlayerDetailsPart.list);
+    expect(find.text('More from Some Studio'), findsOneWidget);
+    expect(find.text(_scene.title), findsNothing);
+  });
 
   testWidgets('the queue header shows the position', (tester) async {
     final semantics = tester.ensureSemantics();
