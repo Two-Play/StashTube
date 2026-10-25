@@ -31,7 +31,6 @@ import 'package:stash_app_mobile/features/security/app_lock.dart';
 import 'package:stash_app_mobile/features/player/player_providers.dart';
 import 'package:stash_app_mobile/features/shell/app_shell.dart';
 import 'package:stash_app_mobile/features/shell/navigation.dart';
-import 'package:stash_app_mobile/features/shorts/shorts_settings.dart';
 import 'package:stash_app_mobile/features/shorts/shorts_settings_sheet.dart';
 import 'package:stash_app_mobile/features/you/you_page.dart';
 import 'package:stash_app_mobile/l10n/gen/app_localizations.dart';
@@ -346,7 +345,8 @@ void main() {
         expect(find.byType(ShortsSettingsSheet), findsOneWidget);
         expectNoOverflow(at, 'shorts settings');
         final list = find.descendant(of: find.byType(ShortsSettingsSheet), matching: find.byType(Scrollable)).first;
-        await tester.scrollUntilVisible(find.byType(SegmentedButton<ShortsMarkers>), 300, scrollable: list);
+        // To the end of the list (the loops' hint).
+        await tester.drag(list, const Offset(0, -2000));
         await settle(tester);
         expectNoOverflow(at, 'shorts settings, scrolled');
       });

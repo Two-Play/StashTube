@@ -139,22 +139,8 @@ class _ShortsSettingsSheetState extends ConsumerState<ShortsSettingsSheet> {
                     value: _settings.portraitOnly,
                     onChanged: withHaptic((v) => setState(() => _settings = _settings.copyWith(portraitOnly: v))),
                   ),
-                  section(l.shortsContent),
-                  Text(l.shortsContentHint, style: theme.textTheme.bodySmall),
-                  const SizedBox(height: 8),
-                  // A mode, not a filter: one segmented choice.
-                  SegmentedButton<ShortsMarkers>(
-                    segments: [
-                      for (final markers in ShortsMarkers.values)
-                        ButtonSegment(value: markers, label: Text(markers.label(l))),
-                    ],
-                    selected: {_settings.markers},
-                    showSelectedIcon: false,
-                    onSelectionChanged: (selection) {
-                      Haptics.selection();
-                      setState(() => _settings = _settings.copyWith(markers: selection.single));
-                    },
-                  ),
+                  // The loops follow the tags and the orientation too.
+                  Text(l.shortsLoopsHint, style: theme.textTheme.bodySmall),
                   const SizedBox(height: 16),
                 ],
               ),

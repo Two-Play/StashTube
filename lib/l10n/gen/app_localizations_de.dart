@@ -1842,6 +1842,19 @@ class AppLocalizationsDe extends AppLocalizations {
   String get shortsOnlyTagsHint => 'Videos ohne einen der Tags weglassen';
 
   @override
+  String get shortsModeShorts => 'Shorts';
+
+  @override
+  String get shortsModeLoops => 'Loops';
+
+  @override
+  String get shortsModeSemantics => 'Shorts oder Loops';
+
+  @override
+  String get shortsLoopsHint =>
+      'Loops spielen Szenenmarker, jeder für sich in Schleife; die Tags und „Nur Hochkant“ gelten für sie, die Länge nicht.';
+
+  @override
   String get shortsMaxLength => 'Maximale Länge';
 
   @override
@@ -1859,22 +1872,6 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get shortsPortraitOnly => 'Nur Hochkant-Videos';
-
-  @override
-  String get shortsContent => 'Inhalt';
-
-  @override
-  String get shortsContentHint =>
-      'Marker spielen die markierte Stelle einer Szene als Short.';
-
-  @override
-  String get shortsContentVideos => 'Nur Videos';
-
-  @override
-  String get shortsContentMixed => 'Videos & Marker';
-
-  @override
-  String get shortsContentMarkers => 'Nur Marker';
 
   @override
   String shortMarkerSemantics(String title) {
@@ -1905,6 +1902,15 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get cardChannelPerformers => 'Performer';
+
+  @override
+  String get thumbnailFit => 'Vorschaubilder';
+
+  @override
+  String get thumbnailFitWhole => 'Ganz zeigen';
+
+  @override
+  String get thumbnailFitFill => 'Füllen (zuschneiden)';
 
   @override
   String get cardShowPlays => 'Wiedergaben anzeigen';
@@ -2215,10 +2221,10 @@ class AppLocalizationsDe extends AppLocalizations {
   String get markersEmptyHint => 'Markiere eine Stelle im Player mit „Marker“.';
 
   @override
-  String get markersPlayAsShorts => 'Als Shorts abspielen';
+  String get markersPlayAsShorts => 'Als Loops abspielen';
 
   @override
-  String get markerPlayAsShort => 'Als Short abspielen';
+  String get markerPlayAsShort => 'Als Loop abspielen';
 
   @override
   String get markerMoreOptions => 'Marker-Optionen';
@@ -2527,4 +2533,67 @@ class AppLocalizationsDe extends AppLocalizations {
   @override
   String get previewsOnServerSubtitle =>
       'Ob Stash sie erstellt hat, und fehlende erzeugen';
+
+  @override
+  String get introSkip => 'Überspringen';
+
+  @override
+  String get introNext => 'Weiter';
+
+  @override
+  String get introDone => 'Los geht\'s';
+
+  @override
+  String introProgress(int current, int total) {
+    return 'Schritt $current von $total';
+  }
+
+  @override
+  String get introTour => 'Einführung';
+
+  @override
+  String get introTourSubtitle =>
+      'So funktioniert StashTube: Player, Shorts und Loops, Bibliothek';
+
+  @override
+  String get introWelcomeTitle => 'Willkommen bei StashTube';
+
+  @override
+  String get introWelcomeText =>
+      'Deine Stash-Bibliothek, durchstöbert wie YouTube. Die Startseite zeigt neue und zufällige Szenen mit Filtern und Sortier-Chips; die Suche findet Szenen, Bilder, Galerien, Darsteller und Studios an einem Ort.';
+
+  @override
+  String get introPlayerTitle => 'Der Player';
+
+  @override
+  String get introPlayerText =>
+      'Tippe auf ein Video, um es abzuspielen; wische den Player nach unten, damit es in der Mini-Leiste weiterläuft. Doppeltippen links oder rechts spult, Gedrückthalten spielt mit 2×, zwei Finger zoomen. Öffnest du ein weiteres Video aus „Up next“, springen die Pfeile neben Play zwischen ihnen hin und her.';
+
+  @override
+  String get introShortsTitle => 'Shorts und Loops';
+
+  @override
+  String get introShortsText =>
+      'Der Shorts-Tab hat oben zwei Feeds: Shorts sind kurze (Hochkant-)Videos zum Durchwischen. Loops sind Szenenmarker, die sich wie ein GIF einzeln wiederholen. Über den Regler wählst du Lieblings-Tags, Länge und „Nur Hochkant“.';
+
+  @override
+  String get introLibraryTitle => 'Bibliothek und Du';
+
+  @override
+  String get introLibraryText =>
+      'Die Bibliothek enthält alle Szenen, Bilder und Galerien. „Du“ sammelt Verlauf, Später ansehen, Gruppen, Marker, Darsteller, Studios, Tags und Statistik. Welche Tabs unten stehen, bestimmst du in den Einstellungen.';
+
+  @override
+  String get introFavoritesTitle => 'Favoriten und Bewertungen';
+
+  @override
+  String get introFavoritesText =>
+      'Markiere Darsteller und Studios als Favoriten und bewerte sie und deine Szenen mit Sternen. Favoriten bekommen einen eigenen Feed; langes Drücken auf eine Kachel oder ihr ⋮ zeigt weitere Aktionen. Du kannst auch Metadaten bearbeiten und Darsteller, Studios, Tags und Gruppen anlegen.';
+
+  @override
+  String get introSettingsTitle => 'Mach sie dir zu eigen';
+
+  @override
+  String get introSettingsText =>
+      'Dein Avatar oben rechts wechselt den Server und öffnet die Einstellungen: App-Sperre, Vorschauen, wie Vorschaubilder passen, Haptik, Wiedergabe und mehr. Dort findest du unter „Über“ auch diese Einführung wieder.';
 }

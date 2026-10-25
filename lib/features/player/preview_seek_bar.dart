@@ -45,12 +45,17 @@ class PreviewSeekBar extends ConsumerStatefulWidget {
     this.onInteractionEnd,
     this.remote,
     this.window,
+    this.windowRelative = false,
   });
 
   final String sceneId;
 
   /// The part of the video the bar covers; null for the whole video.
   final SeekWindow? window;
+
+  /// The [player] plays only the [window] (a marker loop's clip): its
+  /// position 0 is the window's start, and so are its seeks.
+  final bool windowRelative;
 
   /// While casting: the TV's playback, shown and seeked instead of the
   /// [player]'s.
@@ -129,17 +134,22 @@ class _PreviewSeekBarState extends ConsumerState<PreviewSeekBar> {
     _subscriptions.clear();
     if (widget.remote != null) return;
     final player = _player;
-    _position = player.state.position;
-    _duration = player.state.duration;
-    _buffer = player.state.buffer;
+    _position = player.state.position + _offset;
+    _duration = player.state.duration + _offset;
+    _buffer = player.state.buffer + _offset;
     _subscriptions.addAll([
       player.stream.position.listen(_onPosition),
-      player.stream.duration.listen((v) => setState(() => _duration = v)),
-      player.stream.buffer.listen((v) => setState(() => _buffer = v)),
+      player.stream.duration.listen((v) => setState(() => _duration = v + _offset)),
+      player.stream.buffer.listen((v) => setState(() => _buffer = v + _offset)),
     ]);
   }
 
-  void _onPosition(Duration position) {
+  /// Added to the player's times: the window's start when it plays only
+  /// the window ([PreviewSeekBar.windowRelative]).
+  Duration get _offset => widget.windowRelative ? widget.window?.start ?? Duration.zero : Duration.zero;
+
+  void _onPosition(Duration relative) {
+    final position = relative + _offset;
     final second = _position.inSeconds;
     _position = position;
     _played.value = _fractionOf(position);
@@ -189,7 +199,7 @@ class _PreviewSeekBarState extends ConsumerState<PreviewSeekBar> {
 
   void _seek(Duration target) {
     final remote = widget.remote;
-    remote == null ? _player.seek(target) : remote.seek(target);
+    remote == null ? _player.seek(target - _offset) : remote.seek(target);
   }
 
   /// For screen readers: a step back or forward, kept inside the window.

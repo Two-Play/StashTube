@@ -18,9 +18,8 @@ import 'package:stash_app_mobile/features/player/preview_seek_bar.dart';
 import 'package:stash_app_mobile/features/shorts/short.dart';
 import 'package:stash_app_mobile/features/shorts/short_tile.dart';
 import 'package:stash_app_mobile/features/shorts/shorts_page.dart';
-import 'package:stash_app_mobile/features/shorts/shorts_settings.dart';
 import 'package:stash_app_mobile/features/shorts/shorts_settings_sheet.dart';
-import 'package:stash_app_mobile/l10n/l10n.dart';
+import 'package:stash_app_mobile/widgets/stash_image.dart';
 
 import '../helpers.dart';
 import 'fake_player.dart';
@@ -69,8 +68,12 @@ void main() {
       SceneMarker(id: 'd', title: 'After', seconds: 80),
     ]);
 
-    Future<void> pump(WidgetTester tester, {Duration position = const Duration(seconds: 40)}) async {
-      player = FakePlayer(position: position);
+    /// [relative]: the player plays only the clip (a loop's EDL), so its
+    /// times run from the clip's start.
+    Future<void> pump(WidgetTester tester, {Duration position = const Duration(seconds: 40), bool relative = false}) async {
+      player = relative
+          ? FakePlayer(position: position - window.start, duration: window.end - window.start)
+          : FakePlayer(position: position);
       await tester.pumpWidget(ProviderScope(
         overrides: [
           playerProvider.overrideWithValue(player),
@@ -78,9 +81,14 @@ void main() {
           authHeadersProvider.overrideWithValue(const {}),
           sceneDetailsProvider('1').overrideWith((ref) async => details),
         ],
-        child: const MaterialApp(
+        child: MaterialApp(
           home: Scaffold(
-            body: Center(child: SizedBox(width: 400, child: PreviewSeekBar(sceneId: '1', window: window))),
+            body: Center(
+              child: SizedBox(
+                width: 400,
+                child: PreviewSeekBar(sceneId: '1', window: window, windowRelative: relative),
+              ),
+            ),
           ),
         ),
       ));
@@ -102,6 +110,16 @@ void main() {
       expect(bar.played, 0.5, reason: '0:40 is the middle of 0:30–0:50');
       expect(bar.chapters, [0.25], reason: 'the clip\'s own marker and those outside are left out');
       expect(bar.ranges, [(0.75, 1.0)], reason: 'a range reaching past the end is cut to the clip');
+    });
+
+    testWidgets('a player that plays only the clip: same bar, seeks from the clip\'s start', (tester) async {
+      await pump(tester, relative: true);
+      final bar = painter(tester);
+      expect(bar.played, 0.5, reason: '0:10 into the clip is 0:40 of the scene');
+      expect(bar.chapters, [0.25], reason: 'markers at their absolute times');
+      await tester.tapAt(at(tester, 0.25));
+      await tester.pumpAndSettle();
+      expect(player.seeks, [const Duration(seconds: 5)], reason: 'the player only knows the clip');
     });
 
     testWidgets('tapping seeks inside the clip', (tester) async {
@@ -163,17 +181,17 @@ void main() {
     });
   });
 
-  group('marker shorts stay in their clip', () {
-    final short = Short.marker(_marker(seconds: 30));
-
-    test('back to the start once the position left the clip', () {
-      expect(short.correctionFor(const Duration(seconds: 40)), isNull);
-      expect(short.correctionFor(const Duration(milliseconds: 50400)), isNull,
-          reason: 'the A-B loop jumps back a moment after the end');
-      expect(short.correctionFor(const Duration(seconds: 55)), const Duration(seconds: 30));
-      expect(short.correctionFor(Duration.zero), const Duration(seconds: 30),
-          reason: 'e.g. the scene ended and looped');
-      expect(const Short.video(_scene).correctionFor(Duration.zero), isNull);
+  group('zoom', () {
+    test('cover only when it crops little, else the whole picture', () {
+      const phone = 390 / 844;
+      const landscapeTablet = 1280 / 800;
+      const portraitTablet = 800 / 1280;
+      expect(Short.fitFor(9 / 16, phone), BoxFit.cover, reason: 'a portrait video fills a phone');
+      expect(Short.fitFor(9 / 16, landscapeTablet), BoxFit.contain, reason: 'no zoom to the tablet\'s width');
+      expect(Short.fitFor(9 / 16, portraitTablet), BoxFit.cover);
+      expect(Short.fitFor(16 / 9, phone), BoxFit.contain);
+      expect(Short.fitFor(16 / 9, landscapeTablet), BoxFit.cover);
+      expect(Short.fitFor(null, phone), BoxFit.contain);
     });
   });
 
@@ -195,6 +213,14 @@ void main() {
       expect(find.bySemanticsLabel('Sunset, 1 minute 40 seconds'), findsOneWidget);
     });
 
+    testWidgets('a landscape scene shows whole in the 9:16 tile, a portrait one fills it', (tester) async {
+      BoxFit fit() => tester.widget<StashImage>(find.byType(StashImage)).fit;
+      await pumpTile(tester, const Short.video(Scene(id: 'w', title: 'Wide', width: 1920, height: 1080)));
+      expect(fit(), BoxFit.contain);
+      await pumpTile(tester, const Short.video(Scene(id: 'p', title: 'Tall', width: 1080, height: 1920)));
+      expect(fit(), BoxFit.cover);
+    });
+
     testWidgets('a marker: badge, its title and its clip\'s length', (tester) async {
       await pumpTile(tester, Short.marker(_marker(seconds: 30)));
       expect(find.text('Kiss'), findsOneWidget);
@@ -205,11 +231,7 @@ void main() {
   });
 
   group('shorts settings sheet', () {
-    testWidgets('the content is a segmented choice, saved on apply', (tester) async {
-      // A phone's width: the three labels fit.
-      tester.view.physicalSize = const Size(360, 780);
-      tester.view.devicePixelRatio = 1;
-      addTearDown(tester.view.reset);
+    testWidgets('no content choice any more: the loops have their own switch', (tester) async {
       SharedPreferences.setMockInitialValues({});
       final prefs = await SharedPreferences.getInstance();
       final container = ProviderContainer(overrides: [
@@ -230,45 +252,26 @@ void main() {
       ));
       await tester.tap(find.text('open'));
       await tester.pumpAndSettle();
-
-      final l = lookupAppLocalizations(const Locale('en'));
-      final segmented = find.byType(SegmentedButton<ShortsMarkers>);
+      final hint = find.textContaining('Loops play scene markers');
       await tester.scrollUntilVisible(
-        segmented,
+        hint,
         200,
         scrollable: find.descendant(of: find.byType(ListView), matching: find.byType(Scrollable)).first,
       );
-      expect(
-        tester.widget<SegmentedButton<ShortsMarkers>>(segmented).selected,
-        {ShortsMarkers.off},
-        reason: 'off by default',
-      );
-      expect(find.text('Content'), findsOneWidget);
-      expect(find.text('Markers play the marked part of a scene as a short.'), findsOneWidget);
-      expect(find.text('Only for videos: a marker plays its marked part.'), findsOneWidget, reason: 'max length');
-      for (final label in ['Videos only', 'Videos & markers', 'Markers only']) {
-        expect(find.descendant(of: segmented, matching: find.text(label)), findsOneWidget);
-      }
-      await tester.tap(find.descendant(of: segmented, matching: find.text(l.shortsContentMarkers)));
-      await tester.pumpAndSettle();
-      expect(tester.widget<SegmentedButton<ShortsMarkers>>(segmented).selected, {ShortsMarkers.only});
-      expect(container.read(shortsSettingsProvider).markers, ShortsMarkers.off, reason: 'not before applying');
-
-      await tester.tap(find.text(l.apply));
-      await tester.pumpAndSettle();
-      expect(container.read(shortsSettingsProvider).markers, ShortsMarkers.only);
+      expect(hint, findsOneWidget);
+      expect(find.text('Content'), findsNothing);
     });
   });
 
   group('full video', () {
-    Future<_Playing> pumpButton(WidgetTester tester, Short short) async {
+    Future<_Playing> pumpButton(WidgetTester tester, Short short, {Duration? position}) async {
       final playing = _Playing();
       await tester.pumpWidget(ProviderScope(
         overrides: [nowPlayingProvider.overrideWith(() => playing)],
         child: MaterialApp(
           home: Consumer(
             builder: (context, ref, _) => TextButton(
-              onPressed: () => playFullVideo(ref, short),
+              onPressed: () => playFullVideo(ref, short, position: position),
               child: const Text('full'),
             ),
           ),
@@ -288,6 +291,16 @@ void main() {
 
     testWidgets('a whole video resumes where it was left', (tester) async {
       expect((await pumpButton(tester, const Short.video(_scene))).played, [('s1', null)]);
+    });
+
+    testWidgets('the player continues where the short is', (tester) async {
+      final video = await pumpButton(tester, const Short.video(_scene), position: const Duration(seconds: 12));
+      expect(video.played, [('s1', 12.0)]);
+    });
+
+    testWidgets('a loop continues at the clip\'s spot in the scene', (tester) async {
+      final loop = await pumpButton(tester, Short.marker(_marker(seconds: 30)), position: const Duration(seconds: 7));
+      expect(loop.played, [('s1', 37.0)], reason: 'the clip counts from the marker\'s start');
     });
   });
 }

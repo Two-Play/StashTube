@@ -2972,6 +2972,30 @@ abstract class AppLocalizations {
   /// **'Leave out videos without any of the tags'**
   String get shortsOnlyTagsHint;
 
+  /// No description provided for @shortsModeShorts.
+  ///
+  /// In en, this message translates to:
+  /// **'Shorts'**
+  String get shortsModeShorts;
+
+  /// No description provided for @shortsModeLoops.
+  ///
+  /// In en, this message translates to:
+  /// **'Loops'**
+  String get shortsModeLoops;
+
+  /// No description provided for @shortsModeSemantics.
+  ///
+  /// In en, this message translates to:
+  /// **'Shorts or loops'**
+  String get shortsModeSemantics;
+
+  /// No description provided for @shortsLoopsHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Loops play scene markers, each one repeating on its own; the tags and \"portrait only\" apply to them, the length doesn\'t.'**
+  String get shortsLoopsHint;
+
   /// No description provided for @shortsMaxLength.
   ///
   /// In en, this message translates to:
@@ -3007,36 +3031,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Portrait videos only'**
   String get shortsPortraitOnly;
-
-  /// No description provided for @shortsContent.
-  ///
-  /// In en, this message translates to:
-  /// **'Content'**
-  String get shortsContent;
-
-  /// No description provided for @shortsContentHint.
-  ///
-  /// In en, this message translates to:
-  /// **'Markers play the marked part of a scene as a short.'**
-  String get shortsContentHint;
-
-  /// No description provided for @shortsContentVideos.
-  ///
-  /// In en, this message translates to:
-  /// **'Videos only'**
-  String get shortsContentVideos;
-
-  /// No description provided for @shortsContentMixed.
-  ///
-  /// In en, this message translates to:
-  /// **'Videos & markers'**
-  String get shortsContentMixed;
-
-  /// No description provided for @shortsContentMarkers.
-  ///
-  /// In en, this message translates to:
-  /// **'Markers only'**
-  String get shortsContentMarkers;
 
   /// No description provided for @shortMarkerSemantics.
   ///
@@ -3091,6 +3085,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Performers'**
   String get cardChannelPerformers;
+
+  /// No description provided for @thumbnailFit.
+  ///
+  /// In en, this message translates to:
+  /// **'Thumbnails'**
+  String get thumbnailFit;
+
+  /// No description provided for @thumbnailFitWhole.
+  ///
+  /// In en, this message translates to:
+  /// **'Show whole'**
+  String get thumbnailFitWhole;
+
+  /// No description provided for @thumbnailFitFill.
+  ///
+  /// In en, this message translates to:
+  /// **'Fill (crop)'**
+  String get thumbnailFitFill;
 
   /// No description provided for @cardShowPlays.
   ///
@@ -3629,13 +3641,13 @@ abstract class AppLocalizations {
   /// No description provided for @markersPlayAsShorts.
   ///
   /// In en, this message translates to:
-  /// **'Play as shorts'**
+  /// **'Play as loops'**
   String get markersPlayAsShorts;
 
   /// No description provided for @markerPlayAsShort.
   ///
   /// In en, this message translates to:
-  /// **'Play as short'**
+  /// **'Play as loop'**
   String get markerPlayAsShort;
 
   /// No description provided for @markerMoreOptions.
@@ -4165,6 +4177,114 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Whether Stash has created them, and generate missing ones'**
   String get previewsOnServerSubtitle;
+
+  /// No description provided for @introSkip.
+  ///
+  /// In en, this message translates to:
+  /// **'Skip'**
+  String get introSkip;
+
+  /// No description provided for @introNext.
+  ///
+  /// In en, this message translates to:
+  /// **'Next'**
+  String get introNext;
+
+  /// No description provided for @introDone.
+  ///
+  /// In en, this message translates to:
+  /// **'Let\'s go'**
+  String get introDone;
+
+  /// No description provided for @introProgress.
+  ///
+  /// In en, this message translates to:
+  /// **'Step {current} of {total}'**
+  String introProgress(int current, int total);
+
+  /// No description provided for @introTour.
+  ///
+  /// In en, this message translates to:
+  /// **'App tour'**
+  String get introTour;
+
+  /// No description provided for @introTourSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'How StashTube works: player, shorts and loops, library'**
+  String get introTourSubtitle;
+
+  /// No description provided for @introWelcomeTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Welcome to StashTube'**
+  String get introWelcomeTitle;
+
+  /// No description provided for @introWelcomeText.
+  ///
+  /// In en, this message translates to:
+  /// **'Your Stash library, browsed like YouTube. Home shows new and random scenes with filters and sort chips; search finds scenes, images, galleries, performers and studios in one place.'**
+  String get introWelcomeText;
+
+  /// No description provided for @introPlayerTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'The player'**
+  String get introPlayerTitle;
+
+  /// No description provided for @introPlayerText.
+  ///
+  /// In en, this message translates to:
+  /// **'Tap a video to play it; swipe the player down to keep it running in the mini bar. Double-tap the left or right of the video to skip, hold it for 2× speed, pinch to zoom. Open another video from \"Up next\" and the arrows beside play take you back and forth between them.'**
+  String get introPlayerText;
+
+  /// No description provided for @introShortsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Shorts and loops'**
+  String get introShortsTitle;
+
+  /// No description provided for @introShortsText.
+  ///
+  /// In en, this message translates to:
+  /// **'The Shorts tab has two feeds, switched at its top: Shorts are short (portrait) videos to swipe through. Loops are scene markers, each repeating on its own like a GIF. The tune button picks your favorite tags, the length and \"portrait only\".'**
+  String get introShortsText;
+
+  /// No description provided for @introLibraryTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Library and You'**
+  String get introLibraryTitle;
+
+  /// No description provided for @introLibraryText.
+  ///
+  /// In en, this message translates to:
+  /// **'The library holds all scenes, images and galleries. \"You\" collects your history, watch later, groups, markers, performers, studios, tags and stats. Which tabs the bottom bar shows is up to you, in the settings.'**
+  String get introLibraryText;
+
+  /// No description provided for @introFavoritesTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Favorites and ratings'**
+  String get introFavoritesTitle;
+
+  /// No description provided for @introFavoritesText.
+  ///
+  /// In en, this message translates to:
+  /// **'Mark performers and studios as favorites and rate them and your scenes with stars. Favorites get their own feed, and long-pressing a tile or tapping its ⋮ shows more actions. You can also edit metadata and create performers, studios, tags and groups.'**
+  String get introFavoritesText;
+
+  /// No description provided for @introSettingsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Make it yours'**
+  String get introSettingsTitle;
+
+  /// No description provided for @introSettingsText.
+  ///
+  /// In en, this message translates to:
+  /// **'Your avatar at the top right switches servers and opens the settings: app lock, previews, how thumbnails fit, haptics, playback and more. This tour is there too, under About.'**
+  String get introSettingsText;
 }
 
 class _AppLocalizationsDelegate
