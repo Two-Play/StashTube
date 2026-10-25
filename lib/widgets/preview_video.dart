@@ -10,7 +10,9 @@ import '../data/repositories/stash_session.dart';
 /// thumbnail below shows while it loads and if it fails. Lists show one at
 /// a time ([AutoPreviewScope]); each costs a native player while shown.
 class PreviewVideo extends ConsumerStatefulWidget {
-  const PreviewVideo(this.url, {super.key});
+  const PreviewVideo(this.url, {super.key, this.fit = BoxFit.cover});
+
+  final BoxFit fit;
 
   final String url;
 
@@ -45,7 +47,7 @@ class _PreviewVideoState extends ConsumerState<PreviewVideo> {
   Widget build(BuildContext context) => AnimatedOpacity(
     opacity: _shown ? 1 : 0,
     duration: const Duration(milliseconds: 200),
-    child: Video(controller: _controller, fit: BoxFit.cover, fill: Colors.transparent, controls: _noControls),
+    child: Video(controller: _controller, fit: widget.fit, fill: Colors.transparent, controls: _noControls),
   );
 }
 

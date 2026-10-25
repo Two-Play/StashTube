@@ -513,7 +513,12 @@ class _TopBar extends StatelessWidget {
             if (Navigator.of(context).canPop()) const BackButton(color: Colors.white) else const SizedBox(width: AppSpacing.l),
             Expanded(
               child: mode != null
-                  ? Align(alignment: AlignmentDirectional.centerStart, child: _ModeSwitch(mode: mode!, onMode: onMode!))
+                  ? Align(
+                      alignment: AlignmentDirectional.centerStart,
+                      // Only as tall as the switch, not the screen.
+                      heightFactor: 1,
+                      child: _ModeSwitch(mode: mode!, onMode: onMode!),
+                    )
                   : title == null
                   ? const SizedBox.shrink()
                   : Text(
@@ -591,6 +596,9 @@ class _ModeSwitch extends StatelessWidget {
                     child: Padding(
                       padding: const EdgeInsets.symmetric(horizontal: AppSpacing.m),
                       child: Column(
+                        // Only as tall as the label: in the bar's row a full
+                        // height column pulled the whole bar to the middle.
+                        mainAxisSize: MainAxisSize.min,
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           Text(

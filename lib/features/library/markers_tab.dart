@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/utils/picture_fit.dart';
 import '../../core/config/haptics.dart';
 import '../../core/config/theme.dart';
 import '../../core/pagination/paging_mode.dart';
@@ -204,7 +205,13 @@ class MarkerTile extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final muted = theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurfaceVariant);
-    final still = StashImage(marker.screenshotUrl ?? marker.scene.screenshotUrl, fallbackIcon: Icons.bookmark_outline);
+    // A portrait scene's marker shows whole instead of zoomed to the width.
+    final fit = pictureFit(marker.scene.aspect, 16 / 9);
+    final still = StashImage(
+      marker.screenshotUrl ?? marker.scene.screenshotUrl,
+      fit: fit,
+      fallbackIcon: Icons.bookmark_outline,
+    );
     final preview = previewsPlay(context, ref, markerPreviewsProvider) ? marker.previewUrl : null;
     final l = context.l10n;
     final showTag = marker.tag.name != marker.title;
@@ -237,10 +244,11 @@ class MarkerTile extends ConsumerWidget {
                   child: Stack(
                     fit: StackFit.expand,
                     children: [
+                      const ColoredBox(color: Colors.black),
                       if (preview != null)
                         // Loops by itself (animated WebP); the still frame shows
                         // until it loaded, and if Stash has none.
-                        StashImage(preview, standIn: still)
+                        StashImage(preview, fit: fit, standIn: still)
                       else
                         still,
                       Positioned(

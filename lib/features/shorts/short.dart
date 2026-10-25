@@ -2,6 +2,8 @@ import 'dart:convert';
 
 import 'package:flutter/widgets.dart';
 
+import '../../core/utils/picture_fit.dart';
+
 import '../../data/models/marker.dart';
 import '../../data/models/scene.dart';
 
@@ -54,26 +56,11 @@ class Short {
     return 'edl://%${utf8.encode(url).length}%$url,start=${seconds(start!)},length=${seconds(end! - start!)}';
   }
 
-  /// How much of a video [BoxFit.cover] may crop before it is shown whole
-  /// ([BoxFit.contain]) instead.
-  static const maxCrop = 0.3;
-
-  /// Cover a box of [boxAspect] (width / height) with a picture of
-  /// [aspect] when that crops at most [maxCrop] of it, else show it whole:
-  /// a portrait video fills a phone, but not a landscape tablet, where
-  /// covering zoomed it to the full width.
-  static BoxFit fitFor(double? aspect, double boxAspect) {
-    if (aspect == null || aspect <= 0 || boxAspect <= 0) return BoxFit.contain;
-    final shown = aspect < boxAspect ? aspect / boxAspect : boxAspect / aspect;
-    return 1 - shown <= maxCrop ? BoxFit.cover : BoxFit.contain;
-  }
+  /// See [pictureFit].
+  static BoxFit fitFor(double? aspect, double boxAspect) => pictureFit(aspect, boxAspect);
 
   /// The scene's width / height, null when Stash doesn't know it.
-  double? get aspect {
-    final width = scene.width;
-    final height = scene.height;
-    return width == null || height == null || width <= 0 || height <= 0 ? null : width / height;
-  }
+  double? get aspect => scene.aspect;
 
   static Duration _duration(double seconds) => Duration(milliseconds: (seconds * 1000).round());
 

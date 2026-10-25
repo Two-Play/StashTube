@@ -6,6 +6,7 @@ import 'package:stash_app_mobile/core/config/server_config.dart';
 import 'package:stash_app_mobile/features/player/player_providers.dart';
 import 'package:stash_app_mobile/features/shorts/shorts_feed.dart';
 import 'package:stash_app_mobile/features/shorts/shorts_page.dart';
+import 'package:stash_app_mobile/features/shorts/shorts_settings.dart';
 import 'package:stash_app_mobile/widgets/status_views.dart';
 
 import '../helpers.dart';
@@ -40,6 +41,19 @@ void main() {
     expect(empty.center.dx, moreOrLessEquals(screen.center.dx, epsilon: 1));
     expect(empty.center.dy, moreOrLessEquals(screen.center.dy, epsilon: 1));
     expect(tester.takeException(), isNull);
+
+    // The shorts/loops switch sits at the top, not in the middle.
+    final shorts = find.text('Shorts');
+    expect(shorts, findsOneWidget);
+    expect(find.text('Loops'), findsOneWidget);
+    expect(tester.getRect(shorts).top, lessThan(screen.top + 100));
+
+    // Switching to the loops swaps the feed in place.
+    await tester.tap(find.text('Loops'));
+    await tester.pump();
+    expect(container.read(shortsModeProvider), ShortsMode.loops);
+    expect(container.exists(shortsFeedFamily(const ShortsSource.loops())), isTrue);
+    expect(find.byType(ShortsPage), findsOneWidget);
 
     // The page resets its providers after it is gone, so remove it first.
     await tester.pumpWidget(UncontrolledProviderScope(container: container, child: const SizedBox()));

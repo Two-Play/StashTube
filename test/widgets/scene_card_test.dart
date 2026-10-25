@@ -6,7 +6,9 @@ import 'package:stash_app_mobile/data/models/scene.dart';
 import 'package:stash_app_mobile/data/models/studio.dart';
 import 'package:stash_app_mobile/features/settings/scene_card_config.dart';
 import 'package:stash_app_mobile/l10n/l10n.dart';
+import 'package:stash_app_mobile/core/utils/picture_fit.dart';
 import 'package:stash_app_mobile/widgets/scene_card.dart';
+import 'package:stash_app_mobile/widgets/stash_image.dart';
 
 import '../helpers.dart';
 
@@ -43,6 +45,27 @@ void main() {
     await pump(const Scene(id: '2', title: 'B', duration: 100, resumeTime: 25));
     final bar = tester.widget<LinearProgressIndicator>(find.byType(LinearProgressIndicator));
     expect(bar.value, 0.25);
+  });
+
+  testWidgets('a portrait scene shows whole in the 16:9 thumbnail, a wide one fills it', (tester) async {
+    BoxFit fit() => tester.widget<StashImage>(find.byType(StashImage)).fit;
+    Future<void> pump(Scene scene) => tester.pumpWidget(ProviderScope(
+          overrides: [...testServer],
+          child: MaterialApp(home: Scaffold(body: SceneThumbnail(scene: scene))),
+        ));
+    await pump(const Scene(id: '1', title: 'Tall', width: 1080, height: 1920, screenshotUrl: 'http://s/1.jpg'));
+    expect(fit(), BoxFit.contain);
+    await pump(const Scene(id: '2', title: 'Wide', width: 1920, height: 1080, screenshotUrl: 'http://s/2.jpg'));
+    expect(fit(), BoxFit.cover);
+    await pump(const Scene(id: '3', title: '4:3', width: 1440, height: 1080, screenshotUrl: 'http://s/3.jpg'));
+    expect(fit(), BoxFit.cover, reason: 'crops a quarter at most');
+  });
+
+  test('pictureFit covers only when it crops little', () {
+    expect(pictureFit(16 / 9, 16 / 9), BoxFit.cover);
+    expect(pictureFit(9 / 16, 16 / 9), BoxFit.contain);
+    expect(pictureFit(1, 16 / 9), BoxFit.contain, reason: 'a square would lose 44 %');
+    expect(pictureFit(null, 16 / 9), BoxFit.contain);
   });
 
   group('card settings', () {
