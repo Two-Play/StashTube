@@ -264,14 +264,14 @@ void main() {
   });
 
   group('full video', () {
-    Future<_Playing> pumpButton(WidgetTester tester, Short short) async {
+    Future<_Playing> pumpButton(WidgetTester tester, Short short, {Duration? position}) async {
       final playing = _Playing();
       await tester.pumpWidget(ProviderScope(
         overrides: [nowPlayingProvider.overrideWith(() => playing)],
         child: MaterialApp(
           home: Consumer(
             builder: (context, ref, _) => TextButton(
-              onPressed: () => playFullVideo(ref, short),
+              onPressed: () => playFullVideo(ref, short, position: position),
               child: const Text('full'),
             ),
           ),
@@ -291,6 +291,16 @@ void main() {
 
     testWidgets('a whole video resumes where it was left', (tester) async {
       expect((await pumpButton(tester, const Short.video(_scene))).played, [('s1', null)]);
+    });
+
+    testWidgets('the player continues where the short is', (tester) async {
+      final video = await pumpButton(tester, const Short.video(_scene), position: const Duration(seconds: 12));
+      expect(video.played, [('s1', 12.0)]);
+    });
+
+    testWidgets('a loop continues at the clip\'s spot in the scene', (tester) async {
+      final loop = await pumpButton(tester, Short.marker(_marker(seconds: 30)), position: const Duration(seconds: 7));
+      expect(loop.played, [('s1', 37.0)], reason: 'the clip counts from the marker\'s start');
     });
   });
 }

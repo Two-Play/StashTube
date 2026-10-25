@@ -46,9 +46,13 @@ class FakePlayer implements Player {
         error.stream,
       );
 
+  /// Like mpv right after a seek: the position stays where it was.
+  bool lagging = false;
+
   @override
   Future<void> seek(Duration duration) async {
     seeks.add(duration);
+    if (lagging) return;
     _state = _state.copyWith(position: duration);
     position.add(duration);
   }
