@@ -1,12 +1,13 @@
 import 'package:flutter/gestures.dart';
 import 'package:flutter/widgets.dart';
-import 'package:miniplayer/miniplayer.dart';
+
+import 'sliding_panel.dart';
 
 /// Lets a downward swipe on the expanded player minimize it, following the
 /// finger and snapping on release, like YouTube.
 ///
-/// The miniplayer package only drags the panel when no inner widget claims
-/// the gesture, but the video controls and the details list both do. So this
+/// The expanded [SlidingPanel] takes no drags itself, and the video controls
+/// and the details list both claim vertical drags. So this
 /// watches raw pointer events (outside the gesture arena) and drives the
 /// panel through its [controller]. A swipe starts the drag when it begins on
 /// the video, or in the details while they are scrolled to the top.
@@ -23,7 +24,7 @@ class DragToMinimize extends StatefulWidget {
 
   /// Only start drags while the panel is fully expanded.
   final bool enabled;
-  final MiniplayerController controller;
+  final SlidingPanelController controller;
   final double minHeight;
   final double maxHeight;
 
@@ -53,7 +54,7 @@ class _DragToMinimizeState extends State<DragToMinimize> {
     _pointers++;
     if (_pointers > 1) {
       // A second finger: a pinch on the video, not a swipe down.
-      if (_dragging) widget.controller.animateToHeight(state: PanelState.MAX);
+      if (_dragging) widget.controller.expand();
       _dragging = false;
       _candidate = false;
       return;
@@ -82,7 +83,7 @@ class _DragToMinimizeState extends State<DragToMinimize> {
       }
     }
     final height = (widget.maxHeight - delta.dy).clamp(widget.minHeight, widget.maxHeight);
-    widget.controller.animateToHeight(height: height.roundToDouble(), duration: Duration.zero);
+    widget.controller.jumpTo(height.roundToDouble());
   }
 
   void _onEnd(PointerEvent e) {
@@ -95,7 +96,7 @@ class _DragToMinimizeState extends State<DragToMinimize> {
         velocity: velocity,
         maxHeight: widget.maxHeight,
       );
-      widget.controller.animateToHeight(state: collapse ? PanelState.MIN : PanelState.MAX);
+      collapse ? widget.controller.collapse() : widget.controller.expand();
     }
     _start = null;
     _dragging = false;

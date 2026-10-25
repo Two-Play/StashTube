@@ -1,4 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:stash_app_mobile/data/models/json.dart';
 import 'package:stash_app_mobile/data/models/list_queries.dart';
 import '../fixtures.dart';
 
@@ -105,6 +106,26 @@ void main() {
           'depth': 0,
         },
       });
+    });
+  });
+
+  group('Stash placeholder images', () {
+    const placeholder = 'http://s/performer/1/image?t=1700000000&default=true';
+
+    test('URLs marked default=true count as no image', () {
+      expect(stashImageUrl(placeholder), isNull);
+      expect(stashImageUrl('http://s/performer/1/image?t=1700000000'), 'http://s/performer/1/image?t=1700000000');
+      expect(stashImageUrl(''), isNull);
+      expect(stashImageUrl(null), isNull);
+    });
+
+    test('performers, studios and scene performers drop them', () {
+      expect(performerFrom({'image_path': placeholder}).imageUrl, isNull);
+      expect(studioFrom({'image_path': placeholder.replaceFirst('performer', 'studio')}).imageUrl, isNull);
+      final scene = sceneFrom({
+        'performers': [scenePerformerJson({'id': '1', 'name': 'Alice', 'image_path': placeholder})],
+      });
+      expect(scene.performers.single.imageUrl, isNull);
     });
   });
 }

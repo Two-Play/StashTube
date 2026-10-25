@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:miniplayer/miniplayer.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:stash_app_mobile/core/config/server_config.dart';
 import 'package:stash_app_mobile/data/models/scene.dart';
 import 'package:stash_app_mobile/features/player/player_providers.dart';
+import 'package:stash_app_mobile/features/player/sliding_panel.dart';
 import 'package:stash_app_mobile/features/shell/app_shell.dart';
 import 'package:stash_app_mobile/features/shell/navigation.dart';
 import 'package:stash_app_mobile/features/shell/shell_layout.dart';
@@ -68,8 +68,9 @@ void main() {
               content: const SizedBox.expand(key: contentKey),
               miniplayer: !player
                   ? null
-                  : Miniplayer(
-                      valueNotifier: height,
+                  : SlidingPanel(
+                      controller: SlidingPanelController(),
+                      height: height,
                       minHeight: kMiniPlayerHeight,
                       maxHeight: maxHeight,
                       builder: (_, _) => const ColoredBox(key: panelKey, color: Colors.red),
@@ -172,7 +173,7 @@ void main() {
   group('AppShell on a tablet', () {
     late ProviderContainer container;
 
-    Future<void> pumpShell(WidgetTester tester, Size size) async {
+    Future<void> pumpShell(WidgetTester tester, Size size, {bool playing = false}) async {
       setSize(tester, size);
       final prefs = (await tester.runAsync(() async {
         SharedPreferences.setMockInitialValues({});
@@ -181,7 +182,7 @@ void main() {
       container = ProviderContainer(overrides: [
         ...testServer,
         sharedPreferencesProvider.overrideWithValue(prefs),
-        nowPlayingProvider.overrideWith(_NothingPlaying.new),
+        nowPlayingProvider.overrideWith(playing ? _Playing.new : _NothingPlaying.new),
       ]);
       addTearDown(container.dispose);
       await tester.pumpWidget(UncontrolledProviderScope(
@@ -191,6 +192,7 @@ void main() {
           localizationsDelegates: AppLocalizations.localizationsDelegates,
           supportedLocales: AppLocalizations.supportedLocales,
           home: AppShell(
+            panelBuilder: (_) => const ColoredBox(key: Key('panel'), color: Colors.red),
             pageBuilder: (tab) => Scaffold(
               body: ListView(
                 children: [for (var i = 0; i < 100; i++) SizedBox(height: 50, child: Text('${tab.name} $i'))],
@@ -236,6 +238,42 @@ void main() {
       expect(find.byType(NavigationRail), findsOneWidget);
     });
 
+    testWidgets('back collapses the expanded player before leaving a page', (tester) async {
+      await pumpShell(tester, const Size(390, 844), playing: true);
+      final navigator = container.read(tabNavigatorKeysProvider)[AppTab.home]!.currentState!;
+      navigator.push(MaterialPageRoute<void>(builder: (_) => const Text('detail page')));
+      await tester.pumpAndSettle();
+      container.read(nowPlayingProvider.notifier).expand();
+      await tester.pumpAndSettle();
+      final height = container.read(miniplayerHeightProvider);
+      expect(height.value, 844);
+
+      await tester.binding.handlePopRoute();
+      await tester.pumpAndSettle();
+      expect(height.value, kMiniPlayerHeight);
+      expect(navigator.canPop(), isTrue, reason: 'the page stays');
+
+      await tester.binding.handlePopRoute();
+      await tester.pumpAndSettle();
+      expect(navigator.canPop(), isFalse);
+      expect(find.byKey(const Key('panel')), findsOneWidget);
+    });
+
+    testWidgets('only the shown tab animates, and not behind the open player', (tester) async {
+      await pumpShell(tester, const Size(390, 844), playing: true);
+      bool ticking(String text) => TickerMode.valuesOf(tester.element(find.text(text, skipOffstage: false))).enabled;
+      expect(ticking('home 0'), isTrue);
+      expect(ticking('search 0'), isFalse, reason: 'a hidden tab');
+
+      container.read(nowPlayingProvider.notifier).expand();
+      await tester.pumpAndSettle();
+      expect(ticking('home 0'), isFalse, reason: 'covered by the player');
+
+      container.read(nowPlayingProvider.notifier).collapse();
+      await tester.pumpAndSettle();
+      expect(ticking('home 0'), isTrue);
+    });
+
     testWidgets('a phone keeps the bottom bar', (tester) async {
       await pumpShell(tester, const Size(390, 844));
       expect(find.byType(NavigationBar), findsOneWidget);
@@ -247,4 +285,9 @@ void main() {
 class _NothingPlaying extends NowPlayingNotifier {
   @override
   Scene? build() => null;
+}
+
+class _Playing extends NowPlayingNotifier {
+  @override
+  Scene? build() => const Scene(id: '1', title: 'A');
 }
