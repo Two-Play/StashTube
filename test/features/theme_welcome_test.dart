@@ -62,6 +62,10 @@ void main() {
     await tester.tap(find.text('Done'));
     await tester.pumpAndSettle();
     expect(find.text('Choose your look'), findsNothing);
+    expect(find.text('Welcome to StashTube'), findsOneWidget, reason: 'the tour follows');
+    await tester.tap(find.text('Skip'));
+    await tester.pumpAndSettle();
+    expect(find.text('Welcome to StashTube'), findsNothing);
 
     showThemeWelcomeIfPending(context, widgetRef);
     await tester.pumpAndSettle();

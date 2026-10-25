@@ -1,16 +1,18 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/config/theme.dart';
 import '../../core/utils/format.dart';
 import '../../l10n/l10n.dart';
 import '../../widgets/scene_card.dart';
 import '../../widgets/stash_image.dart';
+import '../settings/scene_card_config.dart';
 import 'short.dart';
 
 /// A short's 9:16 tile (the home shelf, a channel's shorts): still, title
 /// and length. A marker short shows its marker's still and title with a
 /// bookmark badge.
-class ShortTile extends StatelessWidget {
+class ShortTile extends ConsumerWidget {
   const ShortTile({super.key, required this.short, required this.onTap});
 
   final Short short;
@@ -26,7 +28,7 @@ class ShortTile extends StatelessWidget {
   @override
   // Sized by its parent (9:16); the still fills it when that crops little,
   // else it shows whole on black (a landscape scene).
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final colors = AppColors.of(context);
     return SizedBox.expand(
       child: ClipRRect(
@@ -45,7 +47,8 @@ class ShortTile extends StatelessWidget {
                     LayoutBuilder(
                       builder: (context, box) => StashImage(
                         short.marker?.screenshotUrl ?? short.scene.screenshotUrl,
-                        fit: Short.fitFor(
+                        fit: thumbnailFit(
+                          ref,
                           short.aspect,
                           box.maxHeight > 0 && box.maxHeight.isFinite ? box.maxWidth / box.maxHeight : 9 / 16,
                         ),
