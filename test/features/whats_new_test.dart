@@ -49,6 +49,7 @@ void main() {
       for (final entry in entries) {
         expect(entry.title, isNotEmpty);
         expect(entry.items.length, greaterThan(1));
+        expect(entry.icons, hasLength(entry.items.length), reason: 'an icon per item (${locale.languageCode})');
       }
       final ids = [for (final e in entries) e.id];
       expect(ids, [...ids]..sort((a, b) => b - a), reason: 'newest first');
@@ -59,6 +60,8 @@ void main() {
     final c = await pump(tester);
     expect(find.text(l.whatsNewTitle), findsOneWidget);
     expect(find.text(l.whatsNew1Title), findsOneWidget);
+    expect(find.byIcon(Icons.auto_awesome), findsNothing);
+    expect(find.byIcon(Icons.loop), findsOneWidget, reason: 'the loops item has its icon');
     expect(c.read(whatsNewSeenProvider), latestChangelogId(l));
     expect(prefs.getInt('whats_new_seen'), latestChangelogId(l), reason: 'stored');
 
