@@ -7,6 +7,7 @@ import '../../data/providers.dart';
 import '../../widgets/paged_sliver.dart';
 import '../../widgets/stash_image.dart';
 import '../search/search_page.dart';
+import '../edit/create_dialog.dart';
 import '../shell/navigation.dart';
 import '../../l10n/l10n.dart';
 import '../auth/server_avatar.dart';
@@ -28,6 +29,18 @@ class StudiosPage extends ConsumerWidget {
           IconButton(icon: const Icon(Icons.search), onPressed: () => openSearch(ref, scope: SearchScope.studios)),
           const ServerAvatarButton(),
         ],
+      ),
+      floatingActionButton: FloatingActionButton.extended(
+        icon: const Icon(Icons.add_business_outlined),
+        label: Text(context.l10n.newStudio),
+        onPressed: () async {
+          final studio = await showCreateDialog(
+            context,
+            title: context.l10n.newStudio,
+            create: (name) => createStudio(ref, name),
+          );
+          if (studio != null) openStudio(ref, studio.id);
+        },
       ),
       body: RefreshIndicator(
         onRefresh: () => refreshFuture(ref, provider.future),

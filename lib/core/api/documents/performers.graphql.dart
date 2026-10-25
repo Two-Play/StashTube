@@ -3202,3 +3202,669 @@ class Mutation$PerformerSetFavorite$performerUpdate {
     return true;
   }
 }
+
+class Variables$Mutation$PerformerSetRating {
+  factory Variables$Mutation$PerformerSetRating({
+    required String id,
+    int? rating100,
+  }) => Variables$Mutation$PerformerSetRating._({
+    r'id': id,
+    if (rating100 != null) r'rating100': rating100,
+  });
+
+  Variables$Mutation$PerformerSetRating._(this._$data);
+
+  factory Variables$Mutation$PerformerSetRating.fromJson(
+    Map<String, dynamic> data,
+  ) {
+    final result$data = <String, dynamic>{};
+    final l$id = data['id'];
+    result$data['id'] = (l$id as String);
+    if (data.containsKey('rating100')) {
+      final l$rating100 = data['rating100'];
+      result$data['rating100'] = (l$rating100 as int?);
+    }
+    return Variables$Mutation$PerformerSetRating._(result$data);
+  }
+
+  Map<String, dynamic> _$data;
+
+  String get id => (_$data['id'] as String);
+
+  int? get rating100 => (_$data['rating100'] as int?);
+
+  Map<String, dynamic> toJson() {
+    final result$data = <String, dynamic>{};
+    final l$id = id;
+    result$data['id'] = l$id;
+    if (_$data.containsKey('rating100')) {
+      final l$rating100 = rating100;
+      result$data['rating100'] = l$rating100;
+    }
+    return result$data;
+  }
+
+  @override
+  bool operator ==(Object other) {
+    if (identical(this, other)) {
+      return true;
+    }
+    if (other is! Variables$Mutation$PerformerSetRating ||
+        runtimeType != other.runtimeType) {
+      return false;
+    }
+    final l$id = id;
+    final lOther$id = other.id;
+    if (l$id != lOther$id) {
+      return false;
+    }
+    final l$rating100 = rating100;
+    final lOther$rating100 = other.rating100;
+    if (_$data.containsKey('rating100') !=
+        other._$data.containsKey('rating100')) {
+      return false;
+    }
+    if (l$rating100 != lOther$rating100) {
+      return false;
+    }
+    return true;
+  }
+
+  @override
+  int get hashCode {
+    final l$id = id;
+    final l$rating100 = rating100;
+    return Object.hashAll([
+      l$id,
+      _$data.containsKey('rating100') ? l$rating100 : const {},
+    ]);
+  }
+}
+
+class Mutation$PerformerSetRating {
+  Mutation$PerformerSetRating({
+    this.performerUpdate,
+    this.$__typename = 'Mutation',
+  });
+
+  factory Mutation$PerformerSetRating.fromJson(Map<String, dynamic> json) {
+    final l$performerUpdate = json['performerUpdate'];
+    final l$$__typename = json['__typename'];
+    return Mutation$PerformerSetRating(
+      performerUpdate: l$performerUpdate == null
+          ? null
+          : Mutation$PerformerSetRating$performerUpdate.fromJson(
+              (l$performerUpdate as Map<String, dynamic>),
+            ),
+      $__typename: (l$$__typename as String),
+    );
+  }
+
+  final Mutation$PerformerSetRating$performerUpdate? performerUpdate;
+
+  final String $__typename;
+
+  Map<String, dynamic> toJson() {
+    final _resultData = <String, dynamic>{};
+    final l$performerUpdate = performerUpdate;
+    _resultData['performerUpdate'] = l$performerUpdate?.toJson();
+    final l$$__typename = $__typename;
+    _resultData['__typename'] = l$$__typename;
+    return _resultData;
+  }
+
+  @override
+  int get hashCode {
+    final l$performerUpdate = performerUpdate;
+    final l$$__typename = $__typename;
+    return Object.hashAll([l$performerUpdate, l$$__typename]);
+  }
+
+  @override
+  bool operator ==(Object other) {
+    if (identical(this, other)) {
+      return true;
+    }
+    if (other is! Mutation$PerformerSetRating ||
+        runtimeType != other.runtimeType) {
+      return false;
+    }
+    final l$performerUpdate = performerUpdate;
+    final lOther$performerUpdate = other.performerUpdate;
+    if (l$performerUpdate != lOther$performerUpdate) {
+      return false;
+    }
+    final l$$__typename = $__typename;
+    final lOther$$__typename = other.$__typename;
+    if (l$$__typename != lOther$$__typename) {
+      return false;
+    }
+    return true;
+  }
+}
+
+const documentNodeMutationPerformerSetRating = DocumentNode(
+  definitions: [
+    OperationDefinitionNode(
+      type: OperationType.mutation,
+      name: NameNode(value: 'PerformerSetRating'),
+      variableDefinitions: [
+        VariableDefinitionNode(
+          variable: VariableNode(name: NameNode(value: 'id')),
+          type: NamedTypeNode(name: NameNode(value: 'ID'), isNonNull: true),
+          defaultValue: DefaultValueNode(value: null),
+          directives: [],
+        ),
+        VariableDefinitionNode(
+          variable: VariableNode(name: NameNode(value: 'rating100')),
+          type: NamedTypeNode(name: NameNode(value: 'Int'), isNonNull: false),
+          defaultValue: DefaultValueNode(value: null),
+          directives: [],
+        ),
+      ],
+      directives: [],
+      selectionSet: SelectionSetNode(
+        selections: [
+          FieldNode(
+            name: NameNode(value: 'performerUpdate'),
+            alias: null,
+            arguments: [
+              ArgumentNode(
+                name: NameNode(value: 'input'),
+                value: ObjectValueNode(
+                  fields: [
+                    ObjectFieldNode(
+                      name: NameNode(value: 'id'),
+                      value: VariableNode(name: NameNode(value: 'id')),
+                    ),
+                    ObjectFieldNode(
+                      name: NameNode(value: 'rating100'),
+                      value: VariableNode(name: NameNode(value: 'rating100')),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+            directives: [],
+            selectionSet: SelectionSetNode(
+              selections: [
+                FieldNode(
+                  name: NameNode(value: 'id'),
+                  alias: null,
+                  arguments: [],
+                  directives: [],
+                  selectionSet: null,
+                ),
+                FieldNode(
+                  name: NameNode(value: 'rating100'),
+                  alias: null,
+                  arguments: [],
+                  directives: [],
+                  selectionSet: null,
+                ),
+                FieldNode(
+                  name: NameNode(value: '__typename'),
+                  alias: null,
+                  arguments: [],
+                  directives: [],
+                  selectionSet: null,
+                ),
+              ],
+            ),
+          ),
+          FieldNode(
+            name: NameNode(value: '__typename'),
+            alias: null,
+            arguments: [],
+            directives: [],
+            selectionSet: null,
+          ),
+        ],
+      ),
+    ),
+  ],
+);
+Mutation$PerformerSetRating _parserFn$Mutation$PerformerSetRating(
+  Map<String, dynamic> data,
+) => Mutation$PerformerSetRating.fromJson(data);
+typedef OnMutationCompleted$Mutation$PerformerSetRating =
+    FutureOr<void> Function(
+      Map<String, dynamic>?,
+      Mutation$PerformerSetRating?,
+    );
+
+class Options$Mutation$PerformerSetRating
+    extends graphql.MutationOptions<Mutation$PerformerSetRating> {
+  Options$Mutation$PerformerSetRating({
+    String? operationName,
+    required Variables$Mutation$PerformerSetRating variables,
+    graphql.FetchPolicy? fetchPolicy,
+    graphql.ErrorPolicy? errorPolicy,
+    graphql.CacheRereadPolicy? cacheRereadPolicy,
+    Object? optimisticResult,
+    Mutation$PerformerSetRating? typedOptimisticResult,
+    graphql.Context? context,
+    OnMutationCompleted$Mutation$PerformerSetRating? onCompleted,
+    graphql.OnMutationUpdate<Mutation$PerformerSetRating>? update,
+    graphql.OnError? onError,
+  }) : onCompletedWithParsed = onCompleted,
+       super(
+         variables: variables.toJson(),
+         operationName: operationName ?? 'PerformerSetRating',
+         fetchPolicy: fetchPolicy,
+         errorPolicy: errorPolicy,
+         cacheRereadPolicy: cacheRereadPolicy,
+         optimisticResult: optimisticResult ?? typedOptimisticResult?.toJson(),
+         context: context,
+         onCompleted: onCompleted == null
+             ? null
+             : (data) => onCompleted(
+                 data,
+                 data == null
+                     ? null
+                     : _parserFn$Mutation$PerformerSetRating(data),
+               ),
+         update: update,
+         onError: onError,
+         document: documentNodeMutationPerformerSetRating,
+         parserFn: _parserFn$Mutation$PerformerSetRating,
+       );
+
+  final OnMutationCompleted$Mutation$PerformerSetRating? onCompletedWithParsed;
+
+  @override
+  List<Object?> get properties => [
+    ...super.onCompleted == null
+        ? super.properties
+        : super.properties.where((property) => property != onCompleted),
+    onCompletedWithParsed,
+  ];
+}
+
+class WatchOptions$Mutation$PerformerSetRating
+    extends graphql.WatchQueryOptions<Mutation$PerformerSetRating> {
+  WatchOptions$Mutation$PerformerSetRating({
+    String? operationName,
+    required Variables$Mutation$PerformerSetRating variables,
+    graphql.FetchPolicy? fetchPolicy,
+    graphql.ErrorPolicy? errorPolicy,
+    graphql.CacheRereadPolicy? cacheRereadPolicy,
+    Object? optimisticResult,
+    Mutation$PerformerSetRating? typedOptimisticResult,
+    graphql.Context? context,
+    Duration? pollInterval,
+    bool? eagerlyFetchResults,
+    bool carryForwardDataOnException = true,
+    bool fetchResults = false,
+  }) : super(
+         variables: variables.toJson(),
+         operationName: operationName ?? 'PerformerSetRating',
+         fetchPolicy: fetchPolicy,
+         errorPolicy: errorPolicy,
+         cacheRereadPolicy: cacheRereadPolicy,
+         optimisticResult: optimisticResult ?? typedOptimisticResult?.toJson(),
+         context: context,
+         document: documentNodeMutationPerformerSetRating,
+         pollInterval: pollInterval,
+         eagerlyFetchResults: eagerlyFetchResults,
+         carryForwardDataOnException: carryForwardDataOnException,
+         fetchResults: fetchResults,
+         parserFn: _parserFn$Mutation$PerformerSetRating,
+       );
+}
+
+extension ClientExtension$Mutation$PerformerSetRating on graphql.GraphQLClient {
+  Future<graphql.QueryResult<Mutation$PerformerSetRating>>
+  mutate$PerformerSetRating(
+    Options$Mutation$PerformerSetRating options,
+  ) async => await this.mutate(options);
+
+  graphql.ObservableQuery<Mutation$PerformerSetRating>
+  watchMutation$PerformerSetRating(
+    WatchOptions$Mutation$PerformerSetRating options,
+  ) => this.watchMutation(options);
+}
+
+class Mutation$PerformerSetRating$performerUpdate {
+  Mutation$PerformerSetRating$performerUpdate({
+    required this.id,
+    this.rating100,
+    this.$__typename = 'Performer',
+  });
+
+  factory Mutation$PerformerSetRating$performerUpdate.fromJson(
+    Map<String, dynamic> json,
+  ) {
+    final l$id = json['id'];
+    final l$rating100 = json['rating100'];
+    final l$$__typename = json['__typename'];
+    return Mutation$PerformerSetRating$performerUpdate(
+      id: (l$id as String),
+      rating100: (l$rating100 as int?),
+      $__typename: (l$$__typename as String),
+    );
+  }
+
+  final String id;
+
+  final int? rating100;
+
+  final String $__typename;
+
+  Map<String, dynamic> toJson() {
+    final _resultData = <String, dynamic>{};
+    final l$id = id;
+    _resultData['id'] = l$id;
+    final l$rating100 = rating100;
+    _resultData['rating100'] = l$rating100;
+    final l$$__typename = $__typename;
+    _resultData['__typename'] = l$$__typename;
+    return _resultData;
+  }
+
+  @override
+  int get hashCode {
+    final l$id = id;
+    final l$rating100 = rating100;
+    final l$$__typename = $__typename;
+    return Object.hashAll([l$id, l$rating100, l$$__typename]);
+  }
+
+  @override
+  bool operator ==(Object other) {
+    if (identical(this, other)) {
+      return true;
+    }
+    if (other is! Mutation$PerformerSetRating$performerUpdate ||
+        runtimeType != other.runtimeType) {
+      return false;
+    }
+    final l$id = id;
+    final lOther$id = other.id;
+    if (l$id != lOther$id) {
+      return false;
+    }
+    final l$rating100 = rating100;
+    final lOther$rating100 = other.rating100;
+    if (l$rating100 != lOther$rating100) {
+      return false;
+    }
+    final l$$__typename = $__typename;
+    final lOther$$__typename = other.$__typename;
+    if (l$$__typename != lOther$$__typename) {
+      return false;
+    }
+    return true;
+  }
+}
+
+class Variables$Mutation$PerformerCreate {
+  factory Variables$Mutation$PerformerCreate({required String name}) =>
+      Variables$Mutation$PerformerCreate._({r'name': name});
+
+  Variables$Mutation$PerformerCreate._(this._$data);
+
+  factory Variables$Mutation$PerformerCreate.fromJson(
+    Map<String, dynamic> data,
+  ) {
+    final result$data = <String, dynamic>{};
+    final l$name = data['name'];
+    result$data['name'] = (l$name as String);
+    return Variables$Mutation$PerformerCreate._(result$data);
+  }
+
+  Map<String, dynamic> _$data;
+
+  String get name => (_$data['name'] as String);
+
+  Map<String, dynamic> toJson() {
+    final result$data = <String, dynamic>{};
+    final l$name = name;
+    result$data['name'] = l$name;
+    return result$data;
+  }
+
+  @override
+  bool operator ==(Object other) {
+    if (identical(this, other)) {
+      return true;
+    }
+    if (other is! Variables$Mutation$PerformerCreate ||
+        runtimeType != other.runtimeType) {
+      return false;
+    }
+    final l$name = name;
+    final lOther$name = other.name;
+    if (l$name != lOther$name) {
+      return false;
+    }
+    return true;
+  }
+
+  @override
+  int get hashCode {
+    final l$name = name;
+    return Object.hashAll([l$name]);
+  }
+}
+
+class Mutation$PerformerCreate {
+  Mutation$PerformerCreate({
+    this.performerCreate,
+    this.$__typename = 'Mutation',
+  });
+
+  factory Mutation$PerformerCreate.fromJson(Map<String, dynamic> json) {
+    final l$performerCreate = json['performerCreate'];
+    final l$$__typename = json['__typename'];
+    return Mutation$PerformerCreate(
+      performerCreate: l$performerCreate == null
+          ? null
+          : Fragment$PerformerFields.fromJson(
+              (l$performerCreate as Map<String, dynamic>),
+            ),
+      $__typename: (l$$__typename as String),
+    );
+  }
+
+  final Fragment$PerformerFields? performerCreate;
+
+  final String $__typename;
+
+  Map<String, dynamic> toJson() {
+    final _resultData = <String, dynamic>{};
+    final l$performerCreate = performerCreate;
+    _resultData['performerCreate'] = l$performerCreate?.toJson();
+    final l$$__typename = $__typename;
+    _resultData['__typename'] = l$$__typename;
+    return _resultData;
+  }
+
+  @override
+  int get hashCode {
+    final l$performerCreate = performerCreate;
+    final l$$__typename = $__typename;
+    return Object.hashAll([l$performerCreate, l$$__typename]);
+  }
+
+  @override
+  bool operator ==(Object other) {
+    if (identical(this, other)) {
+      return true;
+    }
+    if (other is! Mutation$PerformerCreate ||
+        runtimeType != other.runtimeType) {
+      return false;
+    }
+    final l$performerCreate = performerCreate;
+    final lOther$performerCreate = other.performerCreate;
+    if (l$performerCreate != lOther$performerCreate) {
+      return false;
+    }
+    final l$$__typename = $__typename;
+    final lOther$$__typename = other.$__typename;
+    if (l$$__typename != lOther$$__typename) {
+      return false;
+    }
+    return true;
+  }
+}
+
+const documentNodeMutationPerformerCreate = DocumentNode(
+  definitions: [
+    OperationDefinitionNode(
+      type: OperationType.mutation,
+      name: NameNode(value: 'PerformerCreate'),
+      variableDefinitions: [
+        VariableDefinitionNode(
+          variable: VariableNode(name: NameNode(value: 'name')),
+          type: NamedTypeNode(name: NameNode(value: 'String'), isNonNull: true),
+          defaultValue: DefaultValueNode(value: null),
+          directives: [],
+        ),
+      ],
+      directives: [],
+      selectionSet: SelectionSetNode(
+        selections: [
+          FieldNode(
+            name: NameNode(value: 'performerCreate'),
+            alias: null,
+            arguments: [
+              ArgumentNode(
+                name: NameNode(value: 'input'),
+                value: ObjectValueNode(
+                  fields: [
+                    ObjectFieldNode(
+                      name: NameNode(value: 'name'),
+                      value: VariableNode(name: NameNode(value: 'name')),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+            directives: [],
+            selectionSet: SelectionSetNode(
+              selections: [
+                FragmentSpreadNode(
+                  name: NameNode(value: 'PerformerFields'),
+                  directives: [],
+                ),
+                FieldNode(
+                  name: NameNode(value: '__typename'),
+                  alias: null,
+                  arguments: [],
+                  directives: [],
+                  selectionSet: null,
+                ),
+              ],
+            ),
+          ),
+          FieldNode(
+            name: NameNode(value: '__typename'),
+            alias: null,
+            arguments: [],
+            directives: [],
+            selectionSet: null,
+          ),
+        ],
+      ),
+    ),
+    fragmentDefinitionPerformerFields,
+  ],
+);
+Mutation$PerformerCreate _parserFn$Mutation$PerformerCreate(
+  Map<String, dynamic> data,
+) => Mutation$PerformerCreate.fromJson(data);
+typedef OnMutationCompleted$Mutation$PerformerCreate = FutureOr<void> Function(
+  Map<String, dynamic>?,
+  Mutation$PerformerCreate?,
+);
+
+class Options$Mutation$PerformerCreate
+    extends graphql.MutationOptions<Mutation$PerformerCreate> {
+  Options$Mutation$PerformerCreate({
+    String? operationName,
+    required Variables$Mutation$PerformerCreate variables,
+    graphql.FetchPolicy? fetchPolicy,
+    graphql.ErrorPolicy? errorPolicy,
+    graphql.CacheRereadPolicy? cacheRereadPolicy,
+    Object? optimisticResult,
+    Mutation$PerformerCreate? typedOptimisticResult,
+    graphql.Context? context,
+    OnMutationCompleted$Mutation$PerformerCreate? onCompleted,
+    graphql.OnMutationUpdate<Mutation$PerformerCreate>? update,
+    graphql.OnError? onError,
+  }) : onCompletedWithParsed = onCompleted,
+       super(
+         variables: variables.toJson(),
+         operationName: operationName ?? 'PerformerCreate',
+         fetchPolicy: fetchPolicy,
+         errorPolicy: errorPolicy,
+         cacheRereadPolicy: cacheRereadPolicy,
+         optimisticResult: optimisticResult ?? typedOptimisticResult?.toJson(),
+         context: context,
+         onCompleted: onCompleted == null
+             ? null
+             : (data) => onCompleted(
+                 data,
+                 data == null ? null : _parserFn$Mutation$PerformerCreate(data),
+               ),
+         update: update,
+         onError: onError,
+         document: documentNodeMutationPerformerCreate,
+         parserFn: _parserFn$Mutation$PerformerCreate,
+       );
+
+  final OnMutationCompleted$Mutation$PerformerCreate? onCompletedWithParsed;
+
+  @override
+  List<Object?> get properties => [
+    ...super.onCompleted == null
+        ? super.properties
+        : super.properties.where((property) => property != onCompleted),
+    onCompletedWithParsed,
+  ];
+}
+
+class WatchOptions$Mutation$PerformerCreate
+    extends graphql.WatchQueryOptions<Mutation$PerformerCreate> {
+  WatchOptions$Mutation$PerformerCreate({
+    String? operationName,
+    required Variables$Mutation$PerformerCreate variables,
+    graphql.FetchPolicy? fetchPolicy,
+    graphql.ErrorPolicy? errorPolicy,
+    graphql.CacheRereadPolicy? cacheRereadPolicy,
+    Object? optimisticResult,
+    Mutation$PerformerCreate? typedOptimisticResult,
+    graphql.Context? context,
+    Duration? pollInterval,
+    bool? eagerlyFetchResults,
+    bool carryForwardDataOnException = true,
+    bool fetchResults = false,
+  }) : super(
+         variables: variables.toJson(),
+         operationName: operationName ?? 'PerformerCreate',
+         fetchPolicy: fetchPolicy,
+         errorPolicy: errorPolicy,
+         cacheRereadPolicy: cacheRereadPolicy,
+         optimisticResult: optimisticResult ?? typedOptimisticResult?.toJson(),
+         context: context,
+         document: documentNodeMutationPerformerCreate,
+         pollInterval: pollInterval,
+         eagerlyFetchResults: eagerlyFetchResults,
+         carryForwardDataOnException: carryForwardDataOnException,
+         fetchResults: fetchResults,
+         parserFn: _parserFn$Mutation$PerformerCreate,
+       );
+}
+
+extension ClientExtension$Mutation$PerformerCreate on graphql.GraphQLClient {
+  Future<graphql.QueryResult<Mutation$PerformerCreate>> mutate$PerformerCreate(
+    Options$Mutation$PerformerCreate options,
+  ) async => await this.mutate(options);
+
+  graphql.ObservableQuery<Mutation$PerformerCreate>
+  watchMutation$PerformerCreate(
+    WatchOptions$Mutation$PerformerCreate options,
+  ) => this.watchMutation(options);
+}

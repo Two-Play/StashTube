@@ -273,6 +273,7 @@ class DemoLibrary {
     'url': s.url,
     'details': s.details,
     'favorite': s.favorite,
+    'rating100': s.rating100,
     'scene_count': (Map<String, dynamic> _) => _scenes.where((sc) => sc.studioId == s.id).length,
     'image_count': (Map<String, dynamic> args) =>
         _images.where((i) => _inStudio(i.studioId, s.id, deep: args['depth'] == -1)).length,
@@ -985,7 +986,18 @@ class DemoLibrary {
       if (input.containsKey('details')) s.details = input['details'] as String?;
       if (input.containsKey('parent_id')) s.parentId = input['parent_id'] as String?;
       if (input['favorite'] case final bool favorite) s.favorite = favorite;
+      if (input.containsKey('rating100')) s.rating100 = input['rating100'] as int?;
       return _studioObject(s);
+    },
+    'performerCreate': (Map<String, dynamic> args) {
+      final performer = _Performer(_newId(), (args['input'] as Map)['name'] as String);
+      _performers.add(performer);
+      return _performerObject(performer);
+    },
+    'studioCreate': (Map<String, dynamic> args) {
+      final studio = _Studio(_newId(), (args['input'] as Map)['name'] as String);
+      _studios.add(studio);
+      return _studioObject(studio);
     },
     'groupCreate': (Map<String, dynamic> args) {
       final input = args['input'] as Map<String, dynamic>;
@@ -1036,6 +1048,7 @@ class _Studio {
   String? details;
   String? url;
   bool favorite = false;
+  int? rating100;
 }
 
 class _Performer {

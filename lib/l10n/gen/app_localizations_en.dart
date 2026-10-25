@@ -737,6 +737,12 @@ class AppLocalizationsEn extends AppLocalizations {
       'Studios appear here once scenes in Stash have one.';
 
   @override
+  String get newPerformer => 'New performer';
+
+  @override
+  String get newStudio => 'New studio';
+
+  @override
   String get newTag => 'New tag';
 
   @override
@@ -997,6 +1003,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String castPlayFailed(String device, String error) {
     return 'Couldn\'t play on $device: $error';
   }
+
+  @override
+  String get backToPreviousVideo => 'Back to the previous video';
 
   @override
   String get minimize => 'Minimize';
@@ -1343,6 +1352,12 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get rateScene => 'Rate';
+
+  @override
+  String get rateThisPerformer => 'Rate this performer';
+
+  @override
+  String get rateThisStudio => 'Rate this studio';
 
   @override
   String get rateThisScene => 'Rate this scene';

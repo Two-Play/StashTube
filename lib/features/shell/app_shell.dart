@@ -88,9 +88,11 @@ class AppShell extends ConsumerWidget {
       canPop: false,
       onPopInvokedWithResult: (didPop, _) {
         if (didPop) return;
-        // Back first collapses the expanded player.
+        // In the open player back first returns to the video left there
+        // (like YouTube), then collapses the player.
         if (scene != null && !hidePlayer && playerHeight.value > kMiniPlayerHeight) {
-          ref.read(nowPlayingProvider.notifier).collapse();
+          final nowPlaying = ref.read(nowPlayingProvider.notifier);
+          if (!nowPlaying.goBack()) nowPlaying.collapse();
           return;
         }
         final navigator = navigatorKeys[currentTab]!.currentState;
