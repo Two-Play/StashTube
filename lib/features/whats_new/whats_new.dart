@@ -6,32 +6,66 @@ import '../../core/config/theme.dart';
 import '../../l10n/l10n.dart';
 import '../settings/theme_welcome.dart';
 
-/// One announcement: what a release brought, one line per item, each with
-/// a fitting icon ([icons], as many as [items]).
-typedef ChangelogEntry = ({int id, String title, List<String> items, List<IconData> icons});
+/// One announcement: what a release brought, one change per line, each with
+/// a fitting icon. [items] are the highlights; [more] shows behind "Show
+/// more".
+typedef ChangelogEntry = ({int id, String title, List<ChangelogItem> items, List<ChangelogItem> more});
+
+typedef ChangelogItem = ({IconData icon, String text});
 
 /// The announcements, newest first. Add one per release with a higher [id]
 /// (not the version: the pipeline picks that only when it releases) and
-/// its texts in both ARB files, one item per line, and an icon per item.
+/// its texts in both ARB files, one change per line, the most relevant
+/// first, and an icon per line.
 List<ChangelogEntry> changelog(AppLocalizations l) => [
       (
         id: 1,
         title: l.whatsNew1Title,
-        items: _lines(l.whatsNew1),
-        icons: const [
+        items: _items(l.whatsNew1, const [
+          Icons.space_dashboard_outlined, // navigation
           Icons.loop, // loops
-          Icons.swap_horiz, // back and forward
-          Icons.smart_display_outlined, // player, tablets
-          Icons.star_outline, // stars, favorites, creating
-          Icons.open_in_full, // full video from a short
+          Icons.smart_display_outlined, // watch page
+          Icons.search, // suggestions
           Icons.fast_forward_outlined, // double tap to skip
+          Icons.swap_horiz, // back and forward
+          Icons.person_outline, // channel tabs
+          Icons.favorite_border, // favorites
+        ]),
+        more: _items(l.whatsNew1More, const [
+          Icons.account_circle_outlined, // you tab
+          Icons.tune, // skip settings
+          Icons.star_outline, // stars, favorites
+          Icons.add_circle_outline, // create
+          Icons.open_in_full, // full video
+          Icons.tablet_outlined, // tablets
+          Icons.picture_in_picture_alt_outlined, // pip
           Icons.dns_outlined, // server tasks
-          Icons.notifications_none, // favorites tab, ranges, notification
-          Icons.crop_outlined, // thumbnails, previews
-          Icons.search, // search, tour, fixes
-        ],
+          Icons.image_search, // preview check
+          Icons.notifications_none, // notification
+          Icons.straighten, // marker ranges
+          Icons.fiber_new_outlined, // new since last visit
+          Icons.error_outline, // playback errors
+          Icons.cloud_off_outlined, // connection banner
+          Icons.login, // login
+          Icons.info_outline, // image details
+          Icons.casino_outlined, // dice
+          Icons.bar_chart, // stats chart
+          Icons.lock_outline, // touch lock
+          Icons.crop_outlined, // thumbnails
+          Icons.explore_outlined, // tour
+          Icons.settings_outlined, // settings
+        ]),
       ),
     ];
+
+/// One item per line; a plain bullet if a translation has more lines than
+/// icons.
+List<ChangelogItem> _items(String text, List<IconData> icons) {
+  final lines = _lines(text);
+  return [
+    for (var i = 0; i < lines.length; i++) (icon: i < icons.length ? icons[i] : Icons.circle, text: lines[i]),
+  ];
+}
 
 List<String> _lines(String text) => [
       for (final line in text.split('\n'))
@@ -108,26 +142,7 @@ class WhatsNewSheet extends StatelessWidget {
                     const SizedBox(height: AppSpacing.l),
                     Text(entry.title, style: theme.textTheme.titleMedium),
                     const SizedBox(height: AppSpacing.s),
-                    for (var i = 0; i < entry.items.length; i++)
-                      Padding(
-                        padding: const EdgeInsets.only(bottom: AppSpacing.m),
-                        child: Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Padding(
-                              padding: const EdgeInsets.only(right: AppSpacing.m),
-                              child: Icon(
-                                // A plain bullet if a translation has more lines
-                                // than icons.
-                                i < entry.icons.length ? entry.icons[i] : Icons.circle,
-                                size: i < entry.icons.length ? 20 : 6,
-                                color: theme.colorScheme.primary,
-                              ),
-                            ),
-                            Expanded(child: Text(entry.items[i], style: theme.textTheme.bodyMedium)),
-                          ],
-                        ),
-                      ),
+                    _EntryItems(entry: entry),
                   ],
                 ],
               ),
@@ -142,6 +157,53 @@ class WhatsNewSheet extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+}
+
+/// An entry's highlights, and the rest behind "Show more".
+class _EntryItems extends StatefulWidget {
+  const _EntryItems({required this.entry});
+
+  final ChangelogEntry entry;
+
+  @override
+  State<_EntryItems> createState() => _EntryItemsState();
+}
+
+class _EntryItemsState extends State<_EntryItems> {
+  bool _expanded = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final l = context.l10n;
+    final theme = Theme.of(context);
+    final more = widget.entry.more;
+    Widget item(ChangelogItem item) => Padding(
+          padding: const EdgeInsets.only(bottom: AppSpacing.m),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Padding(
+                padding: const EdgeInsets.only(right: AppSpacing.m),
+                child: Icon(item.icon, size: item.icon == Icons.circle ? 6 : 20, color: theme.colorScheme.primary),
+              ),
+              Expanded(child: Text(item.text, style: theme.textTheme.bodyMedium)),
+            ],
+          ),
+        );
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        for (final i in widget.entry.items) item(i),
+        if (_expanded) for (final i in more) item(i),
+        if (more.isNotEmpty)
+          TextButton.icon(
+            onPressed: () => setState(() => _expanded = !_expanded),
+            icon: Icon(_expanded ? Icons.expand_less : Icons.expand_more),
+            label: Text(_expanded ? l.whatsNewShowLess : l.whatsNewShowMore(more.length)),
+          ),
+      ],
     );
   }
 }
