@@ -187,6 +187,12 @@ class _StashVideoControlsState extends ConsumerState<StashVideoControls> {
   Duration _seekTotal = Duration.zero;
   Duration _seekBase = Duration.zero;
   Duration? _lastSeekTarget;
+
+  /// Runs for a moment after a sequence's seek: mpv still reports the
+  /// position from before it, so a new sequence (the other side) starts from
+  /// [_lastSeekTarget] instead.
+  Timer? _seekSettling;
+  static const _seekSettle = Duration(seconds: 2);
   Timer? _seekTimer;
 
   /// Taps are tracked from raw pointers, so a tap that extends a sequence
@@ -203,6 +209,7 @@ class _StashVideoControlsState extends ConsumerState<StashVideoControls> {
   void dispose() {
     _hideTimer?.cancel();
     _seekTimer?.cancel();
+    _seekSettling?.cancel();
     _tapHoldTimer?.cancel();
     _lastTapTimer?.cancel();
     // Minimized or closed while holding: the release never arrives here, and
@@ -352,9 +359,12 @@ class _StashVideoControlsState extends ConsumerState<StashVideoControls> {
   bool get _casting => ref.read(castConnectionProvider).value != null;
 
   void _startSeekSequence(int direction) {
-    _seekBase = _casting
-        ? ref.read(castPlaybackProvider).value?.position ?? Duration.zero
-        : ref.read(playerProvider).state.position;
+    final last = _lastSeekTarget;
+    _seekBase = last != null && (_seekSettling?.isActive ?? false)
+        ? last
+        : _casting
+            ? ref.read(castPlaybackProvider).value?.position ?? Duration.zero
+            : ref.read(playerProvider).state.position;
     _seekDirection = direction;
     _seekTaps = 0;
     _lastSeekTarget = null;
@@ -376,6 +386,8 @@ class _StashVideoControlsState extends ConsumerState<StashVideoControls> {
     // position, so mpv's lagging position doesn't add up errors.
     if (target != _lastSeekTarget) {
       _lastSeekTarget = target;
+      _seekSettling?.cancel();
+      _seekSettling = Timer(_seekSettle, () {});
       if (casting) {
         unawaited(ref.read(castServiceProvider).seek(target));
       } else {

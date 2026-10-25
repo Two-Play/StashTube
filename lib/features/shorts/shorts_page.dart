@@ -56,11 +56,15 @@ class _FastPageScrollPhysics extends PageScrollPhysics {
   SpringDescription get spring => const SpringDescription(mass: 0.5, stiffness: 500, damping: 32);
 }
 
-/// "Full video": the whole scene in the main player. A marker short opens
-/// it at the marker's start, a ranged marker too (like tapping its
-/// chapter), not at the scene's resume point; a whole video resumes.
-void playFullVideo(WidgetRef ref, Short short) =>
-    ref.read(nowPlayingProvider.notifier).play(short.scene, at: short.marker?.seconds);
+/// "Full video": the whole scene in the main player, where the short is at
+/// [position] (its player's; a marker's clip counts from the marker's
+/// start). Without a position a marker opens at its start and a whole
+/// video at its resume point.
+void playFullVideo(WidgetRef ref, Short short, {Duration? position}) {
+  final offset = short.marker?.seconds ?? 0;
+  final at = position == null ? short.marker?.seconds : offset + position.inMilliseconds / 1000;
+  ref.read(nowPlayingProvider.notifier).play(short.scene, at: at);
+}
 
 /// Whether the app's main player is playing.
 final _mainPlayingProvider = StreamProvider.autoDispose<bool>((ref) => ref.watch(playerProvider).stream.playing);
@@ -192,7 +196,10 @@ class _ShortsPageState extends ConsumerState<ShortsPage> {
   void _openFullVideo(Short short) {
     setState(() => _handedToPlayer = true);
     _active.set(false);
-    playFullVideo(ref, short);
+    // Continues where the short is (it is paused once the player covers it).
+    final slot = _slot(_index);
+    final player = _slotReady[slot] && _slotShort[slot] == short.key ? (_players?[slot]) : null;
+    playFullVideo(ref, short, position: player?.state.position);
   }
 
   int _slot(int index) => index % _poolSize;
