@@ -21,6 +21,7 @@ import '../subscriptions/last_visit.dart';
 import '../subscriptions/subscriptions_page.dart';
 import '../tags/tags_page.dart';
 import '../you/you_page.dart';
+import '../whats_new/whats_new.dart';
 import 'nav_bar_config.dart';
 import 'navigation.dart';
 import 'shell_layout.dart';
@@ -64,10 +65,13 @@ class AppShell extends ConsumerWidget {
     final closing = ref.watch(playerClosingProvider);
     final playerHeight = ref.watch(miniplayerHeightProvider);
     final maxPlayerHeight = MediaQuery.sizeOf(context).height;
-    // After the first login: pick a theme (once).
-    if (ref.watch(themeWelcomeProvider)) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (context.mounted) showThemeWelcomeIfPending(context, ref);
+    // After the first login: pick a theme (once), then the tour. After an
+    // update: what's new (decided first, as the first login skips it).
+    final whatsNewPending = (ref.watch(whatsNewSeenProvider) ?? -1) < latestChangelogId(context.l10n);
+    if (ref.watch(themeWelcomeProvider) || whatsNewPending) {
+      WidgetsBinding.instance.addPostFrameCallback((_) async {
+        if (context.mounted) await showWhatsNewIfPending(context, ref);
+        if (context.mounted) await showThemeWelcomeIfPending(context, ref);
       });
     }
 

@@ -4285,6 +4285,36 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Your avatar at the top right switches servers and opens the settings: app lock, previews, how thumbnails fit, haptics, playback and more. This tour is there too, under About.'**
   String get introSettingsText;
+
+  /// No description provided for @whatsNewTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'What\'s new'**
+  String get whatsNewTitle;
+
+  /// No description provided for @whatsNewDone.
+  ///
+  /// In en, this message translates to:
+  /// **'Got it'**
+  String get whatsNewDone;
+
+  /// No description provided for @whatsNewSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'What the latest updates brought'**
+  String get whatsNewSubtitle;
+
+  /// No description provided for @whatsNew1Title.
+  ///
+  /// In en, this message translates to:
+  /// **'Shorts, loops and a smoother player'**
+  String get whatsNew1Title;
+
+  /// No description provided for @whatsNew1.
+  ///
+  /// In en, this message translates to:
+  /// **'Loops: scene markers that repeat on their own, next to the shorts. Switch at the top of the Shorts tab.\nBack and forward between videos you open in the player, with arrows beside play.\nA new, smoother player; on tablets the video sits beside \"Up next\".\nStars and favorites for performers and studios, and you can create performers, studios and groups.\n\"Full video\" from a short continues where the short was.\nDouble tap to skip counts per side; step and counting are in Settings → Playback.\nServer tasks (scan, generate, auto tag, clean) and a check for missing previews.\nA Favorites tab, marker ranges, and a notification when a server task finishes.\nPortrait scenes show whole in thumbnails (or filled, in the settings); previews play the MP4 by default.\nSearch suggestions, a tour of the app (Settings → About) and many smaller fixes.'**
+  String get whatsNew1;
 }
 
 class _AppLocalizationsDelegate

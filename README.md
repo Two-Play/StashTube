@@ -22,7 +22,7 @@
   <a href="https://altstore.io/source/two-play.github.io/StashTube/altstore.json?app=io.github.twoplay.stashtube"><img src="docs/images/badges/altstore.png" height="54" alt="Download on AltStore"></a>
 </p>
 
-StashTube feels like the YouTube app: a feed with large thumbnails, a miniplayer that keeps playing while you browse, performers and studios as "channels", and short portrait videos in a vertical Shorts feed. It talks to your own Stash server through its GraphQL API and plays the streams directly.
+StashTube feels like the YouTube app: a feed with large thumbnails, a miniplayer that keeps playing while you browse, performers and studios as "channels", short portrait videos in a vertical Shorts feed and scene markers as looping "Loops". It talks to your own Stash server through its GraphQL API and plays the streams directly.
 
 > [!NOTE]
 > StashTube connects only to the Stash server you enter. It has no account, no analytics and no other services. It is not affiliated with the Stash project.
@@ -30,7 +30,7 @@ StashTube feels like the YouTube app: a feed with large thumbnails, a miniplayer
 It is in beta:
 
 > [!IMPORTANT]
-> Signed Android builds are on the releases page; there is no iOS download yet (see [iOS](#ios)).
+> Signed Android builds are on the releases page; on iOS it's available through TestFlight or AltStore/SideStore (see [iOS](#ios)). After an update the app shows what's new once.
 
 ## Screenshots
 
@@ -68,9 +68,11 @@ The screenshots show a demo library made from Blender's open movies *Tears of St
 - Feed with sort chips, filters (tags, rating, length, resolution) and Stash's saved filters
 - Animated previews: the first fully shown video in a list plays its preview after a moment
 - Miniplayer that turns into the full player as you drag; swipe down to minimize
+- Back and forward between the videos you open in the player, like YouTube
+- On tablets the video sits beside "Up next" instead of across the whole width
 - Controls:
   - seek bar with sprite thumbnails and chapter markers
-  - double tap to skip 10 s, hold for 2× speed, plus a speed menu
+  - double tap to skip (5, 10, 20 s … per side; step and counting adjustable), hold for 2× speed, plus a speed menu
   - quality and transcode choice (HD)
   - pinch to zoom
 - Fullscreen in the video's orientation; turning the phone to landscape enters it
@@ -81,6 +83,8 @@ The screenshots show a demo library made from Blender's open movies *Tears of St
 ### Shorts
 
 - Vertical, looping feed of short portrait videos, with the next one preloaded
+- Loops: scene markers, each repeating on its own like a GIF, switched at the top of the Shorts tab
+- "Full video" continues the scene where the short or loop was
 - Your chosen tags show up more often, or exclusively
 - A performer's own shorts from their channel page
 - Four shorts on the home page, each with a queue of its own
@@ -90,19 +94,23 @@ The screenshots show a demo library made from Blender's open movies *Tears of St
 - History, Watch later and groups, each played as a queue with autoplay
 - Markers: every marked moment, with a looping preview, played from the marker
 - Images and galleries, with a zoomable viewer
-- Performers (favorites), studios (with sub-studios) and tags
+- Performers and studios with favorites and star ratings, studios with sub-studios, and tags
 - One search for scenes, images, galleries, performers and studios
 - Library and watch statistics
 
 ### Editing
 
 - Edit scenes, performers, studios, tags and galleries, including images and URLs
+- Create performers, studios, tags and groups
 - Rate scenes, count O's and add markers right from the player
 
 ### App
 
 - Several Stash servers to switch between, signed in with an API key or username and password
-- Configurable bottom bar, plus an "All" tab for everything else
+- Configurable bottom bar, plus a "You" tab for everything else
+- A short tour after the first login, and "What's new" after updates (both again under Settings → About)
+- Thumbnails show portrait scenes whole, or filled if you prefer
+- Server tasks (scan, generate, auto tag, clean) with a check for missing previews
 - Light and dark mode and accent colors
 - Layouts with several columns on tablets and in landscape
 - Haptic feedback (off, light, normal)
@@ -241,7 +249,7 @@ flutter pub run build_runner build --delete-conflicting-outputs   # after changi
 - **Texts:** live in `lib/l10n/app_en.arb` and `app_de.arb`, never as string literals in the code.
 - **Dependencies:** `pubspec.lock` and `ios/Podfile.lock` are committed; CI runs `flutter pub get --enforce-lockfile`.
 - **Branches:** work comes together in `develop` through pull requests; `main` only changes with a release.
-- **Releases:** a pull request from `develop` to `main` with the new version, then a tag `vX.Y.Z` on `main` that matches `version:` in `pubspec.yaml`, which builds signed APKs and an AAB and publishes a GitHub release (`.github/workflows/release.yml`). Tags with a `-` become pre-releases.
+- **Releases:** every merge of a pull request from `develop` into `main` is a release (`.github/workflows/release.yml`). The pipeline picks the version itself (`tool/release/next_version.py`: the next beta after a beta, else the next patch; labels such as `release:minor` or `release:stable` on the pull request steer it), passes it with the run number as build number to every build (`--build-name`/`--build-number`; the IPA without `-beta.N`, like TestFlight), creates the tag and publishes signed APKs, an AAB, an F-Droid-style APK without Google Cast, an IPA and `SHA256SUMS` as a GitHub release, then uploads to TestFlight and updates the AltStore source. `version:` in `pubspec.yaml` is only for local builds. The app shows the version under Settings → About; announce user-facing changes in `lib/features/whats_new/whats_new.dart`.
 
 [`CLAUDE.md`](CLAUDE.md) describes the architecture in detail: the server config and data flow, paginated lists, the shell and navigation, the player, Shorts, casting, privacy, theming and localization.
 

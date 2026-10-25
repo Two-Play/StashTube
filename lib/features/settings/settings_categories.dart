@@ -23,6 +23,7 @@ import '../security/app_lock_gate.dart';
 import '../server_tasks/server_tasks_page.dart';
 import '../shell/nav_bar_config.dart';
 import '../intro/intro_tour.dart';
+import '../whats_new/whats_new.dart';
 import 'about.dart';
 import 'appearance_picker.dart';
 import 'nav_bar_settings_page.dart';
@@ -526,6 +527,12 @@ class AboutSettingsPage extends StatelessWidget {
             title: Text(context.l10n.introTour),
             subtitle: Text(context.l10n.introTourSubtitle),
             onTap: () => showIntroTour(context),
+          ),
+          ListTile(
+            leading: const Icon(Icons.auto_awesome_outlined),
+            title: Text(context.l10n.whatsNewTitle),
+            subtitle: Text(context.l10n.whatsNewSubtitle),
+            onTap: () => showWhatsNew(context),
           ),
           const AboutSettings(),
         ],

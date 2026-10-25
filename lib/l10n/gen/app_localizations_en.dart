@@ -2585,4 +2585,20 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get introSettingsText =>
       'Your avatar at the top right switches servers and opens the settings: app lock, previews, how thumbnails fit, haptics, playback and more. This tour is there too, under About.';
+
+  @override
+  String get whatsNewTitle => 'What\'s new';
+
+  @override
+  String get whatsNewDone => 'Got it';
+
+  @override
+  String get whatsNewSubtitle => 'What the latest updates brought';
+
+  @override
+  String get whatsNew1Title => 'Shorts, loops and a smoother player';
+
+  @override
+  String get whatsNew1 =>
+      'Loops: scene markers that repeat on their own, next to the shorts. Switch at the top of the Shorts tab.\nBack and forward between videos you open in the player, with arrows beside play.\nA new, smoother player; on tablets the video sits beside \"Up next\".\nStars and favorites for performers and studios, and you can create performers, studios and groups.\n\"Full video\" from a short continues where the short was.\nDouble tap to skip counts per side; step and counting are in Settings → Playback.\nServer tasks (scan, generate, auto tag, clean) and a check for missing previews.\nA Favorites tab, marker ranges, and a notification when a server task finishes.\nPortrait scenes show whole in thumbnails (or filled, in the settings); previews play the MP4 by default.\nSearch suggestions, a tour of the app (Settings → About) and many smaller fixes.';
 }
