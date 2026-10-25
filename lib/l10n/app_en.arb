@@ -625,6 +625,7 @@
     }
   },
   "backToPreviousVideo": "Back to the previous video",
+  "forwardToNextVideo": "Forward to the next video",
   "minimize": "Minimize",
   "back10": "Back 10 s",
   "forward10": "Forward 10 s",

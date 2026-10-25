@@ -23,6 +23,18 @@ class _RecordingNowPlaying extends NowPlayingNotifier {
 
   @override
   void playPrevious() => calls.add('previous');
+
+  @override
+  bool goBack() {
+    calls.add('back');
+    return true;
+  }
+
+  @override
+  bool goForward() {
+    calls.add('forward');
+    return true;
+  }
 }
 
 const _scenes = [Scene(id: '1', title: 'A'), Scene(id: '2', title: 'B'), Scene(id: '3', title: 'C')];
@@ -75,6 +87,26 @@ void main() {
     expect(find.byTooltip('Previous scene'), findsNothing);
     expect(find.byTooltip('Next scene'), findsNothing);
     expect(find.byTooltip('Play'), findsOneWidget);
+  });
+
+  testWidgets('without a queue: back/forward through the videos picked in the player (4.25)', (tester) async {
+    await pump(tester);
+    expect(find.byTooltip('Back to the previous video'), findsNothing, reason: 'nothing to go back to');
+
+    container.read(playerHistoryProvider.notifier).push((scene: _scenes[1], at: 12));
+    await tester.pump();
+    expect(button(tester, 'Back to the previous video').onPressed, isNotNull);
+    expect(button(tester, 'Forward to the next video').onPressed, isNull, reason: 'shown, but nothing ahead');
+    await tester.tap(find.byTooltip('Back to the previous video'));
+    await tester.pump();
+    expect(nowPlaying.calls, ['back']);
+
+    container.read(playerHistoryProvider.notifier).back((scene: _scenes.first, at: 3));
+    await tester.pump();
+    expect(button(tester, 'Back to the previous video').onPressed, isNull);
+    await tester.tap(find.byTooltip('Forward to the next video'));
+    await tester.pump();
+    expect(nowPlaying.calls, ['back', 'forward']);
   });
 
   testWidgets('in the middle of a queue both work (CTRL-4)', (tester) async {

@@ -1568,6 +1568,12 @@ abstract class AppLocalizations {
   /// **'Back to the previous video'**
   String get backToPreviousVideo;
 
+  /// No description provided for @forwardToNextVideo.
+  ///
+  /// In en, this message translates to:
+  /// **'Forward to the next video'**
+  String get forwardToNextVideo;
+
   /// No description provided for @minimize.
   ///
   /// In en, this message translates to:

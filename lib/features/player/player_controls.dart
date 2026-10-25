@@ -18,6 +18,7 @@ import '../../data/repositories/stash_session.dart';
 import '../../widgets/scene_card.dart';
 import '../../widgets/stash_image.dart';
 import '../pip/pip.dart';
+import '../../widgets/sliver_columns.dart';
 import 'player_providers.dart';
 import 'preview_seek_bar.dart';
 import 'video_controls.dart';
@@ -127,8 +128,10 @@ class _PlayerVideoState extends ConsumerState<PlayerVideo> {
     final turned = _orientation != null && orientation != _orientation;
     _orientation = orientation;
     // Android's picture-in-picture window is landscape too: no fullscreen
-    // for it, the phone wasn't turned.
-    if (turned && orientation == Orientation.landscape && !ref.read(pipProvider)) _onTurnedToLandscape();
+    // for it, the phone wasn't turned. Tablets keep their side-by-side
+    // player (PlayerTransition.splitBreakpoint) instead.
+    final tablet = MediaQuery.sizeOf(context).shortestSide >= kWideLayoutBreakpoint;
+    if (turned && orientation == Orientation.landscape && !tablet && !ref.read(pipProvider)) _onTurnedToLandscape();
   }
 
   void _onTurnedToLandscape() {

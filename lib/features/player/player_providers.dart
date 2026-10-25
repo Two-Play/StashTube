@@ -168,37 +168,61 @@ class PlayQueueNotifier extends Notifier<PlayQueue?> {
 
 final playQueueProvider = NotifierProvider<PlayQueueNotifier, PlayQueue?>(PlayQueueNotifier.new);
 
-/// A scene left by picking another one in the open player, and where.
+/// A scene left in the open player, and where.
 typedef PlayerHistoryEntry = ({Scene scene, double at});
 
-/// The scenes left in the open player, newest last, so back returns to
-/// them like on YouTube ([NowPlayingNotifier.goBack]).
-class PlayerHistoryNotifier extends Notifier<List<PlayerHistoryEntry>> {
+/// The scenes left in the open player, like a browser's history: [back]
+/// (newest last) and, after going back, [forward] (next one last).
+class PlayerHistory {
+  const PlayerHistory({this.back = const [], this.forward = const []});
+
+  final List<PlayerHistoryEntry> back;
+  final List<PlayerHistoryEntry> forward;
+
+  bool get canGoBack => back.isNotEmpty;
+  bool get canGoForward => forward.isNotEmpty;
+  bool get isEmpty => back.isEmpty && forward.isEmpty;
+}
+
+/// See [PlayerHistory]; [NowPlayingNotifier.goBack]/[NowPlayingNotifier.goForward]
+/// move through it.
+class PlayerHistoryNotifier extends Notifier<PlayerHistory> {
   /// Enough to retrace a browsing session, not a whole evening.
   static const limit = 20;
 
   @override
-  List<PlayerHistoryEntry> build() => const [];
+  PlayerHistory build() => const PlayerHistory();
 
-  void push(PlayerHistoryEntry entry) {
-    final kept = state.where((e) => e.scene.id != entry.scene.id);
-    state = [...kept, entry].reversed.take(limit).toList().reversed.toList();
+  static List<PlayerHistoryEntry> _add(List<PlayerHistoryEntry> list, PlayerHistoryEntry entry) {
+    final kept = [for (final e in list) if (e.scene.id != entry.scene.id) e, entry];
+    return kept.length > limit ? kept.sublist(kept.length - limit) : kept;
   }
 
-  PlayerHistoryEntry? pop() {
-    if (state.isEmpty) return null;
-    final last = state.last;
-    state = state.sublist(0, state.length - 1);
-    return last;
+  /// A new scene was picked: [left] goes back, the way forward is gone.
+  void push(PlayerHistoryEntry left) => state = PlayerHistory(back: _add(state.back, left));
+
+  /// The scene to go back to; [current] becomes the way forward.
+  PlayerHistoryEntry? back(PlayerHistoryEntry current) {
+    if (!state.canGoBack) return null;
+    final target = state.back.last;
+    state = PlayerHistory(back: state.back.sublist(0, state.back.length - 1), forward: _add(state.forward, current));
+    return target;
+  }
+
+  /// The scene to go forward to; [current] goes back again.
+  PlayerHistoryEntry? forward(PlayerHistoryEntry current) {
+    if (!state.canGoForward) return null;
+    final target = state.forward.last;
+    state = PlayerHistory(back: _add(state.back, current), forward: state.forward.sublist(0, state.forward.length - 1));
+    return target;
   }
 
   void clear() {
-    if (state.isNotEmpty) state = const [];
+    if (!state.isEmpty) state = const PlayerHistory();
   }
 }
 
-final playerHistoryProvider =
-    NotifierProvider<PlayerHistoryNotifier, List<PlayerHistoryEntry>>(PlayerHistoryNotifier.new);
+final playerHistoryProvider = NotifierProvider<PlayerHistoryNotifier, PlayerHistory>(PlayerHistoryNotifier.new);
 
 /// Emits true when the current media played to the end.
 final playerCompletedProvider = StreamProvider<bool>((ref) => ref.watch(playerProvider).stream.completed);
@@ -385,16 +409,14 @@ class NowPlayingNotifier extends Notifier<Scene?> {
   ///
   /// Picked in the open player ("Up next", a channel opened from it), the
   /// scene it replaces goes into [playerHistoryProvider] unless [remember]
-  /// is false (queue moves, going back).
+  /// is false (queue moves, going back or forward).
   void play(Scene scene, {double? at, bool remember = true}) {
     final url = scene.streamUrl;
     if (url == null) return;
 
-    final previous = state;
-    if (remember && previous != null && previous.id != scene.id && _isOpen) {
-      ref
-          .read(playerHistoryProvider.notifier)
-          .push((scene: previous, at: currentPosition().inMilliseconds / 1000));
+    final here = _here;
+    if (remember && here != null && here.scene.id != scene.id && _isOpen) {
+      ref.read(playerHistoryProvider.notifier).push(here);
     }
 
     final queue = ref.read(playQueueProvider);
@@ -511,10 +533,28 @@ class NowPlayingNotifier extends Notifier<Scene?> {
   /// Whether the panel is open, not just the mini bar.
   bool get _isOpen => ref.read(miniplayerHeightProvider).value > kMiniPlayerHeight;
 
+  /// The current scene and position, for the history.
+  PlayerHistoryEntry? get _here {
+    final scene = state;
+    return scene == null ? null : (scene: scene, at: currentPosition().inMilliseconds / 1000);
+  }
+
   /// Back to the scene left last in the open player, where it was; false
   /// when there is none.
   bool goBack() {
-    final entry = ref.read(playerHistoryProvider.notifier).pop();
+    if (!ref.read(playerHistoryProvider).canGoBack) return false;
+    final here = _here;
+    final entry = here == null ? null : ref.read(playerHistoryProvider.notifier).back(here);
+    if (entry == null) return false;
+    play(entry.scene, at: entry.at, remember: false);
+    return true;
+  }
+
+  /// Forward again after [goBack]; false when there is nothing.
+  bool goForward() {
+    if (!ref.read(playerHistoryProvider).canGoForward) return false;
+    final here = _here;
+    final entry = here == null ? null : ref.read(playerHistoryProvider.notifier).forward(here);
     if (entry == null) return false;
     play(entry.scene, at: entry.at, remember: false);
     return true;
