@@ -460,6 +460,8 @@
   "studiosTitle": "Studios",
   "studiosEmpty": "No studios yet",
   "studiosEmptyHint": "Studios appear here once scenes in Stash have one.",
+  "newPerformer": "New performer",
+  "newStudio": "New studio",
   "newTag": "New tag",
   "name": "Name",
   "cancel": "Cancel",
@@ -622,6 +624,7 @@
       }
     }
   },
+  "backToPreviousVideo": "Back to the previous video",
   "minimize": "Minimize",
   "back10": "Back 10 s",
   "forward10": "Forward 10 s",
@@ -845,6 +848,8 @@
   },
   "removeRating": "Remove rating",
   "rateScene": "Rate",
+  "rateThisPerformer": "Rate this performer",
+  "rateThisStudio": "Rate this studio",
   "rateThisScene": "Rate this scene",
   "ratingButtonSemantics": "Rating: {rating}",
   "@ratingButtonSemantics": {

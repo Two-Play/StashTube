@@ -593,6 +593,14 @@ class _StashVideoControlsState extends ConsumerState<StashVideoControls> {
                               icon: const Icon(Icons.keyboard_arrow_down, size: 30),
                               onPressed: () => ref.read(nowPlayingProvider.notifier).collapse(),
                             ),
+                          // Back to the video left in the player (also the
+                          // system back); iOS has no back button.
+                          if (!fullscreen && ref.watch(playerHistoryProvider).isNotEmpty)
+                            IconButton(
+                              tooltip: context.l10n.backToPreviousVideo,
+                              icon: const Icon(Icons.arrow_back),
+                              onPressed: () => ref.read(nowPlayingProvider.notifier).goBack(),
+                            ),
                           const Spacer(),
                           const CastButton(color: Colors.white),
                           if (ref.watch(pipServiceProvider).isSupported)

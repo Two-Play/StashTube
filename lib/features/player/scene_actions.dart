@@ -104,32 +104,48 @@ class SceneActions extends ConsumerWidget {
 /// whole sheet, the current value and "Remove rating". A tap rates and
 /// closes it, tapping the current rating removes it.
 Future<void> showRatingSheet(BuildContext context, {required Scene scene, required ValueChanged<Object> onError}) =>
+    showStarsSheet(
+      context,
+      title: context.l10n.rateThisScene,
+      stars: (ref) => effectiveStars(ref, scene),
+      onRate: (ref, value) => ref.read(sceneEditsProvider.notifier).rate(scene, value).catchError(onError),
+    );
+
+/// [showRatingSheet] for anything rated with stars: [stars] reads the
+/// current value (0 = none), [onRate] saves a new one (0 removes it).
+Future<void> showStarsSheet(
+  BuildContext context, {
+  required String title,
+  required int Function(WidgetRef ref) stars,
+  required void Function(WidgetRef ref, int value) onRate,
+}) =>
     showModalBottomSheet<void>(
       context: context,
       useRootNavigator: true,
       showDragHandle: true,
-      builder: (_) => _RatingSheet(scene: scene, onError: onError),
+      builder: (_) => _StarsSheet(title: title, starsOf: stars, onRate: onRate),
     );
 
-class _RatingSheet extends ConsumerWidget {
-  const _RatingSheet({required this.scene, required this.onError});
+class _StarsSheet extends ConsumerWidget {
+  const _StarsSheet({required this.title, required this.starsOf, required this.onRate});
 
-  final Scene scene;
-  final ValueChanged<Object> onError;
+  final String title;
+  final int Function(WidgetRef ref) starsOf;
+  final void Function(WidgetRef ref, int value) onRate;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l = context.l10n;
     final theme = Theme.of(context);
-    final stars = effectiveStars(ref, scene);
+    final stars = starsOf(ref);
 
     void rate(int value) {
       Haptics.selection();
-      ref.read(sceneEditsProvider.notifier).rate(scene, value).catchError(onError);
+      onRate(ref, value);
     }
 
     return _SheetBody(
-      title: l.rateThisScene,
+      title: title,
       // The slider below says the value to screen readers.
       subtitle: ExcludeSemantics(
         child: Text(

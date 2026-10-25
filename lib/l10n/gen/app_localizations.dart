@@ -1100,6 +1100,18 @@ abstract class AppLocalizations {
   /// **'Studios appear here once scenes in Stash have one.'**
   String get studiosEmptyHint;
 
+  /// No description provided for @newPerformer.
+  ///
+  /// In en, this message translates to:
+  /// **'New performer'**
+  String get newPerformer;
+
+  /// No description provided for @newStudio.
+  ///
+  /// In en, this message translates to:
+  /// **'New studio'**
+  String get newStudio;
+
   /// No description provided for @newTag.
   ///
   /// In en, this message translates to:
@@ -1549,6 +1561,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Couldn\'t play on {device}: {error}'**
   String castPlayFailed(String device, String error);
+
+  /// No description provided for @backToPreviousVideo.
+  ///
+  /// In en, this message translates to:
+  /// **'Back to the previous video'**
+  String get backToPreviousVideo;
 
   /// No description provided for @minimize.
   ///
@@ -2119,6 +2137,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Rate'**
   String get rateScene;
+
+  /// No description provided for @rateThisPerformer.
+  ///
+  /// In en, this message translates to:
+  /// **'Rate this performer'**
+  String get rateThisPerformer;
+
+  /// No description provided for @rateThisStudio.
+  ///
+  /// In en, this message translates to:
+  /// **'Rate this studio'**
+  String get rateThisStudio;
 
   /// No description provided for @rateThisScene.
   ///

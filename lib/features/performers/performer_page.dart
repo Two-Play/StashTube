@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/config/design_tokens.dart';
+import '../channel/channel_rating.dart';
 import '../../core/utils/format.dart';
 import '../../data/models/list_queries.dart';
 import '../../data/models/performer.dart';
@@ -119,7 +121,18 @@ class _PerformerHeader extends StatelessWidget {
         context.l10n.scenesCount(p.sceneCount),
         if (age != null) context.l10n.ageYears(age),
       ].join(' • '),
-      action: FavoriteButton(performer: p),
+      action: Wrap(
+        spacing: AppSpacing.s,
+        runSpacing: AppSpacing.xs,
+        children: [
+          FavoriteButton(performer: p),
+          ChannelRatingButton(
+            kind: ChannelKind.performer,
+            id: p.id,
+            stars: (ref) => effectivePerformerStars(ref, p),
+          ),
+        ],
+      ),
     );
   }
 }

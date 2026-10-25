@@ -313,6 +313,15 @@ void main() {
     expect(await repo.studioFavorite('3'), isFalse);
     await repo.setStudioFavorite('3', true);
     expect(await repo.studioFavorite('3'), isTrue);
+    expect(await repo.studioRating('3'), (rating100: null));
+    await repo.setStudioRating('3', 80);
+    expect(await repo.studioRating('3'), (rating100: 80));
+    await repo.setPerformerRating('3', 60);
+    expect((await repo.findPerformer('3')).rating100, 60);
+    final newPerformer = await repo.createPerformer('Proog');
+    expect((await repo.findPerformer(newPerformer.id)).name, 'Proog');
+    final newStudio = await repo.createStudio('Orange');
+    expect((await repo.findStudio(newStudio.id)).name, 'Orange');
     expect((await repo.updateTag(tag.id, {'description': 'Sky'})).description, 'Sky');
     expect((await repo.updateGallery('1', {'title': 'Frames'})).title, 'Frames');
 
