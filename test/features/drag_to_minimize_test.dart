@@ -1,27 +1,35 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:miniplayer/miniplayer.dart';
 import 'package:stash_app_mobile/features/player/drag_to_minimize.dart';
+import 'package:stash_app_mobile/features/player/sliding_panel.dart';
 
 const _max = 800.0;
 const _videoBottom = 220.0;
 
-// How MiniplayerController encodes target states (see miniplayer's ControllerData).
-const _min = -1;
-const _maxState = -2;
+/// Records what [DragToMinimize] asks the panel for: a height, or
+/// 'collapse'/'expand'.
+class _RecordingController extends SlidingPanelController {
+  Object? last;
+
+  @override
+  void expand({Duration? duration}) => last = 'expand';
+
+  @override
+  void collapse({Duration? duration}) => last = 'collapse';
+
+  @override
+  void jumpTo(double height) => last = height;
+}
 
 void main() {
-  late MiniplayerController controller;
+  late _RecordingController controller;
   late ScrollController scroll;
 
   setUp(() {
-    controller = MiniplayerController();
+    controller = _RecordingController();
     scroll = ScrollController();
   });
-  tearDown(() {
-    controller.dispose();
-    scroll.dispose();
-  });
+  tearDown(() => scroll.dispose());
 
   /// Video area that claims vertical drags (like media_kit's controls) above
   /// a details list (like "Up next").
@@ -57,13 +65,13 @@ void main() {
         ),
       ));
 
-  int? panelTarget() => controller.value?.height;
+  Object? panelTarget() => controller.last;
 
   testWidgets('swiping down on the video collapses, even though the video claims the drag', (tester) async {
     await pump(tester);
     await tester.drag(find.byKey(const Key('video')), const Offset(0, 300));
     await tester.pump();
-    expect(panelTarget(), _min);
+    expect(panelTarget(), 'collapse');
   });
 
   testWidgets('the panel follows the finger during the swipe', (tester) async {
@@ -83,13 +91,13 @@ void main() {
       await tester.pump(const Duration(milliseconds: 50));
     }
     await gesture.up();
-    expect(panelTarget(), _maxState);
+    expect(panelTarget(), 'expand');
   });
 
   testWidgets('swiping down in the details at the top collapses', (tester) async {
     await pump(tester);
     await tester.drag(find.byKey(const Key('details')), const Offset(0, 300));
-    expect(panelTarget(), _min);
+    expect(panelTarget(), 'collapse');
   });
 
   testWidgets('in scrolled details a downward swipe scrolls the list instead', (tester) async {

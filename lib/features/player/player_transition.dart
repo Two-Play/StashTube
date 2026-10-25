@@ -88,7 +88,7 @@ class PlayerTransition {
   bool get isExpanded => progress >= 0.999;
   bool get isCollapsed => progress <= 0.001;
 
-  /// Whether details exist at all; skipped while collapsed so the "Up next"
-  /// list isn't loaded for a closed player.
+  /// Whether the details are shown (they stay built but hidden while
+  /// collapsed, see `PlayerPanel`).
   bool get showDetails => progress > 0.01;
 }

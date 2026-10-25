@@ -401,8 +401,8 @@ class PreviewSettingsPage extends ConsumerWidget {
                 : null,
           ),
         ),
-        // MP4 previews need a native player per preview (one at a time).
-        if (ref.watch(previewSourceProvider) == PreviewSource.video && previewsOn)
+        // How the two formats differ, so the choice is an informed one.
+        if (previewsOn)
           ListTile(
             leading: Icon(Icons.info_outline, color: theme.colorScheme.tertiary),
             subtitle: Text(l.previewSourceVideoHint),

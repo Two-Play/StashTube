@@ -554,7 +554,9 @@ class _TopBar extends StatelessWidget {
   }
 }
 
-const _shadow = [Shadow(blurRadius: 6, color: Colors.black54)];
+// A small blur: the overlay is drawn anew with every video frame, and a
+// wide blur behind every label and icon cost raster time.
+const _shadow = [Shadow(offset: Offset(0, 1), blurRadius: 2, color: Colors.black54)];
 
 /// One page: the video (or its screenshot until it is loaded), the info at
 /// the bottom, the actions on the right and a progress bar.

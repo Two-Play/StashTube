@@ -2501,7 +2501,7 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get previewSourceVideoHint =>
-      'Video-Vorschauen laufen in einem eigenen Videoplayer: mehr Daten, Akku und Speicher als WebP, und auf älteren Geräten starten sie langsamer. Marker spielen weiter die WebP-Vorschauen.';
+      'Video-Vorschauen nutzen den Video-Decoder des Telefons und laufen flüssig; jede öffnet kurz einen eigenen Videoplayer. Animierte Bilder werden Bild für Bild dekodiert und können bei großen Vorschauen ruckeln. Marker spielen weiter die WebP-Vorschauen.';
 
   @override
   String get previewsOnServer => 'Vorschauen auf dem Server prüfen';

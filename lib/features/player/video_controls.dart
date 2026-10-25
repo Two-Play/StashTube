@@ -112,7 +112,12 @@ class _StashVideoControlsState extends ConsumerState<StashVideoControls> {
     return (points[0] - points[1]).distance;
   }
 
+  // The raw pointer handlers below keep getting a gesture's events after
+  // the controls were removed mid-gesture (a swipe down collapses the
+  // player and with it the controls), so each checks [mounted] first.
+
   void _onPointerDown(PointerDownEvent e) {
+    if (!mounted) return;
     // The lock and the tips take the touches; no pinch underneath.
     if (_locked || _tipsShowing) return;
     _pointers[e.pointer] = e.localPosition;
@@ -127,7 +132,7 @@ class _StashVideoControlsState extends ConsumerState<StashVideoControls> {
   }
 
   void _onPointerMove(PointerMoveEvent e) {
-    if (!_pointers.containsKey(e.pointer)) return;
+    if (!mounted || !_pointers.containsKey(e.pointer)) return;
     _pointers[e.pointer] = e.localPosition;
     final start = _pinchStartZoom;
     final box = context.size;
@@ -142,6 +147,7 @@ class _StashVideoControlsState extends ConsumerState<StashVideoControls> {
 
   void _onPointerEnd(PointerEvent e) {
     _pointers.remove(e.pointer);
+    if (!mounted) return;
     if (_pinching && _pointers.length < 2) {
       final notifier = ref.read(videoZoomProvider.notifier);
       notifier.set(ref.read(videoZoomProvider).settled());
@@ -276,6 +282,7 @@ class _StashVideoControlsState extends ConsumerState<StashVideoControls> {
   }
 
   void _onTapPointerDown(PointerDownEvent e) {
+    if (!mounted) return;
     if (_tapPointer != null) {
       // A second finger: no tap.
       _cancelTapPointer();
@@ -301,6 +308,7 @@ class _StashVideoControlsState extends ConsumerState<StashVideoControls> {
   int? _tapSide(PointerUpEvent e, {int? side}) {
     if (e.pointer != _tapPointer) return null;
     _cancelTapPointer();
+    if (!mounted) return null;
     if (_pinching) return null;
     if (side != null) return side;
     final width = context.size?.width ?? 0;
@@ -529,9 +537,9 @@ class _StashVideoControlsState extends ConsumerState<StashVideoControls> {
                 // tap wait, so the first tap of a double tap doesn't toggle.
                 // Without double-tap seeking, taps toggle right away.
                 onDoubleTap: seek.enabled ? () {} : null,
-                // Claim vertical drags so the miniplayer's own pan doesn't
-                // fight with DragToMinimize, which handles the swipe-down
-                // from raw pointer events.
+                // Claim vertical drags so nothing above takes them;
+                // DragToMinimize handles the swipe-down from raw pointer
+                // events.
                 onVerticalDragStart: (_) {},
                 onVerticalDragUpdate: (_) {},
               ),
