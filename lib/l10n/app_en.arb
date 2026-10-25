@@ -1517,5 +1517,10 @@
   "introFavoritesTitle": "Favorites and ratings",
   "introFavoritesText": "Mark performers and studios as favorites and rate them and your scenes with stars. Favorites get their own feed, and long-pressing a tile or tapping its ⋮ shows more actions. You can also edit metadata and create performers, studios, tags and groups.",
   "introSettingsTitle": "Make it yours",
-  "introSettingsText": "Your avatar at the top right switches servers and opens the settings: app lock, previews, how thumbnails fit, haptics, playback and more. This tour is there too, under About."
+  "introSettingsText": "Your avatar at the top right switches servers and opens the settings: app lock, previews, how thumbnails fit, haptics, playback and more. This tour is there too, under About.",
+  "whatsNewTitle": "What's new",
+  "whatsNewDone": "Got it",
+  "whatsNewSubtitle": "What the latest updates brought",
+  "whatsNew1Title": "Shorts, loops and a smoother player",
+  "whatsNew1": "Loops: scene markers that repeat on their own, next to the shorts. Switch at the top of the Shorts tab.\nBack and forward between videos you open in the player, with arrows beside play.\nA new, smoother player; on tablets the video sits beside \"Up next\".\nStars and favorites for performers and studios, and you can create performers, studios and groups.\n\"Full video\" from a short continues where the short was.\nDouble tap to skip counts per side; step and counting are in Settings → Playback.\nServer tasks (scan, generate, auto tag, clean) and a check for missing previews.\nA Favorites tab, marker ranges, and a notification when a server task finishes.\nPortrait scenes show whole in thumbnails (or filled, in the settings); previews play the MP4 by default.\nSearch suggestions, a tour of the app (Settings → About) and many smaller fixes."
 }

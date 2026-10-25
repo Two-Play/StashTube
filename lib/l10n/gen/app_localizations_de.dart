@@ -2596,4 +2596,20 @@ class AppLocalizationsDe extends AppLocalizations {
   @override
   String get introSettingsText =>
       'Dein Avatar oben rechts wechselt den Server und öffnet die Einstellungen: App-Sperre, Vorschauen, wie Vorschaubilder passen, Haptik, Wiedergabe und mehr. Dort findest du unter „Über“ auch diese Einführung wieder.';
+
+  @override
+  String get whatsNewTitle => 'Neu in StashTube';
+
+  @override
+  String get whatsNewDone => 'Verstanden';
+
+  @override
+  String get whatsNewSubtitle => 'Was die letzten Updates gebracht haben';
+
+  @override
+  String get whatsNew1Title => 'Shorts, Loops und ein flüssigerer Player';
+
+  @override
+  String get whatsNew1 =>
+      'Loops: Szenenmarker, die sich einzeln wiederholen, neben den Shorts. Umschalten oben im Shorts-Tab.\nZurück und vor zwischen Videos, die du im Player öffnest, mit Pfeilen neben Play.\nEin neuer, flüssigerer Player; auf dem Tablet steht das Video neben „Up next“.\nSterne und Favoriten für Darsteller und Studios, und du kannst Darsteller, Studios und Gruppen anlegen.\n„Ganzes Video“ aus einem Short spielt dort weiter, wo das Short war.\nDoppeltippen zum Spulen zählt je Seite; Schrittweite und Zählung unter Einstellungen → Wiedergabe.\nServer-Aufgaben (Scannen, Generieren, Auto-Tag, Aufräumen) und eine Prüfung fehlender Vorschauen.\nEin Favoriten-Tab, Marker mit Ende und eine Benachrichtigung, wenn eine Server-Aufgabe fertig ist.\nHochkant-Szenen erscheinen ganz in den Vorschaubildern (oder gefüllt, in den Einstellungen); Vorschauen spielen standardmäßig das MP4.\nSuchvorschläge, eine Einführung in die App (Einstellungen → Über) und viele kleinere Verbesserungen.';
 }
