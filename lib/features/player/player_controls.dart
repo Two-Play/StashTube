@@ -73,7 +73,7 @@ class _PlayerVideoState extends ConsumerState<PlayerVideo> {
   /// A turn counts once the phone was held that way for [_settleTime]:
   /// held at an angle, the system's report flips back and forth.
   Timer? _settle;
-  static const _settleTime = Duration(milliseconds: 350);
+  static const _settleTime = Duration(milliseconds: 250);
 
   /// Left fullscreen (its button, back) while held sideways: sideways
   /// doesn't enter it again until the phone was upright.
@@ -178,6 +178,16 @@ class _PlayerVideoState extends ConsumerState<PlayerVideo> {
     fullscreenByRotation.value = false;
     _waitForUpright = _held?.isLandscape ?? false;
     final morph = fullscreenMorphKey.currentState;
+    if (FullscreenMorph.curtainOnly) {
+      // Black already after the button; at once after the system's back.
+      await morph?.cover(instantly: true);
+      try {
+        await _exitFullscreen();
+      } finally {
+        await morph?.uncover();
+      }
+      return;
+    }
     final controller = ref.read(videoControllerProvider);
     morph?.show(
       (controller: controller, aspect: playingAspect(controller), held: _fullscreenHeld, inline: inlineVideoRect),
