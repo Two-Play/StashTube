@@ -12,7 +12,7 @@ void main() {
       {'url': '', 'mime_type': null, 'label': 'broken'},
     ],
     'scene_markers': [
-      markerJson({'id': 'b', 'title': '', 'seconds': 300, 'primary_tag': {'name': 'Ending'}}),
+      markerJson({'id': 'b', 'title': '', 'seconds': 300, 'primary_tag': {'id': 't2', 'name': 'Ending'}}),
       markerJson({'id': 'a', 'title': 'Intro', 'seconds': 0}),
       markerJson({'id': 'c', 'title': 'Middle', 'seconds': 120.5}),
     ],

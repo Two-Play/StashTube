@@ -350,6 +350,13 @@ class _ShortsPageState extends ConsumerState<ShortsPage> {
   void _onVisibilityChanged(bool visible) {
     if (visible && ref.read(nowPlayingProvider) != null) ref.read(playerProvider).pause();
     _visible = visible;
+    // Back on the shorts (another tab, a page, the player): the switch and
+    // the info show again for a moment. Not during this build.
+    if (visible && _titleTimer != null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) _reveal();
+      });
+    }
   }
 
   void _resetFeed() {

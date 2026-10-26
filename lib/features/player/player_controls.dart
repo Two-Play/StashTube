@@ -25,6 +25,7 @@ import 'fullscreen_route.dart';
 import 'held_orientation.dart';
 import 'player_providers.dart';
 import 'preview_seek_bar.dart';
+import 'scene_actions.dart' show showMarkerMenu;
 import 'video_controls.dart';
 import '../../l10n/l10n.dart';
 
@@ -392,6 +393,11 @@ class ChapterList extends ConsumerWidget {
             final current = details.markerAt(snapshot.data!.inMilliseconds / 1000);
             final scaler = MediaQuery.textScalerOf(context);
             void seek(SceneMarker marker) => ref.read(nowPlayingProvider.notifier).seekTo(marker.seconds);
+            // Edit or delete it.
+            void menu(SceneMarker marker) {
+              final scene = ref.read(nowPlayingProvider);
+              if (scene != null && scene.id == sceneId) showMarkerMenu(context, scene: scene, marker: marker);
+            }
 
             if (withImages) {
               // Wider with large text, so titles keep a few words per line.
@@ -410,6 +416,7 @@ class ChapterList extends ConsumerWidget {
                         current: identical(marker, current),
                         sprite: thumbs,
                         onTap: () => seek(marker),
+                        onLongPress: () => menu(marker),
                       ),
                     ],
                   ],
@@ -436,6 +443,7 @@ class ChapterList extends ConsumerWidget {
                         child: InkWell(
                           borderRadius: BorderRadius.circular(10),
                           onTap: () => seek(marker),
+                          onLongPress: () => menu(marker),
                           child: Container(
                             width: tileWidth,
                             constraints: const BoxConstraints(minHeight: 64),
@@ -482,6 +490,7 @@ class _ChapterThumbnailTile extends ConsumerWidget {
     required this.current,
     required this.sprite,
     required this.onTap,
+    this.onLongPress,
   });
 
   final SceneMarker marker;
@@ -489,6 +498,7 @@ class _ChapterThumbnailTile extends ConsumerWidget {
   final bool current;
   final ScrubThumbnails? sprite;
   final VoidCallback onTap;
+  final VoidCallback? onLongPress;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -528,6 +538,7 @@ class _ChapterThumbnailTile extends ConsumerWidget {
         child: InkWell(
           borderRadius: AppRadius.cardBorder,
           onTap: onTap,
+          onLongPress: onLongPress,
           child: Padding(
             padding: const EdgeInsets.all(AppSpacing.xs),
             child: SizedBox(

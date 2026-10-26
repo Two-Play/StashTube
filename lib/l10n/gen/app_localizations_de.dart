@@ -2615,7 +2615,7 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get whatsNew1More =>
-      'Der Du-Tab bündelt Verlauf, Später ansehen, Gruppen und Marker.\nSchrittweite und Zählung beim Spulen unter Einstellungen → Wiedergabe.\nSterne und Favoriten für Darsteller und Studios.\nDarsteller, Studios und Gruppen anlegen.\n„Ganzes Video“ aus einem Short spielt dort weiter, wo das Short war.\nAuf dem Tablet steht das Video neben „Als Nächstes“.\nBild-im-Bild öffnet im Format des Videos.\nServer-Aufgaben: Scannen, Generieren, Auto-Tag und Aufräumen.\nEine Prüfung fehlender Vorschauen.\nEine Benachrichtigung, wenn eine Server-Aufgabe fertig ist (optional).\nMarker mit Start und Ende bei neueren Stash-Versionen.\n„Neu seit deinem letzten Besuch“ auf der Startseite.\nVerständliche Wiedergabefehler mit „Erneut versuchen“ und „Qualität wechseln“.\nEin Hinweis, wenn der Server nicht erreichbar ist; geladene Listen bleiben.\nEinfacherer Login: Zugangsdaten erst, wenn der Server sie verlangt.\nBilddetails hinter dem (i)-Knopf; nach unten wischen schließt ein Bild.\nDer Würfel auf der Startseite spielt eine zufällige Szene.\nDie Sehzeit als Diagramm in der Statistik.\nEine Touch-Sperre im Vollbild.\nAuf dem Handy bleibt die App hochkant; Kippen mit einem breiten Video dreht es ins Vollbild.\nWährend ein Short läuft, zeigt er nur die wichtigsten Knöpfe und blendet seinen Text aus; Pausieren zeigt den Rest.\nHochkant-Szenen erscheinen ganz in den Vorschaubildern, oder gefüllt (Einstellungen).\nEine Einführung in die App (Einstellungen → Über).\nEinstellungen nach Kategorien geordnet.';
+      'Der Du-Tab bündelt Verlauf, Später ansehen, Gruppen und Marker.\nSchrittweite und Zählung beim Spulen unter Einstellungen → Wiedergabe.\nSterne und Favoriten für Darsteller und Studios.\nDarsteller, Studios und Gruppen anlegen.\n„Ganzes Video“ aus einem Short spielt dort weiter, wo das Short war.\nAuf dem Tablet steht das Video neben „Als Nächstes“.\nBild-im-Bild öffnet im Format des Videos.\nServer-Aufgaben: Scannen, Generieren, Auto-Tag und Aufräumen.\nEine Prüfung fehlender Vorschauen.\nEine Benachrichtigung, wenn eine Server-Aufgabe fertig ist (optional).\nMarker mit Start und Ende bei neueren Stash-Versionen.\n„Neu seit deinem letzten Besuch“ auf der Startseite.\nVerständliche Wiedergabefehler mit „Erneut versuchen“ und „Qualität wechseln“.\nEin Hinweis, wenn der Server nicht erreichbar ist; geladene Listen bleiben.\nEinfacherer Login: Zugangsdaten erst, wenn der Server sie verlangt.\nBilddetails hinter dem (i)-Knopf; nach unten wischen schließt ein Bild.\nDer Würfel auf der Startseite spielt eine zufällige Szene.\nDie Sehzeit als Diagramm in der Statistik.\nEine Touch-Sperre im Vollbild.\nAuf dem Handy bleibt die App hochkant; Kippen mit einem breiten Video dreht es ins Vollbild.\nWährend ein Short läuft, zeigt er nur die wichtigsten Knöpfe und blendet seinen Text aus; Pausieren zeigt den Rest.\nMarker per langem Drücken bearbeiten oder löschen.\nHochkant-Szenen erscheinen ganz in den Vorschaubildern, oder gefüllt (Einstellungen).\nEine Einführung in die App (Einstellungen → Über).\nEinstellungen nach Kategorien geordnet.';
 
   @override
   String whatsNewShowMore(int count) {
@@ -2624,4 +2624,32 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get whatsNewShowLess => 'Weniger anzeigen';
+
+  @override
+  String get markerEdit => 'Marker bearbeiten';
+
+  @override
+  String markerEditAt(String time) {
+    return 'Marker bei $time bearbeiten';
+  }
+
+  @override
+  String get markerDelete => 'Marker löschen';
+
+  @override
+  String get markerDeleteTitle => 'Marker löschen?';
+
+  @override
+  String markerDeleteConfirm(String title, String time) {
+    return '„$title“ bei $time wird aus der Szene entfernt.';
+  }
+
+  @override
+  String get markerDeleteAction => 'Löschen';
+
+  @override
+  String get markerDeleted => 'Marker gelöscht';
+
+  @override
+  String get markerSaved => 'Marker gespeichert';
 }
