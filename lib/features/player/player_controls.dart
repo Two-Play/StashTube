@@ -19,6 +19,8 @@ import '../../widgets/scene_card.dart';
 import '../../widgets/stash_image.dart';
 import '../pip/pip.dart';
 import '../../widgets/sliver_columns.dart';
+import '../../widgets/app_orientation.dart';
+import 'fullscreen_route.dart';
 import 'player_providers.dart';
 import 'preview_seek_bar.dart';
 import 'video_controls.dart';
@@ -72,23 +74,43 @@ class _PlayerVideoState extends ConsumerState<PlayerVideo> {
   bool _portraitLocked = false;
   StreamSubscription<AccelerometerEvent>? _upright;
 
+  /// The inline controls' context, below the [Video]: fullscreen is entered
+  /// from there ([enterPlayerFullscreen]).
+  BuildContext? _controlsContext;
+
+  @override
+  void initState() {
+    super.initState();
+    _updateTurning();
+  }
+
   @override
   void didUpdateWidget(PlayerVideo oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (!widget.showControls) _releasePortrait();
+    _updateTurning();
   }
 
   @override
   void dispose() {
     _releasePortrait();
+    AppOrientation.setPlayerTurns(false);
     super.dispose();
+  }
+
+  /// On a phone only the open player turns, and only for a wide video:
+  /// turning the phone then enters fullscreen. Everything else (and a
+  /// portrait video's player) stays portrait.
+  void _updateTurning() {
+    final aspect = videoAspect(ref.read(playerProvider).state, widget.scene, sceneFirst: true);
+    AppOrientation.setPlayerTurns(widget.showControls && (aspect ?? 16 / 9) > 1);
   }
 
   void _releasePortrait() {
     _stopWatchingUpright();
     if (!_portraitLocked) return;
     _portraitLocked = false;
-    SystemChrome.setPreferredOrientations([]);
+    AppOrientation.setOverride(null);
   }
 
   void _stopWatchingUpright() {
@@ -106,10 +128,10 @@ class _PlayerVideoState extends ConsumerState<PlayerVideo> {
   Future<void> _onExitFullscreen() async {
     final sideways = _orientation == Orientation.landscape;
     fullscreenByRotation.value = false;
-    await defaultExitNativeFullscreen();
+    await _exitFullscreen();
     if (!sideways || !mounted || !widget.showControls || !(Platform.isAndroid || Platform.isIOS)) return;
     _portraitLocked = true;
-    await SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
+    await AppOrientation.setOverride(const [DeviceOrientation.portraitUp]);
     if (!mounted || !_portraitLocked) return;
     _stopWatchingUpright();
     _upright = accelerometerEventStream(samplingPeriod: SensorInterval.uiInterval).listen(
@@ -141,7 +163,8 @@ class _PlayerVideoState extends ConsumerState<PlayerVideo> {
     fullscreenByRotation.value = true;
     // Not while the dependencies change.
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) video.enterFullscreen();
+      final controls = _controlsContext;
+      if (mounted && controls != null && controls.mounted) enterPlayerFullscreen(controls);
     });
   }
 
@@ -168,12 +191,16 @@ class _PlayerVideoState extends ConsumerState<PlayerVideo> {
       // then throws "Looking up a deactivated widget's ancestor is unsafe".
       controls: widget.showControls
           ? (state) => Builder(
-                builder: (controlsContext) => StashVideoControls(
-                  fullscreen: isFullscreen(controlsContext),
-                  onToggleFullscreen: () => toggleFullscreen(controlsContext),
-                  scene: scene,
-                  onQuality: () => showQualitySheet(context, scene.id),
-                ),
+                builder: (controlsContext) {
+                  final fullscreen = isFullscreen(controlsContext);
+                  if (!fullscreen) _controlsContext = controlsContext;
+                  return StashVideoControls(
+                    fullscreen: fullscreen,
+                    onToggleFullscreen: () => togglePlayerFullscreen(controlsContext),
+                    scene: scene,
+                    onQuality: () => showQualitySheet(context, scene.id),
+                  );
+                },
               )
           : _noControls,
     );
@@ -190,10 +217,20 @@ Future<void> _enterFullscreen(PlayerState state, Scene scene) async {
   final portrait = (videoAspect(state, scene) ?? 16 / 9) < 1;
   await Future.wait([
     SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky, overlays: []),
-    SystemChrome.setPreferredOrientations([
+    AppOrientation.setOverride([
       if (portrait || fullscreenByRotation.value) DeviceOrientation.portraitUp,
       if (!portrait) ...[DeviceOrientation.landscapeLeft, DeviceOrientation.landscapeRight],
     ]),
+  ]);
+}
+
+/// Like media_kit's default, but hands the orientations back to
+/// [AppOrientation] (the default allows all, also on a phone's lists).
+Future<void> _exitFullscreen() async {
+  if (!Platform.isAndroid && !Platform.isIOS) return defaultExitNativeFullscreen();
+  await Future.wait([
+    SystemChrome.setEnabledSystemUIMode(SystemUiMode.manual, overlays: SystemUiOverlay.values),
+    AppOrientation.setOverride(null),
   ]);
 }
 
