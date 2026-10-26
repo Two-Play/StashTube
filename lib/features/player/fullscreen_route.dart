@@ -1,114 +1,114 @@
 import 'package:flutter/material.dart';
 import 'package:media_kit_video/media_kit_video.dart';
 
-/// How long entering fullscreen takes; leaving is a bit faster.
-const kFullscreenDuration = Duration(milliseconds: 380);
-const kFullscreenReverseDuration = Duration(milliseconds: 260);
+import 'fullscreen_morph.dart';
+import 'held_orientation.dart';
 
-/// The share of the transition in which the screen goes black, before the
-/// video grows in. The phone turns meanwhile, so the turn isn't seen.
-const _blackShare = 0.35;
+/// Like media_kit's [toggleFullscreen], with [enterPlayerFullscreen] and
+/// [exitPlayerFullscreen]. [context] is below the [Video] (its controls').
+/// The fullscreen route while it is open: there is only ever one. The
+/// guard of media_kit's own (the context's [isFullscreen]) doesn't see a
+/// route opened from another context, or one still being opened.
+Route<void>? _openRoute;
 
-/// Like media_kit's [toggleFullscreen], but with [enterPlayerFullscreen]'s
-/// animation. [context] is below the [Video] (its controls').
-Future<void> togglePlayerFullscreen(BuildContext context) =>
-    isFullscreen(context) ? exitFullscreen(context) : enterPlayerFullscreen(context);
+/// Whether the player's fullscreen is open or opening.
+bool get playerFullscreenOpen {
+  // Gone without a pop (its navigator went away).
+  if (_openRoute?.isActive == false && _openRoute?.navigator == null) _openRoute = null;
+  return _openRoute != null;
+}
 
-/// Like media_kit's [enterFullscreen], whose route appears without any
-/// transition: the screen fades to black, the video's `onEnterFullscreen`
-/// (system bars, orientation) runs while it is black, then the video grows
-/// in from slightly smaller. Leaving plays it backwards. Without animations
-/// (reduced motion) it switches at once.
+Future<void> togglePlayerFullscreen(BuildContext context, {HeldOrientation? held, required Rect? Function() inline}) =>
+    isFullscreen(context) ? exitPlayerFullscreen(context) : enterPlayerFullscreen(context, held: held, inline: inline);
+
+/// The aspect the video's frames have, as the fullscreen shows them.
+double playingAspect(VideoController controller) {
+  final state = controller.player.state;
+  final width = state.width;
+  final height = state.height;
+  return width == null || height == null || width <= 0 || height <= 0 ? 16 / 9 : width / height;
+}
+
+/// Like media_kit's [enterFullscreen], whose route just appears and lets
+/// the system turn the screen in view: the [FullscreenMorph] first carries
+/// the video from its place ([inline]) into the fullscreen pose, turned the
+/// way the phone is [held], while the app goes black. Then the fullscreen
+/// route opens underneath, the video's `onEnterFullscreen` turns the screen
+/// (and waits until it has turned), and the morph goes: what it showed is
+/// exactly the fullscreen.
 ///
 /// [context] is below the [Video] (its controls'); the route carries the
 /// same inherited widgets as media_kit's, so [isFullscreen] and
-/// [exitFullscreen] work in it.
-Future<void> enterPlayerFullscreen(BuildContext context) => lock.synchronized(() async {
-  if (!context.mounted || isFullscreen(context)) return;
-  final inherited = VideoStateInheritedWidget.of(context);
-  final state = inherited.state;
-  final parameters = inherited.videoViewParametersNotifier.value;
-  final animate = !MediaQuery.disableAnimationsOf(context);
-  Navigator.of(context, rootNavigator: true).push(
-    PageRouteBuilder<void>(
-      transitionDuration: animate ? kFullscreenDuration : Duration.zero,
-      reverseTransitionDuration: animate ? kFullscreenReverseDuration : Duration.zero,
-      transitionsBuilder: (_, animation, _, child) => _FullscreenTransition(animation: animation, child: child),
-      pageBuilder: (_, _, _) => Material(
-        color: Colors.black,
-        child: VideoStateInheritedWidget(
-          state: state,
-          contextNotifier: inherited.contextNotifier,
-          videoViewParametersNotifier: inherited.videoViewParametersNotifier,
-          disposeNotifiers: false,
-          child: FullscreenInheritedWidget(
-            parent: state,
-            // Another VideoStateInheritedWidget inside, as in media_kit:
-            // it tells the controls about the fullscreen context.
-            child: VideoStateInheritedWidget(
-              state: state,
-              contextNotifier: inherited.contextNotifier,
-              videoViewParametersNotifier: inherited.videoViewParametersNotifier,
-              disposeNotifiers: false,
-              child: Video(
-                controller: state.widget.controller,
-                fit: parameters.fit,
-                fill: parameters.fill,
-                alignment: parameters.alignment,
-                aspectRatio: parameters.aspectRatio,
-                filterQuality: parameters.filterQuality,
-                controls: parameters.controls,
-                // The inline Video holds the wakelock.
-                wakelock: false,
-                pauseUponEnteringBackgroundMode: state.widget.pauseUponEnteringBackgroundMode,
-                resumeUponEnteringForegroundMode: state.widget.resumeUponEnteringForegroundMode,
-                subtitleViewConfiguration: parameters.subtitleViewConfiguration,
-                focusNode: parameters.focusNode,
-                onEnterFullscreen: state.widget.onEnterFullscreen,
-                onExitFullscreen: state.widget.onExitFullscreen,
+/// [exitPlayerFullscreen] work in it.
+Future<void> enterPlayerFullscreen(BuildContext context, {HeldOrientation? held, required Rect? Function() inline}) =>
+    lock.synchronized(() async {
+      if (!context.mounted || isFullscreen(context) || playerFullscreenOpen) return;
+      final inherited = VideoStateInheritedWidget.of(context);
+      final state = inherited.state;
+      final parameters = inherited.videoViewParametersNotifier.value;
+      final controller = state.widget.controller;
+      final morph = fullscreenMorphKey.currentState;
+      morph?.show((controller: controller, aspect: playingAspect(controller), held: held, inline: inline), at: 0);
+      await morph?.animateTo(1);
+      if (!context.mounted) return morph?.hide();
+      final route = PageRouteBuilder<void>(
+        // The morph covers the switch.
+        transitionDuration: Duration.zero,
+        reverseTransitionDuration: Duration.zero,
+        pageBuilder: (_, _, _) => Material(
+          color: Colors.black,
+          child: VideoStateInheritedWidget(
+            state: state,
+            contextNotifier: inherited.contextNotifier,
+            videoViewParametersNotifier: inherited.videoViewParametersNotifier,
+            disposeNotifiers: false,
+            child: FullscreenInheritedWidget(
+              parent: state,
+              // Another VideoStateInheritedWidget inside, as in media_kit:
+              // it tells the controls about the fullscreen context.
+              child: VideoStateInheritedWidget(
+                state: state,
+                contextNotifier: inherited.contextNotifier,
+                videoViewParametersNotifier: inherited.videoViewParametersNotifier,
+                disposeNotifiers: false,
+                child: Video(
+                  controller: controller,
+                  fit: parameters.fit,
+                  fill: parameters.fill,
+                  alignment: parameters.alignment,
+                  aspectRatio: parameters.aspectRatio,
+                  filterQuality: parameters.filterQuality,
+                  controls: parameters.controls,
+                  // The inline Video holds the wakelock.
+                  wakelock: false,
+                  pauseUponEnteringBackgroundMode: state.widget.pauseUponEnteringBackgroundMode,
+                  resumeUponEnteringForegroundMode: state.widget.resumeUponEnteringForegroundMode,
+                  subtitleViewConfiguration: parameters.subtitleViewConfiguration,
+                  focusNode: parameters.focusNode,
+                  onEnterFullscreen: state.widget.onEnterFullscreen,
+                  onExitFullscreen: state.widget.onExitFullscreen,
+                ),
               ),
             ),
           ),
         ),
-      ),
-    ),
-  );
-  // Turn the phone and hide the system bars once the screen is black.
-  if (animate) await Future<void>.delayed(kFullscreenDuration * _blackShare);
-  await state.widget.onEnterFullscreen();
+      );
+      _openRoute = route;
+      route.popped.whenComplete(() {
+        if (_openRoute == route) _openRoute = null;
+      });
+      Navigator.of(context, rootNavigator: true).push(route);
+      try {
+        await state.widget.onEnterFullscreen();
+      } finally {
+        morph?.hide();
+      }
+    });
+
+/// Like media_kit's [exitFullscreen]. The route's pop calls the video's
+/// `onExitFullscreen`, which shows the morph in the fullscreen pose at once
+/// (also after the system's back), turns the screen back and carries the
+/// video back into its place.
+Future<void> exitPlayerFullscreen(BuildContext context) => lock.synchronized(() async {
+  if (context.mounted && isFullscreen(context)) await Navigator.of(context).maybePop();
 });
-
-/// Black fades in over the page below, then the video fades in growing from
-/// 92 %.
-class _FullscreenTransition extends StatelessWidget {
-  const _FullscreenTransition({required this.animation, required this.child});
-
-  final Animation<double> animation;
-  final Widget child;
-
-  @override
-  Widget build(BuildContext context) {
-    final black = CurvedAnimation(
-      parent: animation,
-      curve: const Interval(0, _blackShare, curve: Curves.easeOut),
-    );
-    final video = CurvedAnimation(
-      parent: animation,
-      curve: const Interval(_blackShare * 0.8, 1, curve: Curves.easeOutCubic),
-      reverseCurve: const Interval(0, 1, curve: Curves.easeInCubic),
-    );
-    return Stack(
-      fit: StackFit.expand,
-      children: [
-        FadeTransition(
-          opacity: black,
-          child: const ColoredBox(color: Colors.black),
-        ),
-        FadeTransition(
-          opacity: video,
-          child: ScaleTransition(scale: Tween(begin: 0.92, end: 1.0).animate(video), child: child),
-        ),
-      ],
-    );
-  }
-}
