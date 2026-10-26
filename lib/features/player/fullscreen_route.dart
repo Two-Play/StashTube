@@ -30,7 +30,9 @@ double playingAspect(VideoController controller) {
 }
 
 /// Like media_kit's [enterFullscreen], whose route just appears and lets
-/// the system turn the screen in view: the [FullscreenMorph] first carries
+/// the system turn the screen in view. With [FullscreenMorph.curtainOnly]
+/// (the default) the app fades to black, the route opens and the screen turns
+/// underneath, then the black fades out. Otherwise the [FullscreenMorph] first carries
 /// the video from its place ([inline]) into the fullscreen pose, turned the
 /// way the phone is [held], while the app goes black. Then the fullscreen
 /// route opens underneath, the video's `onEnterFullscreen` turns the screen
@@ -48,9 +50,15 @@ Future<void> enterPlayerFullscreen(BuildContext context, {HeldOrientation? held,
       final parameters = inherited.videoViewParametersNotifier.value;
       final controller = state.widget.controller;
       final morph = fullscreenMorphKey.currentState;
-      morph?.show((controller: controller, aspect: playingAspect(controller), held: held, inline: inline), at: 0);
-      await morph?.animateTo(1);
-      if (!context.mounted) return morph?.hide();
+      final curtain = FullscreenMorph.curtainOnly;
+      if (curtain) {
+        await morph?.cover();
+        if (!context.mounted) return morph?.uncover();
+      } else {
+        morph?.show((controller: controller, aspect: playingAspect(controller), held: held, inline: inline), at: 0);
+        await morph?.animateTo(1);
+        if (!context.mounted) return morph?.hide();
+      }
       final route = PageRouteBuilder<void>(
         // The morph covers the switch.
         transitionDuration: Duration.zero,
@@ -101,14 +109,22 @@ Future<void> enterPlayerFullscreen(BuildContext context, {HeldOrientation? held,
       try {
         await state.widget.onEnterFullscreen();
       } finally {
-        morph?.hide();
+        if (curtain) {
+          await morph?.uncover();
+        } else {
+          morph?.hide();
+        }
       }
     });
 
 /// Like media_kit's [exitFullscreen]. The route's pop calls the video's
 /// `onExitFullscreen`, which shows the morph in the fullscreen pose at once
 /// (also after the system's back), turns the screen back and carries the
-/// video back into its place.
+/// video back into its place. With [FullscreenMorph.curtainOnly] the app
+/// first fades to black, and `onExitFullscreen` fades it in again.
 Future<void> exitPlayerFullscreen(BuildContext context) => lock.synchronized(() async {
-  if (context.mounted && isFullscreen(context)) await Navigator.of(context).maybePop();
+  if (!context.mounted || !isFullscreen(context)) return;
+  final morph = fullscreenMorphKey.currentState;
+  if (FullscreenMorph.curtainOnly) await morph?.cover();
+  if (!context.mounted || !await Navigator.of(context).maybePop()) await morph?.uncover();
 });

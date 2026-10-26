@@ -45,15 +45,13 @@ public class MainActivity extends AudioServiceFragmentActivity {
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        // Phones turn only for the player's fullscreen (4.28), whose video
-        // already lies turned when the screen turns: Android's rotation
-        // animation would turn that picture once more. A crossfade keeps the
-        // old picture where it is until the new one is drawn (a cut showed
-        // the old frame stretched to the new window for a moment), and both
-        // look the same. Tablets keep the animation.
+        // Phones turn only for the player's fullscreen (4.28), under the
+        // app's own black fade: no rotation animation of the system on top,
+        // just a cut (fastest; the stretched old frame it shows for a moment
+        // is black). Tablets keep the animation.
         if (getResources().getConfiguration().smallestScreenWidthDp < 600) {
             WindowManager.LayoutParams params = getWindow().getAttributes();
-            params.rotationAnimation = WindowManager.LayoutParams.ROTATION_ANIMATION_CROSSFADE;
+            params.rotationAnimation = WindowManager.LayoutParams.ROTATION_ANIMATION_JUMPCUT;
             getWindow().setAttributes(params);
         }
     }
