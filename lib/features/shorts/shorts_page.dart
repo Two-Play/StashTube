@@ -441,6 +441,9 @@ class _ShortsPageState extends ConsumerState<ShortsPage> {
                   },
                   fullscreen: _fullscreen,
                   onToggleFullscreen: _toggleFullscreen,
+                  // Shuffle and settings only while paused, and when there
+                  // is nothing to play (the settings may be why).
+                  showAll: _paused || items.isEmpty || MediaQuery.accessibleNavigationOf(context),
                   muted: _muted,
                   onToggleMute: _toggleMute,
                   onRefresh: () => ref.read(_feed.notifier).refresh(),
@@ -467,7 +470,12 @@ class _TopBar extends StatelessWidget {
     required this.onToggleMute,
     required this.onRefresh,
     this.adjustable = true,
+    this.showAll = true,
   });
+
+  /// Whether the less used buttons show too; while a short plays only
+  /// fullscreen and mute stay.
+  final bool showAll;
 
   /// Whether shuffle and the shorts settings apply.
   final bool adjustable;
@@ -547,20 +555,28 @@ class _TopBar extends StatelessWidget {
               icon: Icon(muted ? Icons.volume_off : Icons.volume_up),
               onPressed: onToggleMute,
             ),
-            if (adjustable) ...[
-              IconButton(
-                tooltip: l.sortShuffle,
-                color: Colors.white,
-                icon: const Icon(Icons.shuffle),
-                onPressed: onRefresh,
+            if (adjustable)
+              _WhenPaused(
+                shown: showAll,
+                axis: Axis.horizontal,
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    IconButton(
+                      tooltip: l.sortShuffle,
+                      color: Colors.white,
+                      icon: const Icon(Icons.shuffle),
+                      onPressed: onRefresh,
+                    ),
+                    IconButton(
+                      tooltip: l.shortsSettings,
+                      color: Colors.white,
+                      icon: const Icon(Icons.tune),
+                      onPressed: () => showShortsSettingsSheet(context),
+                    ),
+                  ],
+                ),
               ),
-              IconButton(
-                tooltip: l.shortsSettings,
-                color: Colors.white,
-                icon: const Icon(Icons.tune),
-                onPressed: () => showShortsSettingsSheet(context),
-              ),
-            ],
           ],
         ),
       ),
@@ -776,6 +792,9 @@ class _ShortViewState extends ConsumerState<_ShortView> {
     // Above the home indicator when the navigation bar is hidden.
     final bottom = MediaQuery.paddingOf(context).bottom;
     final showBar = !widget.fullscreen || _barShown;
+    // While the short plays only its main actions stay, so they cover
+    // less of the video; pausing shows the rest. Screen readers get all.
+    final showAll = widget.paused || MediaQuery.accessibleNavigationOf(context);
 
     return Stack(
       fit: StackFit.expand,
@@ -937,25 +956,33 @@ class _ShortViewState extends ConsumerState<_ShortView> {
                   onTap: _addO,
                   child: const Icon(Icons.water_drop_outlined, color: Colors.white, size: 32, shadows: _shadow),
                 ),
-                _Action(
-                  label: l.tabWatchLater,
-                  onTap: () => ref.read(watchLaterProvider.notifier).toggle(scene.id),
-                  child: Icon(
-                    saved ? Icons.watch_later : Icons.watch_later_outlined,
-                    color: Colors.white,
-                    size: 32,
-                    shadows: _shadow,
+                _WhenPaused(
+                  shown: showAll,
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      _Action(
+                        label: l.tabWatchLater,
+                        onTap: () => ref.read(watchLaterProvider.notifier).toggle(scene.id),
+                        child: Icon(
+                          saved ? Icons.watch_later : Icons.watch_later_outlined,
+                          color: Colors.white,
+                          size: 32,
+                          shadows: _shadow,
+                        ),
+                      ),
+                      _Action(
+                        label: l.shortsFullVideo,
+                        onTap: widget.onFullVideo,
+                        child: const Icon(Icons.open_in_full, color: Colors.white, size: 30, shadows: _shadow),
+                      ),
+                      _Action(
+                        label: l.moreActions,
+                        onTap: () => showSceneMenu(context, ref, scene),
+                        child: const Icon(Icons.more_horiz, color: Colors.white, size: 30, shadows: _shadow),
+                      ),
+                    ],
                   ),
-                ),
-                _Action(
-                  label: l.shortsFullVideo,
-                  onTap: widget.onFullVideo,
-                  child: const Icon(Icons.open_in_full, color: Colors.white, size: 30, shadows: _shadow),
-                ),
-                _Action(
-                  label: l.moreActions,
-                  onTap: () => showSceneMenu(context, ref, scene),
-                  child: const Icon(Icons.more_horiz, color: Colors.white, size: 30, shadows: _shadow),
                 ),
               ],
             ),
@@ -1008,6 +1035,30 @@ class _ShortViewState extends ConsumerState<_ShortView> {
 }
 
 Widget _noControls(VideoState state) => const SizedBox.shrink();
+
+/// Slides and fades [child] in while [shown], e.g. the actions a playing
+/// short hides.
+class _WhenPaused extends StatelessWidget {
+  const _WhenPaused({required this.shown, required this.child, this.axis = Axis.vertical});
+
+  final bool shown;
+  final Axis axis;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) => AnimatedSwitcher(
+        duration: MediaQuery.disableAnimationsOf(context) ? Duration.zero : const Duration(milliseconds: 220),
+        switchInCurve: Curves.easeOutCubic,
+        switchOutCurve: Curves.easeInCubic,
+        transitionBuilder: (child, animation) => FadeTransition(
+          opacity: animation,
+          // Only as large as the child across: a full height Align would
+          // pull the top bar to the middle of the screen.
+          child: SizeTransition(sizeFactor: animation, axis: axis, fixedCrossAxisSizeFactor: 1, child: child),
+        ),
+        child: shown ? KeyedSubtree(key: const ValueKey(true), child: child) : const SizedBox.shrink(),
+      );
+}
 
 /// Play icon while paused, a spinner while the video buffers.
 class _CenterIndicator extends StatelessWidget {

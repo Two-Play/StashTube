@@ -51,6 +51,9 @@ List<ChangelogEntry> changelog(AppLocalizations l) => [
           Icons.casino_outlined, // dice
           Icons.bar_chart, // stats chart
           Icons.lock_outline, // touch lock
+          Icons.fullscreen, // fullscreen transition
+          Icons.screen_rotation_outlined, // portrait on phones
+          Icons.visibility_off_outlined, // calmer shorts
           Icons.crop_outlined, // thumbnails
           Icons.explore_outlined, // tour
           Icons.settings_outlined, // settings
