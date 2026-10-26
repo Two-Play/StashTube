@@ -162,6 +162,10 @@ void main() {
   });
 
   group('turning the phone (4.19)', () {
+    // The moving video, except where a test asks for the plain fade.
+    setUp(() => FullscreenMorph.curtainOnlyOverride = false);
+    tearDown(() => FullscreenMorph.curtainOnlyOverride = null);
+
     Future<void> settle(WidgetTester tester) async {
       for (var i = 0; i < 12; i++) {
         await tester.pump(const Duration(milliseconds: 100));
@@ -183,7 +187,7 @@ void main() {
       await pump(tester, turns: turns.stream);
 
       turns.add(HeldOrientation.turnedLeft);
-      // A turn counts after 350 ms; the morph starts with the next frame.
+      // A turn counts after 250 ms; the morph starts with the next frame.
       await tester.pump(const Duration(milliseconds: 400));
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 200));
@@ -225,6 +229,33 @@ void main() {
       turns.add(HeldOrientation.turnedLeft);
       await settle(tester);
       expect(playerVideoKey.currentState!.isFullscreen(), isTrue);
+    });
+
+    testWidgets('the app fades to black around the turn instead of moving the video', (tester) async {
+      FullscreenMorph.curtainOnlyOverride = null;
+      final turns = StreamController<HeldOrientation>.broadcast();
+      addTearDown(turns.close);
+      await pump(tester, turns: turns.stream);
+      double black() {
+        final curtain = find.byKey(FullscreenMorph.curtainKey);
+        return curtain.evaluate().isEmpty ? 0 : tester.widget<Opacity>(curtain).opacity;
+      }
+
+      turns.add(HeldOrientation.turnedLeft);
+      await tester.pump(const Duration(milliseconds: 400));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 100));
+      expect(black(), greaterThan(0));
+      expect(morphing(), isFalse);
+      await settle(tester);
+      expect(playerVideoKey.currentState!.isFullscreen(), isTrue);
+      expect(black(), 0);
+
+      turns.add(HeldOrientation.portrait);
+      await settle(tester);
+      expect(playerVideoKey.currentState!.isFullscreen(), isFalse);
+      expect(black(), 0);
+      expect(morphing(), isFalse);
     });
 
     testWidgets('held at an angle, the flipping reports change nothing', (tester) async {

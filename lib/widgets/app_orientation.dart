@@ -82,9 +82,11 @@ abstract final class AppOrientation {
     } finally {
       WidgetsBinding.instance.removeObserver(observer);
     }
-    // A few frames in the new shape before what covers the turn goes: the
-    // video surface takes a moment to follow.
-    await Future<void>.delayed(const Duration(milliseconds: 200));
+    // Two frames in the new shape and a moment for the video surface to
+    // follow before what covers the turn goes (a fixed 200 ms felt slow).
+    await WidgetsBinding.instance.endOfFrame;
+    await WidgetsBinding.instance.endOfFrame;
+    await Future<void>.delayed(const Duration(milliseconds: 50));
   }
 }
 
