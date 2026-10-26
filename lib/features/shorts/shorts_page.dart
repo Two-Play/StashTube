@@ -29,6 +29,10 @@ import 'shorts_feed.dart';
 import 'shorts_settings.dart';
 import 'shorts_settings_sheet.dart';
 
+/// How long a short's info and the shorts/loops switch show after a swipe
+/// before they fade out (until the short is paused).
+const kShortsInfoTimeout = Duration(seconds: 2);
+
 /// True while the shorts are on screen; the shell then hides the miniplayer.
 class ShortsActiveNotifier extends Notifier<bool> {
   @override
@@ -149,6 +153,14 @@ class _ShortsPageState extends ConsumerState<ShortsPage> {
   /// collapsed again.
   bool _handedToPlayer = false;
 
+  /// The shorts/loops switch (or title) shows for [kShortsInfoTimeout]
+  /// after a swipe, then fades out until the short is paused.
+  bool _titleShown = true;
+  Timer? _titleTimer;
+
+  /// Counts swipes: each one shows the current short's info again.
+  int _revealTick = 0;
+
   StreamSubscription<Duration>? _positionSub;
   String? _watchedShort;
   final _counted = <String>{};
@@ -175,6 +187,7 @@ class _ShortsPageState extends ConsumerState<ShortsPage> {
     if (_immersive) SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
     _miniplayerHeight.removeListener(_onMiniplayerHeight);
     _lifecycle.dispose();
+    _titleTimer?.cancel();
     _positionSub?.cancel();
     _pageController.dispose();
     for (final player in _players ?? const <Player>[]) {
@@ -236,6 +249,8 @@ class _ShortsPageState extends ConsumerState<ShortsPage> {
       }, onError: (Object _) {});
     }
     if (reassigned) setState(() {});
+    // The first shorts arrived: the title fades out after a moment.
+    if (_titleTimer == null) _reveal();
     if (_index < items.length) _watchPosition(items[_index]);
     _applyPlayback();
   }
@@ -254,6 +269,19 @@ class _ShortsPageState extends ConsumerState<ShortsPage> {
         player.pause();
       }
     }
+  }
+
+  /// Shows the title and the current short's info again; both fade out
+  /// after a moment.
+  void _reveal() {
+    _titleTimer?.cancel();
+    _titleTimer = Timer(kShortsInfoTimeout, () {
+      if (mounted) setState(() => _titleShown = false);
+    });
+    setState(() {
+      _titleShown = true;
+      _revealTick++;
+    });
   }
 
   void _onPageChanged(int index, List<Short> items) {
@@ -395,7 +423,13 @@ class _ShortsPageState extends ConsumerState<ShortsPage> {
             child: Stack(
               children: [
                 if (items.isNotEmpty)
-                  PageView.builder(
+                  NotificationListener<ScrollStartNotification>(
+                    // Every swipe shows the info again, even back to the same short.
+                    onNotification: (_) {
+                      _reveal();
+                      return false;
+                    },
+                    child: PageView.builder(
                     controller: _pageController,
                     scrollDirection: Axis.vertical,
                     physics: const _FastPageScrollPhysics(),
@@ -409,11 +443,13 @@ class _ShortsPageState extends ConsumerState<ShortsPage> {
                         short: items[i],
                         controller: controller,
                         paused: i == _index && _paused,
+                        revealTick: _revealTick,
                         fullscreen: _fullscreen,
                         onTap: _togglePause,
                         onFullVideo: () => _openFullVideo(items[i]),
                       );
                     },
+                  ),
                   )
                 else
                   // Centered on the screen; a plain Stack child sits top left.
@@ -444,6 +480,7 @@ class _ShortsPageState extends ConsumerState<ShortsPage> {
                   // Shuffle and settings only while paused, and when there
                   // is nothing to play (the settings may be why).
                   showAll: _paused || items.isEmpty || MediaQuery.accessibleNavigationOf(context),
+                  showTitle: _titleShown || _paused || items.isEmpty || MediaQuery.accessibleNavigationOf(context),
                   muted: _muted,
                   onToggleMute: _toggleMute,
                   onRefresh: () => ref.read(_feed.notifier).refresh(),
@@ -471,7 +508,12 @@ class _TopBar extends StatelessWidget {
     required this.onRefresh,
     this.adjustable = true,
     this.showAll = true,
+    this.showTitle = true,
   });
+
+  /// Whether the shorts/loops switch or the title shows; it fades out while
+  /// a short plays.
+  final bool showTitle;
 
   /// Whether the less used buttons show too; while a short plays only
   /// fullscreen and mute stay.
@@ -527,7 +569,9 @@ class _TopBar extends StatelessWidget {
           children: [
             if (Navigator.of(context).canPop()) const BackButton(color: Colors.white) else const SizedBox(width: AppSpacing.l),
             Expanded(
-              child: mode != null
+              child: _Fade(
+                shown: showTitle,
+                child: mode != null
                   ? Align(
                       alignment: AlignmentDirectional.centerStart,
                       // Only as tall as the switch, not the screen.
@@ -542,6 +586,7 @@ class _TopBar extends StatelessWidget {
                       overflow: TextOverflow.ellipsis,
                       style: Theme.of(context).textTheme.titleMedium?.copyWith(color: Colors.white, shadows: _shadow),
                     ),
+              ),
             ),
             IconButton(
               tooltip: l.fullscreen,
@@ -661,10 +706,14 @@ class _ShortView extends ConsumerStatefulWidget {
     required this.short,
     required this.controller,
     required this.paused,
+    this.revealTick = 0,
     required this.fullscreen,
     required this.onTap,
     required this.onFullVideo,
   });
+
+  /// Changes with every swipe: the info shows again.
+  final int revealTick;
 
   final Short short;
   final VideoController? controller;
@@ -690,16 +739,33 @@ class _ShortViewState extends ConsumerState<_ShortView> {
   bool _scrubbing = false;
   Timer? _barTimer;
 
+  /// The info at the bottom left shows for [kShortsInfoTimeout] after a
+  /// swipe, then fades out until the short is paused.
+  bool _infoShown = true;
+  Timer? _infoTimer;
+
   @override
   void initState() {
     super.initState();
     _showBar();
+    _showInfo();
+  }
+
+  void _showInfo() {
+    _infoTimer?.cancel();
+    if (!_infoShown && mounted) setState(() => _infoShown = true);
+    _infoShown = true;
+    _infoTimer = Timer(kShortsInfoTimeout, () {
+      if (mounted) setState(() => _infoShown = false);
+    });
   }
 
   @override
   void didUpdateWidget(_ShortView oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.fullscreen != widget.fullscreen) _showBar();
+    // Playing on after a pause: the info goes again a moment later.
+    if (oldWidget.revealTick != widget.revealTick || (oldWidget.paused && !widget.paused)) _showInfo();
     // The pool's player moved on to another short: don't leave it at 2×.
     if (_fast && oldWidget.controller != widget.controller) {
       oldWidget.controller?.player.setRate(1);
@@ -710,6 +776,7 @@ class _ShortViewState extends ConsumerState<_ShortView> {
   @override
   void dispose() {
     _barTimer?.cancel();
+    _infoTimer?.cancel();
     // Swiped away while holding: the release never arrives here.
     if (_fast) _player?.setRate(1);
     super.dispose();
@@ -795,6 +862,7 @@ class _ShortViewState extends ConsumerState<_ShortView> {
     // While the short plays only its main actions stay, so they cover
     // less of the video; pausing shows the rest. Screen readers get all.
     final showAll = widget.paused || MediaQuery.accessibleNavigationOf(context);
+    final showInfo = showAll || _infoShown;
 
     return Stack(
       fit: StackFit.expand,
@@ -833,7 +901,9 @@ class _ShortViewState extends ConsumerState<_ShortView> {
             bottom: 0,
             height: 260,
             child: IgnorePointer(
-              child: DecoratedBox(
+              child: _Fade(
+                shown: showInfo,
+                child: DecoratedBox(
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
                     begin: Alignment.bottomCenter,
@@ -842,13 +912,16 @@ class _ShortViewState extends ConsumerState<_ShortView> {
                   ),
                 ),
               ),
+              ),
             ),
           ),
           Positioned(
             left: AppSpacing.l,
             right: 88,
             bottom: bottom + AppSpacing.xxl,
-            child: Column(
+            child: _Fade(
+              shown: showInfo,
+              child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisSize: MainAxisSize.min,
               children: [
@@ -912,6 +985,7 @@ class _ShortViewState extends ConsumerState<_ShortView> {
                   style: const TextStyle(color: Colors.white70, fontSize: AppTextSize.overlayLabel, shadows: _shadow),
                 ),
               ],
+            ),
             ),
           ),
           Positioned(
@@ -1035,6 +1109,25 @@ class _ShortViewState extends ConsumerState<_ShortView> {
 }
 
 Widget _noControls(VideoState state) => const SizedBox.shrink();
+
+/// Fades [child] out while not [shown]; hidden, it takes no taps.
+class _Fade extends StatelessWidget {
+  const _Fade({required this.shown, required this.child});
+
+  final bool shown;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) => IgnorePointer(
+        ignoring: !shown,
+        child: AnimatedOpacity(
+          opacity: shown ? 1 : 0,
+          duration: MediaQuery.disableAnimationsOf(context) ? Duration.zero : const Duration(milliseconds: 400),
+          curve: Curves.easeOut,
+          child: child,
+        ),
+      );
+}
 
 /// Slides and fades [child] in while [shown], e.g. the actions a playing
 /// short hides.
