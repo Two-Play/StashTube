@@ -8,6 +8,7 @@ import '../../core/config/theme.dart';
 import '../../core/utils/format.dart';
 import '../../data/models/list_queries.dart';
 import '../../data/models/scene.dart';
+import '../../data/models/scene_details.dart';
 import '../../data/models/tag.dart';
 import '../../data/providers.dart';
 import '../../data/repositories/stash_repository.dart';
@@ -17,6 +18,7 @@ import '../library/add_to_group.dart';
 import '../library/watch_later.dart';
 import '../tags/tag_editor.dart';
 import 'file_info.dart';
+import 'player_controls.dart' show markerTimeLabel;
 import 'player_providers.dart';
 import 'scene_description.dart';
 import 'scene_edits.dart';
@@ -428,27 +430,123 @@ Future<void> showAddMarkerSheet(BuildContext context, {required Scene scene, req
       builder: (_) => AddMarkerSheet(scene: scene, seconds: seconds),
     );
 
-/// Creates a scene marker (10.3). Stash requires a primary tag. On servers
-/// with ranged markers (newer Stash) the marker can also get an end.
+/// Opens [AddMarkerSheet] for an existing [marker] of [scene].
+Future<void> showEditMarkerSheet(BuildContext context, {required Scene scene, required SceneMarker marker}) =>
+    showModalBottomSheet<void>(
+      context: context,
+      useRootNavigator: true,
+      isScrollControlled: true,
+      showDragHandle: true,
+      builder: (_) => AddMarkerSheet(scene: scene, seconds: marker.seconds, marker: marker),
+    );
+
+/// The long-press menu of a marker (a chapter in the player, a tile in the
+/// markers grid): [leading] entries of the caller, then edit and delete.
+/// Each entry gets `go`, which closes the menu and then acts.
+Future<void> showMarkerMenu(
+  BuildContext context, {
+  required Scene scene,
+  required SceneMarker marker,
+  List<Widget> Function(BuildContext sheetContext, void Function(VoidCallback action) go)? leading,
+}) {
+  Haptics.heavy();
+  return showModalBottomSheet<void>(
+    context: context,
+    useRootNavigator: true,
+    builder: (sheetContext) {
+      final l = sheetContext.l10n;
+      void go(VoidCallback action) {
+        Navigator.pop(sheetContext);
+        action();
+      }
+
+      return SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              title: Text(marker.title, maxLines: 1, overflow: TextOverflow.ellipsis),
+              subtitle: Text(markerTimeLabel(l, marker.seconds, marker.endSeconds, withLength: true)),
+            ),
+            const Divider(height: 1),
+            ...?leading?.call(sheetContext, go),
+            ListTile(
+              leading: const Icon(Icons.edit_outlined),
+              title: Text(l.markerEdit),
+              onTap: () => go(() => showEditMarkerSheet(context, scene: scene, marker: marker)),
+            ),
+            ListTile(
+              leading: const Icon(Icons.delete_outline),
+              title: Text(l.markerDelete),
+              onTap: () => go(() => confirmDeleteMarker(context, sceneId: scene.id, marker: marker)),
+            ),
+          ],
+        ),
+      );
+    },
+  );
+}
+
+/// Asks, then deletes [marker] and reloads the chapters and marker lists.
+Future<void> confirmDeleteMarker(BuildContext context, {required String sceneId, required SceneMarker marker}) async {
+  final l = context.l10n;
+  final messenger = ScaffoldMessenger.of(context);
+  final container = ProviderScope.containerOf(context, listen: false);
+  final delete = await showDialog<bool>(
+    context: context,
+    useRootNavigator: true,
+    builder: (dialogContext) => AlertDialog(
+      title: Text(l.markerDeleteTitle),
+      content: Text(l.markerDeleteConfirm(marker.title, markerTimeLabel(l, marker.seconds, marker.endSeconds))),
+      actions: [
+        TextButton(onPressed: () => Navigator.pop(dialogContext, false), child: Text(l.cancel)),
+        FilledButton(onPressed: () => Navigator.pop(dialogContext, true), child: Text(l.markerDeleteAction)),
+      ],
+    ),
+  );
+  if (delete != true) return;
+  try {
+    await container.read(stashRepositoryProvider).deleteMarker(marker.id);
+    Haptics.medium();
+    _markersChanged(container, sceneId);
+    messenger.showSnackBar(SnackBar(content: Text(l.markerDeleted)));
+  } catch (e) {
+    messenger.showSnackBar(SnackBar(content: Text(l.saveFailed(errorText(l, e)))));
+  }
+}
+
+/// Reloads what shows [sceneId]'s markers.
+void _markersChanged(ProviderContainer container, String sceneId) {
+  container.invalidate(sceneDetailsProvider(sceneId));
+  container.invalidate(markerListProvider);
+  container.invalidate(markerCountProvider);
+}
+
+/// Creates a scene marker (10.3), or with [marker] edits that one (title,
+/// tag, end). Stash requires a primary tag. On servers with ranged markers
+/// (newer Stash) the marker can also get an end.
 class AddMarkerSheet extends ConsumerStatefulWidget {
-  const AddMarkerSheet({super.key, required this.scene, required this.seconds});
+  const AddMarkerSheet({super.key, required this.scene, required this.seconds, this.marker});
 
   final Scene scene;
   final double seconds;
+
+  /// The marker to edit; null for a new one.
+  final SceneMarker? marker;
 
   @override
   ConsumerState<AddMarkerSheet> createState() => _AddMarkerSheetState();
 }
 
 class _AddMarkerSheetState extends ConsumerState<AddMarkerSheet> {
-  final _title = TextEditingController();
+  late final _title = TextEditingController(text: widget.marker?.ownTitle);
   Timer? _debounce;
   String _tagSearch = '';
-  Tag? _tag;
+  late Tag? _tag = widget.marker?.tag;
   bool _saving = false;
 
   /// The ranged marker's end; null for a moment.
-  double? _end;
+  late double? _end = widget.marker?.endSeconds;
 
   /// Step of the end's − / + buttons.
   static const _endStep = 5.0;
@@ -480,6 +578,25 @@ class _AddMarkerSheetState extends ConsumerState<AddMarkerSheet> {
     final navigator = Navigator.of(context);
     final l = context.l10n;
     final container = ProviderScope.containerOf(context, listen: false);
+    if (widget.marker case final marker?) {
+      try {
+        // Only what changed; the end only where the server knows ends.
+        final ranges = ref.read(sceneDetailsProvider(widget.scene.id)).value?.markerRanges ?? false;
+        final changes = <String, dynamic>{
+          if (_title.text.trim() != marker.ownTitle) 'title': _title.text.trim(),
+          if (tag.id != marker.tag?.id) 'primary_tag_id': tag.id,
+          if (ranges && end != marker.endSeconds) 'end_seconds': end,
+        };
+        if (changes.isNotEmpty) await container.read(stashRepositoryProvider).updateMarker(marker.id, changes);
+        _markersChanged(container, widget.scene.id);
+        if (mounted) navigator.pop();
+        if (changes.isNotEmpty) messenger.showSnackBar(SnackBar(content: Text(l.markerSaved)));
+      } catch (e) {
+        if (mounted) setState(() => _saving = false);
+        messenger.showSnackBar(SnackBar(content: Text(l.saveFailed(errorText(l, e)))));
+      }
+      return;
+    }
     try {
       await container.read(stashRepositoryProvider).createMarker(
             sceneId: widget.scene.id,
@@ -489,7 +606,7 @@ class _AddMarkerSheetState extends ConsumerState<AddMarkerSheet> {
             endSeconds: end,
           );
       // Chapters come from the scene details.
-      container.invalidate(sceneDetailsProvider(widget.scene.id));
+      _markersChanged(container, widget.scene.id);
       // Closed meanwhile: popping now would remove the page below the sheet.
       if (mounted) navigator.pop();
       final time = end == null
@@ -519,7 +636,12 @@ class _AddMarkerSheetState extends ConsumerState<AddMarkerSheet> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Text(context.l10n.addMarkerAt(formatDuration(widget.seconds)), style: theme.textTheme.titleMedium),
+              Text(
+                widget.marker == null
+                    ? context.l10n.addMarkerAt(formatDuration(widget.seconds))
+                    : context.l10n.markerEditAt(formatDuration(widget.seconds)),
+                style: theme.textTheme.titleMedium,
+              ),
               const SizedBox(height: 12),
               TextField(
                 controller: _title,
@@ -565,7 +687,7 @@ class _AddMarkerSheetState extends ConsumerState<AddMarkerSheet> {
                 onPressed: _tag == null || !_endValid || _saving ? null : _save,
                 child: _saving
                     ? const SizedBox.square(dimension: 20, child: CircularProgressIndicator(strokeWidth: 2))
-                    : Text(context.l10n.addMarker),
+                    : Text(widget.marker == null ? context.l10n.addMarker : context.l10n.save),
               ),
             ],
           ),

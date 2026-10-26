@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/misc.dart' show Override;
 import 'package:stash_app_mobile/core/config/server_config.dart';
 import 'package:stash_app_mobile/features/security/app_lock.dart';
 import 'package:stash_app_mobile/features/settings/scene_card_config.dart';
+import 'package:stash_app_mobile/features/whats_new/whats_new.dart';
 
 /// A server in use, for tests that don't care which one: per-server state
 /// (watch later, caches) and the lists depend on it. Scene cards get the
@@ -17,7 +18,14 @@ final List<Override> testServerOnly = [
   serverConfigProvider.overrideWithValue(const ServerConfig(baseUrl: 'http://test')),
   // Not locked: the lock state would otherwise need SharedPreferences.
   appLockedProvider.overrideWith(_Unlocked.new),
+  // Nothing new to announce: the shell would show "What's new" first.
+  whatsNewSeenProvider.overrideWith(_AllSeen.new),
 ];
+
+class _AllSeen extends WhatsNewSeenNotifier {
+  @override
+  int? build() => 1 << 30;
+}
 
 class _Unlocked extends AppLockStateNotifier {
   @override

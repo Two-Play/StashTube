@@ -336,6 +336,85 @@ void main() {
     });
   });
 
+  group('edit marker', () {
+    Future<_Repo> pumpTile(WidgetTester tester) async {
+      SharedPreferences.setMockInitialValues({});
+      final prefs = await SharedPreferences.getInstance();
+      final repo = _Repo();
+      await tester.pumpWidget(ProviderScope(
+        overrides: [
+          ...testServer,
+          sharedPreferencesProvider.overrideWithValue(prefs),
+          authHeadersProvider.overrideWithValue(const {}),
+          stashRepositoryProvider.overrideWithValue(repo),
+          sceneDetailsProvider('s1').overrideWith((ref) async => const SceneDetails(markerRanges: true)),
+          playerProvider.overrideWithValue(FakePlayer(position: const Duration(seconds: 30))),
+        ],
+        child: const MaterialApp(
+          home: Scaffold(
+            body: SizedBox(
+              width: 240,
+              child: MarkerTile(
+                marker: Marker(
+                  id: 'm1',
+                  title: 'Chase',
+                  ownTitle: 'Chase',
+                  seconds: 40,
+                  endSeconds: 70,
+                  tag: Tag(id: '3', name: 'Action'),
+                  scene: _scene,
+                ),
+              ),
+            ),
+          ),
+        ),
+      ));
+      await tester.pump();
+      return repo;
+    }
+
+    testWidgets('a long press offers edit; the sheet starts filled and sends only changes', (tester) async {
+      final repo = await pumpTile(tester);
+      await tester.longPress(find.text('Chase'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Edit marker'));
+      await tester.pumpAndSettle();
+      expect(find.text('Edit marker at 0:40'), findsOneWidget);
+      expect(find.widgetWithText(InputChip, '#Action'), findsOneWidget);
+      expect(find.text('0:40–1:10'), findsOneWidget);
+
+      await tester.enterText(find.widgetWithText(TextField, 'Chase'), 'Escape');
+      await tester.tap(find.byTooltip('Remove end'));
+      await tester.pump();
+      await tester.tap(find.widgetWithText(FilledButton, 'Save'));
+      await tester.pumpAndSettle();
+      final (id, changes) = repo.updated.single;
+      expect(id, 'm1');
+      expect(changes, {'title': 'Escape', 'end_seconds': null}, reason: 'the tag stayed, so it is not sent');
+      expect(repo.created, isEmpty);
+    });
+
+    testWidgets('delete asks first', (tester) async {
+      final repo = await pumpTile(tester);
+      await tester.longPress(find.text('Chase'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Delete marker'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Cancel'));
+      await tester.pumpAndSettle();
+      expect(repo.deleted, isEmpty);
+
+      await tester.longPress(find.text('Chase'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Delete marker'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.widgetWithText(FilledButton, 'Delete'));
+      await tester.pumpAndSettle();
+      expect(repo.deleted, ['m1']);
+      expect(find.text('Marker deleted'), findsOneWidget);
+    });
+  });
+
   testWidgets('a ranged marker tile shows its range and length', (tester) async {
     await tester.pumpWidget(ProviderScope(
       overrides: [...testServer, authHeadersProvider.overrideWithValue(const {})],
@@ -382,6 +461,18 @@ class _Repo implements StashRepository {
     created.add((seconds, endSeconds));
     return SceneMarker(id: 'n', title: title, seconds: seconds, endSeconds: endSeconds);
   }
+
+  final updated = <(String, Map<String, dynamic>)>[];
+  final deleted = <String>[];
+
+  @override
+  Future<SceneMarker> updateMarker(String id, Map<String, dynamic> changes) async {
+    updated.add((id, changes));
+    return SceneMarker(id: id, title: 'x', seconds: 0);
+  }
+
+  @override
+  Future<void> deleteMarker(String id) async => deleted.add(id);
 
   @override
   dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);

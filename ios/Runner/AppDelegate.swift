@@ -9,6 +9,7 @@ import UserNotifications
   private var airPlay: AirPlayController?
   private var pictureInPicture: PictureInPictureController?
   private var privacyCover: PrivacyCoverController?
+  private var deviceOrientation: DeviceOrientationStream?
 
   override func application(
     _ application: UIApplication,
@@ -27,6 +28,9 @@ import UserNotifications
     }
     if let registrar = engineBridge.pluginRegistry.registrar(forPlugin: "StashPrivacy") {
       privacyCover = PrivacyCoverController(messenger: registrar.messenger())
+    }
+    if let registrar = engineBridge.pluginRegistry.registrar(forPlugin: "StashDeviceOrientation") {
+      deviceOrientation = DeviceOrientationStream(messenger: registrar.messenger())
     }
     if let registrar = engineBridge.pluginRegistry.registrar(forPlugin: "StashPictureInPicture") {
       pictureInPicture = PictureInPictureController(messenger: registrar.messenger())
@@ -55,6 +59,55 @@ import UserNotifications
         }
       }
     }
+  }
+}
+
+/// How the phone is held (4.19), on `stash/device_orientation`: "portrait",
+/// "turnedLeft" (top to the left) or "turnedRight" whenever that changes. The app stays portrait on phones,
+/// so the player learns here that the phone was turned. UIDevice reports no
+/// turns while the rotation lock is on; lying flat reports nothing.
+final class DeviceOrientationStream: NSObject, FlutterStreamHandler {
+  private var sink: FlutterEventSink?
+  private var last: String?
+
+  init(messenger: FlutterBinaryMessenger) {
+    super.init()
+    FlutterEventChannel(name: "stash/device_orientation", binaryMessenger: messenger).setStreamHandler(self)
+  }
+
+  func onListen(withArguments arguments: Any?, eventSink events: @escaping FlutterEventSink) -> FlutterError? {
+    sink = events
+    last = nil
+    UIDevice.current.beginGeneratingDeviceOrientationNotifications()
+    NotificationCenter.default.addObserver(
+      self, selector: #selector(orientationChanged), name: UIDevice.orientationDidChangeNotification, object: nil)
+    orientationChanged()
+    return nil
+  }
+
+  func onCancel(withArguments arguments: Any?) -> FlutterError? {
+    NotificationCenter.default.removeObserver(self, name: UIDevice.orientationDidChangeNotification, object: nil)
+    UIDevice.current.endGeneratingDeviceOrientationNotifications()
+    sink = nil
+    return nil
+  }
+
+  @objc private func orientationChanged() {
+    let orientation = UIDevice.current.orientation
+    let held: String
+    // UIDevice's landscapeLeft has the home button on the right: top left.
+    if orientation == .landscapeLeft {
+      held = "turnedLeft"
+    } else if orientation == .landscapeRight {
+      held = "turnedRight"
+    } else if orientation.isPortrait {
+      held = "portrait"
+    } else {
+      return
+    }
+    guard held != last else { return }
+    last = held
+    sink?(held)
   }
 }
 

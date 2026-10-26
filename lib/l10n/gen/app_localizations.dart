@@ -4285,6 +4285,102 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Your avatar at the top right switches servers and opens the settings: app lock, previews, how thumbnails fit, haptics, playback and more. This tour is there too, under About.'**
   String get introSettingsText;
+
+  /// No description provided for @whatsNewTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'What\'s new'**
+  String get whatsNewTitle;
+
+  /// No description provided for @whatsNewDone.
+  ///
+  /// In en, this message translates to:
+  /// **'Got it'**
+  String get whatsNewDone;
+
+  /// No description provided for @whatsNewSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'What the latest updates brought'**
+  String get whatsNewSubtitle;
+
+  /// No description provided for @whatsNew1Title.
+  ///
+  /// In en, this message translates to:
+  /// **'Loops, a new watch page and more'**
+  String get whatsNew1Title;
+
+  /// No description provided for @whatsNew1.
+  ///
+  /// In en, this message translates to:
+  /// **'New navigation: Home · Shorts · Search · Library · You.\nLoops: scene markers that repeat on their own. Switch at the top of the Shorts tab.\nA new watch page: rating, O-counter, watch later, marker and more in one bar.\nSearch suggestions while you type.\nDouble tap to skip adds up like on YouTube: 5, 10, 20, 30 seconds …\nBack and forward between the videos you opened, with arrows beside play.\nPerformer and studio pages with tabs: videos, shorts, markers, images, galleries, about.\nFavorites: the newest videos of your favorite performers.'**
+  String get whatsNew1;
+
+  /// No description provided for @whatsNew1More.
+  ///
+  /// In en, this message translates to:
+  /// **'The You tab gathers history, watch later, groups and markers.\nSkip step and counting can be set in Settings → Playback.\nStars and favorites for performers and studios.\nCreate performers, studios and groups.\n\"Full video\" from a short continues where the short was.\nOn tablets the video sits beside \"Up next\".\nPicture-in-picture opens in the video\'s shape.\nServer tasks: scan, generate, auto tag and clean.\nA check for missing previews.\nA notification when a server task finishes (optional).\nMarkers with a start and an end on newer Stash versions.\n\"New since your last visit\" on the home page.\nClear playback errors with \"Try again\" and \"Change quality\".\nA banner when the server can\'t be reached; loaded lists stay.\nA simpler login: credentials only when the server asks for them.\nImage details behind the (i) button; swipe down to close an image.\nThe dice on the home page plays a random scene.\nWatch time as a chart in the stats.\nA touch lock in fullscreen.\nOn phones the app stays upright; tilting the phone with a wide video turns it into fullscreen.\nWhile a short plays, only its main buttons show and its text fades out; pause for the rest.\nEdit or delete markers with a long press.\nPortrait scenes show whole in thumbnails, or filled (settings).\nA tour of the app (Settings → About).\nSettings sorted into categories.'**
+  String get whatsNew1More;
+
+  /// No description provided for @whatsNewShowMore.
+  ///
+  /// In en, this message translates to:
+  /// **'Show {count} more'**
+  String whatsNewShowMore(int count);
+
+  /// No description provided for @whatsNewShowLess.
+  ///
+  /// In en, this message translates to:
+  /// **'Show less'**
+  String get whatsNewShowLess;
+
+  /// No description provided for @markerEdit.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit marker'**
+  String get markerEdit;
+
+  /// No description provided for @markerEditAt.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit marker at {time}'**
+  String markerEditAt(String time);
+
+  /// No description provided for @markerDelete.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete marker'**
+  String get markerDelete;
+
+  /// No description provided for @markerDeleteTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete marker?'**
+  String get markerDeleteTitle;
+
+  /// No description provided for @markerDeleteConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'\"{title}\" at {time} will be removed from the scene.'**
+  String markerDeleteConfirm(String title, String time);
+
+  /// No description provided for @markerDeleteAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete'**
+  String get markerDeleteAction;
+
+  /// No description provided for @markerDeleted.
+  ///
+  /// In en, this message translates to:
+  /// **'Marker deleted'**
+  String get markerDeleted;
+
+  /// No description provided for @markerSaved.
+  ///
+  /// In en, this message translates to:
+  /// **'Marker saved'**
+  String get markerSaved;
 }
 
 class _AppLocalizationsDelegate

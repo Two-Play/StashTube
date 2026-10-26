@@ -6,7 +6,6 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:media_kit/media_kit.dart';
 import 'package:media_kit_video/media_kit_video.dart';
-import 'package:sensors_plus/sensors_plus.dart';
 
 import '../../core/config/theme.dart';
 import '../../core/utils/format.dart';
@@ -18,23 +17,24 @@ import '../../data/repositories/stash_session.dart';
 import '../../widgets/scene_card.dart';
 import '../../widgets/stash_image.dart';
 import '../pip/pip.dart';
+import '../security/app_lock.dart';
 import '../../widgets/sliver_columns.dart';
+import '../../widgets/app_orientation.dart';
+import 'fullscreen_morph.dart';
+import 'fullscreen_route.dart';
+import 'held_orientation.dart';
 import 'player_providers.dart';
 import 'preview_seek_bar.dart';
+import 'scene_actions.dart' show showMarkerMenu;
 import 'video_controls.dart';
 import '../../l10n/l10n.dart';
 
-/// media_kit's state of the one [PlayerVideo], to enter fullscreen when the
-/// phone is turned.
+/// media_kit's state of the one [PlayerVideo].
 final playerVideoKey = GlobalKey<VideoState>();
 
-/// True while the fullscreen was entered by turning the phone; turning it
-/// back to portrait then leaves it again.
+/// True while the fullscreen was entered by turning the phone, or the phone
+/// was turned sideways in it; turning it back upright then leaves it.
 final fullscreenByRotation = ValueNotifier<bool>(false);
-
-/// Whether gravity (an accelerometer reading in m/s²) shows the phone held
-/// upright, not sideways or lying flat.
-bool isHeldUpright(double x, double y) => y.abs() > 7 && y.abs() > 2 * x.abs();
 
 /// Width / height of [scene]'s video: the decoded size once known (it
 /// accounts for rotation metadata), else the file's size from Stash. With
@@ -51,8 +51,11 @@ double? videoAspect(PlayerState state, Scene scene, {bool sceneFirst = false}) {
 ///
 /// With [showControls] it shows [StashVideoControls]: double tap to seek
 /// ±10 s (4.11), quality (4.10), scrubbing with previews (4.14), and outside
-/// fullscreen a collapse button. Turning the phone to landscape then opens
-/// fullscreen for wide videos (4.19).
+/// fullscreen a collapse button. On a phone, turning it sideways then opens
+/// fullscreen for wide videos and turning it back upright leaves it (4.19):
+/// the app itself stays portrait, [heldOrientationProvider] reports the
+/// turn, and [enterPlayerFullscreen]'s morph carries the video into the
+/// fullscreen before the screen turns underneath.
 class PlayerVideo extends ConsumerStatefulWidget {
   const PlayerVideo({super.key, required this.scene, required this.showControls});
 
@@ -64,86 +67,133 @@ class PlayerVideo extends ConsumerStatefulWidget {
 }
 
 class _PlayerVideoState extends ConsumerState<PlayerVideo> {
-  Orientation? _orientation;
+  StreamSubscription<HeldOrientation>? _turns;
+  HeldOrientation? _held;
 
-  /// Held in portrait after leaving fullscreen while sideways (see
-  /// [_onExitFullscreen]) until the phone is upright again ([_upright]) or
-  /// the panel collapses.
-  bool _portraitLocked = false;
-  StreamSubscription<AccelerometerEvent>? _upright;
+  /// A turn counts once the phone was held that way for [_settleTime]:
+  /// held at an angle, the system's report flips back and forth.
+  Timer? _settle;
+  static const _settleTime = Duration(milliseconds: 350);
 
-  @override
-  void didUpdateWidget(PlayerVideo oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    if (!widget.showControls) _releasePortrait();
-  }
+  /// Left fullscreen (its button, back) while held sideways: sideways
+  /// doesn't enter it again until the phone was upright.
+  bool _waitForUpright = false;
+  bool _fullscreen = false;
 
-  @override
-  void dispose() {
-    _releasePortrait();
-    super.dispose();
-  }
+  /// How the phone was held in fullscreen: the morph back starts turned
+  /// that way. Null when it wasn't known (entered by the button upright).
+  HeldOrientation? _fullscreenHeld;
 
-  void _releasePortrait() {
-    _stopWatchingUpright();
-    if (!_portraitLocked) return;
-    _portraitLocked = false;
-    SystemChrome.setPreferredOrientations([]);
-  }
-
-  void _stopWatchingUpright() {
-    _upright?.cancel();
-    _upright = null;
-  }
-
-  /// Without a lock, leaving fullscreen while the phone is held sideways
-  /// keeps the app in landscape: the expanded player then fills the screen
-  /// with its controls hidden and looks stuck in fullscreen. Like YouTube,
-  /// go back to portrait. The UI can't turn then, so the accelerometer tells
-  /// when the phone is upright again: the lock goes, and turning the phone
-  /// enters fullscreen as before. Without a sensor the lock stays until the
-  /// panel collapses (releasing it sideways would enter fullscreen again).
-  Future<void> _onExitFullscreen() async {
-    final sideways = _orientation == Orientation.landscape;
-    fullscreenByRotation.value = false;
-    await defaultExitNativeFullscreen();
-    if (!sideways || !mounted || !widget.showControls || !(Platform.isAndroid || Platform.isIOS)) return;
-    _portraitLocked = true;
-    await SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
-    if (!mounted || !_portraitLocked) return;
-    _stopWatchingUpright();
-    _upright = accelerometerEventStream(samplingPeriod: SensorInterval.uiInterval).listen(
-      (event) {
-        if (isHeldUpright(event.x, event.y)) _releasePortrait();
-      },
-      onError: (Object _) => _stopWatchingUpright(),
-      cancelOnError: true,
-    );
-  }
+  /// The controls' contexts, below the [Video], inline and in the
+  /// fullscreen route: fullscreen is entered and left from there.
+  BuildContext? _controlsContext;
+  BuildContext? _fullscreenControlsContext;
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    final orientation = MediaQuery.orientationOf(context);
-    final turned = _orientation != null && orientation != _orientation;
-    _orientation = orientation;
-    // Android's picture-in-picture window is landscape too: no fullscreen
-    // for it, the phone wasn't turned. Tablets keep their side-by-side
-    // player (PlayerTransition.splitBreakpoint) instead.
-    final tablet = MediaQuery.sizeOf(context).shortestSide >= kWideLayoutBreakpoint;
-    if (turned && orientation == Orientation.landscape && !tablet && !ref.read(pipProvider)) _onTurnedToLandscape();
+    _watchTurns();
   }
 
-  void _onTurnedToLandscape() {
-    final aspect = videoAspect(ref.read(playerProvider).state, widget.scene);
-    final video = playerVideoKey.currentState;
-    if (!widget.showControls || video == null || video.isFullscreen() || (aspect ?? 16 / 9) <= 1) return;
-    fullscreenByRotation.value = true;
-    // Not while the dependencies change.
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) video.enterFullscreen();
+  @override
+  void dispose() {
+    _turns?.cancel();
+    _settle?.cancel();
+    super.dispose();
+  }
+
+  /// Turns are watched on a phone for as long as the player lives, also
+  /// while it is collapsed: the panel isn't "expanded" for a moment while
+  /// the screen turns, and listening anew reported the phone's sideways
+  /// hold at once, which entered fullscreen again right after leaving it.
+  /// Tablets keep their side-by-side player
+  /// (PlayerTransition.splitBreakpoint) and turn as a whole.
+  void _watchTurns() {
+    final phone = MediaQuery.sizeOf(context).shortestSide < kWideLayoutBreakpoint;
+    if (phone == (_turns != null)) return;
+    if (phone) {
+      _turns = ref.read(heldOrientationProvider).listen(_onReported);
+    } else {
+      _turns?.cancel();
+      _settle?.cancel();
+      _turns = null;
+      _held = null;
+    }
+  }
+
+  void _onReported(HeldOrientation held) {
+    _settle?.cancel();
+    _settle = Timer(_settleTime, () {
+      if (mounted) _onTurned(held);
     });
   }
+
+  void _onTurned(HeldOrientation held) {
+    _held = held;
+    // Not behind the lock screen nor while the app is away: coming back
+    // reported turns that each opened another fullscreen.
+    final lifecycle = WidgetsBinding.instance.lifecycleState;
+    if (ref.read(appLockedProvider) || (lifecycle != null && lifecycle != AppLifecycleState.resumed)) return;
+    if (!held.isLandscape) {
+      _waitForUpright = false;
+      final controls = _fullscreenControlsContext;
+      if (_fullscreen && fullscreenByRotation.value && controls != null && controls.mounted) {
+        exitPlayerFullscreen(controls);
+      }
+      return;
+    }
+    if (_fullscreen) {
+      // Turned over in fullscreen; or entered by its button and now turned,
+      // so turning back upright leaves it.
+      if (_fullscreenHeld != null || _isWide) {
+        _fullscreenHeld = held;
+        fullscreenMorphKey.currentState?.held = held;
+      }
+      if (_isWide) fullscreenByRotation.value = true;
+      return;
+    }
+    // In the open player (not the mini bar nor Android's picture-in-picture
+    // window), with a wide video.
+    final controls = _controlsContext;
+    if (_waitForUpright || !widget.showControls || ref.read(pipProvider) || !_isWide) return;
+    if (controls == null || !controls.mounted) return;
+    fullscreenByRotation.value = true;
+    enterPlayerFullscreen(controls, held: held, inline: inlineVideoRect);
+  }
+
+  bool get _isWide => (videoAspect(ref.read(playerProvider).state, widget.scene) ?? 16 / 9) > 1;
+
+  Future<void> _onEnterFullscreen() {
+    _fullscreen = true;
+    final held = _held;
+    _fullscreenHeld = held != null && held.isLandscape && _isWide ? held : null;
+    return _enterFullscreen(ref.read(playerProvider).state, widget.scene);
+  }
+
+  /// Called as the fullscreen route goes (its button, back, turning the
+  /// phone upright): the morph shows the fullscreen pose at once, the
+  /// screen turns back underneath, and the video moves back into its place.
+  Future<void> _onExitFullscreen() async {
+    _fullscreen = false;
+    fullscreenByRotation.value = false;
+    _waitForUpright = _held?.isLandscape ?? false;
+    final morph = fullscreenMorphKey.currentState;
+    final controller = ref.read(videoControllerProvider);
+    morph?.show(
+      (controller: controller, aspect: playingAspect(controller), held: _fullscreenHeld, inline: inlineVideoRect),
+      at: 1,
+    );
+    try {
+      await _exitFullscreen();
+      await morph?.animateTo(0);
+    } finally {
+      morph?.hide();
+    }
+  }
+
+  /// For the fullscreen button: turned the way the phone is held, or
+  /// unturned when that isn't known (the screen then turns in view).
+  HeldOrientation? get _buttonHeld => _held != null && _held!.isLandscape ? _held : null;
 
   @override
   Widget build(BuildContext context) {
@@ -153,47 +203,69 @@ class _PlayerVideoState extends ConsumerState<PlayerVideo> {
       controller: ref.watch(videoControllerProvider),
       // backgroundPlaybackProvider decides (4.12): keep the sound, or pause.
       pauseUponEnteringBackgroundMode: false,
-      onEnterFullscreen: () {
-        // The fullscreen sets its own orientations.
-        _portraitLocked = false;
-        _stopWatchingUpright();
-        return _enterFullscreen(ref.read(playerProvider).state, scene);
-      },
+      onEnterFullscreen: _onEnterFullscreen,
       onExitFullscreen: _onExitFullscreen,
-      // The same builder is used by media_kit's fullscreen route. Fullscreen
-      // is read from the controls' own place in the tree: VideoState's
+      // The same builder is used by the fullscreen route. Fullscreen is read
+      // from the controls' own place in the tree: VideoState's
       // isFullscreen()/toggleFullscreen() use the last context media_kit
       // remembered, which is still the fullscreen route's while that route
       // goes away (leaving picture-in-picture), and looking up its ancestors
       // then throws "Looking up a deactivated widget's ancestor is unsafe".
       controls: widget.showControls
           ? (state) => Builder(
-                builder: (controlsContext) => StashVideoControls(
-                  fullscreen: isFullscreen(controlsContext),
-                  onToggleFullscreen: () => toggleFullscreen(controlsContext),
-                  scene: scene,
-                  onQuality: () => showQualitySheet(context, scene.id),
-                ),
+                builder: (controlsContext) {
+                  final fullscreen = isFullscreen(controlsContext);
+                  if (fullscreen) {
+                    _fullscreenControlsContext = controlsContext;
+                  } else {
+                    _controlsContext = controlsContext;
+                  }
+                  return StashVideoControls(
+                    fullscreen: fullscreen,
+                    onToggleFullscreen: () =>
+                        togglePlayerFullscreen(controlsContext, held: _buttonHeld, inline: inlineVideoRect),
+                    scene: scene,
+                    onQuality: () => showQualitySheet(context, scene.id),
+                  );
+                },
               )
           : _noControls,
     );
   }
 }
 
+/// Where the player's own video is on screen, for [FullscreenMorph].
+Rect? inlineVideoRect() {
+  final box = playerVideoKey.currentContext?.findRenderObject();
+  if (box is! RenderBox || !box.attached || !box.hasSize) return null;
+  return box.localToGlobal(Offset.zero) & box.size;
+}
+
 /// Like media_kit's default, but locks the orientation to match the video:
 /// landscape for wide videos, portrait for portrait videos (the default
-/// always rotates to landscape, so portrait videos end up small and
-/// pillarboxed). Entered by turning the phone, portrait stays allowed so
-/// that turning it back leaves fullscreen.
+/// always turns to landscape, so portrait videos end up small and
+/// pillarboxed). Returns once the screen has turned.
 Future<void> _enterFullscreen(PlayerState state, Scene scene) async {
   if (!Platform.isAndroid && !Platform.isIOS) return defaultEnterNativeFullscreen();
   final portrait = (videoAspect(state, scene) ?? 16 / 9) < 1;
   await Future.wait([
     SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky, overlays: []),
-    SystemChrome.setPreferredOrientations([
-      if (portrait || fullscreenByRotation.value) DeviceOrientation.portraitUp,
-      if (!portrait) ...[DeviceOrientation.landscapeLeft, DeviceOrientation.landscapeRight],
-    ]),
+    AppOrientation.turnTo(
+      portrait
+          ? const [DeviceOrientation.portraitUp]
+          : const [DeviceOrientation.landscapeLeft, DeviceOrientation.landscapeRight],
+    ),
+  ]);
+}
+
+/// Like media_kit's default, but hands the orientations back to
+/// [AppOrientation] (the default allows all, also on a phone's lists).
+/// Returns once the screen has turned back.
+Future<void> _exitFullscreen() async {
+  if (!Platform.isAndroid && !Platform.isIOS) return defaultExitNativeFullscreen();
+  await Future.wait([
+    SystemChrome.setEnabledSystemUIMode(SystemUiMode.manual, overlays: SystemUiOverlay.values),
+    AppOrientation.turnTo(null),
   ]);
 }
 
@@ -321,6 +393,11 @@ class ChapterList extends ConsumerWidget {
             final current = details.markerAt(snapshot.data!.inMilliseconds / 1000);
             final scaler = MediaQuery.textScalerOf(context);
             void seek(SceneMarker marker) => ref.read(nowPlayingProvider.notifier).seekTo(marker.seconds);
+            // Edit or delete it.
+            void menu(SceneMarker marker) {
+              final scene = ref.read(nowPlayingProvider);
+              if (scene != null && scene.id == sceneId) showMarkerMenu(context, scene: scene, marker: marker);
+            }
 
             if (withImages) {
               // Wider with large text, so titles keep a few words per line.
@@ -339,6 +416,7 @@ class ChapterList extends ConsumerWidget {
                         current: identical(marker, current),
                         sprite: thumbs,
                         onTap: () => seek(marker),
+                        onLongPress: () => menu(marker),
                       ),
                     ],
                   ],
@@ -365,6 +443,7 @@ class ChapterList extends ConsumerWidget {
                         child: InkWell(
                           borderRadius: BorderRadius.circular(10),
                           onTap: () => seek(marker),
+                          onLongPress: () => menu(marker),
                           child: Container(
                             width: tileWidth,
                             constraints: const BoxConstraints(minHeight: 64),
@@ -411,6 +490,7 @@ class _ChapterThumbnailTile extends ConsumerWidget {
     required this.current,
     required this.sprite,
     required this.onTap,
+    this.onLongPress,
   });
 
   final SceneMarker marker;
@@ -418,6 +498,7 @@ class _ChapterThumbnailTile extends ConsumerWidget {
   final bool current;
   final ScrubThumbnails? sprite;
   final VoidCallback onTap;
+  final VoidCallback? onLongPress;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -457,6 +538,7 @@ class _ChapterThumbnailTile extends ConsumerWidget {
         child: InkWell(
           borderRadius: AppRadius.cardBorder,
           onTap: onTap,
+          onLongPress: onLongPress,
           child: Padding(
             padding: const EdgeInsets.all(AppSpacing.xs),
             child: SizedBox(

@@ -7,9 +7,11 @@ import 'core/config/server_config.dart';
 import 'core/config/theme.dart';
 import 'features/auth/login_page.dart';
 import 'features/pip/pip.dart';
+import 'features/player/fullscreen_morph.dart';
 import 'features/security/app_lock_gate.dart';
 import 'features/shell/app_shell.dart';
 import 'l10n/l10n.dart';
+import 'widgets/app_orientation.dart';
 
 class StashApp extends ConsumerWidget {
   const StashApp({super.key});
@@ -30,7 +32,12 @@ class StashApp extends ConsumerWidget {
       theme: AppTheme.light(accent),
       darkTheme: AppTheme.dark(accent),
       themeMode: ref.watch(themeModeProvider),
-      builder: (context, child) => AppLockGate(child: PipScope(child: child ?? const SizedBox.shrink())),
+      builder: (context, child) => AppOrientationScope(
+        child: FullscreenMorph(
+          key: fullscreenMorphKey,
+          child: AppLockGate(child: PipScope(child: child ?? const SizedBox.shrink())),
+        ),
+      ),
       // Keyed by server so all per-server state is rebuilt after switching.
       home: server == null ? const LoginPage() : AppShell(key: ValueKey(server.id)),
     );

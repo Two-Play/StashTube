@@ -946,7 +946,7 @@ class Fragment$MarkerFields {
       title: (l$title as String),
       seconds: (l$seconds as num).toDouble(),
       screenshot: (l$screenshot as String),
-      primary_tag: Fragment$MarkerFields$primary_tag.fromJson(
+      primary_tag: Fragment$TagRef.fromJson(
         (l$primary_tag as Map<String, dynamic>),
       ),
       $__typename: (l$$__typename as String),
@@ -961,7 +961,7 @@ class Fragment$MarkerFields {
 
   final String screenshot;
 
-  final Fragment$MarkerFields$primary_tag primary_tag;
+  final Fragment$TagRef primary_tag;
 
   final String $__typename;
 
@@ -1085,12 +1085,9 @@ const fragmentDefinitionMarkerFields = FragmentDefinitionNode(
         directives: [],
         selectionSet: SelectionSetNode(
           selections: [
-            FieldNode(
-              name: NameNode(value: 'name'),
-              alias: null,
-              arguments: [],
+            FragmentSpreadNode(
+              name: NameNode(value: 'TagRef'),
               directives: [],
-              selectionSet: null,
             ),
             FieldNode(
               name: NameNode(value: '__typename'),
@@ -1113,7 +1110,7 @@ const fragmentDefinitionMarkerFields = FragmentDefinitionNode(
   ),
 );
 const documentNodeFragmentMarkerFields = DocumentNode(
-  definitions: [fragmentDefinitionMarkerFields],
+  definitions: [fragmentDefinitionMarkerFields, fragmentDefinitionTagRef],
 );
 
 extension ClientExtension$Fragment$MarkerFields on graphql.GraphQLClient {
@@ -1148,66 +1145,6 @@ extension ClientExtension$Fragment$MarkerFields on graphql.GraphQLClient {
       optimistic: optimistic,
     );
     return result == null ? null : Fragment$MarkerFields.fromJson(result);
-  }
-}
-
-class Fragment$MarkerFields$primary_tag {
-  Fragment$MarkerFields$primary_tag({
-    required this.name,
-    this.$__typename = 'Tag',
-  });
-
-  factory Fragment$MarkerFields$primary_tag.fromJson(
-    Map<String, dynamic> json,
-  ) {
-    final l$name = json['name'];
-    final l$$__typename = json['__typename'];
-    return Fragment$MarkerFields$primary_tag(
-      name: (l$name as String),
-      $__typename: (l$$__typename as String),
-    );
-  }
-
-  final String name;
-
-  final String $__typename;
-
-  Map<String, dynamic> toJson() {
-    final _resultData = <String, dynamic>{};
-    final l$name = name;
-    _resultData['name'] = l$name;
-    final l$$__typename = $__typename;
-    _resultData['__typename'] = l$$__typename;
-    return _resultData;
-  }
-
-  @override
-  int get hashCode {
-    final l$name = name;
-    final l$$__typename = $__typename;
-    return Object.hashAll([l$name, l$$__typename]);
-  }
-
-  @override
-  bool operator ==(Object other) {
-    if (identical(this, other)) {
-      return true;
-    }
-    if (other is! Fragment$MarkerFields$primary_tag ||
-        runtimeType != other.runtimeType) {
-      return false;
-    }
-    final l$name = name;
-    final lOther$name = other.name;
-    if (l$name != lOther$name) {
-      return false;
-    }
-    final l$$__typename = $__typename;
-    final lOther$$__typename = other.$__typename;
-    if (l$$__typename != lOther$$__typename) {
-      return false;
-    }
-    return true;
   }
 }
 
@@ -3152,6 +3089,7 @@ const documentNodeQueryFindSceneDetails = DocumentNode(
       ),
     ),
     fragmentDefinitionMarkerFields,
+    fragmentDefinitionTagRef,
   ],
 );
 Query$FindSceneDetails _parserFn$Query$FindSceneDetails(
@@ -6455,6 +6393,7 @@ const documentNodeMutationSceneMarkerCreate = DocumentNode(
       ),
     ),
     fragmentDefinitionMarkerFields,
+    fragmentDefinitionTagRef,
   ],
 );
 Mutation$SceneMarkerCreate _parserFn$Mutation$SceneMarkerCreate(
@@ -6551,6 +6490,527 @@ extension ClientExtension$Mutation$SceneMarkerCreate on graphql.GraphQLClient {
   graphql.ObservableQuery<Mutation$SceneMarkerCreate>
   watchMutation$SceneMarkerCreate(
     WatchOptions$Mutation$SceneMarkerCreate options,
+  ) => this.watchMutation(options);
+}
+
+class Variables$Mutation$SceneMarkerUpdate {
+  factory Variables$Mutation$SceneMarkerUpdate({
+    required Input$SceneMarkerUpdateInput input,
+  }) => Variables$Mutation$SceneMarkerUpdate._({r'input': input});
+
+  Variables$Mutation$SceneMarkerUpdate._(this._$data);
+
+  factory Variables$Mutation$SceneMarkerUpdate.fromJson(
+    Map<String, dynamic> data,
+  ) {
+    final result$data = <String, dynamic>{};
+    final l$input = data['input'];
+    result$data['input'] = Input$SceneMarkerUpdateInput.fromJson(
+      (l$input as Map<String, dynamic>),
+    );
+    return Variables$Mutation$SceneMarkerUpdate._(result$data);
+  }
+
+  Map<String, dynamic> _$data;
+
+  Input$SceneMarkerUpdateInput get input =>
+      (_$data['input'] as Input$SceneMarkerUpdateInput);
+
+  Map<String, dynamic> toJson() {
+    final result$data = <String, dynamic>{};
+    final l$input = input;
+    result$data['input'] = l$input.toJson();
+    return result$data;
+  }
+
+  @override
+  bool operator ==(Object other) {
+    if (identical(this, other)) {
+      return true;
+    }
+    if (other is! Variables$Mutation$SceneMarkerUpdate ||
+        runtimeType != other.runtimeType) {
+      return false;
+    }
+    final l$input = input;
+    final lOther$input = other.input;
+    if (l$input != lOther$input) {
+      return false;
+    }
+    return true;
+  }
+
+  @override
+  int get hashCode {
+    final l$input = input;
+    return Object.hashAll([l$input]);
+  }
+}
+
+class Mutation$SceneMarkerUpdate {
+  Mutation$SceneMarkerUpdate({
+    this.sceneMarkerUpdate,
+    this.$__typename = 'Mutation',
+  });
+
+  factory Mutation$SceneMarkerUpdate.fromJson(Map<String, dynamic> json) {
+    final l$sceneMarkerUpdate = json['sceneMarkerUpdate'];
+    final l$$__typename = json['__typename'];
+    return Mutation$SceneMarkerUpdate(
+      sceneMarkerUpdate: l$sceneMarkerUpdate == null
+          ? null
+          : Fragment$MarkerFields.fromJson(
+              (l$sceneMarkerUpdate as Map<String, dynamic>),
+            ),
+      $__typename: (l$$__typename as String),
+    );
+  }
+
+  final Fragment$MarkerFields? sceneMarkerUpdate;
+
+  final String $__typename;
+
+  Map<String, dynamic> toJson() {
+    final _resultData = <String, dynamic>{};
+    final l$sceneMarkerUpdate = sceneMarkerUpdate;
+    _resultData['sceneMarkerUpdate'] = l$sceneMarkerUpdate?.toJson();
+    final l$$__typename = $__typename;
+    _resultData['__typename'] = l$$__typename;
+    return _resultData;
+  }
+
+  @override
+  int get hashCode {
+    final l$sceneMarkerUpdate = sceneMarkerUpdate;
+    final l$$__typename = $__typename;
+    return Object.hashAll([l$sceneMarkerUpdate, l$$__typename]);
+  }
+
+  @override
+  bool operator ==(Object other) {
+    if (identical(this, other)) {
+      return true;
+    }
+    if (other is! Mutation$SceneMarkerUpdate ||
+        runtimeType != other.runtimeType) {
+      return false;
+    }
+    final l$sceneMarkerUpdate = sceneMarkerUpdate;
+    final lOther$sceneMarkerUpdate = other.sceneMarkerUpdate;
+    if (l$sceneMarkerUpdate != lOther$sceneMarkerUpdate) {
+      return false;
+    }
+    final l$$__typename = $__typename;
+    final lOther$$__typename = other.$__typename;
+    if (l$$__typename != lOther$$__typename) {
+      return false;
+    }
+    return true;
+  }
+}
+
+const documentNodeMutationSceneMarkerUpdate = DocumentNode(
+  definitions: [
+    OperationDefinitionNode(
+      type: OperationType.mutation,
+      name: NameNode(value: 'SceneMarkerUpdate'),
+      variableDefinitions: [
+        VariableDefinitionNode(
+          variable: VariableNode(name: NameNode(value: 'input')),
+          type: NamedTypeNode(
+            name: NameNode(value: 'SceneMarkerUpdateInput'),
+            isNonNull: true,
+          ),
+          defaultValue: DefaultValueNode(value: null),
+          directives: [],
+        ),
+      ],
+      directives: [],
+      selectionSet: SelectionSetNode(
+        selections: [
+          FieldNode(
+            name: NameNode(value: 'sceneMarkerUpdate'),
+            alias: null,
+            arguments: [
+              ArgumentNode(
+                name: NameNode(value: 'input'),
+                value: VariableNode(name: NameNode(value: 'input')),
+              ),
+            ],
+            directives: [],
+            selectionSet: SelectionSetNode(
+              selections: [
+                FragmentSpreadNode(
+                  name: NameNode(value: 'MarkerFields'),
+                  directives: [],
+                ),
+                FieldNode(
+                  name: NameNode(value: '__typename'),
+                  alias: null,
+                  arguments: [],
+                  directives: [],
+                  selectionSet: null,
+                ),
+              ],
+            ),
+          ),
+          FieldNode(
+            name: NameNode(value: '__typename'),
+            alias: null,
+            arguments: [],
+            directives: [],
+            selectionSet: null,
+          ),
+        ],
+      ),
+    ),
+    fragmentDefinitionMarkerFields,
+    fragmentDefinitionTagRef,
+  ],
+);
+Mutation$SceneMarkerUpdate _parserFn$Mutation$SceneMarkerUpdate(
+  Map<String, dynamic> data,
+) => Mutation$SceneMarkerUpdate.fromJson(data);
+typedef OnMutationCompleted$Mutation$SceneMarkerUpdate =
+    FutureOr<void> Function(Map<String, dynamic>?, Mutation$SceneMarkerUpdate?);
+
+class Options$Mutation$SceneMarkerUpdate
+    extends graphql.MutationOptions<Mutation$SceneMarkerUpdate> {
+  Options$Mutation$SceneMarkerUpdate({
+    String? operationName,
+    required Variables$Mutation$SceneMarkerUpdate variables,
+    graphql.FetchPolicy? fetchPolicy,
+    graphql.ErrorPolicy? errorPolicy,
+    graphql.CacheRereadPolicy? cacheRereadPolicy,
+    Object? optimisticResult,
+    Mutation$SceneMarkerUpdate? typedOptimisticResult,
+    graphql.Context? context,
+    OnMutationCompleted$Mutation$SceneMarkerUpdate? onCompleted,
+    graphql.OnMutationUpdate<Mutation$SceneMarkerUpdate>? update,
+    graphql.OnError? onError,
+  }) : onCompletedWithParsed = onCompleted,
+       super(
+         variables: variables.toJson(),
+         operationName: operationName ?? 'SceneMarkerUpdate',
+         fetchPolicy: fetchPolicy,
+         errorPolicy: errorPolicy,
+         cacheRereadPolicy: cacheRereadPolicy,
+         optimisticResult: optimisticResult ?? typedOptimisticResult?.toJson(),
+         context: context,
+         onCompleted: onCompleted == null
+             ? null
+             : (data) => onCompleted(
+                 data,
+                 data == null
+                     ? null
+                     : _parserFn$Mutation$SceneMarkerUpdate(data),
+               ),
+         update: update,
+         onError: onError,
+         document: documentNodeMutationSceneMarkerUpdate,
+         parserFn: _parserFn$Mutation$SceneMarkerUpdate,
+       );
+
+  final OnMutationCompleted$Mutation$SceneMarkerUpdate? onCompletedWithParsed;
+
+  @override
+  List<Object?> get properties => [
+    ...super.onCompleted == null
+        ? super.properties
+        : super.properties.where((property) => property != onCompleted),
+    onCompletedWithParsed,
+  ];
+}
+
+class WatchOptions$Mutation$SceneMarkerUpdate
+    extends graphql.WatchQueryOptions<Mutation$SceneMarkerUpdate> {
+  WatchOptions$Mutation$SceneMarkerUpdate({
+    String? operationName,
+    required Variables$Mutation$SceneMarkerUpdate variables,
+    graphql.FetchPolicy? fetchPolicy,
+    graphql.ErrorPolicy? errorPolicy,
+    graphql.CacheRereadPolicy? cacheRereadPolicy,
+    Object? optimisticResult,
+    Mutation$SceneMarkerUpdate? typedOptimisticResult,
+    graphql.Context? context,
+    Duration? pollInterval,
+    bool? eagerlyFetchResults,
+    bool carryForwardDataOnException = true,
+    bool fetchResults = false,
+  }) : super(
+         variables: variables.toJson(),
+         operationName: operationName ?? 'SceneMarkerUpdate',
+         fetchPolicy: fetchPolicy,
+         errorPolicy: errorPolicy,
+         cacheRereadPolicy: cacheRereadPolicy,
+         optimisticResult: optimisticResult ?? typedOptimisticResult?.toJson(),
+         context: context,
+         document: documentNodeMutationSceneMarkerUpdate,
+         pollInterval: pollInterval,
+         eagerlyFetchResults: eagerlyFetchResults,
+         carryForwardDataOnException: carryForwardDataOnException,
+         fetchResults: fetchResults,
+         parserFn: _parserFn$Mutation$SceneMarkerUpdate,
+       );
+}
+
+extension ClientExtension$Mutation$SceneMarkerUpdate on graphql.GraphQLClient {
+  Future<graphql.QueryResult<Mutation$SceneMarkerUpdate>>
+  mutate$SceneMarkerUpdate(Options$Mutation$SceneMarkerUpdate options) async =>
+      await this.mutate(options);
+
+  graphql.ObservableQuery<Mutation$SceneMarkerUpdate>
+  watchMutation$SceneMarkerUpdate(
+    WatchOptions$Mutation$SceneMarkerUpdate options,
+  ) => this.watchMutation(options);
+}
+
+class Variables$Mutation$SceneMarkerDestroy {
+  factory Variables$Mutation$SceneMarkerDestroy({required String id}) =>
+      Variables$Mutation$SceneMarkerDestroy._({r'id': id});
+
+  Variables$Mutation$SceneMarkerDestroy._(this._$data);
+
+  factory Variables$Mutation$SceneMarkerDestroy.fromJson(
+    Map<String, dynamic> data,
+  ) {
+    final result$data = <String, dynamic>{};
+    final l$id = data['id'];
+    result$data['id'] = (l$id as String);
+    return Variables$Mutation$SceneMarkerDestroy._(result$data);
+  }
+
+  Map<String, dynamic> _$data;
+
+  String get id => (_$data['id'] as String);
+
+  Map<String, dynamic> toJson() {
+    final result$data = <String, dynamic>{};
+    final l$id = id;
+    result$data['id'] = l$id;
+    return result$data;
+  }
+
+  @override
+  bool operator ==(Object other) {
+    if (identical(this, other)) {
+      return true;
+    }
+    if (other is! Variables$Mutation$SceneMarkerDestroy ||
+        runtimeType != other.runtimeType) {
+      return false;
+    }
+    final l$id = id;
+    final lOther$id = other.id;
+    if (l$id != lOther$id) {
+      return false;
+    }
+    return true;
+  }
+
+  @override
+  int get hashCode {
+    final l$id = id;
+    return Object.hashAll([l$id]);
+  }
+}
+
+class Mutation$SceneMarkerDestroy {
+  Mutation$SceneMarkerDestroy({
+    required this.sceneMarkerDestroy,
+    this.$__typename = 'Mutation',
+  });
+
+  factory Mutation$SceneMarkerDestroy.fromJson(Map<String, dynamic> json) {
+    final l$sceneMarkerDestroy = json['sceneMarkerDestroy'];
+    final l$$__typename = json['__typename'];
+    return Mutation$SceneMarkerDestroy(
+      sceneMarkerDestroy: (l$sceneMarkerDestroy as bool),
+      $__typename: (l$$__typename as String),
+    );
+  }
+
+  final bool sceneMarkerDestroy;
+
+  final String $__typename;
+
+  Map<String, dynamic> toJson() {
+    final _resultData = <String, dynamic>{};
+    final l$sceneMarkerDestroy = sceneMarkerDestroy;
+    _resultData['sceneMarkerDestroy'] = l$sceneMarkerDestroy;
+    final l$$__typename = $__typename;
+    _resultData['__typename'] = l$$__typename;
+    return _resultData;
+  }
+
+  @override
+  int get hashCode {
+    final l$sceneMarkerDestroy = sceneMarkerDestroy;
+    final l$$__typename = $__typename;
+    return Object.hashAll([l$sceneMarkerDestroy, l$$__typename]);
+  }
+
+  @override
+  bool operator ==(Object other) {
+    if (identical(this, other)) {
+      return true;
+    }
+    if (other is! Mutation$SceneMarkerDestroy ||
+        runtimeType != other.runtimeType) {
+      return false;
+    }
+    final l$sceneMarkerDestroy = sceneMarkerDestroy;
+    final lOther$sceneMarkerDestroy = other.sceneMarkerDestroy;
+    if (l$sceneMarkerDestroy != lOther$sceneMarkerDestroy) {
+      return false;
+    }
+    final l$$__typename = $__typename;
+    final lOther$$__typename = other.$__typename;
+    if (l$$__typename != lOther$$__typename) {
+      return false;
+    }
+    return true;
+  }
+}
+
+const documentNodeMutationSceneMarkerDestroy = DocumentNode(
+  definitions: [
+    OperationDefinitionNode(
+      type: OperationType.mutation,
+      name: NameNode(value: 'SceneMarkerDestroy'),
+      variableDefinitions: [
+        VariableDefinitionNode(
+          variable: VariableNode(name: NameNode(value: 'id')),
+          type: NamedTypeNode(name: NameNode(value: 'ID'), isNonNull: true),
+          defaultValue: DefaultValueNode(value: null),
+          directives: [],
+        ),
+      ],
+      directives: [],
+      selectionSet: SelectionSetNode(
+        selections: [
+          FieldNode(
+            name: NameNode(value: 'sceneMarkerDestroy'),
+            alias: null,
+            arguments: [
+              ArgumentNode(
+                name: NameNode(value: 'id'),
+                value: VariableNode(name: NameNode(value: 'id')),
+              ),
+            ],
+            directives: [],
+            selectionSet: null,
+          ),
+          FieldNode(
+            name: NameNode(value: '__typename'),
+            alias: null,
+            arguments: [],
+            directives: [],
+            selectionSet: null,
+          ),
+        ],
+      ),
+    ),
+  ],
+);
+Mutation$SceneMarkerDestroy _parserFn$Mutation$SceneMarkerDestroy(
+  Map<String, dynamic> data,
+) => Mutation$SceneMarkerDestroy.fromJson(data);
+typedef OnMutationCompleted$Mutation$SceneMarkerDestroy =
+    FutureOr<void> Function(
+      Map<String, dynamic>?,
+      Mutation$SceneMarkerDestroy?,
+    );
+
+class Options$Mutation$SceneMarkerDestroy
+    extends graphql.MutationOptions<Mutation$SceneMarkerDestroy> {
+  Options$Mutation$SceneMarkerDestroy({
+    String? operationName,
+    required Variables$Mutation$SceneMarkerDestroy variables,
+    graphql.FetchPolicy? fetchPolicy,
+    graphql.ErrorPolicy? errorPolicy,
+    graphql.CacheRereadPolicy? cacheRereadPolicy,
+    Object? optimisticResult,
+    Mutation$SceneMarkerDestroy? typedOptimisticResult,
+    graphql.Context? context,
+    OnMutationCompleted$Mutation$SceneMarkerDestroy? onCompleted,
+    graphql.OnMutationUpdate<Mutation$SceneMarkerDestroy>? update,
+    graphql.OnError? onError,
+  }) : onCompletedWithParsed = onCompleted,
+       super(
+         variables: variables.toJson(),
+         operationName: operationName ?? 'SceneMarkerDestroy',
+         fetchPolicy: fetchPolicy,
+         errorPolicy: errorPolicy,
+         cacheRereadPolicy: cacheRereadPolicy,
+         optimisticResult: optimisticResult ?? typedOptimisticResult?.toJson(),
+         context: context,
+         onCompleted: onCompleted == null
+             ? null
+             : (data) => onCompleted(
+                 data,
+                 data == null
+                     ? null
+                     : _parserFn$Mutation$SceneMarkerDestroy(data),
+               ),
+         update: update,
+         onError: onError,
+         document: documentNodeMutationSceneMarkerDestroy,
+         parserFn: _parserFn$Mutation$SceneMarkerDestroy,
+       );
+
+  final OnMutationCompleted$Mutation$SceneMarkerDestroy? onCompletedWithParsed;
+
+  @override
+  List<Object?> get properties => [
+    ...super.onCompleted == null
+        ? super.properties
+        : super.properties.where((property) => property != onCompleted),
+    onCompletedWithParsed,
+  ];
+}
+
+class WatchOptions$Mutation$SceneMarkerDestroy
+    extends graphql.WatchQueryOptions<Mutation$SceneMarkerDestroy> {
+  WatchOptions$Mutation$SceneMarkerDestroy({
+    String? operationName,
+    required Variables$Mutation$SceneMarkerDestroy variables,
+    graphql.FetchPolicy? fetchPolicy,
+    graphql.ErrorPolicy? errorPolicy,
+    graphql.CacheRereadPolicy? cacheRereadPolicy,
+    Object? optimisticResult,
+    Mutation$SceneMarkerDestroy? typedOptimisticResult,
+    graphql.Context? context,
+    Duration? pollInterval,
+    bool? eagerlyFetchResults,
+    bool carryForwardDataOnException = true,
+    bool fetchResults = false,
+  }) : super(
+         variables: variables.toJson(),
+         operationName: operationName ?? 'SceneMarkerDestroy',
+         fetchPolicy: fetchPolicy,
+         errorPolicy: errorPolicy,
+         cacheRereadPolicy: cacheRereadPolicy,
+         optimisticResult: optimisticResult ?? typedOptimisticResult?.toJson(),
+         context: context,
+         document: documentNodeMutationSceneMarkerDestroy,
+         pollInterval: pollInterval,
+         eagerlyFetchResults: eagerlyFetchResults,
+         carryForwardDataOnException: carryForwardDataOnException,
+         fetchResults: fetchResults,
+         parserFn: _parserFn$Mutation$SceneMarkerDestroy,
+       );
+}
+
+extension ClientExtension$Mutation$SceneMarkerDestroy on graphql.GraphQLClient {
+  Future<graphql.QueryResult<Mutation$SceneMarkerDestroy>>
+  mutate$SceneMarkerDestroy(
+    Options$Mutation$SceneMarkerDestroy options,
+  ) async => await this.mutate(options);
+
+  graphql.ObservableQuery<Mutation$SceneMarkerDestroy>
+  watchMutation$SceneMarkerDestroy(
+    WatchOptions$Mutation$SceneMarkerDestroy options,
   ) => this.watchMutation(options);
 }
 

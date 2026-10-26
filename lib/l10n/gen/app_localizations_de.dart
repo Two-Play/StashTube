@@ -2596,4 +2596,60 @@ class AppLocalizationsDe extends AppLocalizations {
   @override
   String get introSettingsText =>
       'Dein Avatar oben rechts wechselt den Server und öffnet die Einstellungen: App-Sperre, Vorschauen, wie Vorschaubilder passen, Haptik, Wiedergabe und mehr. Dort findest du unter „Über“ auch diese Einführung wieder.';
+
+  @override
+  String get whatsNewTitle => 'Neu in StashTube';
+
+  @override
+  String get whatsNewDone => 'Verstanden';
+
+  @override
+  String get whatsNewSubtitle => 'Was die letzten Updates gebracht haben';
+
+  @override
+  String get whatsNew1Title => 'Loops, eine neue Player-Seite und mehr';
+
+  @override
+  String get whatsNew1 =>
+      'Neue Navigation: Start · Shorts · Suche · Bibliothek · Du.\nLoops: Szenenmarker, die sich von selbst wiederholen. Umschalten oben im Shorts-Tab.\nNeue Player-Seite: Bewertung, O-Zähler, Später ansehen, Marker und Mehr in einer Leiste.\nSuchvorschläge schon beim Tippen.\nDoppeltippen zum Spulen summiert sich wie bei YouTube: 5, 10, 20, 30 Sekunden …\nZurück und vor zwischen geöffneten Videos, mit Pfeilen neben Play.\nDarsteller- und Studioseiten mit Tabs: Videos, Shorts, Marker, Bilder, Galerien, Info.\nFavoriten: die neuesten Videos deiner Lieblingsdarsteller.';
+
+  @override
+  String get whatsNew1More =>
+      'Der Du-Tab bündelt Verlauf, Später ansehen, Gruppen und Marker.\nSchrittweite und Zählung beim Spulen unter Einstellungen → Wiedergabe.\nSterne und Favoriten für Darsteller und Studios.\nDarsteller, Studios und Gruppen anlegen.\n„Ganzes Video“ aus einem Short spielt dort weiter, wo das Short war.\nAuf dem Tablet steht das Video neben „Als Nächstes“.\nBild-im-Bild öffnet im Format des Videos.\nServer-Aufgaben: Scannen, Generieren, Auto-Tag und Aufräumen.\nEine Prüfung fehlender Vorschauen.\nEine Benachrichtigung, wenn eine Server-Aufgabe fertig ist (optional).\nMarker mit Start und Ende bei neueren Stash-Versionen.\n„Neu seit deinem letzten Besuch“ auf der Startseite.\nVerständliche Wiedergabefehler mit „Erneut versuchen“ und „Qualität wechseln“.\nEin Hinweis, wenn der Server nicht erreichbar ist; geladene Listen bleiben.\nEinfacherer Login: Zugangsdaten erst, wenn der Server sie verlangt.\nBilddetails hinter dem (i)-Knopf; nach unten wischen schließt ein Bild.\nDer Würfel auf der Startseite spielt eine zufällige Szene.\nDie Sehzeit als Diagramm in der Statistik.\nEine Touch-Sperre im Vollbild.\nAuf dem Handy bleibt die App hochkant; Kippen mit einem breiten Video dreht es ins Vollbild.\nWährend ein Short läuft, zeigt er nur die wichtigsten Knöpfe und blendet seinen Text aus; Pausieren zeigt den Rest.\nMarker per langem Drücken bearbeiten oder löschen.\nHochkant-Szenen erscheinen ganz in den Vorschaubildern, oder gefüllt (Einstellungen).\nEine Einführung in die App (Einstellungen → Über).\nEinstellungen nach Kategorien geordnet.';
+
+  @override
+  String whatsNewShowMore(int count) {
+    return '$count weitere anzeigen';
+  }
+
+  @override
+  String get whatsNewShowLess => 'Weniger anzeigen';
+
+  @override
+  String get markerEdit => 'Marker bearbeiten';
+
+  @override
+  String markerEditAt(String time) {
+    return 'Marker bei $time bearbeiten';
+  }
+
+  @override
+  String get markerDelete => 'Marker löschen';
+
+  @override
+  String get markerDeleteTitle => 'Marker löschen?';
+
+  @override
+  String markerDeleteConfirm(String title, String time) {
+    return '„$title“ bei $time wird aus der Szene entfernt.';
+  }
+
+  @override
+  String get markerDeleteAction => 'Löschen';
+
+  @override
+  String get markerDeleted => 'Marker gelöscht';
+
+  @override
+  String get markerSaved => 'Marker gespeichert';
 }
