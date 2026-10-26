@@ -34,6 +34,22 @@ class FullscreenMorph extends StatefulWidget {
 
   static const duration = Duration(milliseconds: 420);
 
+  /// The app only fades to black around the turn ([FullscreenMorphState.cover])
+  /// instead of moving the video: on iOS the turn still showed, and the
+  /// plain fade read best on both platforms. The moving video stays
+  /// available (tests) should it come back.
+  static bool get curtainOnly => curtainOnlyOverride ?? true;
+
+  @visibleForTesting
+  static bool? curtainOnlyOverride;
+
+  static const coverDuration = Duration(milliseconds: 120);
+  static const uncoverDuration = Duration(milliseconds: 200);
+
+  /// The black of [FullscreenMorphState.cover], while it shows.
+  @visibleForTesting
+  static const curtainKey = ValueKey('fullscreenCurtain');
+
   /// The moving video, while the morph shows.
   @visibleForTesting
   static const videoKey = ValueKey('fullscreenMorph');
@@ -42,7 +58,7 @@ class FullscreenMorph extends StatefulWidget {
   State<FullscreenMorph> createState() => FullscreenMorphState();
 }
 
-class FullscreenMorphState extends State<FullscreenMorph> with SingleTickerProviderStateMixin {
+class FullscreenMorphState extends State<FullscreenMorph> with TickerProviderStateMixin {
   /// 0: the video in its place in the player; 1: the fullscreen pose.
   late final _progress = AnimationController(vsync: this, duration: FullscreenMorph.duration);
   FullscreenMorphSpec? _spec;
@@ -77,9 +93,36 @@ class FullscreenMorphState extends State<FullscreenMorph> with SingleTickerProvi
     if (_spec != null && mounted) setState(() => _spec = null);
   }
 
+  /// The black over the whole app of [FullscreenMorph.curtainOnly].
+  late final _black = AnimationController(vsync: this);
+
+  bool get _animate => !MediaQuery.disableAnimationsOf(context);
+
+  /// Fades the app to black ([instantly]: at once, e.g. after the system's
+  /// back, when the fullscreen is already gone).
+  Future<void> cover({bool instantly = false}) {
+    if (instantly || !_animate) {
+      _black.value = 1;
+      return Future.value();
+    }
+    return _fade(_black.animateTo(1, duration: FullscreenMorph.coverDuration, curve: Curves.easeOut));
+  }
+
+  Future<void> uncover() {
+    if (!_animate) {
+      _black.value = 0;
+      return Future.value();
+    }
+    return _fade(_black.animateTo(0, duration: FullscreenMorph.uncoverDuration, curve: Curves.easeIn));
+  }
+
+  /// A fade cut short by the next one just ends.
+  Future<void> _fade(TickerFuture fade) => fade.orCancel.catchError((Object _) {});
+
   @override
   void dispose() {
     _progress.dispose();
+    _black.dispose();
     super.dispose();
   }
 
@@ -99,6 +142,20 @@ class FullscreenMorphState extends State<FullscreenMorph> with SingleTickerProvi
               ),
             ),
           ),
+        Positioned.fill(
+          child: AnimatedBuilder(
+            animation: _black,
+            builder: (_, _) => _black.value == 0
+                ? const SizedBox.shrink()
+                : AbsorbPointer(
+                    child: Opacity(
+                      key: FullscreenMorph.curtainKey,
+                      opacity: _black.value,
+                      child: const ColoredBox(color: Colors.black),
+                    ),
+                  ),
+          ),
+        ),
       ],
     );
   }
