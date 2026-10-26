@@ -18,7 +18,7 @@ import '../cast/cast_providers.dart';
 import '../cast/cast_ui.dart';
 import '../pip/pip.dart';
 import 'gesture_hints.dart';
-import 'player_controls.dart' show fullscreenByRotation, playerVideoKey;
+import 'player_controls.dart' show playerVideoKey;
 import 'player_providers.dart';
 import 'preview_seek_bar.dart';
 import 'seek_settings.dart';
@@ -475,20 +475,6 @@ class _StashVideoControlsState extends ConsumerState<StashVideoControls> {
     // Leaving fullscreen unlocks (media_kit's fullscreen route usually has
     // its own controls, which go away with it).
     if (!widget.fullscreen && _locked) _locked = false;
-  }
-
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    // Fullscreen entered by turning the phone ends when it is turned back.
-    if (widget.fullscreen &&
-        fullscreenByRotation.value &&
-        MediaQuery.orientationOf(context) == Orientation.portrait) {
-      fullscreenByRotation.value = false;
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted) widget.onToggleFullscreen();
-      });
-    }
   }
 
   @override

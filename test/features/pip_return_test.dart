@@ -16,8 +16,11 @@ import 'package:stash_app_mobile/data/repositories/stash_session.dart';
 import 'package:stash_app_mobile/features/cast/cast_providers.dart';
 import 'package:stash_app_mobile/features/pip/pip.dart';
 import 'package:stash_app_mobile/features/pip/pip_service.dart';
+import 'package:stash_app_mobile/features/player/fullscreen_morph.dart';
+import 'package:stash_app_mobile/features/player/held_orientation.dart';
 import 'package:stash_app_mobile/features/player/player_controls.dart';
 import 'package:stash_app_mobile/features/player/player_providers.dart';
+import 'package:stash_app_mobile/features/player/video_controls.dart';
 import 'package:stash_app_mobile/features/security/app_lock_gate.dart';
 
 import '../helpers.dart';
@@ -60,7 +63,7 @@ void main() {
     tester.view.physicalSize = pip ? const Size(720, 405) : const Size(1080, 2340);
   }
 
-  Future<FakePipService> pump(WidgetTester tester) async {
+  Future<FakePipService> pump(WidgetTester tester, {Stream<HeldOrientation> turns = const Stream.empty()}) async {
     addTearDown(tester.view.reset);
     // media_kit's native fullscreen on desktop (the tests' platform); it
     // holds media_kit's fullscreen lock until it answers.
@@ -77,6 +80,7 @@ void main() {
         secretStoreProvider.overrideWithValue(MemorySecretStore()),
         authHeadersProvider.overrideWithValue(const {}),
         pipServiceProvider.overrideWithValue(pip),
+        heldOrientationProvider.overrideWithValue(turns),
         playerProvider.overrideWithValue(player),
         videoControllerProvider.overrideWithValue(_FakeVideoController(player)),
         playerPlayingProvider.overrideWith((ref) => Stream.value(true)),
@@ -86,7 +90,10 @@ void main() {
         scrubThumbnailsProvider('1').overrideWith((ref) async => null),
       ],
       child: MaterialApp(
-        builder: (context, child) => AppLockGate(child: PipScope(child: child!)),
+        builder: (context, child) => FullscreenMorph(
+          key: fullscreenMorphKey,
+          child: AppLockGate(child: PipScope(child: child!)),
+        ),
         // Like PlayerPanel, rebuilt whenever the window's size changes.
         home: Scaffold(
           body: Builder(
@@ -137,13 +144,9 @@ void main() {
     await leave(tester, pip);
   });
 
-  // Regression: when the landscape window comes before the mode change, the
-  // wide video enters fullscreen as if the phone was turned; back in the
-  // portrait window, the fullscreen route went while the player rebuilt for
-  // the new size, and its controls builder asked media_kit's
-  // VideoState.isFullscreen(), which looks up the remembered (fullscreen
-  // route's, now deactivated) context.
-  testWidgets('Android: leaving picture-in-picture throws nothing', (tester) async {
+  // Formerly a landscape window before the mode change entered fullscreen
+  // as if the phone was turned. Now only reported turns of the phone do.
+  testWidgets('Android: a landscape window before the mode change is no turn either', (tester) async {
     final pip = await pump(tester);
 
     setWindow(tester, pip: true);
@@ -153,8 +156,110 @@ void main() {
     pip.events$.add(const PipModeChanged(true));
     await tester.pump(const Duration(milliseconds: 100));
     expect(tester.takeException(), isNull);
-    expect(playerVideoKey.currentState!.isFullscreen(), isTrue);
+    expect(playerVideoKey.currentState!.isFullscreen(), isFalse);
 
     await leave(tester, pip);
+  });
+
+  group('turning the phone (4.19)', () {
+    Future<void> settle(WidgetTester tester) async {
+      for (var i = 0; i < 12; i++) {
+        await tester.pump(const Duration(milliseconds: 100));
+      }
+    }
+
+    bool morphing() => find.byKey(FullscreenMorph.videoKey).evaluate().isNotEmpty;
+
+    /// The moving video's turn: a quarter turn in the portrait test window.
+    double angle(WidgetTester tester) => tester
+        .widget<Transform>(find.ancestor(of: find.byKey(FullscreenMorph.videoKey), matching: find.byType(Transform)).first)
+        .transform
+        .getRotation()
+        .entry(1, 0);
+
+    testWidgets('sideways morphs the video into fullscreen, upright back out', (tester) async {
+      final turns = StreamController<HeldOrientation>.broadcast();
+      addTearDown(turns.close);
+      await pump(tester, turns: turns.stream);
+
+      turns.add(HeldOrientation.turnedLeft);
+      // A turn counts after 350 ms; the morph starts with the next frame.
+      await tester.pump(const Duration(milliseconds: 400));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 200));
+      await tester.pump(const Duration(milliseconds: 200));
+      expect(morphing(), isTrue, reason: 'the video moves into fullscreen first');
+      expect(angle(tester), greaterThan(0), reason: 'turning clockwise, against the phone turned to the left');
+      await settle(tester);
+      expect(playerVideoKey.currentState!.isFullscreen(), isTrue);
+      expect(fullscreenByRotation.value, isTrue);
+      expect(morphing(), isFalse);
+
+      turns.add(HeldOrientation.portrait);
+      await settle(tester);
+      expect(playerVideoKey.currentState!.isFullscreen(), isFalse);
+      expect(morphing(), isFalse);
+      expect(tester.takeException(), isNull);
+    });
+
+    testWidgets('left by its button while sideways: no new fullscreen until upright', (tester) async {
+      final turns = StreamController<HeldOrientation>.broadcast();
+      addTearDown(turns.close);
+      await pump(tester, turns: turns.stream);
+      turns.add(HeldOrientation.turnedLeft);
+      await settle(tester);
+      expect(playerVideoKey.currentState!.isFullscreen(), isTrue);
+
+      // The fullscreen controls' button.
+      tester.widget<StashVideoControls>(find.byType(StashVideoControls).last).onToggleFullscreen();
+      await settle(tester);
+      expect(playerVideoKey.currentState!.isFullscreen(), isFalse);
+
+      turns.add(HeldOrientation.turnedLeft);
+      await settle(tester);
+      expect(playerVideoKey.currentState!.isFullscreen(), isFalse);
+
+      // Held upright for a moment (a blink doesn't count), then sideways.
+      turns.add(HeldOrientation.portrait);
+      await tester.pump(const Duration(milliseconds: 400));
+      turns.add(HeldOrientation.turnedLeft);
+      await settle(tester);
+      expect(playerVideoKey.currentState!.isFullscreen(), isTrue);
+    });
+
+    testWidgets('held at an angle, the flipping reports change nothing', (tester) async {
+      final turns = StreamController<HeldOrientation>.broadcast();
+      addTearDown(turns.close);
+      await pump(tester, turns: turns.stream);
+      for (var i = 0; i < 6; i++) {
+        turns.add(i.isEven ? HeldOrientation.turnedLeft : HeldOrientation.portrait);
+        await tester.pump(const Duration(milliseconds: 150));
+      }
+      await settle(tester);
+      expect(playerVideoKey.currentState!.isFullscreen(), isFalse);
+      expect(find.byKey(FullscreenMorph.videoKey), findsNothing);
+    });
+
+    // Regression: coming back to the app reported several turns while the
+    // first fullscreen was still opening, and each opened another one.
+    testWidgets('turns while fullscreen opens open no second one', (tester) async {
+      final turns = StreamController<HeldOrientation>.broadcast();
+      addTearDown(turns.close);
+      await pump(tester, turns: turns.stream);
+      turns.add(HeldOrientation.turnedLeft);
+      await tester.pump(const Duration(milliseconds: 400));
+      await tester.pump(const Duration(milliseconds: 100));
+      turns.add(HeldOrientation.portrait);
+      await tester.pump(const Duration(milliseconds: 400));
+      turns.add(HeldOrientation.turnedRight);
+      await settle(tester);
+      await settle(tester);
+      expect(playerVideoKey.currentState!.isFullscreen(), isTrue);
+      expect(find.byType(StashVideoControls, skipOffstage: false), findsNWidgets(2), reason: 'inline and one fullscreen');
+
+      turns.add(HeldOrientation.portrait);
+      await settle(tester);
+      expect(playerVideoKey.currentState!.isFullscreen(), isFalse);
+    });
   });
 }

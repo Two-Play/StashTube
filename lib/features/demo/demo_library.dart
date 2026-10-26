@@ -962,6 +962,21 @@ class DemoLibrary {
       _markers.add(marker);
       return _markerObject(marker);
     },
+    'sceneMarkerUpdate': (Map<String, dynamic> args) {
+      final input = args['input'] as Map<String, dynamic>;
+      final m = _markers.where((m) => m.id == input['id']).firstOrNull;
+      if (m == null) return null;
+      if (input['title'] case final String title) m.title = title;
+      if (input['seconds'] case final num seconds) m.seconds = seconds.toDouble();
+      if (input.containsKey('end_seconds')) m.endSeconds = (input['end_seconds'] as num?)?.toDouble();
+      if (input['primary_tag_id'] case final String tagId) m.tagId = tagId;
+      return _markerObject(m);
+    },
+    'sceneMarkerDestroy': (Map<String, dynamic> args) {
+      final before = _markers.length;
+      _markers.removeWhere((m) => m.id == args['id']);
+      return _markers.length < before;
+    },
     'performerUpdate': (Map<String, dynamic> args) {
       final input = args['input'] as Map<String, dynamic>;
       final p = _performers.where((p) => p.id == input['id']).firstOrNull;
@@ -1141,10 +1156,10 @@ class _Marker {
 
   final String id;
   final String sceneId;
-  final double seconds;
-  final double? endSeconds;
-  final String title;
-  final String tagId;
+  double seconds;
+  double? endSeconds;
+  String title;
+  String tagId;
   final DateTime createdAt;
 }
 
