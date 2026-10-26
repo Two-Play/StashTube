@@ -21,7 +21,7 @@ fragment MarkerFields on SceneMarker {
   title
   seconds
   screenshot
-  primary_tag { name }
+  primary_tag { ...TagRef }
 }
 
 query FindScenes($filter: FindFilterType, $scene_filter: SceneFilterType) {
@@ -95,6 +95,14 @@ mutation SceneDeleteO($id: ID!) {
 
 mutation SceneMarkerCreate($input: SceneMarkerCreateInput!) {
   sceneMarkerCreate(input: $input) { ...MarkerFields }
+}
+
+mutation SceneMarkerUpdate($input: SceneMarkerUpdateInput!) {
+  sceneMarkerUpdate(input: $input) { ...MarkerFields }
+}
+
+mutation SceneMarkerDestroy($id: ID!) {
+  sceneMarkerDestroy(id: $id)
 }
 
 mutation SceneEdit($input: SceneUpdateInput!) {

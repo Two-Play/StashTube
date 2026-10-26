@@ -306,6 +306,14 @@ void main() {
     expect(ranged.endSeconds, 6);
     expect((await repo.findSceneDetails('2')).markers.single.endSeconds, 6);
 
+    // Edited: a new title, no end any more; then deleted.
+    final editedMarker = await repo.updateMarker(ranged.id, {'title': 'Rain', 'end_seconds': null});
+    expect([editedMarker.title, editedMarker.ownTitle, editedMarker.tag?.id], ['Rain', 'Rain', tag.id]);
+    final reloaded = (await repo.findSceneDetails('2')).markers.single;
+    expect([reloaded.title, reloaded.endSeconds], ['Rain', null]);
+    await repo.deleteMarker(ranged.id);
+    expect((await repo.findSceneDetails('2')).markers, isEmpty);
+
     await repo.setPerformerFavorite('2', true);
     expect((await repo.findPerformers(PerformerQuery(sort: PerformerSort.favorites))).items, hasLength(2));
     expect((await repo.updatePerformer('3', {'details': 'Pink'})).details, 'Pink');

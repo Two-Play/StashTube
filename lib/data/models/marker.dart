@@ -16,7 +16,11 @@ class Marker {
     this.endSeconds,
     this.screenshotUrl,
     this.previewUrl,
+    this.ownTitle = '',
   });
+
+  /// The title as set on the marker, empty when it has none (for editing).
+  final String ownTitle;
 
   final String id;
 
@@ -47,6 +51,18 @@ class Marker {
         scene: scene,
         screenshotUrl: screenshotUrl,
         previewUrl: previewUrl,
+        ownTitle: ownTitle,
+      );
+
+  /// As the player's chapters know it, e.g. for the marker editor.
+  SceneMarker get asSceneMarker => SceneMarker(
+        id: id,
+        title: title,
+        ownTitle: ownTitle,
+        tag: tag,
+        seconds: seconds,
+        endSeconds: endSeconds,
+        screenshotUrl: screenshotUrl,
       );
 
   factory Marker.fromGraphql(Query$FindSceneMarkers$findSceneMarkers$scene_markers m) {
@@ -54,6 +70,7 @@ class Marker {
     return Marker(
       id: m.id,
       title: nonEmpty(m.title) ?? tag.name,
+      ownTitle: m.title,
       seconds: m.seconds,
       tag: tag,
       scene: Scene.fromFields(m.scene),

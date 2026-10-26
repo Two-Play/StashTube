@@ -1,5 +1,6 @@
 import '../../core/api/documents/scenes.graphql.dart';
 import 'json.dart';
+import 'tag.dart';
 
 /// One playable endpoint from `sceneStreams` (direct file or a transcode).
 class SceneStream {
@@ -74,10 +75,20 @@ class SceneMarker {
     required this.seconds,
     this.endSeconds,
     this.screenshotUrl,
+    this.tag,
+    this.ownTitle = '',
   });
 
   final String id;
+
+  /// The marker's title, or its primary tag's name when it has none.
   final String title;
+
+  /// The title as set on the marker, empty when it has none (for editing).
+  final String ownTitle;
+
+  /// The primary tag; null in older test data.
+  final Tag? tag;
   final double seconds;
 
   /// The end of a ranged marker; null for a marked moment. Only set when
@@ -103,11 +114,15 @@ class SceneMarker {
         seconds: seconds,
         endSeconds: markerEnd(seconds, end),
         screenshotUrl: screenshotUrl,
+        tag: tag,
+        ownTitle: ownTitle,
       );
 
   factory SceneMarker.fromFields(Fragment$MarkerFields m) => SceneMarker(
         id: m.id,
         title: nonEmpty(m.title) ?? nonEmpty(m.primary_tag.name) ?? 'Marker',
+        ownTitle: m.title,
+        tag: Tag.fromRef(m.primary_tag),
         seconds: m.seconds,
         screenshotUrl: nonEmpty(m.screenshot),
       );

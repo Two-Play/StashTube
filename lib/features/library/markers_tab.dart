@@ -15,6 +15,7 @@ import '../../widgets/scene_card.dart';
 import '../../widgets/stash_image.dart';
 import '../player/player_controls.dart';
 import '../player/player_providers.dart';
+import '../player/scene_actions.dart' show showMarkerMenu;
 import '../shell/navigation.dart';
 import '../shorts/shorts_feed.dart';
 import '../shorts/shorts_page.dart';
@@ -159,8 +160,8 @@ class _MarkerGridViewState extends ConsumerState<MarkerGridView> {
 /// The frame at the marker with its time (a ranged marker's range and
 /// length), the marker's title and below it the scene and the marker's tag.
 ///
-/// With [onPlayAsShort] a ⋮ next to the title (and a long press) offers to
-/// play it, or to play it as a short.
+/// A ⋮ next to the title (and a long press) offers to play it, with
+/// [onPlayAsShort] to play it as a short, and to edit or delete it.
 class MarkerTile extends ConsumerWidget {
   const MarkerTile({super.key, required this.marker, this.onPlayAsShort});
 
@@ -171,33 +172,26 @@ class MarkerTile extends ConsumerWidget {
 
   void _play(WidgetRef ref) => ref.read(nowPlayingProvider.notifier).play(marker.scene, at: marker.seconds);
 
-  void _showMenu(BuildContext context, WidgetRef ref) => showModalBottomSheet<void>(
-        context: context,
-        useRootNavigator: true,
-        builder: (sheetContext) {
+  /// Play, play as loop, edit, delete.
+  void _showMenu(BuildContext context, WidgetRef ref) => showMarkerMenu(
+        context,
+        scene: marker.scene,
+        marker: marker.asSceneMarker,
+        leading: (sheetContext, go) {
           final l = sheetContext.l10n;
-          void go(VoidCallback action) {
-            Navigator.pop(sheetContext);
-            action();
-          }
-
-          return SafeArea(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                ListTile(
-                  leading: const Icon(Icons.play_arrow),
-                  title: Text(l.sceneMenuPlay),
-                  onTap: () => go(() => _play(ref)),
-                ),
-                ListTile(
-                  leading: const Icon(Icons.slow_motion_video),
-                  title: Text(l.markerPlayAsShort),
-                  onTap: () => go(onPlayAsShort!),
-                ),
-              ],
+          return [
+            ListTile(
+              leading: const Icon(Icons.play_arrow),
+              title: Text(l.sceneMenuPlay),
+              onTap: () => go(() => _play(ref)),
             ),
-          );
+            if (onPlayAsShort case final playAsShort?)
+              ListTile(
+                leading: const Icon(Icons.slow_motion_video),
+                title: Text(l.markerPlayAsShort),
+                onTap: () => go(playAsShort),
+              ),
+          ];
         },
       );
 
@@ -227,12 +221,7 @@ class MarkerTile extends ConsumerWidget {
         borderRadius: AppRadius.thumbnailBorder,
         onTap: () => _play(ref),
         // A shortcut for the ⋮ next to the title.
-        onLongPress: onPlayAsShort == null
-            ? null
-            : () {
-                Haptics.heavy();
-                _showMenu(context, ref);
-              },
+        onLongPress: () => _showMenu(context, ref),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -306,8 +295,7 @@ class MarkerTile extends ConsumerWidget {
                     ),
                   ),
                 ),
-                if (onPlayAsShort != null)
-                  IconButton(
+                IconButton(
                     tooltip: l.markerMoreOptions,
                     icon: const Icon(Icons.more_vert, size: 18),
                     padding: EdgeInsets.zero,

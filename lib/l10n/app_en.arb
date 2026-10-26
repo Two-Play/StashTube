@@ -1523,8 +1523,18 @@
   "whatsNewSubtitle": "What the latest updates brought",
   "whatsNew1Title": "Loops, a new watch page and more",
   "whatsNew1": "New navigation: Home · Shorts · Search · Library · You.\nLoops: scene markers that repeat on their own. Switch at the top of the Shorts tab.\nA new watch page: rating, O-counter, watch later, marker and more in one bar.\nSearch suggestions while you type.\nDouble tap to skip adds up like on YouTube: 5, 10, 20, 30 seconds …\nBack and forward between the videos you opened, with arrows beside play.\nPerformer and studio pages with tabs: videos, shorts, markers, images, galleries, about.\nFavorites: the newest videos of your favorite performers.",
-  "whatsNew1More": "The You tab gathers history, watch later, groups and markers.\nSkip step and counting can be set in Settings → Playback.\nStars and favorites for performers and studios.\nCreate performers, studios and groups.\n\"Full video\" from a short continues where the short was.\nOn tablets the video sits beside \"Up next\".\nPicture-in-picture opens in the video's shape.\nServer tasks: scan, generate, auto tag and clean.\nA check for missing previews.\nA notification when a server task finishes (optional).\nMarkers with a start and an end on newer Stash versions.\n\"New since your last visit\" on the home page.\nClear playback errors with \"Try again\" and \"Change quality\".\nA banner when the server can't be reached; loaded lists stay.\nA simpler login: credentials only when the server asks for them.\nImage details behind the (i) button; swipe down to close an image.\nThe dice on the home page plays a random scene.\nWatch time as a chart in the stats.\nA touch lock in fullscreen.\nOn phones the app stays upright; tilting the phone with a wide video turns it into fullscreen.\nWhile a short plays, only its main buttons show and its text fades out; pause for the rest.\nPortrait scenes show whole in thumbnails, or filled (settings).\nA tour of the app (Settings → About).\nSettings sorted into categories.",
+  "whatsNew1More": "The You tab gathers history, watch later, groups and markers.\nSkip step and counting can be set in Settings → Playback.\nStars and favorites for performers and studios.\nCreate performers, studios and groups.\n\"Full video\" from a short continues where the short was.\nOn tablets the video sits beside \"Up next\".\nPicture-in-picture opens in the video's shape.\nServer tasks: scan, generate, auto tag and clean.\nA check for missing previews.\nA notification when a server task finishes (optional).\nMarkers with a start and an end on newer Stash versions.\n\"New since your last visit\" on the home page.\nClear playback errors with \"Try again\" and \"Change quality\".\nA banner when the server can't be reached; loaded lists stay.\nA simpler login: credentials only when the server asks for them.\nImage details behind the (i) button; swipe down to close an image.\nThe dice on the home page plays a random scene.\nWatch time as a chart in the stats.\nA touch lock in fullscreen.\nOn phones the app stays upright; tilting the phone with a wide video turns it into fullscreen.\nWhile a short plays, only its main buttons show and its text fades out; pause for the rest.\nEdit or delete markers with a long press.\nPortrait scenes show whole in thumbnails, or filled (settings).\nA tour of the app (Settings → About).\nSettings sorted into categories.",
   "whatsNewShowMore": "Show {count} more",
   "@whatsNewShowMore": {"placeholders": {"count": {"type": "int"}}},
-  "whatsNewShowLess": "Show less"
+  "whatsNewShowLess": "Show less",
+  "markerEdit": "Edit marker",
+  "markerEditAt": "Edit marker at {time}",
+  "@markerEditAt": {"placeholders": {"time": {"type": "String"}}},
+  "markerDelete": "Delete marker",
+  "markerDeleteTitle": "Delete marker?",
+  "markerDeleteConfirm": "\"{title}\" at {time} will be removed from the scene.",
+  "@markerDeleteConfirm": {"placeholders": {"title": {"type": "String"}, "time": {"type": "String"}}},
+  "markerDeleteAction": "Delete",
+  "markerDeleted": "Marker deleted",
+  "markerSaved": "Marker saved"
 }

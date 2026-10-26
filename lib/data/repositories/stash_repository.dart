@@ -784,6 +784,28 @@ class StashRepository implements PlaybackActivityApi {
     return SceneMarker.fromFields(marker).withEnd(endSeconds);
   }
 
+  /// Saves [changes] to a marker (`title`, `primary_tag_id`, `seconds`,
+  /// `end_seconds`; an `end_seconds` of null removes the end).
+  Future<SceneMarker> updateMarker(String id, Map<String, dynamic> changes) async {
+    final data = await _mutate(
+      Options$Mutation$SceneMarkerUpdate(
+        variables: Variables$Mutation$SceneMarkerUpdate(
+          input: _updateInput(id, changes, Input$SceneMarkerUpdateInput.fromJson, (i) => i.toJson()),
+        ),
+      ),
+    );
+    final marker = data.sceneMarkerUpdate ?? _notSaved();
+    final end = changes.containsKey('end_seconds') ? changes['end_seconds'] as double? : null;
+    return SceneMarker.fromFields(marker).withEnd(end);
+  }
+
+  Future<void> deleteMarker(String id) async {
+    final data = await _mutate(
+      Options$Mutation$SceneMarkerDestroy(variables: Variables$Mutation$SceneMarkerDestroy(id: id)),
+    );
+    if (!data.sceneMarkerDestroy) _notSaved();
+  }
+
   Future<void> setPerformerFavorite(String performerId, bool favorite) => _mutate(
     Options$Mutation$PerformerSetFavorite(
       variables: Variables$Mutation$PerformerSetFavorite(id: performerId, favorite: favorite),

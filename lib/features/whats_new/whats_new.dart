@@ -53,6 +53,7 @@ List<ChangelogEntry> changelog(AppLocalizations l) => [
           Icons.lock_outline, // touch lock
           Icons.screen_rotation_outlined, // portrait on phones, fullscreen by tilting
           Icons.visibility_off_outlined, // calmer shorts
+          Icons.edit_outlined, // edit markers
           Icons.crop_outlined, // thumbnails
           Icons.explore_outlined, // tour
           Icons.settings_outlined, // settings
