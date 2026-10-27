@@ -8,16 +8,17 @@ import '../../l10n/l10n.dart';
 /// Technical details of a scene's files (path, size, codecs, ...), folded
 /// into one line until tapped.
 class FileInfoCard extends StatefulWidget {
-  const FileInfoCard({super.key, required this.files});
+  const FileInfoCard({super.key, required this.files, this.initiallyExpanded = false});
 
   final List<SceneFile> files;
+  final bool initiallyExpanded;
 
   @override
   State<FileInfoCard> createState() => _FileInfoCardState();
 }
 
 class _FileInfoCardState extends State<FileInfoCard> {
-  bool _expanded = false;
+  late bool _expanded = widget.initiallyExpanded;
 
   @override
   Widget build(BuildContext context) {
@@ -70,6 +71,26 @@ class _FileInfoCardState extends State<FileInfoCard> {
   }
 }
 
+/// The file info on its own, opened from the player's "More" (WATCH-2).
+Future<void> showFileInfoSheet(BuildContext context, List<SceneFile> files) => showModalBottomSheet<void>(
+      context: context,
+      useRootNavigator: true,
+      isScrollControlled: true,
+      showDragHandle: true,
+      builder: (_) => DraggableScrollableSheet(
+        expand: false,
+        initialChildSize: 0.6,
+        maxChildSize: 0.95,
+        builder: (_, controller) => SafeArea(
+          child: SingleChildScrollView(
+            controller: controller,
+            padding: const EdgeInsets.only(bottom: 16),
+            child: FileInfoCard(files: files, initiallyExpanded: true),
+          ),
+        ),
+      ),
+    );
+
 /// `1440p · h264 · 1.2 GB`: the most telling facts in one line.
 String fileSummary(AppLocalizations l, SceneFile file) => [
       ?resolutionLabel(file.height),
@@ -104,6 +125,8 @@ class _FileDetails extends StatelessWidget {
     ];
     final theme = Theme.of(context);
     final muted = theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurfaceVariant);
+    // Wider with large text, but the values keep most of the row.
+    final labelWidth = MediaQuery.textScalerOf(context).scale(96).clamp(96.0, 150.0);
 
     return Padding(
       padding: const EdgeInsets.only(top: 8),
@@ -116,7 +139,7 @@ class _FileDetails extends StatelessWidget {
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  SizedBox(width: 96, child: Text(label, style: muted)),
+                  SizedBox(width: labelWidth, child: Text(label, style: muted)),
                   Expanded(child: SelectableText(value, style: theme.textTheme.bodySmall)),
                 ],
               ),

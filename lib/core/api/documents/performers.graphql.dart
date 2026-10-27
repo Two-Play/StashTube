@@ -1299,6 +1299,651 @@ class Query$FindPerformer$findPerformer implements Fragment$PerformerFields {
   }
 }
 
+class Variables$Query$PerformerProfile {
+  factory Variables$Query$PerformerProfile({required String id}) =>
+      Variables$Query$PerformerProfile._({r'id': id});
+
+  Variables$Query$PerformerProfile._(this._$data);
+
+  factory Variables$Query$PerformerProfile.fromJson(Map<String, dynamic> data) {
+    final result$data = <String, dynamic>{};
+    final l$id = data['id'];
+    result$data['id'] = (l$id as String);
+    return Variables$Query$PerformerProfile._(result$data);
+  }
+
+  Map<String, dynamic> _$data;
+
+  String get id => (_$data['id'] as String);
+
+  Map<String, dynamic> toJson() {
+    final result$data = <String, dynamic>{};
+    final l$id = id;
+    result$data['id'] = l$id;
+    return result$data;
+  }
+
+  @override
+  bool operator ==(Object other) {
+    if (identical(this, other)) {
+      return true;
+    }
+    if (other is! Variables$Query$PerformerProfile ||
+        runtimeType != other.runtimeType) {
+      return false;
+    }
+    final l$id = id;
+    final lOther$id = other.id;
+    if (l$id != lOther$id) {
+      return false;
+    }
+    return true;
+  }
+
+  @override
+  int get hashCode {
+    final l$id = id;
+    return Object.hashAll([l$id]);
+  }
+}
+
+class Query$PerformerProfile {
+  Query$PerformerProfile({this.findPerformer, this.$__typename = 'Query'});
+
+  factory Query$PerformerProfile.fromJson(Map<String, dynamic> json) {
+    final l$findPerformer = json['findPerformer'];
+    final l$$__typename = json['__typename'];
+    return Query$PerformerProfile(
+      findPerformer: l$findPerformer == null
+          ? null
+          : Query$PerformerProfile$findPerformer.fromJson(
+              (l$findPerformer as Map<String, dynamic>),
+            ),
+      $__typename: (l$$__typename as String),
+    );
+  }
+
+  final Query$PerformerProfile$findPerformer? findPerformer;
+
+  final String $__typename;
+
+  Map<String, dynamic> toJson() {
+    final _resultData = <String, dynamic>{};
+    final l$findPerformer = findPerformer;
+    _resultData['findPerformer'] = l$findPerformer?.toJson();
+    final l$$__typename = $__typename;
+    _resultData['__typename'] = l$$__typename;
+    return _resultData;
+  }
+
+  @override
+  int get hashCode {
+    final l$findPerformer = findPerformer;
+    final l$$__typename = $__typename;
+    return Object.hashAll([l$findPerformer, l$$__typename]);
+  }
+
+  @override
+  bool operator ==(Object other) {
+    if (identical(this, other)) {
+      return true;
+    }
+    if (other is! Query$PerformerProfile || runtimeType != other.runtimeType) {
+      return false;
+    }
+    final l$findPerformer = findPerformer;
+    final lOther$findPerformer = other.findPerformer;
+    if (l$findPerformer != lOther$findPerformer) {
+      return false;
+    }
+    final l$$__typename = $__typename;
+    final lOther$$__typename = other.$__typename;
+    if (l$$__typename != lOther$$__typename) {
+      return false;
+    }
+    return true;
+  }
+}
+
+const documentNodeQueryPerformerProfile = DocumentNode(
+  definitions: [
+    OperationDefinitionNode(
+      type: OperationType.query,
+      name: NameNode(value: 'PerformerProfile'),
+      variableDefinitions: [
+        VariableDefinitionNode(
+          variable: VariableNode(name: NameNode(value: 'id')),
+          type: NamedTypeNode(name: NameNode(value: 'ID'), isNonNull: true),
+          defaultValue: DefaultValueNode(value: null),
+          directives: [],
+        ),
+      ],
+      directives: [],
+      selectionSet: SelectionSetNode(
+        selections: [
+          FieldNode(
+            name: NameNode(value: 'findPerformer'),
+            alias: null,
+            arguments: [
+              ArgumentNode(
+                name: NameNode(value: 'id'),
+                value: VariableNode(name: NameNode(value: 'id')),
+              ),
+            ],
+            directives: [],
+            selectionSet: SelectionSetNode(
+              selections: [
+                FieldNode(
+                  name: NameNode(value: 'id'),
+                  alias: null,
+                  arguments: [],
+                  directives: [],
+                  selectionSet: null,
+                ),
+                FieldNode(
+                  name: NameNode(value: 'alias_list'),
+                  alias: null,
+                  arguments: [],
+                  directives: [],
+                  selectionSet: null,
+                ),
+                FieldNode(
+                  name: NameNode(value: 'death_date'),
+                  alias: null,
+                  arguments: [],
+                  directives: [],
+                  selectionSet: null,
+                ),
+                FieldNode(
+                  name: NameNode(value: 'ethnicity'),
+                  alias: null,
+                  arguments: [],
+                  directives: [],
+                  selectionSet: null,
+                ),
+                FieldNode(
+                  name: NameNode(value: 'hair_color'),
+                  alias: null,
+                  arguments: [],
+                  directives: [],
+                  selectionSet: null,
+                ),
+                FieldNode(
+                  name: NameNode(value: 'eye_color'),
+                  alias: null,
+                  arguments: [],
+                  directives: [],
+                  selectionSet: null,
+                ),
+                FieldNode(
+                  name: NameNode(value: 'height_cm'),
+                  alias: null,
+                  arguments: [],
+                  directives: [],
+                  selectionSet: null,
+                ),
+                FieldNode(
+                  name: NameNode(value: 'weight'),
+                  alias: null,
+                  arguments: [],
+                  directives: [],
+                  selectionSet: null,
+                ),
+                FieldNode(
+                  name: NameNode(value: 'measurements'),
+                  alias: null,
+                  arguments: [],
+                  directives: [],
+                  selectionSet: null,
+                ),
+                FieldNode(
+                  name: NameNode(value: 'career_length'),
+                  alias: null,
+                  arguments: [],
+                  directives: [],
+                  selectionSet: null,
+                ),
+                FieldNode(
+                  name: NameNode(value: 'tattoos'),
+                  alias: null,
+                  arguments: [],
+                  directives: [],
+                  selectionSet: null,
+                ),
+                FieldNode(
+                  name: NameNode(value: 'piercings'),
+                  alias: null,
+                  arguments: [],
+                  directives: [],
+                  selectionSet: null,
+                ),
+                FieldNode(
+                  name: NameNode(value: 'image_count'),
+                  alias: null,
+                  arguments: [],
+                  directives: [],
+                  selectionSet: null,
+                ),
+                FieldNode(
+                  name: NameNode(value: 'gallery_count'),
+                  alias: null,
+                  arguments: [],
+                  directives: [],
+                  selectionSet: null,
+                ),
+                FieldNode(
+                  name: NameNode(value: '__typename'),
+                  alias: null,
+                  arguments: [],
+                  directives: [],
+                  selectionSet: null,
+                ),
+              ],
+            ),
+          ),
+          FieldNode(
+            name: NameNode(value: '__typename'),
+            alias: null,
+            arguments: [],
+            directives: [],
+            selectionSet: null,
+          ),
+        ],
+      ),
+    ),
+  ],
+);
+Query$PerformerProfile _parserFn$Query$PerformerProfile(
+  Map<String, dynamic> data,
+) => Query$PerformerProfile.fromJson(data);
+typedef OnQueryComplete$Query$PerformerProfile = FutureOr<void> Function(
+  Map<String, dynamic>?,
+  Query$PerformerProfile?,
+);
+
+class Options$Query$PerformerProfile
+    extends graphql.QueryOptions<Query$PerformerProfile> {
+  Options$Query$PerformerProfile({
+    String? operationName,
+    required Variables$Query$PerformerProfile variables,
+    graphql.FetchPolicy? fetchPolicy,
+    graphql.ErrorPolicy? errorPolicy,
+    graphql.CacheRereadPolicy? cacheRereadPolicy,
+    Object? optimisticResult,
+    Query$PerformerProfile? typedOptimisticResult,
+    Duration? pollInterval,
+    graphql.Context? context,
+    OnQueryComplete$Query$PerformerProfile? onComplete,
+    graphql.OnQueryError? onError,
+  }) : onCompleteWithParsed = onComplete,
+       super(
+         variables: variables.toJson(),
+         operationName: operationName ?? 'PerformerProfile',
+         fetchPolicy: fetchPolicy,
+         errorPolicy: errorPolicy,
+         cacheRereadPolicy: cacheRereadPolicy,
+         optimisticResult: optimisticResult ?? typedOptimisticResult?.toJson(),
+         pollInterval: pollInterval,
+         context: context,
+         onComplete: onComplete == null
+             ? null
+             : (data) => onComplete(
+                 data,
+                 data == null ? null : _parserFn$Query$PerformerProfile(data),
+               ),
+         onError: onError,
+         document: documentNodeQueryPerformerProfile,
+         parserFn: _parserFn$Query$PerformerProfile,
+       );
+
+  final OnQueryComplete$Query$PerformerProfile? onCompleteWithParsed;
+
+  @override
+  List<Object?> get properties => [
+    ...super.onComplete == null
+        ? super.properties
+        : super.properties.where((property) => property != onComplete),
+    onCompleteWithParsed,
+  ];
+}
+
+class WatchOptions$Query$PerformerProfile
+    extends graphql.WatchQueryOptions<Query$PerformerProfile> {
+  WatchOptions$Query$PerformerProfile({
+    String? operationName,
+    required Variables$Query$PerformerProfile variables,
+    graphql.FetchPolicy? fetchPolicy,
+    graphql.ErrorPolicy? errorPolicy,
+    graphql.CacheRereadPolicy? cacheRereadPolicy,
+    Object? optimisticResult,
+    Query$PerformerProfile? typedOptimisticResult,
+    graphql.Context? context,
+    Duration? pollInterval,
+    bool? eagerlyFetchResults,
+    bool carryForwardDataOnException = true,
+    bool fetchResults = false,
+  }) : super(
+         variables: variables.toJson(),
+         operationName: operationName ?? 'PerformerProfile',
+         fetchPolicy: fetchPolicy,
+         errorPolicy: errorPolicy,
+         cacheRereadPolicy: cacheRereadPolicy,
+         optimisticResult: optimisticResult ?? typedOptimisticResult?.toJson(),
+         context: context,
+         document: documentNodeQueryPerformerProfile,
+         pollInterval: pollInterval,
+         eagerlyFetchResults: eagerlyFetchResults,
+         carryForwardDataOnException: carryForwardDataOnException,
+         fetchResults: fetchResults,
+         parserFn: _parserFn$Query$PerformerProfile,
+       );
+}
+
+class FetchMoreOptions$Query$PerformerProfile extends graphql.FetchMoreOptions {
+  FetchMoreOptions$Query$PerformerProfile({
+    required graphql.UpdateQuery updateQuery,
+    required Variables$Query$PerformerProfile variables,
+  }) : super(
+         updateQuery: updateQuery,
+         variables: variables.toJson(),
+         document: documentNodeQueryPerformerProfile,
+       );
+}
+
+extension ClientExtension$Query$PerformerProfile on graphql.GraphQLClient {
+  Future<graphql.QueryResult<Query$PerformerProfile>> query$PerformerProfile(
+    Options$Query$PerformerProfile options,
+  ) async => await this.query(options);
+
+  graphql.ObservableQuery<Query$PerformerProfile> watchQuery$PerformerProfile(
+    WatchOptions$Query$PerformerProfile options,
+  ) => this.watchQuery(options);
+
+  void writeQuery$PerformerProfile({
+    required Query$PerformerProfile data,
+    required Variables$Query$PerformerProfile variables,
+    bool broadcast = true,
+  }) => this.writeQuery(
+    graphql.Request(
+      operation: graphql.Operation(document: documentNodeQueryPerformerProfile),
+      variables: variables.toJson(),
+    ),
+    data: data.toJson(),
+    broadcast: broadcast,
+  );
+
+  Query$PerformerProfile? readQuery$PerformerProfile({
+    required Variables$Query$PerformerProfile variables,
+    bool optimistic = true,
+  }) {
+    final result = this.readQuery(
+      graphql.Request(
+        operation: graphql.Operation(
+          document: documentNodeQueryPerformerProfile,
+        ),
+        variables: variables.toJson(),
+      ),
+      optimistic: optimistic,
+    );
+    return result == null ? null : Query$PerformerProfile.fromJson(result);
+  }
+}
+
+class Query$PerformerProfile$findPerformer {
+  Query$PerformerProfile$findPerformer({
+    required this.id,
+    required this.alias_list,
+    this.death_date,
+    this.ethnicity,
+    this.hair_color,
+    this.eye_color,
+    this.height_cm,
+    this.weight,
+    this.measurements,
+    this.career_length,
+    this.tattoos,
+    this.piercings,
+    required this.image_count,
+    required this.gallery_count,
+    this.$__typename = 'Performer',
+  });
+
+  factory Query$PerformerProfile$findPerformer.fromJson(
+    Map<String, dynamic> json,
+  ) {
+    final l$id = json['id'];
+    final l$alias_list = json['alias_list'];
+    final l$death_date = json['death_date'];
+    final l$ethnicity = json['ethnicity'];
+    final l$hair_color = json['hair_color'];
+    final l$eye_color = json['eye_color'];
+    final l$height_cm = json['height_cm'];
+    final l$weight = json['weight'];
+    final l$measurements = json['measurements'];
+    final l$career_length = json['career_length'];
+    final l$tattoos = json['tattoos'];
+    final l$piercings = json['piercings'];
+    final l$image_count = json['image_count'];
+    final l$gallery_count = json['gallery_count'];
+    final l$$__typename = json['__typename'];
+    return Query$PerformerProfile$findPerformer(
+      id: (l$id as String),
+      alias_list: (l$alias_list as List<dynamic>)
+          .map((e) => (e as String))
+          .toList(),
+      death_date: (l$death_date as String?),
+      ethnicity: (l$ethnicity as String?),
+      hair_color: (l$hair_color as String?),
+      eye_color: (l$eye_color as String?),
+      height_cm: (l$height_cm as int?),
+      weight: (l$weight as int?),
+      measurements: (l$measurements as String?),
+      career_length: (l$career_length as String?),
+      tattoos: (l$tattoos as String?),
+      piercings: (l$piercings as String?),
+      image_count: (l$image_count as int),
+      gallery_count: (l$gallery_count as int),
+      $__typename: (l$$__typename as String),
+    );
+  }
+
+  final String id;
+
+  final List<String> alias_list;
+
+  final String? death_date;
+
+  final String? ethnicity;
+
+  final String? hair_color;
+
+  final String? eye_color;
+
+  final int? height_cm;
+
+  final int? weight;
+
+  final String? measurements;
+
+  @Deprecated('Use career_start and career_end')
+  final String? career_length;
+
+  final String? tattoos;
+
+  final String? piercings;
+
+  final int image_count;
+
+  final int gallery_count;
+
+  final String $__typename;
+
+  Map<String, dynamic> toJson() {
+    final _resultData = <String, dynamic>{};
+    final l$id = id;
+    _resultData['id'] = l$id;
+    final l$alias_list = alias_list;
+    _resultData['alias_list'] = l$alias_list.map((e) => e).toList();
+    final l$death_date = death_date;
+    _resultData['death_date'] = l$death_date;
+    final l$ethnicity = ethnicity;
+    _resultData['ethnicity'] = l$ethnicity;
+    final l$hair_color = hair_color;
+    _resultData['hair_color'] = l$hair_color;
+    final l$eye_color = eye_color;
+    _resultData['eye_color'] = l$eye_color;
+    final l$height_cm = height_cm;
+    _resultData['height_cm'] = l$height_cm;
+    final l$weight = weight;
+    _resultData['weight'] = l$weight;
+    final l$measurements = measurements;
+    _resultData['measurements'] = l$measurements;
+    final l$career_length = career_length;
+    _resultData['career_length'] = l$career_length;
+    final l$tattoos = tattoos;
+    _resultData['tattoos'] = l$tattoos;
+    final l$piercings = piercings;
+    _resultData['piercings'] = l$piercings;
+    final l$image_count = image_count;
+    _resultData['image_count'] = l$image_count;
+    final l$gallery_count = gallery_count;
+    _resultData['gallery_count'] = l$gallery_count;
+    final l$$__typename = $__typename;
+    _resultData['__typename'] = l$$__typename;
+    return _resultData;
+  }
+
+  @override
+  int get hashCode {
+    final l$id = id;
+    final l$alias_list = alias_list;
+    final l$death_date = death_date;
+    final l$ethnicity = ethnicity;
+    final l$hair_color = hair_color;
+    final l$eye_color = eye_color;
+    final l$height_cm = height_cm;
+    final l$weight = weight;
+    final l$measurements = measurements;
+    final l$career_length = career_length;
+    final l$tattoos = tattoos;
+    final l$piercings = piercings;
+    final l$image_count = image_count;
+    final l$gallery_count = gallery_count;
+    final l$$__typename = $__typename;
+    return Object.hashAll([
+      l$id,
+      Object.hashAll(l$alias_list.map((v) => v)),
+      l$death_date,
+      l$ethnicity,
+      l$hair_color,
+      l$eye_color,
+      l$height_cm,
+      l$weight,
+      l$measurements,
+      l$career_length,
+      l$tattoos,
+      l$piercings,
+      l$image_count,
+      l$gallery_count,
+      l$$__typename,
+    ]);
+  }
+
+  @override
+  bool operator ==(Object other) {
+    if (identical(this, other)) {
+      return true;
+    }
+    if (other is! Query$PerformerProfile$findPerformer ||
+        runtimeType != other.runtimeType) {
+      return false;
+    }
+    final l$id = id;
+    final lOther$id = other.id;
+    if (l$id != lOther$id) {
+      return false;
+    }
+    final l$alias_list = alias_list;
+    final lOther$alias_list = other.alias_list;
+    if (l$alias_list.length != lOther$alias_list.length) {
+      return false;
+    }
+    for (int i = 0; i < l$alias_list.length; i++) {
+      final l$alias_list$entry = l$alias_list[i];
+      final lOther$alias_list$entry = lOther$alias_list[i];
+      if (l$alias_list$entry != lOther$alias_list$entry) {
+        return false;
+      }
+    }
+    final l$death_date = death_date;
+    final lOther$death_date = other.death_date;
+    if (l$death_date != lOther$death_date) {
+      return false;
+    }
+    final l$ethnicity = ethnicity;
+    final lOther$ethnicity = other.ethnicity;
+    if (l$ethnicity != lOther$ethnicity) {
+      return false;
+    }
+    final l$hair_color = hair_color;
+    final lOther$hair_color = other.hair_color;
+    if (l$hair_color != lOther$hair_color) {
+      return false;
+    }
+    final l$eye_color = eye_color;
+    final lOther$eye_color = other.eye_color;
+    if (l$eye_color != lOther$eye_color) {
+      return false;
+    }
+    final l$height_cm = height_cm;
+    final lOther$height_cm = other.height_cm;
+    if (l$height_cm != lOther$height_cm) {
+      return false;
+    }
+    final l$weight = weight;
+    final lOther$weight = other.weight;
+    if (l$weight != lOther$weight) {
+      return false;
+    }
+    final l$measurements = measurements;
+    final lOther$measurements = other.measurements;
+    if (l$measurements != lOther$measurements) {
+      return false;
+    }
+    final l$career_length = career_length;
+    final lOther$career_length = other.career_length;
+    if (l$career_length != lOther$career_length) {
+      return false;
+    }
+    final l$tattoos = tattoos;
+    final lOther$tattoos = other.tattoos;
+    if (l$tattoos != lOther$tattoos) {
+      return false;
+    }
+    final l$piercings = piercings;
+    final lOther$piercings = other.piercings;
+    if (l$piercings != lOther$piercings) {
+      return false;
+    }
+    final l$image_count = image_count;
+    final lOther$image_count = other.image_count;
+    if (l$image_count != lOther$image_count) {
+      return false;
+    }
+    final l$gallery_count = gallery_count;
+    final lOther$gallery_count = other.gallery_count;
+    if (l$gallery_count != lOther$gallery_count) {
+      return false;
+    }
+    final l$$__typename = $__typename;
+    final lOther$$__typename = other.$__typename;
+    if (l$$__typename != lOther$$__typename) {
+      return false;
+    }
+    return true;
+  }
+}
+
 class Variables$Query$PerformerUrls {
   factory Variables$Query$PerformerUrls({required String id}) =>
       Variables$Query$PerformerUrls._({r'id': id});
@@ -2556,4 +3201,670 @@ class Mutation$PerformerSetFavorite$performerUpdate {
     }
     return true;
   }
+}
+
+class Variables$Mutation$PerformerSetRating {
+  factory Variables$Mutation$PerformerSetRating({
+    required String id,
+    int? rating100,
+  }) => Variables$Mutation$PerformerSetRating._({
+    r'id': id,
+    if (rating100 != null) r'rating100': rating100,
+  });
+
+  Variables$Mutation$PerformerSetRating._(this._$data);
+
+  factory Variables$Mutation$PerformerSetRating.fromJson(
+    Map<String, dynamic> data,
+  ) {
+    final result$data = <String, dynamic>{};
+    final l$id = data['id'];
+    result$data['id'] = (l$id as String);
+    if (data.containsKey('rating100')) {
+      final l$rating100 = data['rating100'];
+      result$data['rating100'] = (l$rating100 as int?);
+    }
+    return Variables$Mutation$PerformerSetRating._(result$data);
+  }
+
+  Map<String, dynamic> _$data;
+
+  String get id => (_$data['id'] as String);
+
+  int? get rating100 => (_$data['rating100'] as int?);
+
+  Map<String, dynamic> toJson() {
+    final result$data = <String, dynamic>{};
+    final l$id = id;
+    result$data['id'] = l$id;
+    if (_$data.containsKey('rating100')) {
+      final l$rating100 = rating100;
+      result$data['rating100'] = l$rating100;
+    }
+    return result$data;
+  }
+
+  @override
+  bool operator ==(Object other) {
+    if (identical(this, other)) {
+      return true;
+    }
+    if (other is! Variables$Mutation$PerformerSetRating ||
+        runtimeType != other.runtimeType) {
+      return false;
+    }
+    final l$id = id;
+    final lOther$id = other.id;
+    if (l$id != lOther$id) {
+      return false;
+    }
+    final l$rating100 = rating100;
+    final lOther$rating100 = other.rating100;
+    if (_$data.containsKey('rating100') !=
+        other._$data.containsKey('rating100')) {
+      return false;
+    }
+    if (l$rating100 != lOther$rating100) {
+      return false;
+    }
+    return true;
+  }
+
+  @override
+  int get hashCode {
+    final l$id = id;
+    final l$rating100 = rating100;
+    return Object.hashAll([
+      l$id,
+      _$data.containsKey('rating100') ? l$rating100 : const {},
+    ]);
+  }
+}
+
+class Mutation$PerformerSetRating {
+  Mutation$PerformerSetRating({
+    this.performerUpdate,
+    this.$__typename = 'Mutation',
+  });
+
+  factory Mutation$PerformerSetRating.fromJson(Map<String, dynamic> json) {
+    final l$performerUpdate = json['performerUpdate'];
+    final l$$__typename = json['__typename'];
+    return Mutation$PerformerSetRating(
+      performerUpdate: l$performerUpdate == null
+          ? null
+          : Mutation$PerformerSetRating$performerUpdate.fromJson(
+              (l$performerUpdate as Map<String, dynamic>),
+            ),
+      $__typename: (l$$__typename as String),
+    );
+  }
+
+  final Mutation$PerformerSetRating$performerUpdate? performerUpdate;
+
+  final String $__typename;
+
+  Map<String, dynamic> toJson() {
+    final _resultData = <String, dynamic>{};
+    final l$performerUpdate = performerUpdate;
+    _resultData['performerUpdate'] = l$performerUpdate?.toJson();
+    final l$$__typename = $__typename;
+    _resultData['__typename'] = l$$__typename;
+    return _resultData;
+  }
+
+  @override
+  int get hashCode {
+    final l$performerUpdate = performerUpdate;
+    final l$$__typename = $__typename;
+    return Object.hashAll([l$performerUpdate, l$$__typename]);
+  }
+
+  @override
+  bool operator ==(Object other) {
+    if (identical(this, other)) {
+      return true;
+    }
+    if (other is! Mutation$PerformerSetRating ||
+        runtimeType != other.runtimeType) {
+      return false;
+    }
+    final l$performerUpdate = performerUpdate;
+    final lOther$performerUpdate = other.performerUpdate;
+    if (l$performerUpdate != lOther$performerUpdate) {
+      return false;
+    }
+    final l$$__typename = $__typename;
+    final lOther$$__typename = other.$__typename;
+    if (l$$__typename != lOther$$__typename) {
+      return false;
+    }
+    return true;
+  }
+}
+
+const documentNodeMutationPerformerSetRating = DocumentNode(
+  definitions: [
+    OperationDefinitionNode(
+      type: OperationType.mutation,
+      name: NameNode(value: 'PerformerSetRating'),
+      variableDefinitions: [
+        VariableDefinitionNode(
+          variable: VariableNode(name: NameNode(value: 'id')),
+          type: NamedTypeNode(name: NameNode(value: 'ID'), isNonNull: true),
+          defaultValue: DefaultValueNode(value: null),
+          directives: [],
+        ),
+        VariableDefinitionNode(
+          variable: VariableNode(name: NameNode(value: 'rating100')),
+          type: NamedTypeNode(name: NameNode(value: 'Int'), isNonNull: false),
+          defaultValue: DefaultValueNode(value: null),
+          directives: [],
+        ),
+      ],
+      directives: [],
+      selectionSet: SelectionSetNode(
+        selections: [
+          FieldNode(
+            name: NameNode(value: 'performerUpdate'),
+            alias: null,
+            arguments: [
+              ArgumentNode(
+                name: NameNode(value: 'input'),
+                value: ObjectValueNode(
+                  fields: [
+                    ObjectFieldNode(
+                      name: NameNode(value: 'id'),
+                      value: VariableNode(name: NameNode(value: 'id')),
+                    ),
+                    ObjectFieldNode(
+                      name: NameNode(value: 'rating100'),
+                      value: VariableNode(name: NameNode(value: 'rating100')),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+            directives: [],
+            selectionSet: SelectionSetNode(
+              selections: [
+                FieldNode(
+                  name: NameNode(value: 'id'),
+                  alias: null,
+                  arguments: [],
+                  directives: [],
+                  selectionSet: null,
+                ),
+                FieldNode(
+                  name: NameNode(value: 'rating100'),
+                  alias: null,
+                  arguments: [],
+                  directives: [],
+                  selectionSet: null,
+                ),
+                FieldNode(
+                  name: NameNode(value: '__typename'),
+                  alias: null,
+                  arguments: [],
+                  directives: [],
+                  selectionSet: null,
+                ),
+              ],
+            ),
+          ),
+          FieldNode(
+            name: NameNode(value: '__typename'),
+            alias: null,
+            arguments: [],
+            directives: [],
+            selectionSet: null,
+          ),
+        ],
+      ),
+    ),
+  ],
+);
+Mutation$PerformerSetRating _parserFn$Mutation$PerformerSetRating(
+  Map<String, dynamic> data,
+) => Mutation$PerformerSetRating.fromJson(data);
+typedef OnMutationCompleted$Mutation$PerformerSetRating =
+    FutureOr<void> Function(
+      Map<String, dynamic>?,
+      Mutation$PerformerSetRating?,
+    );
+
+class Options$Mutation$PerformerSetRating
+    extends graphql.MutationOptions<Mutation$PerformerSetRating> {
+  Options$Mutation$PerformerSetRating({
+    String? operationName,
+    required Variables$Mutation$PerformerSetRating variables,
+    graphql.FetchPolicy? fetchPolicy,
+    graphql.ErrorPolicy? errorPolicy,
+    graphql.CacheRereadPolicy? cacheRereadPolicy,
+    Object? optimisticResult,
+    Mutation$PerformerSetRating? typedOptimisticResult,
+    graphql.Context? context,
+    OnMutationCompleted$Mutation$PerformerSetRating? onCompleted,
+    graphql.OnMutationUpdate<Mutation$PerformerSetRating>? update,
+    graphql.OnError? onError,
+  }) : onCompletedWithParsed = onCompleted,
+       super(
+         variables: variables.toJson(),
+         operationName: operationName ?? 'PerformerSetRating',
+         fetchPolicy: fetchPolicy,
+         errorPolicy: errorPolicy,
+         cacheRereadPolicy: cacheRereadPolicy,
+         optimisticResult: optimisticResult ?? typedOptimisticResult?.toJson(),
+         context: context,
+         onCompleted: onCompleted == null
+             ? null
+             : (data) => onCompleted(
+                 data,
+                 data == null
+                     ? null
+                     : _parserFn$Mutation$PerformerSetRating(data),
+               ),
+         update: update,
+         onError: onError,
+         document: documentNodeMutationPerformerSetRating,
+         parserFn: _parserFn$Mutation$PerformerSetRating,
+       );
+
+  final OnMutationCompleted$Mutation$PerformerSetRating? onCompletedWithParsed;
+
+  @override
+  List<Object?> get properties => [
+    ...super.onCompleted == null
+        ? super.properties
+        : super.properties.where((property) => property != onCompleted),
+    onCompletedWithParsed,
+  ];
+}
+
+class WatchOptions$Mutation$PerformerSetRating
+    extends graphql.WatchQueryOptions<Mutation$PerformerSetRating> {
+  WatchOptions$Mutation$PerformerSetRating({
+    String? operationName,
+    required Variables$Mutation$PerformerSetRating variables,
+    graphql.FetchPolicy? fetchPolicy,
+    graphql.ErrorPolicy? errorPolicy,
+    graphql.CacheRereadPolicy? cacheRereadPolicy,
+    Object? optimisticResult,
+    Mutation$PerformerSetRating? typedOptimisticResult,
+    graphql.Context? context,
+    Duration? pollInterval,
+    bool? eagerlyFetchResults,
+    bool carryForwardDataOnException = true,
+    bool fetchResults = false,
+  }) : super(
+         variables: variables.toJson(),
+         operationName: operationName ?? 'PerformerSetRating',
+         fetchPolicy: fetchPolicy,
+         errorPolicy: errorPolicy,
+         cacheRereadPolicy: cacheRereadPolicy,
+         optimisticResult: optimisticResult ?? typedOptimisticResult?.toJson(),
+         context: context,
+         document: documentNodeMutationPerformerSetRating,
+         pollInterval: pollInterval,
+         eagerlyFetchResults: eagerlyFetchResults,
+         carryForwardDataOnException: carryForwardDataOnException,
+         fetchResults: fetchResults,
+         parserFn: _parserFn$Mutation$PerformerSetRating,
+       );
+}
+
+extension ClientExtension$Mutation$PerformerSetRating on graphql.GraphQLClient {
+  Future<graphql.QueryResult<Mutation$PerformerSetRating>>
+  mutate$PerformerSetRating(
+    Options$Mutation$PerformerSetRating options,
+  ) async => await this.mutate(options);
+
+  graphql.ObservableQuery<Mutation$PerformerSetRating>
+  watchMutation$PerformerSetRating(
+    WatchOptions$Mutation$PerformerSetRating options,
+  ) => this.watchMutation(options);
+}
+
+class Mutation$PerformerSetRating$performerUpdate {
+  Mutation$PerformerSetRating$performerUpdate({
+    required this.id,
+    this.rating100,
+    this.$__typename = 'Performer',
+  });
+
+  factory Mutation$PerformerSetRating$performerUpdate.fromJson(
+    Map<String, dynamic> json,
+  ) {
+    final l$id = json['id'];
+    final l$rating100 = json['rating100'];
+    final l$$__typename = json['__typename'];
+    return Mutation$PerformerSetRating$performerUpdate(
+      id: (l$id as String),
+      rating100: (l$rating100 as int?),
+      $__typename: (l$$__typename as String),
+    );
+  }
+
+  final String id;
+
+  final int? rating100;
+
+  final String $__typename;
+
+  Map<String, dynamic> toJson() {
+    final _resultData = <String, dynamic>{};
+    final l$id = id;
+    _resultData['id'] = l$id;
+    final l$rating100 = rating100;
+    _resultData['rating100'] = l$rating100;
+    final l$$__typename = $__typename;
+    _resultData['__typename'] = l$$__typename;
+    return _resultData;
+  }
+
+  @override
+  int get hashCode {
+    final l$id = id;
+    final l$rating100 = rating100;
+    final l$$__typename = $__typename;
+    return Object.hashAll([l$id, l$rating100, l$$__typename]);
+  }
+
+  @override
+  bool operator ==(Object other) {
+    if (identical(this, other)) {
+      return true;
+    }
+    if (other is! Mutation$PerformerSetRating$performerUpdate ||
+        runtimeType != other.runtimeType) {
+      return false;
+    }
+    final l$id = id;
+    final lOther$id = other.id;
+    if (l$id != lOther$id) {
+      return false;
+    }
+    final l$rating100 = rating100;
+    final lOther$rating100 = other.rating100;
+    if (l$rating100 != lOther$rating100) {
+      return false;
+    }
+    final l$$__typename = $__typename;
+    final lOther$$__typename = other.$__typename;
+    if (l$$__typename != lOther$$__typename) {
+      return false;
+    }
+    return true;
+  }
+}
+
+class Variables$Mutation$PerformerCreate {
+  factory Variables$Mutation$PerformerCreate({required String name}) =>
+      Variables$Mutation$PerformerCreate._({r'name': name});
+
+  Variables$Mutation$PerformerCreate._(this._$data);
+
+  factory Variables$Mutation$PerformerCreate.fromJson(
+    Map<String, dynamic> data,
+  ) {
+    final result$data = <String, dynamic>{};
+    final l$name = data['name'];
+    result$data['name'] = (l$name as String);
+    return Variables$Mutation$PerformerCreate._(result$data);
+  }
+
+  Map<String, dynamic> _$data;
+
+  String get name => (_$data['name'] as String);
+
+  Map<String, dynamic> toJson() {
+    final result$data = <String, dynamic>{};
+    final l$name = name;
+    result$data['name'] = l$name;
+    return result$data;
+  }
+
+  @override
+  bool operator ==(Object other) {
+    if (identical(this, other)) {
+      return true;
+    }
+    if (other is! Variables$Mutation$PerformerCreate ||
+        runtimeType != other.runtimeType) {
+      return false;
+    }
+    final l$name = name;
+    final lOther$name = other.name;
+    if (l$name != lOther$name) {
+      return false;
+    }
+    return true;
+  }
+
+  @override
+  int get hashCode {
+    final l$name = name;
+    return Object.hashAll([l$name]);
+  }
+}
+
+class Mutation$PerformerCreate {
+  Mutation$PerformerCreate({
+    this.performerCreate,
+    this.$__typename = 'Mutation',
+  });
+
+  factory Mutation$PerformerCreate.fromJson(Map<String, dynamic> json) {
+    final l$performerCreate = json['performerCreate'];
+    final l$$__typename = json['__typename'];
+    return Mutation$PerformerCreate(
+      performerCreate: l$performerCreate == null
+          ? null
+          : Fragment$PerformerFields.fromJson(
+              (l$performerCreate as Map<String, dynamic>),
+            ),
+      $__typename: (l$$__typename as String),
+    );
+  }
+
+  final Fragment$PerformerFields? performerCreate;
+
+  final String $__typename;
+
+  Map<String, dynamic> toJson() {
+    final _resultData = <String, dynamic>{};
+    final l$performerCreate = performerCreate;
+    _resultData['performerCreate'] = l$performerCreate?.toJson();
+    final l$$__typename = $__typename;
+    _resultData['__typename'] = l$$__typename;
+    return _resultData;
+  }
+
+  @override
+  int get hashCode {
+    final l$performerCreate = performerCreate;
+    final l$$__typename = $__typename;
+    return Object.hashAll([l$performerCreate, l$$__typename]);
+  }
+
+  @override
+  bool operator ==(Object other) {
+    if (identical(this, other)) {
+      return true;
+    }
+    if (other is! Mutation$PerformerCreate ||
+        runtimeType != other.runtimeType) {
+      return false;
+    }
+    final l$performerCreate = performerCreate;
+    final lOther$performerCreate = other.performerCreate;
+    if (l$performerCreate != lOther$performerCreate) {
+      return false;
+    }
+    final l$$__typename = $__typename;
+    final lOther$$__typename = other.$__typename;
+    if (l$$__typename != lOther$$__typename) {
+      return false;
+    }
+    return true;
+  }
+}
+
+const documentNodeMutationPerformerCreate = DocumentNode(
+  definitions: [
+    OperationDefinitionNode(
+      type: OperationType.mutation,
+      name: NameNode(value: 'PerformerCreate'),
+      variableDefinitions: [
+        VariableDefinitionNode(
+          variable: VariableNode(name: NameNode(value: 'name')),
+          type: NamedTypeNode(name: NameNode(value: 'String'), isNonNull: true),
+          defaultValue: DefaultValueNode(value: null),
+          directives: [],
+        ),
+      ],
+      directives: [],
+      selectionSet: SelectionSetNode(
+        selections: [
+          FieldNode(
+            name: NameNode(value: 'performerCreate'),
+            alias: null,
+            arguments: [
+              ArgumentNode(
+                name: NameNode(value: 'input'),
+                value: ObjectValueNode(
+                  fields: [
+                    ObjectFieldNode(
+                      name: NameNode(value: 'name'),
+                      value: VariableNode(name: NameNode(value: 'name')),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+            directives: [],
+            selectionSet: SelectionSetNode(
+              selections: [
+                FragmentSpreadNode(
+                  name: NameNode(value: 'PerformerFields'),
+                  directives: [],
+                ),
+                FieldNode(
+                  name: NameNode(value: '__typename'),
+                  alias: null,
+                  arguments: [],
+                  directives: [],
+                  selectionSet: null,
+                ),
+              ],
+            ),
+          ),
+          FieldNode(
+            name: NameNode(value: '__typename'),
+            alias: null,
+            arguments: [],
+            directives: [],
+            selectionSet: null,
+          ),
+        ],
+      ),
+    ),
+    fragmentDefinitionPerformerFields,
+  ],
+);
+Mutation$PerformerCreate _parserFn$Mutation$PerformerCreate(
+  Map<String, dynamic> data,
+) => Mutation$PerformerCreate.fromJson(data);
+typedef OnMutationCompleted$Mutation$PerformerCreate = FutureOr<void> Function(
+  Map<String, dynamic>?,
+  Mutation$PerformerCreate?,
+);
+
+class Options$Mutation$PerformerCreate
+    extends graphql.MutationOptions<Mutation$PerformerCreate> {
+  Options$Mutation$PerformerCreate({
+    String? operationName,
+    required Variables$Mutation$PerformerCreate variables,
+    graphql.FetchPolicy? fetchPolicy,
+    graphql.ErrorPolicy? errorPolicy,
+    graphql.CacheRereadPolicy? cacheRereadPolicy,
+    Object? optimisticResult,
+    Mutation$PerformerCreate? typedOptimisticResult,
+    graphql.Context? context,
+    OnMutationCompleted$Mutation$PerformerCreate? onCompleted,
+    graphql.OnMutationUpdate<Mutation$PerformerCreate>? update,
+    graphql.OnError? onError,
+  }) : onCompletedWithParsed = onCompleted,
+       super(
+         variables: variables.toJson(),
+         operationName: operationName ?? 'PerformerCreate',
+         fetchPolicy: fetchPolicy,
+         errorPolicy: errorPolicy,
+         cacheRereadPolicy: cacheRereadPolicy,
+         optimisticResult: optimisticResult ?? typedOptimisticResult?.toJson(),
+         context: context,
+         onCompleted: onCompleted == null
+             ? null
+             : (data) => onCompleted(
+                 data,
+                 data == null ? null : _parserFn$Mutation$PerformerCreate(data),
+               ),
+         update: update,
+         onError: onError,
+         document: documentNodeMutationPerformerCreate,
+         parserFn: _parserFn$Mutation$PerformerCreate,
+       );
+
+  final OnMutationCompleted$Mutation$PerformerCreate? onCompletedWithParsed;
+
+  @override
+  List<Object?> get properties => [
+    ...super.onCompleted == null
+        ? super.properties
+        : super.properties.where((property) => property != onCompleted),
+    onCompletedWithParsed,
+  ];
+}
+
+class WatchOptions$Mutation$PerformerCreate
+    extends graphql.WatchQueryOptions<Mutation$PerformerCreate> {
+  WatchOptions$Mutation$PerformerCreate({
+    String? operationName,
+    required Variables$Mutation$PerformerCreate variables,
+    graphql.FetchPolicy? fetchPolicy,
+    graphql.ErrorPolicy? errorPolicy,
+    graphql.CacheRereadPolicy? cacheRereadPolicy,
+    Object? optimisticResult,
+    Mutation$PerformerCreate? typedOptimisticResult,
+    graphql.Context? context,
+    Duration? pollInterval,
+    bool? eagerlyFetchResults,
+    bool carryForwardDataOnException = true,
+    bool fetchResults = false,
+  }) : super(
+         variables: variables.toJson(),
+         operationName: operationName ?? 'PerformerCreate',
+         fetchPolicy: fetchPolicy,
+         errorPolicy: errorPolicy,
+         cacheRereadPolicy: cacheRereadPolicy,
+         optimisticResult: optimisticResult ?? typedOptimisticResult?.toJson(),
+         context: context,
+         document: documentNodeMutationPerformerCreate,
+         pollInterval: pollInterval,
+         eagerlyFetchResults: eagerlyFetchResults,
+         carryForwardDataOnException: carryForwardDataOnException,
+         fetchResults: fetchResults,
+         parserFn: _parserFn$Mutation$PerformerCreate,
+       );
+}
+
+extension ClientExtension$Mutation$PerformerCreate on graphql.GraphQLClient {
+  Future<graphql.QueryResult<Mutation$PerformerCreate>> mutate$PerformerCreate(
+    Options$Mutation$PerformerCreate options,
+  ) async => await this.mutate(options);
+
+  graphql.ObservableQuery<Mutation$PerformerCreate>
+  watchMutation$PerformerCreate(
+    WatchOptions$Mutation$PerformerCreate options,
+  ) => this.watchMutation(options);
 }

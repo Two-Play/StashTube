@@ -18,9 +18,13 @@ class FakeRepository implements StashRepository {
   final requestedPages = <int>[];
   bool failNext = false;
 
+  /// Fails every request as if the server were out of reach.
+  bool offline = false;
+
   @override
   Future<PageResult<Scene>> findScenes(SceneQuery query, {int page = 1, int perPage = 24}) async {
     requestedPages.add(page);
+    if (offline) throw const StashApiException('unreachable', isNetworkError: true);
     if (failNext) {
       failNext = false;
       throw const StashApiException('boom');
@@ -85,6 +89,54 @@ void main() {
     state = container.read(sceneListProvider(query)).requireValue;
     expect(state.items, hasLength(48));
     expect(state.loadMoreError, isNull);
+  });
+
+  group('reload failures (STATE-1)', () {
+    late ProviderContainer noRetry;
+
+    setUp(() {
+      noRetry = ProviderContainer(
+        retry: (_, _) => null,
+        overrides: [stashRepositoryProvider.overrideWithValue(repo), ...testServer],
+      );
+      noRetry.listen(sceneListProvider(query), (_, _) {});
+    });
+
+    tearDown(() => noRetry.dispose());
+
+    test('a reload that can\'t reach the server keeps the loaded items', () async {
+      final notifier = noRetry.read(sceneListProvider(query).notifier);
+      await noRetry.read(sceneListProvider(query).future);
+      await notifier.loadMore();
+
+      repo.offline = true;
+      final state = await noRetry.refresh(sceneListProvider(query).future);
+      expect(state.items, hasLength(48), reason: 'both pages stay');
+      expect(state.refreshError, isA<StashApiException>());
+      final value = noRetry.read(sceneListProvider(query));
+      expect(value.hasError, isFalse);
+      expect(value.current?.items, hasLength(48));
+
+      // Once the server answers again, the next reload replaces them.
+      repo.offline = false;
+      final reloaded = await noRetry.refresh(sceneListProvider(query).future);
+      expect(reloaded.items, hasLength(24));
+      expect(reloaded.refreshError, isNull);
+    });
+
+    test('a reload the server rejects still shows the error', () async {
+      await noRetry.read(sceneListProvider(query).future);
+      repo.failNext = true;
+      await expectLater(noRetry.refresh(sceneListProvider(query).future), throwsA(isA<StashApiException>()));
+      final value = noRetry.read(sceneListProvider(query));
+      expect(value.hasError, isTrue);
+      expect(value.current, isNull);
+    });
+
+    test('a first load that can\'t reach the server fails', () async {
+      repo.offline = true;
+      await expectLater(noRetry.read(sceneListProvider(SceneQuery(search: 'x')).future), throwsA(isA<StashApiException>()));
+    });
   });
 
   group('pages mode', () {

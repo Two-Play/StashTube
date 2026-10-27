@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/config/server_config.dart';
+import '../../data/models/list_queries.dart';
 import '../../data/models/scene_filter.dart';
 import '../../data/models/tag.dart';
 
@@ -19,8 +20,10 @@ enum ShortsLength {
   final int? maxSeconds;
 }
 
-/// What the shorts feed shows: short (by default portrait) videos, with the
-/// chosen [tags] shown more often, or exclusively with [onlyTags].
+/// What the shorts show: short (by default portrait) videos, with the
+/// chosen [tags] shown more often, or exclusively with [onlyTags]. The loops
+/// ([ShortsMode.loops]) play scene markers with one of the [tags] (all
+/// markers without tags).
 @immutable
 class ShortsSettings {
   const ShortsSettings({
@@ -46,7 +49,17 @@ class ShortsSettings {
   /// Whether the feed also mixes in videos without the tags.
   bool get mixesOthers => tags.isEmpty || !onlyTags;
 
-  ShortsSettings copyWith({List<Tag>? tags, bool? onlyTags, ShortsLength? length, bool? portraitOnly}) =>
+  /// The loops' markers. The orientation applies (through the marker's
+  /// scene); the length doesn't: a marker plays only its marked part.
+  MarkerQuery get markerQuery =>
+      MarkerQuery(sort: MarkerSort.random, tagIds: [for (final t in tags) t.id], portraitOnly: portraitOnly);
+
+  ShortsSettings copyWith({
+    List<Tag>? tags,
+    bool? onlyTags,
+    ShortsLength? length,
+    bool? portraitOnly,
+  }) =>
       ShortsSettings(
         tags: tags ?? this.tags,
         onlyTags: onlyTags ?? this.onlyTags,
@@ -73,6 +86,8 @@ class ShortsSettings {
       ],
       onlyTags: json['onlyTags'] as bool? ?? defaults.onlyTags,
       length: ShortsLength.values.asNameMap()[json['length']] ?? defaults.length,
+      // An older "markers" (videos & markers in one feed) is dropped: the
+      // markers are the loops now.
       portraitOnly: json['portraitOnly'] as bool? ?? defaults.portraitOnly,
     );
   }
@@ -86,7 +101,8 @@ class ShortsSettings {
       other.portraitOnly == portraitOnly;
 
   @override
-  int get hashCode => Object.hash(Object.hashAll([for (final t in tags) t.id]), onlyTags, length, portraitOnly);
+  int get hashCode =>
+      Object.hash(Object.hashAll([for (final t in tags) t.id]), onlyTags, length, portraitOnly);
 }
 
 /// Stored per server, as tag ids belong to one server.
@@ -121,3 +137,28 @@ class ShortsSettingsNotifier extends Notifier<ShortsSettings> {
 
 final shortsSettingsProvider =
     NotifierProvider<ShortsSettingsNotifier, ShortsSettings>(ShortsSettingsNotifier.new);
+
+/// What the shorts tab plays: short videos, or scene markers looping on
+/// their own ("Loops"). Switched at the top of the tab; stored for all
+/// servers.
+enum ShortsMode { shorts, loops }
+
+class ShortsModeNotifier extends Notifier<ShortsMode> {
+  static const _key = 'shorts_mode';
+
+  @override
+  ShortsMode build() {
+    try {
+      return ShortsMode.values.asNameMap()[ref.watch(sharedPreferencesProvider).getString(_key)] ?? ShortsMode.shorts;
+    } catch (_) {
+      return ShortsMode.shorts;
+    }
+  }
+
+  Future<void> set(ShortsMode mode) async {
+    state = mode;
+    await ref.read(sharedPreferencesProvider).setString(_key, mode.name);
+  }
+}
+
+final shortsModeProvider = NotifierProvider<ShortsModeNotifier, ShortsMode>(ShortsModeNotifier.new);

@@ -9,7 +9,6 @@ import 'package:media_kit_video/media_kit_video.dart';
 import '../../core/config/haptics.dart';
 import '../../core/config/theme.dart';
 import '../../core/utils/format.dart';
-import '../../data/models/scene.dart';
 import '../../data/repositories/stash_repository.dart';
 import '../../data/repositories/stash_session.dart';
 import '../../l10n/l10n.dart';
@@ -18,14 +17,21 @@ import '../../widgets/scene_card.dart';
 import '../../widgets/stash_image.dart';
 import '../../widgets/status_views.dart';
 import '../library/watch_later.dart';
+import '../player/player_controls.dart';
 import '../player/player_providers.dart';
 import '../player/preview_seek_bar.dart';
 import '../player/scene_edits.dart';
 import '../settings/settings_button.dart';
 import '../security/app_lock.dart';
 import '../shell/navigation.dart';
+import 'short.dart';
 import 'shorts_feed.dart';
+import 'shorts_settings.dart';
 import 'shorts_settings_sheet.dart';
+
+/// How long a short's info and the shorts/loops switch show after a swipe
+/// before they fade out (until the short is paused).
+const kShortsInfoTimeout = Duration(seconds: 2);
 
 /// True while the shorts are on screen; the shell then hides the miniplayer.
 class ShortsActiveNotifier extends Notifier<bool> {
@@ -52,6 +58,16 @@ class _FastPageScrollPhysics extends PageScrollPhysics {
 
   @override
   SpringDescription get spring => const SpringDescription(mass: 0.5, stiffness: 500, damping: 32);
+}
+
+/// "Full video": the whole scene in the main player, where the short is at
+/// [position] (its player's; a marker's clip counts from the marker's
+/// start). Without a position a marker opens at its start and a whole
+/// video at its resume point.
+void playFullVideo(WidgetRef ref, Short short, {Duration? position}) {
+  final offset = short.marker?.seconds ?? 0;
+  final at = position == null ? short.marker?.seconds : offset + position.inMilliseconds / 1000;
+  ref.read(nowPlayingProvider.notifier).play(short.scene, at: at);
 }
 
 /// Whether the app's main player is playing.
@@ -81,7 +97,14 @@ class ShortsPage extends ConsumerStatefulWidget {
 class _ShortsPageState extends ConsumerState<ShortsPage> {
   static const _poolSize = 3;
 
-  late final _feed = shortsFeedFamily(widget.source);
+  /// The feed playing: the tab's follows the shorts/loops switch
+  /// ([shortsModeProvider]); switching swaps it in place.
+  late ShortsSource _source = _sourceFor(ref.read(shortsModeProvider));
+
+  ShortsSource _sourceFor(ShortsMode mode) =>
+      widget.source.isFeed && mode == ShortsMode.loops ? const ShortsSource.loops() : widget.source;
+
+  NotifierProvider<ShortsFeedNotifier, ShortsFeedState> get _feed => shortsFeedFamily(_source);
 
   /// The tab this page lives in; it stays mounted (IndexedStack) while
   /// another tab is shown. Found through the tab's navigator, because a tab
@@ -103,7 +126,8 @@ class _ShortsPageState extends ConsumerState<ShortsPage> {
 
   List<Player>? _players;
   List<VideoController>? _controllers;
-  final _slotScene = List<String?>.filled(_poolSize, null);
+  /// The [Short.key] each player has open.
+  final _slotShort = List<String?>.filled(_poolSize, null);
 
   /// Whether the slot's `open` finished. media_kit's `open(play: false)`
   /// pauses only once the file is loaded, so a `play()` sent earlier would
@@ -129,8 +153,16 @@ class _ShortsPageState extends ConsumerState<ShortsPage> {
   /// collapsed again.
   bool _handedToPlayer = false;
 
+  /// The shorts/loops switch (or title) shows for [kShortsInfoTimeout]
+  /// after a swipe, then fades out until the short is paused.
+  bool _titleShown = true;
+  Timer? _titleTimer;
+
+  /// Counts swipes: each one shows the current short's info again.
+  int _revealTick = 0;
+
   StreamSubscription<Duration>? _positionSub;
-  String? _watchedScene;
+  String? _watchedShort;
   final _counted = <String>{};
 
   @override
@@ -155,6 +187,7 @@ class _ShortsPageState extends ConsumerState<ShortsPage> {
     if (_immersive) SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
     _miniplayerHeight.removeListener(_onMiniplayerHeight);
     _lifecycle.dispose();
+    _titleTimer?.cancel();
     _positionSub?.cancel();
     _pageController.dispose();
     for (final player in _players ?? const <Player>[]) {
@@ -173,16 +206,19 @@ class _ShortsPageState extends ConsumerState<ShortsPage> {
     });
   }
 
-  void _openFullVideo(Scene scene) {
+  void _openFullVideo(Short short) {
     setState(() => _handedToPlayer = true);
     _active.set(false);
-    ref.read(nowPlayingProvider.notifier).play(scene);
+    // Continues where the short is (it is paused once the player covers it).
+    final slot = _slot(_index);
+    final player = _slotReady[slot] && _slotShort[slot] == short.key ? (_players?[slot]) : null;
+    playFullVideo(ref, short, position: player?.state.position);
   }
 
   int _slot(int index) => index % _poolSize;
 
   /// Opens the current short and its neighbours in the pool's players.
-  void _sync(List<Scene> items) {
+  void _sync(List<Short> items) {
     if (items.isEmpty) return;
     final players = _players ??= [
       for (var i = 0; i < _poolSize; i++) Player()..setPlaylistMode(PlaylistMode.single),
@@ -192,23 +228,29 @@ class _ShortsPageState extends ConsumerState<ShortsPage> {
     var reassigned = false;
     for (var i = _index - 1; i <= _index + 1; i++) {
       if (i < 0 || i >= items.length) continue;
-      final scene = items[i];
+      final short = items[i];
       final slot = _slot(i);
-      if (_slotScene[slot] == scene.id) continue;
-      _slotScene[slot] = scene.id;
+      if (_slotShort[slot] == short.key) continue;
+      _slotShort[slot] = short.key;
       _slotReady[slot] = false;
       reassigned = true;
       final player = players[slot];
       unawaited(player.setVolume(_muted ? 0 : 100));
       player
-          .open(Media(scene.streamUrl!, httpHeaders: ref.read(authHeadersProvider)), play: false)
+          .open(
+            // A marker opens only its clip (Short.playbackUrl), from 0.
+            Media(short.playbackUrl!, httpHeaders: ref.read(authHeadersProvider)),
+            play: false,
+          )
           .then((_) {
-        if (!mounted || _slotScene[slot] != scene.id) return;
+        if (!mounted || _slotShort[slot] != short.key) return;
         _slotReady[slot] = true;
         _applyPlayback();
       }, onError: (Object _) {});
     }
     if (reassigned) setState(() {});
+    // The first shorts arrived: the title fades out after a moment.
+    if (_titleTimer == null) _reveal();
     if (_index < items.length) _watchPosition(items[_index]);
     _applyPlayback();
   }
@@ -229,7 +271,20 @@ class _ShortsPageState extends ConsumerState<ShortsPage> {
     }
   }
 
-  void _onPageChanged(int index, List<Scene> items) {
+  /// Shows the title and the current short's info again; both fade out
+  /// after a moment.
+  void _reveal() {
+    _titleTimer?.cancel();
+    _titleTimer = Timer(kShortsInfoTimeout, () {
+      if (mounted) setState(() => _titleShown = false);
+    });
+    setState(() {
+      _titleShown = true;
+      _revealTick++;
+    });
+  }
+
+  void _onPageChanged(int index, List<Short> items) {
     Haptics.selection();
     setState(() {
       _index = index;
@@ -243,14 +298,17 @@ class _ShortsPageState extends ConsumerState<ShortsPage> {
     if (index >= feed.items.length - 5) ref.read(_feed.notifier).loadMore();
   }
 
-  /// Counts a play once the short was watched halfway (at most 15 s).
-  void _watchPosition(Scene scene) {
-    if (_watchedScene == scene.id) return;
-    _watchedScene = scene.id;
+  /// Counts a play of its scene once the short was watched halfway (at
+  /// most 15 s).
+  void _watchPosition(Short short) {
+    if (_watchedShort == short.key) return;
+    _watchedShort = short.key;
     _positionSub?.cancel();
+    final scene = short.scene;
     final player = _players?[_slot(_index)];
     if (player == null || _counted.contains(scene.id)) return;
-    final threshold = Duration(milliseconds: (scene.duration * 500).round().clamp(1000, 15000));
+    // Positions run from 0 for a marker's clip too (Short.playbackUrl).
+    final threshold = Duration(milliseconds: (short.duration * 500).round().clamp(1000, 15000));
     _positionSub = player.stream.position.listen((position) {
       if (position < threshold || !_counted.add(scene.id)) return;
       _positionSub?.cancel();
@@ -292,18 +350,39 @@ class _ShortsPageState extends ConsumerState<ShortsPage> {
   void _onVisibilityChanged(bool visible) {
     if (visible && ref.read(nowPlayingProvider) != null) ref.read(playerProvider).pause();
     _visible = visible;
+    // Back on the shorts (another tab, a page, the player): the switch and
+    // the info show again for a moment. Not during this build.
+    if (visible && _titleTimer != null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) _reveal();
+      });
+    }
   }
 
   void _resetFeed() {
-    _slotScene.fillRange(0, _poolSize, null);
+    _slotShort.fillRange(0, _poolSize, null);
     _slotReady.fillRange(0, _poolSize, false);
-    _watchedScene = null;
+    _watchedShort = null;
     _index = 0;
     if (_pageController.hasClients) _pageController.jumpToPage(0);
   }
 
+  /// Switches between shorts and loops: the pool's players open the new
+  /// feed's first shorts.
+  void _onModeChanged(ShortsMode mode) {
+    final source = _sourceFor(mode);
+    if (source == _source) return;
+    _positionSub?.cancel();
+    setState(() {
+      _source = source;
+      _paused = false;
+      _resetFeed();
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
+    if (widget.source.isFeed) ref.listen(shortsModeProvider, (_, mode) => _onModeChanged(mode));
     final nowPlaying = ref.watch(nowPlayingProvider);
     final mainCovers = nowPlaying != null && (_mainExpanded || _handedToPlayer);
     final tab = _tabOf(context);
@@ -351,7 +430,13 @@ class _ShortsPageState extends ConsumerState<ShortsPage> {
             child: Stack(
               children: [
                 if (items.isNotEmpty)
-                  PageView.builder(
+                  NotificationListener<ScrollStartNotification>(
+                    // Every swipe shows the info again, even back to the same short.
+                    onNotification: (_) {
+                      _reveal();
+                      return false;
+                    },
+                    child: PageView.builder(
                     controller: _pageController,
                     scrollDirection: Axis.vertical,
                     physics: const _FastPageScrollPhysics(),
@@ -359,17 +444,19 @@ class _ShortsPageState extends ConsumerState<ShortsPage> {
                     onPageChanged: (i) => _onPageChanged(i, items),
                     itemBuilder: (_, i) {
                       final slot = _slot(i);
-                      final controller = _slotScene[slot] == items[i].id ? (_controllers?[slot]) : null;
+                      final controller = _slotShort[slot] == items[i].key ? (_controllers?[slot]) : null;
                       return _ShortView(
-                        key: ValueKey(items[i].id),
-                        scene: items[i],
+                        key: ValueKey(items[i].key),
+                        short: items[i],
                         controller: controller,
                         paused: i == _index && _paused,
+                        revealTick: _revealTick,
                         fullscreen: _fullscreen,
                         onTap: _togglePause,
                         onFullVideo: () => _openFullVideo(items[i]),
                       );
                     },
+                  ),
                   )
                 else
                   // Centered on the screen; a plain Stack child sits top left.
@@ -390,11 +477,22 @@ class _ShortsPageState extends ConsumerState<ShortsPage> {
                   ),
                 _TopBar(
                   title: widget.source.title,
+                  mode: widget.source.isFeed ? ref.watch(shortsModeProvider) : null,
+                  onMode: (mode) {
+                    Haptics.selection();
+                    ref.read(shortsModeProvider.notifier).set(mode);
+                  },
                   fullscreen: _fullscreen,
                   onToggleFullscreen: _toggleFullscreen,
+                  // Shuffle and settings only while paused, and when there
+                  // is nothing to play (the settings may be why).
+                  showAll: _paused || items.isEmpty || MediaQuery.accessibleNavigationOf(context),
+                  showTitle: _titleShown || _paused || items.isEmpty || MediaQuery.accessibleNavigationOf(context),
                   muted: _muted,
                   onToggleMute: _toggleMute,
                   onRefresh: () => ref.read(_feed.notifier).refresh(),
+                  // A markers grid's shorts keep its order and filters.
+                  adjustable: widget.source.markers == null,
                 ),
               ],
             ),
@@ -408,15 +506,36 @@ class _ShortsPageState extends ConsumerState<ShortsPage> {
 class _TopBar extends StatelessWidget {
   const _TopBar({
     this.title,
+    this.mode,
+    this.onMode,
     required this.fullscreen,
     required this.onToggleFullscreen,
     required this.muted,
     required this.onToggleMute,
     required this.onRefresh,
+    this.adjustable = true,
+    this.showAll = true,
+    this.showTitle = true,
   });
+
+  /// Whether the shorts/loops switch or the title shows; it fades out while
+  /// a short plays.
+  final bool showTitle;
+
+  /// Whether the less used buttons show too; while a short plays only
+  /// fullscreen and mute stay.
+  final bool showAll;
+
+  /// Whether shuffle and the shorts settings apply.
+  final bool adjustable;
 
   /// E.g. the performer whose shorts these are.
   final String? title;
+
+  /// The shorts tab's shorts/loops switch, in place of a title; null
+  /// elsewhere (a channel's shorts, a markers grid's loops).
+  final ShortsMode? mode;
+  final ValueChanged<ShortsMode>? onMode;
   final bool fullscreen;
   final VoidCallback onToggleFullscreen;
   final bool muted;
@@ -444,20 +563,29 @@ class _TopBar extends StatelessWidget {
       );
     }
     return DecoratedBox(
-      decoration: const BoxDecoration(
+      decoration: BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
-          colors: [Colors.black54, Colors.transparent],
+          colors: [AppColors.of(context).videoScrimSoft, Colors.transparent],
         ),
       ),
       child: SafeArea(
         bottom: false,
         child: Row(
           children: [
-            if (Navigator.of(context).canPop()) const BackButton(color: Colors.white) else const SizedBox(width: 16),
+            if (Navigator.of(context).canPop()) const BackButton(color: Colors.white) else const SizedBox(width: AppSpacing.l),
             Expanded(
-              child: title == null
+              child: _Fade(
+                shown: showTitle,
+                child: mode != null
+                  ? Align(
+                      alignment: AlignmentDirectional.centerStart,
+                      // Only as tall as the switch, not the screen.
+                      heightFactor: 1,
+                      child: _ModeSwitch(mode: mode!, onMode: onMode!),
+                    )
+                  : title == null
                   ? const SizedBox.shrink()
                   : Text(
                       title!,
@@ -465,6 +593,7 @@ class _TopBar extends StatelessWidget {
                       overflow: TextOverflow.ellipsis,
                       style: Theme.of(context).textTheme.titleMedium?.copyWith(color: Colors.white, shadows: _shadow),
                     ),
+              ),
             ),
             IconButton(
               tooltip: l.fullscreen,
@@ -478,18 +607,28 @@ class _TopBar extends StatelessWidget {
               icon: Icon(muted ? Icons.volume_off : Icons.volume_up),
               onPressed: onToggleMute,
             ),
-            IconButton(
-              tooltip: l.sortShuffle,
-              color: Colors.white,
-              icon: const Icon(Icons.shuffle),
-              onPressed: onRefresh,
-            ),
-            IconButton(
-              tooltip: l.shortsSettings,
-              color: Colors.white,
-              icon: const Icon(Icons.tune),
-              onPressed: () => showShortsSettingsSheet(context),
-            ),
+            if (adjustable)
+              _WhenPaused(
+                shown: showAll,
+                axis: Axis.horizontal,
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    IconButton(
+                      tooltip: l.sortShuffle,
+                      color: Colors.white,
+                      icon: const Icon(Icons.shuffle),
+                      onPressed: onRefresh,
+                    ),
+                    IconButton(
+                      tooltip: l.shortsSettings,
+                      color: Colors.white,
+                      icon: const Icon(Icons.tune),
+                      onPressed: () => showShortsSettingsSheet(context),
+                    ),
+                  ],
+                ),
+              ),
           ],
         ),
       ),
@@ -497,22 +636,93 @@ class _TopBar extends StatelessWidget {
   }
 }
 
-const _shadow = [Shadow(blurRadius: 6, color: Colors.black54)];
+// A small blur: the overlay is drawn anew with every video frame, and a
+// wide blur behind every label and icon cost raster time.
+/// "Shorts | Loops" at the top of the shorts tab, like TikTok's feeds:
+/// the chosen one bold and underlined.
+class _ModeSwitch extends StatelessWidget {
+  const _ModeSwitch({required this.mode, required this.onMode});
+
+  final ShortsMode mode;
+  final ValueChanged<ShortsMode> onMode;
+
+  @override
+  Widget build(BuildContext context) {
+    final l = context.l10n;
+    final style = Theme.of(context).textTheme.titleMedium?.copyWith(color: Colors.white, shadows: _shadow);
+    return Semantics(
+      label: l.shortsModeSemantics,
+      container: true,
+      child: SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            for (final m in ShortsMode.values)
+              Semantics(
+                selected: m == mode,
+                button: true,
+                child: InkWell(
+                  borderRadius: AppRadius.badgeBorder,
+                  onTap: m == mode ? null : () => onMode(m),
+                  child: ConstrainedBox(
+                    // A 48 dp target.
+                    constraints: const BoxConstraints(minHeight: 48),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.m),
+                      child: Column(
+                        // Only as tall as the label: in the bar's row a full
+                        // height column pulled the whole bar to the middle.
+                        mainAxisSize: MainAxisSize.min,
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text(
+                            m.label(l),
+                            style: style?.copyWith(
+                              fontWeight: m == mode ? FontWeight.w700 : FontWeight.w400,
+                              color: m == mode ? Colors.white : Colors.white70,
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          AnimatedContainer(
+                            duration: const Duration(milliseconds: 200),
+                            height: 2,
+                            width: m == mode ? 20 : 0,
+                            color: Colors.white,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+const _shadow = [Shadow(offset: Offset(0, 1), blurRadius: 2, color: Colors.black54)];
 
 /// One page: the video (or its screenshot until it is loaded), the info at
 /// the bottom, the actions on the right and a progress bar.
 class _ShortView extends ConsumerStatefulWidget {
   const _ShortView({
     super.key,
-    required this.scene,
+    required this.short,
     required this.controller,
     required this.paused,
+    this.revealTick = 0,
     required this.fullscreen,
     required this.onTap,
     required this.onFullVideo,
   });
 
-  final Scene scene;
+  /// Changes with every swipe: the info shows again.
+  final int revealTick;
+
+  final Short short;
   final VideoController? controller;
   final bool paused;
 
@@ -536,16 +746,33 @@ class _ShortViewState extends ConsumerState<_ShortView> {
   bool _scrubbing = false;
   Timer? _barTimer;
 
+  /// The info at the bottom left shows for [kShortsInfoTimeout] after a
+  /// swipe, then fades out until the short is paused.
+  bool _infoShown = true;
+  Timer? _infoTimer;
+
   @override
   void initState() {
     super.initState();
     _showBar();
+    _showInfo();
+  }
+
+  void _showInfo() {
+    _infoTimer?.cancel();
+    if (!_infoShown && mounted) setState(() => _infoShown = true);
+    _infoShown = true;
+    _infoTimer = Timer(kShortsInfoTimeout, () {
+      if (mounted) setState(() => _infoShown = false);
+    });
   }
 
   @override
   void didUpdateWidget(_ShortView oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.fullscreen != widget.fullscreen) _showBar();
+    // Playing on after a pause: the info goes again a moment later.
+    if (oldWidget.revealTick != widget.revealTick || (oldWidget.paused && !widget.paused)) _showInfo();
     // The pool's player moved on to another short: don't leave it at 2×.
     if (_fast && oldWidget.controller != widget.controller) {
       oldWidget.controller?.player.setRate(1);
@@ -556,6 +783,7 @@ class _ShortViewState extends ConsumerState<_ShortView> {
   @override
   void dispose() {
     _barTimer?.cancel();
+    _infoTimer?.cancel();
     // Swiped away while holding: the release never arrives here.
     if (_fast) _player?.setRate(1);
     super.dispose();
@@ -589,9 +817,9 @@ class _ShortViewState extends ConsumerState<_ShortView> {
 
   void _rate(int stars) {
     Haptics.selection();
-    final current = effectiveStars(ref, widget.scene);
+    final current = effectiveStars(ref, widget.short.scene);
     // Tapping the current rating again removes it.
-    ref.read(sceneEditsProvider.notifier).rate(widget.scene, stars == current ? 0 : stars).catchError(_showError);
+    ref.read(sceneEditsProvider.notifier).rate(widget.short.scene, stars == current ? 0 : stars).catchError(_showError);
     setState(() => _rating = false);
   }
 
@@ -601,12 +829,12 @@ class _ShortViewState extends ConsumerState<_ShortView> {
     final messenger = ScaffoldMessenger.of(context);
     final notifier = ref.read(sceneEditsProvider.notifier);
     try {
-      final count = await notifier.addO(widget.scene);
+      final count = await notifier.addO(widget.short.scene);
       messenger.showSnackBar(SnackBar(
         content: Text(l.oCountValue(count)),
         // With an action, snack bars would stay until tapped.
         persist: false,
-        action: SnackBarAction(label: l.undo, onPressed: () => notifier.removeO(widget.scene).catchError(_showError)),
+        action: SnackBarAction(label: l.undo, onPressed: () => notifier.removeO(widget.short.scene).catchError(_showError)),
       ));
     } catch (e) {
       if (mounted) _showError(e);
@@ -616,26 +844,37 @@ class _ShortViewState extends ConsumerState<_ShortView> {
   @override
   Widget build(BuildContext context) {
     final l = context.l10n;
-    final scene = widget.scene;
-    final width = scene.width;
-    final height = scene.height;
-    // Fill the screen with portrait videos; show wide ones whole.
-    final fit = width != null && height != null && height > width ? BoxFit.cover : BoxFit.contain;
+    final short = widget.short;
+    final scene = short.scene;
+    final marker = short.marker;
+    // Fill the screen when that crops little (a portrait video on a phone);
+    // else show it whole (wide videos, any video on a landscape tablet).
+    final screen = MediaQuery.sizeOf(context);
+    final fit = Short.fitFor(short.aspect, screen.height <= 0 ? 1 : screen.width / screen.height);
     final saved = ref.watch(watchLaterProvider.select((ids) => ids.contains(scene.id)));
     final stars = effectiveStars(ref, scene);
     final oCount = effectiveOCounter(ref, scene);
-    final tags = effectiveTags(ref, scene);
+    // A marker's own tag first.
+    final tags = [
+      if (marker != null) marker.tag,
+      ...effectiveTags(ref, scene).where((t) => t.id != marker?.tag.id),
+    ];
+    final screenshot = marker?.screenshotUrl ?? scene.screenshotUrl;
     final performer = scene.performers.firstOrNull;
     final studio = scene.studio;
     final controller = widget.controller;
     // Above the home indicator when the navigation bar is hidden.
     final bottom = MediaQuery.paddingOf(context).bottom;
     final showBar = !widget.fullscreen || _barShown;
+    // While the short plays only its main actions stay, so they cover
+    // less of the video; pausing shows the rest. Screen readers get all.
+    final showAll = widget.paused || MediaQuery.accessibleNavigationOf(context);
+    final showInfo = showAll || _infoShown;
 
     return Stack(
       fit: StackFit.expand,
       children: [
-        if (scene.screenshotUrl != null) StashImage(scene.screenshotUrl!, fit: fit),
+        if (screenshot != null) StashImage(screenshot, fit: fit),
         if (controller != null)
           Video(controller: controller, fit: fit, fill: Colors.transparent, controls: _noControls),
         // Hold for double speed, like TikTok.
@@ -663,28 +902,33 @@ class _ShortViewState extends ConsumerState<_ShortView> {
             child: Center(child: _Pill(child: Text(l.fastForward2x, style: const TextStyle(color: Colors.white)))),
           ),
         if (!widget.fullscreen) ...[
-          const Positioned(
+          Positioned(
             left: 0,
             right: 0,
             bottom: 0,
             height: 260,
             child: IgnorePointer(
-              child: DecoratedBox(
+              child: _Fade(
+                shown: showInfo,
+                child: DecoratedBox(
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
                     begin: Alignment.bottomCenter,
                     end: Alignment.topCenter,
-                    colors: [Colors.black87, Colors.transparent],
+                    colors: [AppColors.of(context).videoScrim, Colors.transparent],
                   ),
                 ),
+              ),
               ),
             ),
           ),
           Positioned(
-            left: 16,
+            left: AppSpacing.l,
             right: 88,
-            bottom: bottom + 32,
-            child: Column(
+            bottom: bottom + AppSpacing.xxl,
+            child: _Fade(
+              shown: showInfo,
+              child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisSize: MainAxisSize.min,
               children: [
@@ -702,12 +946,30 @@ class _ShortViewState extends ConsumerState<_ShortView> {
                   ],
                 ),
                 const SizedBox(height: 4),
-                Text(
-                  scene.title,
+                Text.rich(
+                  TextSpan(children: [
+                    if (marker != null)
+                      const WidgetSpan(
+                        alignment: PlaceholderAlignment.middle,
+                        child: Padding(
+                          padding: EdgeInsets.only(right: 4),
+                          child: Icon(Icons.bookmark, color: Colors.white, size: 16, shadows: _shadow),
+                        ),
+                      ),
+                    TextSpan(text: short.title),
+                  ]),
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(color: Colors.white, fontSize: 15, shadows: _shadow),
+                  style: const TextStyle(color: Colors.white, fontSize: AppTextSize.overlayTitle, shadows: _shadow),
                 ),
+                // A marker's scene, which "full video" opens.
+                if (marker != null)
+                  Text(
+                    scene.title,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(color: Colors.white70, fontSize: 13, shadows: _shadow),
+                  ),
                 if (tags.isNotEmpty) ...[
                   const SizedBox(height: 4),
                   Wrap(
@@ -721,11 +983,16 @@ class _ShortViewState extends ConsumerState<_ShortView> {
                 Text(
                   [
                     l.playsCount(scene.playCount),
-                    if (scene.duration > 0) formatDuration(scene.duration),
+                    // A ranged marker with its place in the scene.
+                    if (marker?.endSeconds case final end?)
+                      markerTimeLabel(l, marker!.seconds, end, withLength: true)
+                    else if (short.duration > 0)
+                      formatDuration(short.duration),
                   ].join(' • '),
-                  style: const TextStyle(color: Colors.white70, fontSize: 12, shadows: _shadow),
+                  style: const TextStyle(color: Colors.white70, fontSize: AppTextSize.overlayLabel, shadows: _shadow),
                 ),
               ],
+            ),
             ),
           ),
           Positioned(
@@ -756,7 +1023,8 @@ class _ShortViewState extends ConsumerState<_ShortView> {
                       onTap: () => setState(() => _rating = !_rating),
                       child: Icon(
                         stars == 0 ? Icons.star_outline_rounded : Icons.star_rounded,
-                        color: stars == 0 ? Colors.white : Colors.amber,
+                        // Over the video: the dark mode's rating color.
+                        color: stars == 0 ? Colors.white : AppColors.forBrightness(Brightness.dark).rating,
                         size: 36,
                         shadows: _shadow,
                       ),
@@ -769,25 +1037,33 @@ class _ShortViewState extends ConsumerState<_ShortView> {
                   onTap: _addO,
                   child: const Icon(Icons.water_drop_outlined, color: Colors.white, size: 32, shadows: _shadow),
                 ),
-                _Action(
-                  label: l.tabWatchLater,
-                  onTap: () => ref.read(watchLaterProvider.notifier).toggle(scene.id),
-                  child: Icon(
-                    saved ? Icons.watch_later : Icons.watch_later_outlined,
-                    color: Colors.white,
-                    size: 32,
-                    shadows: _shadow,
+                _WhenPaused(
+                  shown: showAll,
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      _Action(
+                        label: l.tabWatchLater,
+                        onTap: () => ref.read(watchLaterProvider.notifier).toggle(scene.id),
+                        child: Icon(
+                          saved ? Icons.watch_later : Icons.watch_later_outlined,
+                          color: Colors.white,
+                          size: 32,
+                          shadows: _shadow,
+                        ),
+                      ),
+                      _Action(
+                        label: l.shortsFullVideo,
+                        onTap: widget.onFullVideo,
+                        child: const Icon(Icons.open_in_full, color: Colors.white, size: 30, shadows: _shadow),
+                      ),
+                      _Action(
+                        label: l.moreActions,
+                        onTap: () => showSceneMenu(context, ref, scene),
+                        child: const Icon(Icons.more_horiz, color: Colors.white, size: 30, shadows: _shadow),
+                      ),
+                    ],
                   ),
-                ),
-                _Action(
-                  label: l.shortsFullVideo,
-                  onTap: widget.onFullVideo,
-                  child: const Icon(Icons.open_in_full, color: Colors.white, size: 30, shadows: _shadow),
-                ),
-                _Action(
-                  label: l.moreActions,
-                  onTap: () => showSceneMenu(context, ref, scene),
-                  child: const Icon(Icons.more_horiz, color: Colors.white, size: 30, shadows: _shadow),
                 ),
               ],
             ),
@@ -795,8 +1071,8 @@ class _ShortViewState extends ConsumerState<_ShortView> {
         ],
         if (controller != null)
           Positioned(
-            left: 8,
-            right: 8,
+            left: AppSpacing.s,
+            right: AppSpacing.s,
             bottom: bottom,
             // The player's seek bar: sprite thumbnails and marker dots, loaded
             // once touched. In fullscreen it hides after a few seconds; a tap
@@ -811,6 +1087,10 @@ class _ShortViewState extends ConsumerState<_ShortView> {
                     child: PreviewSeekBar(
                       sceneId: scene.id,
                       player: controller.player,
+                      // A marker's bar covers only its clip.
+                      window: short.isMarker ? (start: short.start!, end: short.end!) : null,
+                      // The player knows only the clip: its 0 is the window's start.
+                      windowRelative: true,
                       visible: false,
                       onInteractionStart: () {
                         _scrubbing = true;
@@ -836,6 +1116,49 @@ class _ShortViewState extends ConsumerState<_ShortView> {
 }
 
 Widget _noControls(VideoState state) => const SizedBox.shrink();
+
+/// Fades [child] out while not [shown]; hidden, it takes no taps.
+class _Fade extends StatelessWidget {
+  const _Fade({required this.shown, required this.child});
+
+  final bool shown;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) => IgnorePointer(
+        ignoring: !shown,
+        child: AnimatedOpacity(
+          opacity: shown ? 1 : 0,
+          duration: MediaQuery.disableAnimationsOf(context) ? Duration.zero : const Duration(milliseconds: 400),
+          curve: Curves.easeOut,
+          child: child,
+        ),
+      );
+}
+
+/// Slides and fades [child] in while [shown], e.g. the actions a playing
+/// short hides.
+class _WhenPaused extends StatelessWidget {
+  const _WhenPaused({required this.shown, required this.child, this.axis = Axis.vertical});
+
+  final bool shown;
+  final Axis axis;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) => AnimatedSwitcher(
+        duration: MediaQuery.disableAnimationsOf(context) ? Duration.zero : const Duration(milliseconds: 220),
+        switchInCurve: Curves.easeOutCubic,
+        switchOutCurve: Curves.easeInCubic,
+        transitionBuilder: (child, animation) => FadeTransition(
+          opacity: animation,
+          // Only as large as the child across: a full height Align would
+          // pull the top bar to the middle of the screen.
+          child: SizeTransition(sizeFactor: animation, axis: axis, fixedCrossAxisSizeFactor: 1, child: child),
+        ),
+        child: shown ? KeyedSubtree(key: const ValueKey(true), child: child) : const SizedBox.shrink(),
+      );
+}
 
 /// Play icon while paused, a spinner while the video buffers.
 class _CenterIndicator extends StatelessWidget {
@@ -889,11 +1212,10 @@ class _StarPicker extends StatelessWidget {
           children: [
             for (var i = 1; i <= 5; i++)
               IconButton(
-                visualDensity: VisualDensity.compact,
                 tooltip: i == stars ? l.removeRating : l.rateStars(i),
                 icon: Icon(
                   i <= stars ? Icons.star_rounded : Icons.star_outline_rounded,
-                  color: i <= stars ? Colors.amber : Colors.white,
+                  color: i <= stars ? AppColors.forBrightness(Brightness.dark).rating : Colors.white,
                 ),
                 onPressed: () => onRate(i),
               ),
@@ -911,7 +1233,7 @@ class _Pill extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => DecoratedBox(
-        decoration: BoxDecoration(color: Colors.black54, borderRadius: BorderRadius.circular(24)),
+        decoration: BoxDecoration(color: AppColors.of(context).videoScrimSoft, borderRadius: AppRadius.pillBorder),
         child: Padding(padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4), child: child),
       );
 }
@@ -961,7 +1283,12 @@ class _Action extends StatelessWidget {
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               textAlign: TextAlign.center,
-              style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w600, shadows: _shadow),
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: AppTextSize.overlayLabel,
+                fontWeight: FontWeight.w600,
+                shadows: _shadow,
+              ),
             ),
           ],
         ),

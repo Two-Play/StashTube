@@ -10,6 +10,7 @@ import 'package:stash_app_mobile/data/models/page_result.dart';
 import 'package:stash_app_mobile/data/models/scene.dart';
 import 'package:stash_app_mobile/data/repositories/stash_repository.dart';
 import 'package:stash_app_mobile/widgets/scene_feed.dart';
+import 'package:stash_app_mobile/widgets/skeleton.dart';
 
 /// Server B answers only when [gate] completes, or fails if [failB].
 class FakeServerRepository implements StashRepository {
@@ -66,7 +67,7 @@ void main() {
     await tester.runAsync(() => setup.container.read(serverProfilesProvider.notifier).add(const ServerConfig(baseUrl: 'http://b')));
     await tester.pump();
     expect(find.text('video from http://a'), findsNothing, reason: 'old videos gone while B loads');
-    expect(find.byType(CircularProgressIndicator), findsOneWidget);
+    expect(find.byType(SceneCardSkeleton), findsWidgets, reason: 'placeholders while B loads');
 
     // The switch (and B's request) ran in real async code: answer there too.
     await tester.runAsync(() async {
@@ -91,7 +92,7 @@ void main() {
   });
 }
 
-/// A few frames: the loading spinner never settles, so no pumpAndSettle.
+/// A few frames: the loading placeholders never settle, so no pumpAndSettle.
 Future<void> _settle(WidgetTester tester) async {
   for (var i = 0; i < 5; i++) {
     await tester.pump(const Duration(milliseconds: 100));

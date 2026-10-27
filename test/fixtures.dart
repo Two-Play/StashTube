@@ -201,7 +201,7 @@ Json sceneDetailsJson([Json fields = const {}]) => typed('Scene', {
 
 Json markerJson([Json fields = const {}]) => typed(
       'SceneMarker',
-      {'id': '1', 'title': '', 'seconds': 0, 'primary_tag': const {'name': 'Tag'}, ...fields},
+      {'id': '1', 'title': '', 'seconds': 0, 'screenshot': '', 'primary_tag': const {'id': 't1', 'name': 'Tag'}, ...fields},
       const {'primary_tag': 'Tag'},
     );
 

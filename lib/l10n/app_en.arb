@@ -109,11 +109,13 @@
   "tabHome": "Home",
   "tabPerformers": "Performers",
   "tabStudios": "Studios",
+  "tabSubscriptions": "Favorites",
   "tabLibrary": "Library",
   "tabWatchLater": "Later",
   "tabTags": "Tags",
   "tabSearch": "Search",
   "emptyDefault": "Nothing here yet",
+  "loading": "Loading",
   "loadMoreFailed": "Couldn't load more – tap to retry",
   "pageOf": "Page {page} of {count}",
   "@pageOf": {
@@ -146,6 +148,66 @@
   "pagingPages": "Pages",
   "channelUnknown": "Unknown",
   "sceneMenuPlay": "Play",
+  "sceneMoreOptions": "More options",
+  "durationHours": "{count, plural, =1{1 hour} other{{count} hours}}",
+  "@durationHours": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "durationMinutes": "{count, plural, =1{1 minute} other{{count} minutes}}",
+  "@durationMinutes": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "durationSeconds": "{count, plural, =1{1 second} other{{count} seconds}}",
+  "@durationSeconds": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "starsCount": "{count, plural, =1{1 star} other{{count} stars}}",
+  "@starsCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "watchedPercent": "{percent}% watched",
+  "@watchedPercent": {
+    "placeholders": {
+      "percent": {
+        "type": "int"
+      }
+    }
+  },
+  "markerAt": "Marker at {time}",
+  "@markerAt": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "markerFromTo": "Marker from {start} to {end}",
+  "@markerFromTo": {
+    "placeholders": {
+      "start": {
+        "type": "String"
+      },
+      "end": {
+        "type": "String"
+      }
+    }
+  },
   "watchLaterRemove": "Remove from Watch later",
   "watchLaterSave": "Save to Watch later",
   "editDetails": "Edit details",
@@ -158,6 +220,9 @@
     }
   },
   "scenesEmpty": "No scenes found",
+  "homeEmptyTitle": "Your library is still empty",
+  "homeEmptyHint": "Stash has to scan your media folders before scenes show up here. Start a scan in the server tasks.",
+  "openServerTasks": "Open server tasks",
   "savedFilterUnsupported": "\"{name}\": ignored unsupported criteria ({criteria})",
   "@savedFilterUnsupported": {
     "placeholders": {
@@ -182,6 +247,8 @@
   "apply": "Apply",
   "errorTitle": "Something went wrong",
   "retry": "Retry",
+  "playbackFailed": "Couldn't play this video",
+  "otherQuality": "Other quality",
   "sortRecentlyAdded": "Recently added",
   "sortNewest": "Newest",
   "sortShuffle": "Shuffle",
@@ -223,6 +290,44 @@
     }
   },
   "groupNoScenes": "This group has no scenes",
+  "addToGroup": "Add to group…",
+  "addToGroupTitle": "Add to group",
+  "searchGroups": "Search groups",
+  "groupsNoMatch": "No groups match",
+  "newGroup": "New group",
+  "groupName": "Group name",
+  "addedToGroup": "Added to {group}",
+  "@addedToGroup": {
+    "placeholders": {
+      "group": {
+        "type": "String"
+      }
+    }
+  },
+  "removedFromGroup": "Removed from {group}",
+  "@removedFromGroup": {
+    "placeholders": {
+      "group": {
+        "type": "String"
+      }
+    }
+  },
+  "groupUpdateFailed": "Couldn't change the group: {error}",
+  "@groupUpdateFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "groupCreateFailed": "Couldn't create the group: {error}",
+  "@groupCreateFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
   "playAll": "Play all",
   "imagesEmpty": "No images yet",
   "statsLibrary": "Library",
@@ -240,8 +345,86 @@
   "statsWatchTime": "Watch time",
   "statsScenesWatched": "Scenes watched",
   "statsOCount": "O-count",
+  "statsWatchHistory": "Watch history",
+  "statsChartWeeks": "12 weeks",
+  "statsChartDays": "30 days",
+  "statsPlaysPerWeek": "Plays per week",
+  "statsPlaysPerDay": "Plays per day",
+  "statsChartTotal": "Total",
+  "statsChartAverage": "Average",
+  "statsAveragePerWeek": "{average} per week",
+  "@statsAveragePerWeek": {
+    "placeholders": {
+      "average": {
+        "type": "String"
+      }
+    }
+  },
+  "statsAveragePerDay": "{average} per day",
+  "@statsAveragePerDay": {
+    "placeholders": {
+      "average": {
+        "type": "String"
+      }
+    }
+  },
+  "statsChartSummaryWeek": "{count, plural, =1{1 play this week, {average} on average} other{{count} plays this week, {average} on average}}",
+  "@statsChartSummaryWeek": {
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "format": "decimalPattern"
+      },
+      "average": {
+        "type": "String"
+      }
+    }
+  },
+  "statsChartSummaryDay": "{count, plural, =1{1 play today, {average} on average} other{{count} plays today, {average} on average}}",
+  "@statsChartSummaryDay": {
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "format": "decimalPattern"
+      },
+      "average": {
+        "type": "String"
+      }
+    }
+  },
+  "statsChartWeekOf": "Week of {date}",
+  "@statsChartWeekOf": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "statsChartBar": "{period}: {plays}",
+  "@statsChartBar": {
+    "placeholders": {
+      "period": {
+        "type": "String"
+      },
+      "plays": {
+        "type": "String"
+      }
+    }
+  },
+  "statsChartEmpty": "No plays in this period",
+  "statsChartPlaysNote": "Stash keeps the watch time per scene, not per play, so the chart counts plays.",
+  "statsChartTruncated": "Based on the {count} most recently played scenes.",
+  "@statsChartTruncated": {
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "format": "decimalPattern"
+      }
+    }
+  },
   "watchLaterEmpty": "Nothing saved yet",
   "watchLaterEmptyHint": "Tap \"Later\" on a scene to watch it afterwards.",
+  "watchLaterDeviceOnly": "Saved on this device only, not on the server.",
   "favoriteUpdateFailed": "Couldn't update favorite: {error}",
   "@favoriteUpdateFailed": {
     "placeholders": {
@@ -277,6 +460,8 @@
   "studiosTitle": "Studios",
   "studiosEmpty": "No studios yet",
   "studiosEmptyHint": "Studios appear here once scenes in Stash have one.",
+  "newPerformer": "New performer",
+  "newStudio": "New studio",
   "newTag": "New tag",
   "name": "Name",
   "cancel": "Cancel",
@@ -313,6 +498,28 @@
   "search": "Search",
   "continueWatching": "Continue watching",
   "newFromFavorites": "New from favorites",
+  "subscriptionsEmpty": "No favorites yet",
+  "subscriptionsEmptyHint": "Mark performers as favorites to see their newest scenes here.",
+  "performerHasNewScenes": "{name}, new scenes",
+  "@performerHasNewScenes": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "newSinceLastVisit": "{count, plural, =1{1 new video since your last visit} other{{count} new videos since your last visit}}",
+  "@newSinceLastVisit": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "newSinceLastVisitTitle": "New since your last visit",
+  "newSinceLastVisitEmpty": "Nothing new since your last visit",
+  "randomScene": "Play a random scene",
+  "randomSceneNone": "There are no scenes to pick from",
   "searchHint": "Search Stash",
   "searchNoScenes": "No scenes match \"{term}\"",
   "@searchNoScenes": {
@@ -330,6 +537,7 @@
   "seeAll": "See all",
   "searchIntro": "Search scenes, images, galleries, performers and studios",
   "addServer": "Add server",
+  "addServerTitle": "Add a server",
   "connectToStash": "Connect to Stash",
   "loginIntro": "Enter the address of your Stash server, e.g. 192.168.1.10. Without a port, Stash's default port 9999 is tried too.",
   "savedServers": "Saved servers",
@@ -339,12 +547,29 @@
   "serverUrl": "Server URL",
   "serverUrlInvalid": "Enter a valid http(s) URL",
   "apiKeyOptional": "API key (optional)",
-  "apiKeyHelper": "For a server with a password: the API key (Stash → Settings → Security), or sign in below.",
-  "signInWithPassword": "Sign in with username and password",
   "signInWithPasswordHint": "Instead of an API key. Casting to a TV needs the API key.",
   "username": "Username",
   "password": "Password",
   "loginIncomplete": "Enter username and password.",
+  "apiKeyRequired": "Enter the API key.",
+  "loginAuthTitle": "This server needs a login",
+  "loginAuthServer": "{name} · {host}",
+  "@loginAuthServer": {
+    "description": "Under the login step's title: the server's name and host.",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "host": {
+        "type": "String"
+      }
+    }
+  },
+  "loginAuthIntro": "Sign in with an API key or with your Stash username and password.",
+  "loginMethodPassword": "Username & password",
+  "apiKeyWhere": "You find it in Stash under Settings → Security → API key.",
+  "signIn": "Sign in",
+  "changeServerAddress": "Change address",
   "connect": "Connect",
   "tryDemo": "Try the demo",
   "tryDemoHint": "No Stash server at hand? Explore the app with sample videos from Big Buck Bunny, the open movie by the Blender Foundation (CC BY 3.0).",
@@ -388,11 +613,54 @@
       }
     }
   },
+  "castPlayFailed": "Couldn't play on {device}: {error}",
+  "@castPlayFailed": {
+    "placeholders": {
+      "device": {
+        "type": "String"
+      },
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "backToPreviousVideo": "Back to the previous video",
+  "forwardToNextVideo": "Forward to the next video",
   "minimize": "Minimize",
   "back10": "Back 10 s",
   "forward10": "Forward 10 s",
+  "seekForwardSeconds": "{count, plural, =1{Forward 1 second} other{Forward {count} seconds}}",
+  "@seekForwardSeconds": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "seekBackSeconds": "{count, plural, =1{Back 1 second} other{Back {count} seconds}}",
+  "@seekBackSeconds": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "seekBar": "Seek bar",
+  "seekBarValue": "{position} of {duration}",
+  "@seekBarValue": {
+    "placeholders": {
+      "position": {
+        "type": "String"
+      },
+      "duration": {
+        "type": "String"
+      }
+    }
+  },
   "pause": "Pause",
   "play": "Play",
+  "previousScene": "Previous scene",
+  "nextScene": "Next scene",
   "navBarTitle": "Navigation bar",
   "navBarIntro": "Choose up to {max} tabs and drag them into order. The first tab opens when the app starts.",
   "@navBarIntro": {
@@ -464,6 +732,14 @@
   "preferredQuality": "Preferred quality",
   "qualityOriginal": "Original",
   "preferredQualityHint": "Used when a scene offers it, otherwise the next lower one. Smaller videos play their original file. Also changes with HD in the player.",
+  "qualitySummary": "Quality: {quality}",
+  "@qualitySummary": {
+    "placeholders": {
+      "quality": {
+        "type": "String"
+      }
+    }
+  },
   "sectionPrivacy": "Privacy & security",
   "removeThisServer": "Remove this server",
   "lockImmediately": "Immediately",
@@ -477,6 +753,8 @@
   },
   "appLock": "App lock",
   "appLockSubtitle": "Ask for a PIN when opening the app",
+  "appLockOnSummary": "App lock on",
+  "appLockOffSummary": "App lock off",
   "unlockBiometric": "Unlock with Face ID / fingerprint",
   "lockNow": "Lock",
   "changePin": "Change PIN",
@@ -505,7 +783,7 @@
   "streamTranscoded": "Transcoded – seeking may be limited",
   "noAlternativeStreams": "No alternative streams available",
   "streamsLoadFailed": "Couldn't load streams",
-  "chapters": "Chapters",
+  "chapters": "Markers",
   "close": "Close",
   "upNextEmpty": "Nothing else to watch here",
   "moreFrom": "More from {name}",
@@ -517,10 +795,50 @@
     }
   },
   "upNext": "Up next",
+  "queuePosition": "{position} / {count}",
+  "@queuePosition": {
+    "placeholders": {
+      "position": {
+        "type": "int"
+      },
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "queuePositionSemantics": "Scene {position} of {count}",
+  "@queuePositionSemantics": {
+    "placeholders": {
+      "position": {
+        "type": "int"
+      },
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "addTags": "Add tags",
   "editTags": "Edit tags",
-  "showLess": "Show less",
   "showMore": "...more",
+  "moreTags": "+{count}",
+  "@moreTags": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "moreTagsSemantics": "{count, plural, =1{1 more tag} other{{count} more tags}}",
+  "@moreTagsSemantics": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "showDescription": "Show description",
+  "sceneDescription": "Description",
+  "noDescription": "No description",
   "saveFailed": "Couldn't save: {error}",
   "@saveFailed": {
     "placeholders": {
@@ -530,8 +848,29 @@
     }
   },
   "removeRating": "Remove rating",
+  "rateScene": "Rate",
+  "rateThisPerformer": "Rate this performer",
+  "rateThisStudio": "Rate this studio",
+  "rateThisScene": "Rate this scene",
+  "ratingButtonSemantics": "Rating: {rating}",
+  "@ratingButtonSemantics": {
+    "placeholders": {
+      "rating": {
+        "type": "String"
+      }
+    }
+  },
   "rateStars": "{count, plural, =1{Rate 1 star} other{Rate {count} stars}}",
   "@rateStars": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "ratingLabel": "Rating",
+  "ratingValue": "{count, plural, =0{No rating} =1{1 of 5 stars} other{{count} of 5 stars}}",
+  "@ratingValue": {
     "placeholders": {
       "count": {
         "type": "int"
@@ -547,6 +886,24 @@
       }
     }
   },
+  "oCounterLabel": "O · {count}",
+  "@oCounterLabel": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "oCounterSemantics": "O-counter: {count}",
+  "@oCounterSemantics": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "oCounterTitle": "O-counter",
+  "removeO": "Remove one O",
   "undo": "Undo",
   "editSceneDetails": "Edit scene details",
   "marker": "Marker",
@@ -578,6 +935,34 @@
   "titleOptional": "Title (optional)",
   "primaryTagRequired": "Primary tag (required)",
   "addMarker": "Add marker",
+  "markerRange": "{start}–{end}",
+  "@markerRange": {
+    "placeholders": {
+      "start": {
+        "type": "String"
+      },
+      "end": {
+        "type": "String"
+      }
+    }
+  },
+  "markerRangeWithLength": "{range} · {length}",
+  "@markerRangeWithLength": {
+    "placeholders": {
+      "range": {
+        "type": "String"
+      },
+      "length": {
+        "type": "String"
+      }
+    }
+  },
+  "markerEndOptional": "End (optional)",
+  "markerEndSet": "Set end to current position",
+  "markerEndEarlier": "End 5 seconds earlier",
+  "markerEndLater": "End 5 seconds later",
+  "markerEndClear": "Remove end",
+  "markerEndInvalid": "The end must be after the start.",
   "saved": "Saved",
   "later": "Later",
   "exitFullscreen": "Exit fullscreen",
@@ -638,6 +1023,18 @@
       }
     }
   },
+  "connectionLostTitle": "Server not reachable",
+  "@connectionLostTitle": {
+    "description": "Banner at the top of the app while the server can't be reached."
+  },
+  "connectionLostBody": "{server} doesn't answer. Are you outside your home network?",
+  "@connectionLostBody": {
+    "placeholders": {
+      "server": {
+        "type": "String"
+      }
+    }
+  },
   "errorUnauthorized": "Not authorized – check the API key or login.",
   "errorInvalidCredentials": "Wrong username or password.",
   "errorNotReady": "Server is reachable but not ready (status: {status}).",
@@ -650,6 +1047,27 @@
   },
   "errorNotFound": "Not found.",
   "errorNotSaved": "Nothing was saved.",
+  "errorLocalNetworkDenied": "StashTube can't reach your local network. Allow it in Settings → Privacy & Security → Local Network → StashTube.",
+  "@errorLocalNetworkDenied": {
+    "description": "iOS blocked the connection to a server in the home network because the Local Network permission is off."
+  },
+  "errorLocalNetworkTitle": "No access to the local network",
+  "errorUnreachableTitle": "Can't reach the server",
+  "errorUnreachableHint": "Check that the server is running and that you're in its network or connected to your VPN.",
+  "errorUnauthorizedTitle": "Access denied",
+  "errorUnauthorizedHint": "The server didn't accept the API key or login. Check them in the server settings.",
+  "errorInvalidCredentialsTitle": "Sign-in failed",
+  "errorNotReadyTitle": "Server not ready",
+  "errorNotReadyHint": "The server is running but not set up yet. Finish its setup in Stash's web interface.",
+  "errorNotFoundTitle": "Not found",
+  "errorNotFoundHint": "It may have been deleted or moved on the server.",
+  "errorServerHint": "The server reported an error. The details may help.",
+  "errorUnexpectedHint": "Something unexpected happened. Try again, or look at the details.",
+  "errorShowDetails": "Details",
+  "@errorShowDetails": {
+    "description": "Button under an error that shows its technical message."
+  },
+  "errorHideDetails": "Hide details",
   "navBarCount": "{count} of {max} tabs chosen",
   "@navBarCount": {
     "placeholders": {
@@ -681,6 +1099,20 @@
   "fileFrameRate": "Frame rate",
   "fileBitRate": "Bit rate",
   "fileModified": "Modified",
+  "imageInfo": "Image info",
+  "@imageInfo": {
+    "description": "Tooltip of the image viewer's info button and title of its sheet."
+  },
+  "imagePhotographer": "Photographer",
+  "imageDimensions": "Dimensions",
+  "imageOCounter": "O-counter",
+  "imageTags": "Tags",
+  "imageGalleries": "Galleries",
+  "imageCreated": "Added",
+  "@imageCreated": {
+    "description": "When the image was added to Stash."
+  },
+  "imageUpdated": "Updated",
   "copyPath": "Copy path",
   "pathCopied": "Path copied",
   "framesPerSecond": "{fps} fps",
@@ -705,18 +1137,35 @@
   "shortsTagsHint": "Videos with one of these tags show up more often.",
   "shortsOnlyTags": "Only these tags",
   "shortsOnlyTagsHint": "Leave out videos without any of the tags",
+  "shortsModeShorts": "Shorts",
+  "shortsModeLoops": "Loops",
+  "shortsModeSemantics": "Shorts or loops",
+  "shortsLoopsHint": "Loops play scene markers, each one repeating on its own; the tags and \"portrait only\" apply to them, the length doesn't.",
   "shortsMaxLength": "Maximum length",
   "shortsLengthOneMinute": "Up to 1 min",
   "shortsLengthThreeMinutes": "Up to 3 min",
   "shortsLengthTenMinutes": "Up to 10 min",
+  "shortsMaxLengthHint": "Only for videos: a marker plays its marked part.",
   "shortsPortraitOnly": "Portrait videos only",
+  "shortMarkerSemantics": "Marker: {title}",
+  "@shortMarkerSemantics": {
+    "placeholders": {
+      "title": {
+        "type": "String"
+      }
+    }
+  },
   "shortsEmpty": "No shorts found",
   "shortsEmptyHint": "Shorts are short portrait videos. Try a longer maximum length or other tags.",
   "shortsFullVideo": "Full video",
   "sectionSceneCards": "Video cards",
+  "sectionPreviewsCards": "Previews & cards",
   "cardChannel": "Channel on cards",
   "cardChannelStudio": "Studio",
   "cardChannelPerformers": "Performers",
+  "thumbnailFit": "Thumbnails",
+  "thumbnailFitWhole": "Show whole",
+  "thumbnailFitFill": "Fill (crop)",
   "cardShowPlays": "Show plays",
   "cardShowRating": "Show rating",
   "shortsRate": "Rate",
@@ -724,6 +1173,38 @@
   "unmute": "Unmute",
   "moreActions": "More",
   "fastForward2x": "2× speed",
+  "gestureTipsTitle": "Player gestures",
+  "gestureTipDoubleTap": "Double-tap left or right: {seconds} s back/forward, keep tapping to skip further",
+  "@gestureTipDoubleTap": {
+    "placeholders": {
+      "seconds": {
+        "type": "int"
+      }
+    }
+  },
+  "gestureTipHold": "Hold: 2× speed",
+  "gestureTipPinch": "Pinch: zoom",
+  "gestureTipSwipeDown": "Swipe down: minimize",
+  "gestureTipsDone": "Got it",
+  "showGestureTipsAgain": "Show gesture tips again",
+  "showGestureTipsAgainSubtitle": "The next time the player's controls appear",
+  "sectionDoubleTapSeek": "Double-tap to seek",
+  "doubleTapSeek": "Double-tap seeking",
+  "doubleTapSeekSubtitle": "Double-tap the left or right side of the video. Off: a tap shows the controls right away.",
+  "seekStep": "Skip by",
+  "seekCumulative": "Keep tapping to skip further",
+  "seekSequenceExample": "In total: {totals} s …",
+  "@seekSequenceExample": {
+    "placeholders": {
+      "totals": {
+        "type": "String"
+      }
+    }
+  },
+  "lockTouch": "Lock screen",
+  "touchLocked": "Screen locked",
+  "holdToUnlock": "Hold to unlock",
+  "unlockTouch": "Unlock",
   "unknownStudio": "Unknown studio",
   "unknownPerformer": "Unknown performer",
   "playbackSpeed": "Playback speed",
@@ -741,8 +1222,8 @@
   "statsAndServer": "Stats & server",
   "airPlay": "AirPlay",
   "airPlayHint": "Apple TV and AirPlay TVs",
-  "allViews": "All views",
-  "tabAll": "All",
+  "moreViews": "More views",
+  "tabYou": "You",
   "colorStashTube": "StashTube",
   "searchScenes": "Search scenes",
   "searchGalleries": "Search galleries",
@@ -754,6 +1235,42 @@
       }
     }
   },
+  "searchFor": "Search for {text}",
+  "@searchFor": {
+    "description": "Screen reader label of a search completion row.",
+    "placeholders": {
+      "text": {
+        "type": "String"
+      }
+    }
+  },
+  "searchFillIn": "Fill in",
+  "@searchFillIn": {
+    "description": "Tooltip of the arrow that puts a completion into the search field without searching."
+  },
+  "searchFillInText": "Fill in {text}",
+  "@searchFillInText": {
+    "placeholders": {
+      "text": {
+        "type": "String"
+      }
+    }
+  },
+  "searchRemoveFromHistory": "Remove {text} from recent searches",
+  "@searchRemoveFromHistory": {
+    "placeholders": {
+      "text": {
+        "type": "String"
+      }
+    }
+  },
+  "searchGoTo": "Go to",
+  "@searchGoTo": {
+    "description": "Header above performers, tags and studios matching the typed text, which open their pages."
+  },
+  "searchOtherAreas": "Search other areas",
+  "searchClearFilters": "Clear filters",
+  "searchFiltersActiveHint": "Active filters may hide results.",
   "pictureInPicture": "Picture-in-picture",
   "pipUnavailable": "Picture-in-picture isn't available for this video.",
   "autoPip": "Picture-in-picture when leaving the app",
@@ -768,6 +1285,60 @@
       }
     }
   },
+  "channelTabVideos": "Videos",
+  "channelTabShorts": "Shorts",
+  "channelTabMarkers": "Markers",
+  "channelTabImages": "Images",
+  "channelTabGalleries": "Galleries",
+  "channelTabAbout": "About",
+  "@channelTabAbout": {
+    "description": "Tab of a performer's or studio's page with their details and links."
+  },
+  "channelAboutEmpty": "Nothing here yet",
+  "channelLinks": "Links",
+  "copyLink": "Copy link",
+  "linkCopied": "Link copied",
+  "openLink": "Open link",
+  "openLinkFailed": "Couldn't open {url}",
+  "@openLinkFailed": {
+    "placeholders": {
+      "url": {
+        "type": "String"
+      }
+    }
+  },
+  "openInStash": "Open in Stash",
+  "@openInStash": {
+    "description": "Opens the scene in the Stash web interface in the browser."
+  },
+  "fieldAliases": "Also known as",
+  "fieldDeathDate": "Died",
+  "fieldCountry": "Country",
+  "fieldEthnicity": "Ethnicity",
+  "fieldHairColor": "Hair color",
+  "fieldEyeColor": "Eye color",
+  "fieldHeight": "Height",
+  "fieldWeight": "Weight",
+  "fieldMeasurements": "Measurements",
+  "fieldCareer": "Career",
+  "fieldTattoos": "Tattoos",
+  "fieldPiercings": "Piercings",
+  "heightCm": "{cm} cm",
+  "@heightCm": {
+    "placeholders": {
+      "cm": {
+        "type": "int"
+      }
+    }
+  },
+  "weightKg": "{kg} kg",
+  "@weightKg": {
+    "placeholders": {
+      "kg": {
+        "type": "int"
+      }
+    }
+  },
   "themeWelcomeTitle": "Choose your look",
   "themeWelcomeText": "Light or dark, and an accent color. You can change this anytime in the settings.",
   "lockScreenControls": "Show on the lock screen",
@@ -775,6 +1346,9 @@
   "libraryMarkers": "Markers",
   "markersEmpty": "No markers yet",
   "markersEmptyHint": "Mark a moment in the player with \"Marker\".",
+  "markersPlayAsShorts": "Play as loops",
+  "markerPlayAsShort": "Play as loop",
+  "markerMoreOptions": "Marker options",
   "markersCount": "{count, plural, =1{1 marker} other{{count} markers}}",
   "@markersCount": {
     "placeholders": {
@@ -789,6 +1363,7 @@
   "hapticsLight": "Light",
   "hapticsNormal": "Normal",
   "feedPreviews": "Play previews in lists",
+  "previewsOffSummary": "Previews off",
   "feedPreviewsSubtitle": "The first fully shown video plays a short preview.",
   "feedPreviewDelay": "Preview starts after",
   "secondsValue": "{seconds} s",
@@ -802,6 +1377,9 @@
   },
   "markerPreviews": "Play marker previews",
   "markerPreviewsSubtitle": "Markers loop a short clip instead of a still frame.",
+  "previewsWifiOnly": "Only on Wi-Fi",
+  "previewsWifiOnlySubtitle": "No previews play on mobile data.",
+  "previewsHint": "Previews need Stash's animated (WebP) previews, which it doesn't create by default. Generate them in Stash under Settings → Tasks → Generate with \"Animated image previews\" and \"Marker animated image previews\".",
   "sectionAbout": "About",
   "appVersion": "Version",
   "appVersionValue": "{version} (build {build})",
@@ -837,5 +1415,126 @@
     }
   },
   "connectAnyway": "Connect anyway",
-  "castApiKeyHint": "While casting, the cast device receives the stream address including your API key. Other devices on this Wi-Fi may be able to read it."
+  "castApiKeyHint": "While casting, the cast device receives the stream address including your API key. Other devices on this Wi-Fi may be able to read it.",
+  "serverTasks": "Server tasks",
+  "serverTasksSubtitle": "Scan, generate, check previews",
+  "sectionPreviewCheck": "Previews on the server",
+  "previewCheckAnimated": "Animated previews (WebP)",
+  "previewCheckVideo": "Video previews (MP4)",
+  "previewCheckMarkers": "Marker previews (WebP)",
+  "previewCheckFound": "Found for {found} of {checked} random samples",
+  "@previewCheckFound": {
+    "placeholders": {
+      "found": {
+        "type": "int"
+      },
+      "checked": {
+        "type": "int"
+      }
+    }
+  },
+  "previewCheckNothing": "No scenes to check",
+  "previewCheckMissingHint": "Lists and markers play the animated previews, which Stash doesn't create by default. Generate them here, or switch the preview format to video in the settings.",
+  "generateAnimatedPreviews": "Generate animated previews",
+  "checkAgain": "Check again",
+  "sectionTasks": "Tasks",
+  "taskScan": "Scan library",
+  "taskScanSubtitle": "Finds new and changed files",
+  "taskGenerate": "Generate",
+  "taskGenerateSubtitle": "Previews, sprites, covers and more for files that lack them",
+  "taskAutoTag": "Auto tag",
+  "taskAutoTagSubtitle": "Assigns performers, studios and tags named in file paths",
+  "taskClean": "Clean",
+  "taskCleanSubtitle": "Removes entries of files that no longer exist",
+  "taskCleanConfirm": "Remove the entries of missing files from the library? Their ratings, play counts and markers are lost.",
+  "taskScanGenerates": "Also create for new files",
+  "startTask": "Start",
+  "taskStarted": "Task started on the server",
+  "taskFinishedNamed": "Finished: {task}",
+  "@taskFinishedNamed": {
+    "placeholders": {
+      "task": {
+        "type": "String"
+      }
+    }
+  },
+  "taskFailedNamed": "Failed: {task}",
+  "@taskFailedNamed": {
+    "placeholders": {
+      "task": {
+        "type": "String"
+      }
+    }
+  },
+  "sectionNotifications": "Notifications",
+  "systemNotifications": "System notifications",
+  "systemNotificationsSubtitle": "Tells you when a server task you started ends while StashTube is in the background. Only while the system keeps the app running: Android ends it after a while, iOS pauses it soon after you leave it.",
+  "discreetNotifications": "Discreet notifications",
+  "discreetNotificationsSubtitle": "Only “StashTube” and a neutral text, without task or server names. Hidden on the lock screen.",
+  "notificationsDenied": "Notifications not allowed",
+  "notificationsDeniedBody": "StashTube may not show notifications. Allow them in the system settings, then switch them on here again.",
+  "notificationTaskFinished": "A task has finished",
+  "notificationTaskFailed": "A task has failed",
+  "sectionJobs": "Running tasks",
+  "noJobs": "No tasks running",
+  "stopJob": "Stop task",
+  "jobReady": "Waiting",
+  "jobRunning": "Running",
+  "jobFinished": "Finished",
+  "jobStopping": "Stopping",
+  "jobCancelled": "Cancelled",
+  "jobFailed": "Failed",
+  "optionRescan": "Rescan unchanged files",
+  "optionCovers": "Covers",
+  "optionPreviews": "Video previews (MP4)",
+  "optionImagePreviews": "Animated previews (WebP)",
+  "optionSprites": "Seek bar thumbnails (sprites)",
+  "optionMarkers": "Marker previews (MP4)",
+  "optionMarkerImagePreviews": "Marker animated previews (WebP)",
+  "optionMarkerScreenshots": "Marker screenshots",
+  "optionPhashes": "Perceptual hashes (duplicates)",
+  "previewSource": "Preview format",
+  "previewSourceAnimated": "Animated image (WebP)",
+  "previewSourceVideo": "Video (MP4)",
+  "previewSourceVideoHint": "Video previews use the phone's video decoder and play smoothly; each one opens a short-lived video player of its own. Animated images are decoded frame by frame and can stutter with large previews. Markers keep playing the WebP previews.",
+  "previewsOnServer": "Check previews on the server",
+  "previewsOnServerSubtitle": "Whether Stash has created them, and generate missing ones",
+  "introSkip": "Skip",
+  "introNext": "Next",
+  "introDone": "Let's go",
+  "introProgress": "Step {current} of {total}",
+  "@introProgress": {"placeholders": {"current": {"type": "int"}, "total": {"type": "int"}}},
+  "introTour": "App tour",
+  "introTourSubtitle": "How StashTube works: player, shorts and loops, library",
+  "introWelcomeTitle": "Welcome to StashTube",
+  "introWelcomeText": "Your Stash library, browsed like YouTube. Home shows new and random scenes with filters and sort chips; search finds scenes, images, galleries, performers and studios in one place.",
+  "introPlayerTitle": "The player",
+  "introPlayerText": "Tap a video to play it; swipe the player down to keep it running in the mini bar. Double-tap the left or right of the video to skip, hold it for 2× speed, pinch to zoom. Open another video from \"Up next\" and the arrows beside play take you back and forth between them.",
+  "introShortsTitle": "Shorts and loops",
+  "introShortsText": "The Shorts tab has two feeds, switched at its top: Shorts are short (portrait) videos to swipe through. Loops are scene markers, each repeating on its own like a GIF. The tune button picks your favorite tags, the length and \"portrait only\".",
+  "introLibraryTitle": "Library and You",
+  "introLibraryText": "The library holds all scenes, images and galleries. \"You\" collects your history, watch later, groups, markers, performers, studios, tags and stats. Which tabs the bottom bar shows is up to you, in the settings.",
+  "introFavoritesTitle": "Favorites and ratings",
+  "introFavoritesText": "Mark performers and studios as favorites and rate them and your scenes with stars. Favorites get their own feed, and long-pressing a tile or tapping its ⋮ shows more actions. You can also edit metadata and create performers, studios, tags and groups.",
+  "introSettingsTitle": "Make it yours",
+  "introSettingsText": "Your avatar at the top right switches servers and opens the settings: app lock, previews, how thumbnails fit, haptics, playback and more. This tour is there too, under About.",
+  "whatsNewTitle": "What's new",
+  "whatsNewDone": "Got it",
+  "whatsNewSubtitle": "What the latest updates brought",
+  "whatsNew1Title": "Loops, a new watch page and more",
+  "whatsNew1": "New navigation: Home · Shorts · Search · Library · You.\nLoops: scene markers that repeat on their own. Switch at the top of the Shorts tab.\nA new watch page: rating, O-counter, watch later, marker and more in one bar.\nSearch suggestions while you type.\nDouble tap to skip adds up like on YouTube: 5, 10, 20, 30 seconds …\nBack and forward between the videos you opened, with arrows beside play.\nPerformer and studio pages with tabs: videos, shorts, markers, images, galleries, about.\nFavorites: the newest videos of your favorite performers.",
+  "whatsNew1More": "The You tab gathers history, watch later, groups and markers.\nSkip step and counting can be set in Settings → Playback.\nStars and favorites for performers and studios.\nCreate performers, studios and groups.\n\"Full video\" from a short continues where the short was.\nOn tablets the video sits beside \"Up next\".\nPicture-in-picture opens in the video's shape.\nServer tasks: scan, generate, auto tag and clean.\nA check for missing previews.\nA notification when a server task finishes (optional).\nMarkers with a start and an end on newer Stash versions.\n\"New since your last visit\" on the home page.\nClear playback errors with \"Try again\" and \"Change quality\".\nA banner when the server can't be reached; loaded lists stay.\nA simpler login: credentials only when the server asks for them.\nImage details behind the (i) button; swipe down to close an image.\nThe dice on the home page plays a random scene.\nWatch time as a chart in the stats.\nA touch lock in fullscreen.\nOn phones the app stays upright; tilting the phone with a wide video turns it into fullscreen.\nWhile a short plays, only its main buttons show and its text fades out; pause for the rest.\nEdit or delete markers with a long press.\nPortrait scenes show whole in thumbnails, or filled (settings).\nA tour of the app (Settings → About).\nSettings sorted into categories.",
+  "whatsNewShowMore": "Show {count} more",
+  "@whatsNewShowMore": {"placeholders": {"count": {"type": "int"}}},
+  "whatsNewShowLess": "Show less",
+  "markerEdit": "Edit marker",
+  "markerEditAt": "Edit marker at {time}",
+  "@markerEditAt": {"placeholders": {"time": {"type": "String"}}},
+  "markerDelete": "Delete marker",
+  "markerDeleteTitle": "Delete marker?",
+  "markerDeleteConfirm": "\"{title}\" at {time} will be removed from the scene.",
+  "@markerDeleteConfirm": {"placeholders": {"title": {"type": "String"}, "time": {"type": "String"}}},
+  "markerDeleteAction": "Delete",
+  "markerDeleted": "Marker deleted",
+  "markerSaved": "Marker saved"
 }

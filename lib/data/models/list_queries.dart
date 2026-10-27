@@ -1,5 +1,7 @@
 import 'dart:math';
 
+import 'package:flutter/foundation.dart' show listEquals;
+
 import 'scene_filter.dart';
 
 /// Sort orders offered for scene lists, mapped to Stash `FindFilterType.sort`.
@@ -76,6 +78,10 @@ enum GallerySort {
 
 int newRandomSeed() => Random().nextInt(1 << 30);
 
+/// [time] as Stash's timestamp criteria take it: RFC 3339 in UTC, whole
+/// seconds.
+String stashTimestamp(DateTime time) => '${time.toUtc().toIso8601String().split('.').first.replaceAll('Z', '')}Z';
+
 /// Arguments for a paginated scene list. Used as a provider family key, so it
 /// implements value equality.
 class SceneQuery {
@@ -91,6 +97,7 @@ class SceneQuery {
     this.filter = SceneFilter.none,
     this.groupId,
     this.playedOnly = false,
+    this.createdAfter,
     int? seed,
   }) : seed = seed ?? (sort == SceneSort.random ? newRandomSeed() : 0);
 
@@ -125,6 +132,10 @@ class SceneQuery {
   /// Only scenes that were played at least once (history).
   final bool playedOnly;
 
+  /// Only scenes added to Stash after this time ("new since your last
+  /// visit", NOTIF-1).
+  final DateTime? createdAfter;
+
   /// Seed for [SceneSort.random] so that pages are stable while scrolling.
   /// Always 0 for other sorts, so equal queries map to the same provider.
   final int seed;
@@ -149,6 +160,7 @@ class SceneQuery {
       if (favoritePerformersOnly) 'performer_favorite': true,
       if (groupId != null) 'groups': {'value': [groupId], 'modifier': 'INCLUDES'},
       if (playedOnly) 'play_count': {'value': 0, 'modifier': 'GREATER_THAN'},
+      if (createdAfter case final after?) 'created_at': {'value': stashTimestamp(after), 'modifier': 'GREATER_THAN'},
     };
     return criteria.isEmpty ? null : criteria;
   }
@@ -165,6 +177,7 @@ class SceneQuery {
         filter: filter ?? this.filter,
         groupId: groupId,
         playedOnly: playedOnly,
+        createdAfter: createdAfter,
         // Picking a sort again (e.g. "Shuffle") starts a fresh shuffle.
         seed: sort == null ? seed : null,
       );
@@ -183,6 +196,7 @@ class SceneQuery {
       other.filter == filter &&
       other.groupId == groupId &&
       other.playedOnly == playedOnly &&
+      other.createdAfter == createdAfter &&
       other.seed == seed;
 
   @override
@@ -198,6 +212,7 @@ class SceneQuery {
         filter,
         groupId,
         playedOnly,
+        createdAfter,
         seed,
       );
 }
@@ -279,6 +294,9 @@ class ImageQuery {
     this.galleryId,
     this.search,
     this.filter = SceneFilter.none,
+    this.performerId,
+    this.studioId,
+    this.includeSubStudios = false,
     int? seed,
   }) : seed = seed ?? (sort == ImageSort.random ? newRandomSeed() : 0);
 
@@ -293,6 +311,14 @@ class ImageQuery {
   /// Tags, minimum rating and resolution (15.4); the duration doesn't apply
   /// to images and isn't offered for them.
   final SceneFilter filter;
+
+  /// Only images of this performer (their channel's images tab).
+  final String? performerId;
+
+  /// Only images of this studio, with [includeSubStudios] also of its
+  /// sub-studios (the studio channel's images tab).
+  final String? studioId;
+  final bool includeSubStudios;
   final int seed;
 
   String get sortField => sort == ImageSort.random ? 'random_$seed' : sort.field;
@@ -306,6 +332,7 @@ class ImageQuery {
           'value': [galleryId],
           'modifier': 'INCLUDES',
         },
+      ..._channelCriteria(performerId, studioId, includeSubStudios),
     };
     return criteria.isEmpty ? null : criteria;
   }
@@ -315,6 +342,9 @@ class ImageQuery {
         galleryId: galleryId,
         search: clearSearch ? null : (search ?? this.search),
         filter: filter ?? this.filter,
+        performerId: performerId,
+        studioId: studioId,
+        includeSubStudios: includeSubStudios,
         // Picking a sort again (e.g. "Shuffle") starts a fresh shuffle.
         seed: sort == null ? seed : null,
       );
@@ -326,51 +356,161 @@ class ImageQuery {
       other.galleryId == galleryId &&
       other.search == search &&
       other.filter == filter &&
+      other.performerId == performerId &&
+      other.studioId == studioId &&
+      other.includeSubStudios == includeSubStudios &&
       other.seed == seed;
 
   @override
-  int get hashCode => Object.hash(sort, galleryId, search, filter, seed);
+  int get hashCode => Object.hash(sort, galleryId, search, filter, performerId, studioId, includeSubStudios, seed);
 }
 
+/// The `performers`/`studios` criteria of a channel's images or galleries.
+Map<String, dynamic> _channelCriteria(String? performerId, String? studioId, bool includeSubStudios) => {
+      if (performerId != null) 'performers': {'value': [performerId], 'modifier': 'INCLUDES'},
+      if (studioId != null)
+        'studios': {
+          'value': [studioId],
+          'modifier': 'INCLUDES',
+          'depth': includeSubStudios ? -1 : 0,
+        },
+    };
+
 class GalleryQuery {
-  GalleryQuery({this.sort = GallerySort.recentlyAdded, this.search, int? seed})
-      : seed = seed ?? (sort == GallerySort.random ? newRandomSeed() : 0);
+  GalleryQuery({
+    this.sort = GallerySort.recentlyAdded,
+    this.search,
+    this.performerId,
+    this.studioId,
+    this.includeSubStudios = false,
+    int? seed,
+  }) : seed = seed ?? (sort == GallerySort.random ? newRandomSeed() : 0);
 
   final GallerySort sort;
 
   /// Free text (Stash's `q`: title, path, ...).
   final String? search;
+
+  /// Only galleries of this performer (their channel's galleries tab).
+  final String? performerId;
+
+  /// Only galleries of this studio, with [includeSubStudios] also of its
+  /// sub-studios.
+  final String? studioId;
+  final bool includeSubStudios;
   final int seed;
 
   String get sortField => sort == GallerySort.random ? 'random_$seed' : sort.field;
   String get direction => sort == GallerySort.title ? 'ASC' : 'DESC';
 
+  Map<String, dynamic>? toGalleryFilter() {
+    final criteria = _channelCriteria(performerId, studioId, includeSubStudios);
+    return criteria.isEmpty ? null : criteria;
+  }
+
+  /// The same galleries in another order (a fresh shuffle for random).
+  GalleryQuery withSort(GallerySort sort) => GalleryQuery(
+        sort: sort,
+        search: search,
+        performerId: performerId,
+        studioId: studioId,
+        includeSubStudios: includeSubStudios,
+      );
+
   @override
   bool operator ==(Object other) =>
-      other is GalleryQuery && other.sort == sort && other.search == search && other.seed == seed;
+      other is GalleryQuery &&
+      other.sort == sort &&
+      other.search == search &&
+      other.performerId == performerId &&
+      other.studioId == studioId &&
+      other.includeSubStudios == includeSubStudios &&
+      other.seed == seed;
 
   @override
-  int get hashCode => Object.hash(sort, search, seed);
+  int get hashCode => Object.hash(sort, search, performerId, studioId, includeSubStudios, seed);
 }
 
-/// Arguments for the markers page (scene markers of all scenes).
+/// Arguments for the markers page (scene markers of all scenes), a
+/// channel's markers tab (those of a performer's or studio's scenes), and
+/// the markers in the shorts ([tagIds]).
 class MarkerQuery {
-  MarkerQuery({this.sort = MarkerSort.recentlyAdded, this.search, int? seed})
-      : seed = seed ?? (sort == MarkerSort.random ? newRandomSeed() : 0);
+  MarkerQuery({
+    this.sort = MarkerSort.recentlyAdded,
+    this.search,
+    this.performerId,
+    this.studioId,
+    this.includeSubStudios = false,
+    this.tagIds = const [],
+    this.portraitOnly = false,
+    int? seed,
+  }) : seed = seed ?? (sort == MarkerSort.random ? newRandomSeed() : 0);
 
   final MarkerSort sort;
 
   /// Free text (Stash's `q`: the marker's title, its scene's title, ...).
   final String? search;
+
+  /// Only markers in scenes of this performer.
+  final String? performerId;
+
+  /// Only markers in scenes of this studio, with [includeSubStudios] also
+  /// of its sub-studios.
+  final String? studioId;
+  final bool includeSubStudios;
+
+  /// Markers with at least one of these tags (as primary tag or one of
+  /// their other tags); all markers when empty.
+  final List<String> tagIds;
+
+  /// Only markers in portrait videos (the scene's `orientation`), like the
+  /// shorts' videos.
+  final bool portraitOnly;
   final int seed;
 
   String get sortField => sort == MarkerSort.random ? 'random_$seed' : sort.field;
   String get direction => sort == MarkerSort.title ? 'ASC' : 'DESC';
 
-  @override
-  bool operator ==(Object other) =>
-      other is MarkerQuery && other.sort == sort && other.search == search && other.seed == seed;
+  /// Stash's `SceneMarkerFilterType`, or null without criteria: markers
+  /// have their scene's performers; the studio goes through the scene
+  /// (`scene_filter`), as does the orientation, in one scene filter.
+  Map<String, dynamic>? toMarkerFilter() {
+    final sceneFilter = {
+      ..._channelCriteria(null, studioId, includeSubStudios),
+      if (portraitOnly) 'orientation': {'value': ['PORTRAIT']},
+    };
+    final criteria = {
+      ..._channelCriteria(performerId, null, false),
+      if (sceneFilter.isNotEmpty) 'scene_filter': sceneFilter,
+      if (tagIds.isNotEmpty) 'tags': {'value': tagIds, 'modifier': 'INCLUDES', 'depth': 0},
+    };
+    return criteria.isEmpty ? null : criteria;
+  }
+
+  /// The same markers in another order (a fresh shuffle for random).
+  MarkerQuery withSort(MarkerSort sort) => MarkerQuery(
+        sort: sort,
+        search: search,
+        performerId: performerId,
+        studioId: studioId,
+        includeSubStudios: includeSubStudios,
+        tagIds: tagIds,
+        portraitOnly: portraitOnly,
+      );
 
   @override
-  int get hashCode => Object.hash(sort, search, seed);
+  bool operator ==(Object other) =>
+      other is MarkerQuery &&
+      other.sort == sort &&
+      other.search == search &&
+      other.performerId == performerId &&
+      other.studioId == studioId &&
+      other.includeSubStudios == includeSubStudios &&
+      other.portraitOnly == portraitOnly &&
+      other.seed == seed &&
+      listEquals(other.tagIds, tagIds);
+
+  @override
+  int get hashCode =>
+      Object.hash(sort, search, performerId, studioId, includeSubStudios, portraitOnly, seed, Object.hashAll(tagIds));
 }

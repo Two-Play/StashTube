@@ -1,38 +1,52 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:miniplayer/miniplayer.dart';
 
 import '../../core/config/haptics.dart';
 import '../../l10n/l10n.dart';
+import '../../widgets/connection_banner.dart';
 import '../home/home_page.dart';
 import '../library/library_page.dart';
 import '../performers/performers_page.dart';
-import '../player/closing_slide.dart';
 import '../player/player_providers.dart';
 import '../player/player_view.dart';
+import '../player/sliding_panel.dart';
 import '../shorts/shorts_page.dart';
 import '../search/search_page.dart';
+import '../server_tasks/server_tasks_page.dart';
 import '../settings/theme_welcome.dart';
 import '../studios/studios_page.dart';
+import '../subscriptions/last_visit.dart';
+import '../subscriptions/subscriptions_page.dart';
 import '../tags/tags_page.dart';
-import 'all_views_page.dart';
+import '../you/you_page.dart';
+import '../whats_new/whats_new.dart';
 import 'nav_bar_config.dart';
 import 'navigation.dart';
+import 'shell_layout.dart';
 
 /// Root layout after login: per-tab navigators, the miniplayer on top of
-/// them and a bottom navigation bar that slides away as the player expands.
+/// them and a bottom navigation bar that slides away as the player expands,
+/// or a navigation rail on wide windows ([ShellLayout], NAV-4).
 class AppShell extends ConsumerWidget {
-  const AppShell({super.key});
+  const AppShell({super.key, @visibleForTesting this.pageBuilder, @visibleForTesting this.panelBuilder});
 
-  /// The page a tab starts with; also opened from the "all views" menu.
+  /// Replaces [rootPage] in tests.
+  final Widget Function(AppTab tab)? pageBuilder;
+
+  /// Replaces the [PlayerPanel] in tests (it needs the native player).
+  final Widget Function(double height)? panelBuilder;
+
+  /// The page a tab starts with; also opened from the "You" page.
   static Widget rootPage(AppTab tab) => switch (tab) {
         AppTab(:final section?) => LibrarySectionPage(section: section),
         AppTab.home => const HomePage(),
-        AppTab.all => const AllViewsPage(),
+        AppTab.you => const YouPage(),
         AppTab.shorts => const ShortsPage(),
         AppTab.performers => const PerformersPage(),
         AppTab.studios => const StudiosPage(),
+        AppTab.subscriptions => const SubscriptionsPage(),
         AppTab.library => const LibraryPage(),
         AppTab.tags => const TagsPage(),
         AppTab.search => const SearchPage(autofocus: false),
@@ -51,14 +65,18 @@ class AppShell extends ConsumerWidget {
     final closing = ref.watch(playerClosingProvider);
     final playerHeight = ref.watch(miniplayerHeightProvider);
     final maxPlayerHeight = MediaQuery.sizeOf(context).height;
-    // After the first login: pick a theme (once).
-    if (ref.watch(themeWelcomeProvider)) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (context.mounted) showThemeWelcomeIfPending(context, ref);
+    // After the first login: pick a theme (once), then the tour. After an
+    // update: what's new (decided first, as the first login skips it).
+    final whatsNewPending = (ref.watch(whatsNewSeenProvider) ?? -1) < latestChangelogId(context.l10n);
+    if (ref.watch(themeWelcomeProvider) || whatsNewPending) {
+      WidgetsBinding.instance.addPostFrameCallback((_) async {
+        if (context.mounted) await showWhatsNewIfPending(context, ref);
+        if (context.mounted) await showThemeWelcomeIfPending(context, ref);
       });
     }
 
     final scrollControllers = ref.watch(tabScrollControllersProvider);
+    final selected = tabs.indexOf(currentTab).clamp(0, tabs.length - 1);
 
     void selectTab(AppTab tab) {
       if (tab == currentTab) {
@@ -74,6 +92,13 @@ class AppShell extends ConsumerWidget {
       canPop: false,
       onPopInvokedWithResult: (didPop, _) {
         if (didPop) return;
+        // In the open player back first returns to the video left there
+        // (like YouTube), then collapses the player.
+        if (scene != null && !hidePlayer && playerHeight.value > kMiniPlayerHeight) {
+          final nowPlaying = ref.read(nowPlayingProvider.notifier);
+          if (!nowPlaying.goBack()) nowPlaying.collapse();
+          return;
+        }
         final navigator = navigatorKeys[currentTab]!.currentState;
         if (navigator != null && navigator.canPop()) {
           // maybePop: a page may ask to stay (e.g. while it saves).
@@ -84,83 +109,119 @@ class AppShell extends ConsumerWidget {
           SystemNavigator.pop();
         }
       },
-      child: Scaffold(
-        body: Stack(
-          children: [
-            AnimatedPadding(
-              // Keep the end of every list visible above the collapsed player.
-              // Shrinks along with the closing slide, so no empty strip shows
-              // where the bar was.
-              padding: EdgeInsets.only(bottom: scene == null || hidePlayer || closing ? 0 : kMiniPlayerHeight),
-              duration: ClosingSlide.defaultDuration,
-              curve: ClosingSlide.curve,
+      // The end of a visit (NOTIF-1) and finished server tasks.
+      child: LastVisitRecorder(
+        child: JobFinishedListener(
+          child: ShellLayout(
+            destinations: [
+              for (final tab in tabs) (icon: tab.icon, selectedIcon: tab.selectedIcon, label: tab.label(context.l10n)),
+            ],
+            selectedIndex: selected,
+            onSelect: (i) => selectTab(tabs[i]),
+            playerHeight: playerHeight,
+            hidePlayer: hidePlayer,
+            hideNavigation: hideNavBar,
+            closing: closing,
+            onClosed: () => ref.read(nowPlayingProvider.notifier).close(),
+            // The connection banner (STATE-1) sits above the tabs, below the
+            // player, which covers it when expanded.
+            content: ConnectionBannerScope(
               // Only the tabs in the bar; the GlobalKeys keep each navigator's
               // pages when the tabs are reordered.
               child: IndexedStack(
-                index: tabs.indexOf(currentTab).clamp(0, tabs.length - 1),
+                index: selected,
                 children: [
                   for (final tab in tabs)
-                    Navigator(
-                      key: navigatorKeys[tab],
-                      onGenerateRoute: (_) => MaterialPageRoute(
-                        builder: (_) => PrimaryScrollController(
-                          controller: scrollControllers[tab]!,
-                          child: rootPage(tab),
+                    _TabTickers(
+                      shown: tab == tabs[selected],
+                      playerHeight: playerHeight,
+                      maxPlayerHeight: maxPlayerHeight,
+                      child: Navigator(
+                        key: navigatorKeys[tab],
+                        onGenerateRoute: (_) => MaterialPageRoute(
+                          builder: (_) => PrimaryScrollController(
+                            controller: scrollControllers[tab]!,
+                            child: (pageBuilder ?? rootPage)(tab),
+                          ),
                         ),
                       ),
                     ),
                 ],
               ),
             ),
-            if (scene != null)
-              Offstage(
-                offstage: hidePlayer,
-                child: ClosingSlide(
-                  closing: closing,
-                  distance: kMiniPlayerHeight,
-                  onClosed: () => ref.read(nowPlayingProvider.notifier).close(),
-                  child: Miniplayer(
+            miniplayer: scene == null
+                ? null
+                : SlidingPanel(
                     controller: ref.watch(miniplayerControllerProvider),
-                    valueNotifier: playerHeight,
+                    height: playerHeight,
                     minHeight: kMiniPlayerHeight,
                     maxHeight: maxPlayerHeight,
                     onDismissed: () => ref.read(nowPlayingProvider.notifier).close(),
-                    builder: (height, _) => PlayerPanel(scene: scene, height: height, maxHeight: maxPlayerHeight),
+                    builder: (_, height) =>
+                        panelBuilder?.call(height) ??
+                        PlayerPanel(scene: scene, height: height, maxHeight: maxPlayerHeight),
                   ),
-                ),
-              ),
-          ],
+          ),
         ),
-        bottomNavigationBar: hideNavBar
-            ? null
-            : ValueListenableBuilder<double>(
-                valueListenable: playerHeight,
-                builder: (context, height, child) {
-                  final expanded = scene == null
-                      ? 0.0
-                      : ((height - kMiniPlayerHeight) / (maxPlayerHeight - kMiniPlayerHeight)).clamp(0.0, 1.0);
-                  return ClipRect(
-                    child: Align(
-                      alignment: Alignment.topCenter,
-                      heightFactor: 1 - expanded,
-                      child: child,
-                    ),
-                  );
-                },
-                child: NavigationBar(
-                  selectedIndex: tabs.indexOf(currentTab).clamp(0, tabs.length - 1),
-                  onDestinationSelected: (i) => selectTab(tabs[i]),
-                  destinations: [
-                    for (final tab in tabs)
-                      NavigationDestination(
-                        icon: Icon(tab.icon),
-                        selectedIcon: Icon(tab.selectedIcon),
-                        label: tab.label(context.l10n),
-                      ),
-                  ],
-                ),
-              ),
       ),
     );
   }
+}
+
+/// Stops a tab's animations (shimmers, animated previews, spinners) while
+/// nobody sees it: [IndexedStack] keeps hidden tabs ticking, which cost
+/// frames in the shorts and behind the expanded player.
+class _TabTickers extends StatefulWidget {
+  const _TabTickers({
+    required this.shown,
+    required this.playerHeight,
+    required this.maxPlayerHeight,
+    required this.child,
+  });
+
+  /// The selected tab.
+  final bool shown;
+  final ValueListenable<double> playerHeight;
+  final double maxPlayerHeight;
+  final Widget child;
+
+  @override
+  State<_TabTickers> createState() => _TabTickersState();
+}
+
+class _TabTickersState extends State<_TabTickers> {
+  late bool _covered = _isCovered;
+
+  bool get _isCovered => widget.playerHeight.value >= widget.maxPlayerHeight - 0.5;
+
+  @override
+  void initState() {
+    super.initState();
+    widget.playerHeight.addListener(_onPlayerHeight);
+  }
+
+  @override
+  void didUpdateWidget(_TabTickers oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.playerHeight != widget.playerHeight) {
+      oldWidget.playerHeight.removeListener(_onPlayerHeight);
+      widget.playerHeight.addListener(_onPlayerHeight);
+    }
+    _covered = _isCovered;
+  }
+
+  @override
+  void dispose() {
+    widget.playerHeight.removeListener(_onPlayerHeight);
+    super.dispose();
+  }
+
+  // Only a change of covered/uncovered rebuilds, not every frame of the
+  // player's transition.
+  void _onPlayerHeight() {
+    if (_isCovered != _covered) setState(() => _covered = _isCovered);
+  }
+
+  @override
+  Widget build(BuildContext context) => TickerMode(enabled: widget.shown && !_covered, child: widget.child);
 }

@@ -1,5 +1,6 @@
 import '../data/models/list_queries.dart';
 import '../data/models/scene_filter.dart';
+import '../data/models/server_task.dart';
 import '../features/shorts/shorts_settings.dart';
 import 'gen/app_localizations.dart';
 
@@ -89,5 +90,47 @@ extension ShortsLengthLabel on ShortsLength {
         ShortsLength.threeMinutes => l.shortsLengthThreeMinutes,
         ShortsLength.tenMinutes => l.shortsLengthTenMinutes,
         ShortsLength.any => l.durationAny,
+      };
+}
+
+extension JobStateLabel on JobState {
+  String label(AppLocalizations l) => switch (this) {
+        JobState.ready => l.jobReady,
+        JobState.running => l.jobRunning,
+        JobState.finished => l.jobFinished,
+        JobState.stopping => l.jobStopping,
+        JobState.cancelled => l.jobCancelled,
+        JobState.failed => l.jobFailed,
+      };
+}
+
+extension ScanOptionLabel on ScanOption {
+  String label(AppLocalizations l) => switch (this) {
+        ScanOption.rescan => l.optionRescan,
+        ScanOption.covers => l.optionCovers,
+        ScanOption.previews => l.optionPreviews,
+        ScanOption.imagePreviews => l.optionImagePreviews,
+        ScanOption.sprites => l.optionSprites,
+        ScanOption.phashes => l.optionPhashes,
+      };
+}
+
+extension GenerateOptionLabel on GenerateOption {
+  String label(AppLocalizations l) => switch (this) {
+        GenerateOption.covers => l.optionCovers,
+        GenerateOption.previews => l.optionPreviews,
+        GenerateOption.imagePreviews => l.optionImagePreviews,
+        GenerateOption.sprites => l.optionSprites,
+        GenerateOption.markers => l.optionMarkers,
+        GenerateOption.markerImagePreviews => l.optionMarkerImagePreviews,
+        GenerateOption.markerScreenshots => l.optionMarkerScreenshots,
+        GenerateOption.phashes => l.optionPhashes,
+      };
+}
+
+extension ShortsModeLabel on ShortsMode {
+  String label(AppLocalizations l) => switch (this) {
+        ShortsMode.shorts => l.shortsModeShorts,
+        ShortsMode.loops => l.shortsModeLoops,
       };
 }

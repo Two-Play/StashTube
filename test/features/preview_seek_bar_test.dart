@@ -45,6 +45,29 @@ void main() {
     return Offset(rect.left + rect.width * fraction, rect.center.dy);
   }
 
+  SeekBarPainter painter(WidgetTester tester) => tester
+      .widget<CustomPaint>(find.byWidgetPredicate((w) => w is CustomPaint && w.painter is SeekBarPainter))
+      .painter! as SeekBarPainter;
+
+  testWidgets('positions repaint the bar; it rebuilds only once a second', (tester) async {
+    await pump(tester);
+    player.position.add(const Duration(milliseconds: 20200));
+    await tester.pump();
+    final first = painter(tester);
+    expect(first.played, closeTo(0.202, 1e-9));
+
+    // mpv reports every frame: same second, same painter, new value.
+    player.position.add(const Duration(milliseconds: 20600));
+    await tester.pump();
+    expect(painter(tester), same(first));
+    expect(first.played, closeTo(0.206, 1e-9));
+
+    player.position.add(const Duration(milliseconds: 21000));
+    await tester.pump();
+    expect(painter(tester), isNot(same(first)), reason: 'the spoken value follows each second');
+    expect(painter(tester).played, closeTo(0.21, 1e-9));
+  });
+
   testWidgets('takes the full available width', (tester) async {
     await pump(tester);
     expect(tester.getSize(find.byType(PreviewSeekBar)).width, 400);

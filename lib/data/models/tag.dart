@@ -15,7 +15,7 @@ class Tag {
   factory Tag.fromFields(Fragment$TagFields t, {String? description}) => Tag(
         id: t.id,
         name: t.name,
-        imageUrl: nonEmpty(t.image_path),
+        imageUrl: stashImageUrl(t.image_path),
         description: nonEmpty(description),
         sceneCount: t.scene_count,
       );
