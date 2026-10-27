@@ -9,11 +9,13 @@ import '../core/pagination/paged_notifier.dart';
 export '../core/pagination/paged_notifier.dart' show PagedState, PagedValue;
 import 'models/gallery.dart';
 import 'models/group.dart';
+import 'models/image_details.dart';
 import 'models/image_item.dart';
 import 'models/list_queries.dart';
 import 'models/marker.dart';
 import 'models/page_result.dart';
 import 'models/performer.dart';
+import 'models/performer_profile.dart';
 import 'models/saved_filter.dart';
 import 'models/scene.dart';
 import 'models/scene_details.dart';
@@ -21,6 +23,7 @@ import 'models/scrub_thumbnails.dart';
 import 'models/stats.dart';
 import 'models/studio.dart';
 import 'models/tag.dart';
+import 'models/watch_history.dart';
 import 'repositories/stash_repository.dart';
 
 class SceneListNotifier extends PagedNotifier<Scene, SceneQuery> {
@@ -70,6 +73,22 @@ final studioProvider = FutureProvider.autoDispose.family<Studio, String>(
   (ref, id) => ref.watch(stashRepositoryProvider).findStudio(id),
 );
 
+/// A performer's details for their channel's about tab, with the counts
+/// that decide whether it shows the images and galleries tabs.
+final performerProfileProvider = FutureProvider.autoDispose.family<PerformerProfile, String>(
+  (ref, id) => ref.watch(stashRepositoryProvider).performerProfile(id),
+);
+
+/// A performer's links; null when the server has no URL lists.
+final performerUrlsProvider = FutureProvider.autoDispose.family<List<String>?, String>(
+  (ref, id) => ref.watch(stashRepositoryProvider).performerUrls(id),
+);
+
+/// Whether a studio channel shows the images and galleries tabs.
+final studioMediaCountsProvider = FutureProvider.autoDispose.family<ChannelMediaCounts, String>(
+  (ref, id) => ref.watch(stashRepositoryProvider).studioMediaCounts(id),
+);
+
 final serverVersionProvider = FutureProvider.autoDispose<String?>(
   (ref) => ref.watch(stashRepositoryProvider).serverVersion(),
 );
@@ -109,6 +128,13 @@ final imageListProvider =
   ImageListNotifier.new,
 );
 
+/// An image's details for the viewer's info sheet, loaded when it opens and
+/// kept briefly, so swiping back and forth doesn't refetch.
+final imageDetailsProvider = FutureProvider.autoDispose.family<ImageDetails, String>((ref, id) {
+  ref.cacheFor(const Duration(minutes: 2));
+  return ref.watch(stashRepositoryProvider).findImageDetails(id);
+});
+
 final libraryStatsProvider = FutureProvider.autoDispose<LibraryStats>(
   (ref) => ref.watch(stashRepositoryProvider).libraryStats(),
 );
@@ -116,6 +142,15 @@ final libraryStatsProvider = FutureProvider.autoDispose<LibraryStats>(
 final activityStatsProvider = FutureProvider.autoDispose<ActivityStats?>(
   (ref) => ref.watch(stashRepositoryProvider).activityStats(),
 );
+
+/// Plays of the last [PlayHistory.windowDays] days for the stats' watch
+/// chart; null on servers without play history, which hide the chart.
+final playHistoryProvider = FutureProvider.autoDispose<PlayHistory?>((ref) {
+  final now = DateTime.now();
+  return ref
+      .watch(stashRepositoryProvider)
+      .playHistory(since: DateTime(now.year, now.month, now.day - PlayHistory.windowDays));
+});
 
 /// Seek preview thumbnails of a scene, or null when there are none. Only
 /// read once the user is about to seek (`PreviewSeekBar`), as the WebVTT
@@ -175,6 +210,11 @@ final markerListProvider =
   MarkerListNotifier.new,
 );
 
+/// How many markers a channel has (whether its markers tab shows).
+final markerCountProvider = FutureProvider.autoDispose.family<int, MarkerQuery>(
+  (ref, query) => ref.watch(stashRepositoryProvider).countMarkers(query),
+);
+
 class GroupListNotifier extends PagedNotifier<Group, GroupQuery> {
   GroupListNotifier(super.arg);
 
@@ -188,4 +228,9 @@ final groupListProvider =
 
 final groupProvider = FutureProvider.autoDispose.family<Group, String>(
   (ref, id) => ref.watch(stashRepositoryProvider).findGroup(id),
+);
+
+/// The ids of the groups a scene is in ("Add to group", PL-1).
+final sceneGroupIdsProvider = FutureProvider.autoDispose.family<Set<String>, String>(
+  (ref, sceneId) async => {for (final g in await ref.watch(stashRepositoryProvider).sceneGroups(sceneId)) g.groupId},
 );

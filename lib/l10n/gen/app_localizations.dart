@@ -260,6 +260,12 @@ abstract class AppLocalizations {
   /// **'Studios'**
   String get tabStudios;
 
+  /// No description provided for @tabSubscriptions.
+  ///
+  /// In en, this message translates to:
+  /// **'Favorites'**
+  String get tabSubscriptions;
+
   /// No description provided for @tabLibrary.
   ///
   /// In en, this message translates to:
@@ -289,6 +295,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Nothing here yet'**
   String get emptyDefault;
+
+  /// No description provided for @loading.
+  ///
+  /// In en, this message translates to:
+  /// **'Loading'**
+  String get loading;
 
   /// No description provided for @loadMoreFailed.
   ///
@@ -380,6 +392,54 @@ abstract class AppLocalizations {
   /// **'Play'**
   String get sceneMenuPlay;
 
+  /// No description provided for @sceneMoreOptions.
+  ///
+  /// In en, this message translates to:
+  /// **'More options'**
+  String get sceneMoreOptions;
+
+  /// No description provided for @durationHours.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 hour} other{{count} hours}}'**
+  String durationHours(int count);
+
+  /// No description provided for @durationMinutes.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 minute} other{{count} minutes}}'**
+  String durationMinutes(int count);
+
+  /// No description provided for @durationSeconds.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 second} other{{count} seconds}}'**
+  String durationSeconds(int count);
+
+  /// No description provided for @starsCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 star} other{{count} stars}}'**
+  String starsCount(int count);
+
+  /// No description provided for @watchedPercent.
+  ///
+  /// In en, this message translates to:
+  /// **'{percent}% watched'**
+  String watchedPercent(int percent);
+
+  /// No description provided for @markerAt.
+  ///
+  /// In en, this message translates to:
+  /// **'Marker at {time}'**
+  String markerAt(String time);
+
+  /// No description provided for @markerFromTo.
+  ///
+  /// In en, this message translates to:
+  /// **'Marker from {start} to {end}'**
+  String markerFromTo(String start, String end);
+
   /// No description provided for @watchLaterRemove.
   ///
   /// In en, this message translates to:
@@ -409,6 +469,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'No scenes found'**
   String get scenesEmpty;
+
+  /// No description provided for @homeEmptyTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Your library is still empty'**
+  String get homeEmptyTitle;
+
+  /// No description provided for @homeEmptyHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Stash has to scan your media folders before scenes show up here. Start a scan in the server tasks.'**
+  String get homeEmptyHint;
+
+  /// No description provided for @openServerTasks.
+  ///
+  /// In en, this message translates to:
+  /// **'Open server tasks'**
+  String get openServerTasks;
 
   /// No description provided for @savedFilterUnsupported.
   ///
@@ -493,6 +571,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Retry'**
   String get retry;
+
+  /// No description provided for @playbackFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t play this video'**
+  String get playbackFailed;
+
+  /// No description provided for @otherQuality.
+  ///
+  /// In en, this message translates to:
+  /// **'Other quality'**
+  String get otherQuality;
 
   /// No description provided for @sortRecentlyAdded.
   ///
@@ -650,6 +740,66 @@ abstract class AppLocalizations {
   /// **'This group has no scenes'**
   String get groupNoScenes;
 
+  /// No description provided for @addToGroup.
+  ///
+  /// In en, this message translates to:
+  /// **'Add to group…'**
+  String get addToGroup;
+
+  /// No description provided for @addToGroupTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Add to group'**
+  String get addToGroupTitle;
+
+  /// No description provided for @searchGroups.
+  ///
+  /// In en, this message translates to:
+  /// **'Search groups'**
+  String get searchGroups;
+
+  /// No description provided for @groupsNoMatch.
+  ///
+  /// In en, this message translates to:
+  /// **'No groups match'**
+  String get groupsNoMatch;
+
+  /// No description provided for @newGroup.
+  ///
+  /// In en, this message translates to:
+  /// **'New group'**
+  String get newGroup;
+
+  /// No description provided for @groupName.
+  ///
+  /// In en, this message translates to:
+  /// **'Group name'**
+  String get groupName;
+
+  /// No description provided for @addedToGroup.
+  ///
+  /// In en, this message translates to:
+  /// **'Added to {group}'**
+  String addedToGroup(String group);
+
+  /// No description provided for @removedFromGroup.
+  ///
+  /// In en, this message translates to:
+  /// **'Removed from {group}'**
+  String removedFromGroup(String group);
+
+  /// No description provided for @groupUpdateFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t change the group: {error}'**
+  String groupUpdateFailed(String error);
+
+  /// No description provided for @groupCreateFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t create the group: {error}'**
+  String groupCreateFailed(String error);
+
   /// No description provided for @playAll.
   ///
   /// In en, this message translates to:
@@ -752,6 +902,102 @@ abstract class AppLocalizations {
   /// **'O-count'**
   String get statsOCount;
 
+  /// No description provided for @statsWatchHistory.
+  ///
+  /// In en, this message translates to:
+  /// **'Watch history'**
+  String get statsWatchHistory;
+
+  /// No description provided for @statsChartWeeks.
+  ///
+  /// In en, this message translates to:
+  /// **'12 weeks'**
+  String get statsChartWeeks;
+
+  /// No description provided for @statsChartDays.
+  ///
+  /// In en, this message translates to:
+  /// **'30 days'**
+  String get statsChartDays;
+
+  /// No description provided for @statsPlaysPerWeek.
+  ///
+  /// In en, this message translates to:
+  /// **'Plays per week'**
+  String get statsPlaysPerWeek;
+
+  /// No description provided for @statsPlaysPerDay.
+  ///
+  /// In en, this message translates to:
+  /// **'Plays per day'**
+  String get statsPlaysPerDay;
+
+  /// No description provided for @statsChartTotal.
+  ///
+  /// In en, this message translates to:
+  /// **'Total'**
+  String get statsChartTotal;
+
+  /// No description provided for @statsChartAverage.
+  ///
+  /// In en, this message translates to:
+  /// **'Average'**
+  String get statsChartAverage;
+
+  /// No description provided for @statsAveragePerWeek.
+  ///
+  /// In en, this message translates to:
+  /// **'{average} per week'**
+  String statsAveragePerWeek(String average);
+
+  /// No description provided for @statsAveragePerDay.
+  ///
+  /// In en, this message translates to:
+  /// **'{average} per day'**
+  String statsAveragePerDay(String average);
+
+  /// No description provided for @statsChartSummaryWeek.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 play this week, {average} on average} other{{count} plays this week, {average} on average}}'**
+  String statsChartSummaryWeek(int count, String average);
+
+  /// No description provided for @statsChartSummaryDay.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 play today, {average} on average} other{{count} plays today, {average} on average}}'**
+  String statsChartSummaryDay(int count, String average);
+
+  /// No description provided for @statsChartWeekOf.
+  ///
+  /// In en, this message translates to:
+  /// **'Week of {date}'**
+  String statsChartWeekOf(String date);
+
+  /// No description provided for @statsChartBar.
+  ///
+  /// In en, this message translates to:
+  /// **'{period}: {plays}'**
+  String statsChartBar(String period, String plays);
+
+  /// No description provided for @statsChartEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No plays in this period'**
+  String get statsChartEmpty;
+
+  /// No description provided for @statsChartPlaysNote.
+  ///
+  /// In en, this message translates to:
+  /// **'Stash keeps the watch time per scene, not per play, so the chart counts plays.'**
+  String get statsChartPlaysNote;
+
+  /// No description provided for @statsChartTruncated.
+  ///
+  /// In en, this message translates to:
+  /// **'Based on the {count} most recently played scenes.'**
+  String statsChartTruncated(int count);
+
   /// No description provided for @watchLaterEmpty.
   ///
   /// In en, this message translates to:
@@ -763,6 +1009,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Tap \"Later\" on a scene to watch it afterwards.'**
   String get watchLaterEmptyHint;
+
+  /// No description provided for @watchLaterDeviceOnly.
+  ///
+  /// In en, this message translates to:
+  /// **'Saved on this device only, not on the server.'**
+  String get watchLaterDeviceOnly;
 
   /// No description provided for @favoriteUpdateFailed.
   ///
@@ -847,6 +1099,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Studios appear here once scenes in Stash have one.'**
   String get studiosEmptyHint;
+
+  /// No description provided for @newPerformer.
+  ///
+  /// In en, this message translates to:
+  /// **'New performer'**
+  String get newPerformer;
+
+  /// No description provided for @newStudio.
+  ///
+  /// In en, this message translates to:
+  /// **'New studio'**
+  String get newStudio;
 
   /// No description provided for @newTag.
   ///
@@ -938,6 +1202,54 @@ abstract class AppLocalizations {
   /// **'New from favorites'**
   String get newFromFavorites;
 
+  /// No description provided for @subscriptionsEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No favorites yet'**
+  String get subscriptionsEmpty;
+
+  /// No description provided for @subscriptionsEmptyHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Mark performers as favorites to see their newest scenes here.'**
+  String get subscriptionsEmptyHint;
+
+  /// No description provided for @performerHasNewScenes.
+  ///
+  /// In en, this message translates to:
+  /// **'{name}, new scenes'**
+  String performerHasNewScenes(String name);
+
+  /// No description provided for @newSinceLastVisit.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 new video since your last visit} other{{count} new videos since your last visit}}'**
+  String newSinceLastVisit(int count);
+
+  /// No description provided for @newSinceLastVisitTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'New since your last visit'**
+  String get newSinceLastVisitTitle;
+
+  /// No description provided for @newSinceLastVisitEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing new since your last visit'**
+  String get newSinceLastVisitEmpty;
+
+  /// No description provided for @randomScene.
+  ///
+  /// In en, this message translates to:
+  /// **'Play a random scene'**
+  String get randomScene;
+
+  /// No description provided for @randomSceneNone.
+  ///
+  /// In en, this message translates to:
+  /// **'There are no scenes to pick from'**
+  String get randomSceneNone;
+
   /// No description provided for @searchHint.
   ///
   /// In en, this message translates to:
@@ -998,6 +1310,12 @@ abstract class AppLocalizations {
   /// **'Add server'**
   String get addServer;
 
+  /// No description provided for @addServerTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Add a server'**
+  String get addServerTitle;
+
   /// No description provided for @connectToStash.
   ///
   /// In en, this message translates to:
@@ -1052,18 +1370,6 @@ abstract class AppLocalizations {
   /// **'API key (optional)'**
   String get apiKeyOptional;
 
-  /// No description provided for @apiKeyHelper.
-  ///
-  /// In en, this message translates to:
-  /// **'For a server with a password: the API key (Stash → Settings → Security), or sign in below.'**
-  String get apiKeyHelper;
-
-  /// No description provided for @signInWithPassword.
-  ///
-  /// In en, this message translates to:
-  /// **'Sign in with username and password'**
-  String get signInWithPassword;
-
   /// No description provided for @signInWithPasswordHint.
   ///
   /// In en, this message translates to:
@@ -1087,6 +1393,54 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Enter username and password.'**
   String get loginIncomplete;
+
+  /// No description provided for @apiKeyRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter the API key.'**
+  String get apiKeyRequired;
+
+  /// No description provided for @loginAuthTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'This server needs a login'**
+  String get loginAuthTitle;
+
+  /// Under the login step's title: the server's name and host.
+  ///
+  /// In en, this message translates to:
+  /// **'{name} · {host}'**
+  String loginAuthServer(String name, String host);
+
+  /// No description provided for @loginAuthIntro.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign in with an API key or with your Stash username and password.'**
+  String get loginAuthIntro;
+
+  /// No description provided for @loginMethodPassword.
+  ///
+  /// In en, this message translates to:
+  /// **'Username & password'**
+  String get loginMethodPassword;
+
+  /// No description provided for @apiKeyWhere.
+  ///
+  /// In en, this message translates to:
+  /// **'You find it in Stash under Settings → Security → API key.'**
+  String get apiKeyWhere;
+
+  /// No description provided for @signIn.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign in'**
+  String get signIn;
+
+  /// No description provided for @changeServerAddress.
+  ///
+  /// In en, this message translates to:
+  /// **'Change address'**
+  String get changeServerAddress;
 
   /// No description provided for @connect.
   ///
@@ -1202,6 +1556,24 @@ abstract class AppLocalizations {
   /// **'Couldn\'t connect to {device}: {error}'**
   String castConnectFailed(String device, String error);
 
+  /// No description provided for @castPlayFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t play on {device}: {error}'**
+  String castPlayFailed(String device, String error);
+
+  /// No description provided for @backToPreviousVideo.
+  ///
+  /// In en, this message translates to:
+  /// **'Back to the previous video'**
+  String get backToPreviousVideo;
+
+  /// No description provided for @forwardToNextVideo.
+  ///
+  /// In en, this message translates to:
+  /// **'Forward to the next video'**
+  String get forwardToNextVideo;
+
   /// No description provided for @minimize.
   ///
   /// In en, this message translates to:
@@ -1220,6 +1592,30 @@ abstract class AppLocalizations {
   /// **'Forward 10 s'**
   String get forward10;
 
+  /// No description provided for @seekForwardSeconds.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{Forward 1 second} other{Forward {count} seconds}}'**
+  String seekForwardSeconds(int count);
+
+  /// No description provided for @seekBackSeconds.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{Back 1 second} other{Back {count} seconds}}'**
+  String seekBackSeconds(int count);
+
+  /// No description provided for @seekBar.
+  ///
+  /// In en, this message translates to:
+  /// **'Seek bar'**
+  String get seekBar;
+
+  /// No description provided for @seekBarValue.
+  ///
+  /// In en, this message translates to:
+  /// **'{position} of {duration}'**
+  String seekBarValue(String position, String duration);
+
   /// No description provided for @pause.
   ///
   /// In en, this message translates to:
@@ -1231,6 +1627,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Play'**
   String get play;
+
+  /// No description provided for @previousScene.
+  ///
+  /// In en, this message translates to:
+  /// **'Previous scene'**
+  String get previousScene;
+
+  /// No description provided for @nextScene.
+  ///
+  /// In en, this message translates to:
+  /// **'Next scene'**
+  String get nextScene;
 
   /// No description provided for @navBarTitle.
   ///
@@ -1448,6 +1856,12 @@ abstract class AppLocalizations {
   /// **'Used when a scene offers it, otherwise the next lower one. Smaller videos play their original file. Also changes with HD in the player.'**
   String get preferredQualityHint;
 
+  /// No description provided for @qualitySummary.
+  ///
+  /// In en, this message translates to:
+  /// **'Quality: {quality}'**
+  String qualitySummary(String quality);
+
   /// No description provided for @sectionPrivacy.
   ///
   /// In en, this message translates to:
@@ -1483,6 +1897,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Ask for a PIN when opening the app'**
   String get appLockSubtitle;
+
+  /// No description provided for @appLockOnSummary.
+  ///
+  /// In en, this message translates to:
+  /// **'App lock on'**
+  String get appLockOnSummary;
+
+  /// No description provided for @appLockOffSummary.
+  ///
+  /// In en, this message translates to:
+  /// **'App lock off'**
+  String get appLockOffSummary;
 
   /// No description provided for @unlockBiometric.
   ///
@@ -1613,7 +2039,7 @@ abstract class AppLocalizations {
   /// No description provided for @chapters.
   ///
   /// In en, this message translates to:
-  /// **'Chapters'**
+  /// **'Markers'**
   String get chapters;
 
   /// No description provided for @close.
@@ -1640,6 +2066,18 @@ abstract class AppLocalizations {
   /// **'Up next'**
   String get upNext;
 
+  /// No description provided for @queuePosition.
+  ///
+  /// In en, this message translates to:
+  /// **'{position} / {count}'**
+  String queuePosition(int position, int count);
+
+  /// No description provided for @queuePositionSemantics.
+  ///
+  /// In en, this message translates to:
+  /// **'Scene {position} of {count}'**
+  String queuePositionSemantics(int position, int count);
+
   /// No description provided for @addTags.
   ///
   /// In en, this message translates to:
@@ -1652,17 +2090,41 @@ abstract class AppLocalizations {
   /// **'Edit tags'**
   String get editTags;
 
-  /// No description provided for @showLess.
-  ///
-  /// In en, this message translates to:
-  /// **'Show less'**
-  String get showLess;
-
   /// No description provided for @showMore.
   ///
   /// In en, this message translates to:
   /// **'...more'**
   String get showMore;
+
+  /// No description provided for @moreTags.
+  ///
+  /// In en, this message translates to:
+  /// **'+{count}'**
+  String moreTags(int count);
+
+  /// No description provided for @moreTagsSemantics.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 more tag} other{{count} more tags}}'**
+  String moreTagsSemantics(int count);
+
+  /// No description provided for @showDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Show description'**
+  String get showDescription;
+
+  /// No description provided for @sceneDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Description'**
+  String get sceneDescription;
+
+  /// No description provided for @noDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'No description'**
+  String get noDescription;
 
   /// No description provided for @saveFailed.
   ///
@@ -1676,11 +2138,53 @@ abstract class AppLocalizations {
   /// **'Remove rating'**
   String get removeRating;
 
+  /// No description provided for @rateScene.
+  ///
+  /// In en, this message translates to:
+  /// **'Rate'**
+  String get rateScene;
+
+  /// No description provided for @rateThisPerformer.
+  ///
+  /// In en, this message translates to:
+  /// **'Rate this performer'**
+  String get rateThisPerformer;
+
+  /// No description provided for @rateThisStudio.
+  ///
+  /// In en, this message translates to:
+  /// **'Rate this studio'**
+  String get rateThisStudio;
+
+  /// No description provided for @rateThisScene.
+  ///
+  /// In en, this message translates to:
+  /// **'Rate this scene'**
+  String get rateThisScene;
+
+  /// No description provided for @ratingButtonSemantics.
+  ///
+  /// In en, this message translates to:
+  /// **'Rating: {rating}'**
+  String ratingButtonSemantics(String rating);
+
   /// No description provided for @rateStars.
   ///
   /// In en, this message translates to:
   /// **'{count, plural, =1{Rate 1 star} other{Rate {count} stars}}'**
   String rateStars(int count);
+
+  /// No description provided for @ratingLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Rating'**
+  String get ratingLabel;
+
+  /// No description provided for @ratingValue.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =0{No rating} =1{1 of 5 stars} other{{count} of 5 stars}}'**
+  String ratingValue(int count);
 
   /// No description provided for @addO.
   ///
@@ -1693,6 +2197,30 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'O-count: {count}'**
   String oCountValue(int count);
+
+  /// No description provided for @oCounterLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'O · {count}'**
+  String oCounterLabel(int count);
+
+  /// No description provided for @oCounterSemantics.
+  ///
+  /// In en, this message translates to:
+  /// **'O-counter: {count}'**
+  String oCounterSemantics(int count);
+
+  /// No description provided for @oCounterTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'O-counter'**
+  String get oCounterTitle;
+
+  /// No description provided for @removeO.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove one O'**
+  String get removeO;
 
   /// No description provided for @undo.
   ///
@@ -1753,6 +2281,54 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Add marker'**
   String get addMarker;
+
+  /// No description provided for @markerRange.
+  ///
+  /// In en, this message translates to:
+  /// **'{start}–{end}'**
+  String markerRange(String start, String end);
+
+  /// No description provided for @markerRangeWithLength.
+  ///
+  /// In en, this message translates to:
+  /// **'{range} · {length}'**
+  String markerRangeWithLength(String range, String length);
+
+  /// No description provided for @markerEndOptional.
+  ///
+  /// In en, this message translates to:
+  /// **'End (optional)'**
+  String get markerEndOptional;
+
+  /// No description provided for @markerEndSet.
+  ///
+  /// In en, this message translates to:
+  /// **'Set end to current position'**
+  String get markerEndSet;
+
+  /// No description provided for @markerEndEarlier.
+  ///
+  /// In en, this message translates to:
+  /// **'End 5 seconds earlier'**
+  String get markerEndEarlier;
+
+  /// No description provided for @markerEndLater.
+  ///
+  /// In en, this message translates to:
+  /// **'End 5 seconds later'**
+  String get markerEndLater;
+
+  /// No description provided for @markerEndClear.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove end'**
+  String get markerEndClear;
+
+  /// No description provided for @markerEndInvalid.
+  ///
+  /// In en, this message translates to:
+  /// **'The end must be after the start.'**
+  String get markerEndInvalid;
 
   /// No description provided for @saved.
   ///
@@ -2072,6 +2648,18 @@ abstract class AppLocalizations {
   /// **'Could not reach the server: {detail}'**
   String errorUnreachable(String detail);
 
+  /// Banner at the top of the app while the server can't be reached.
+  ///
+  /// In en, this message translates to:
+  /// **'Server not reachable'**
+  String get connectionLostTitle;
+
+  /// No description provided for @connectionLostBody.
+  ///
+  /// In en, this message translates to:
+  /// **'{server} doesn\'t answer. Are you outside your home network?'**
+  String connectionLostBody(String server);
+
   /// No description provided for @errorUnauthorized.
   ///
   /// In en, this message translates to:
@@ -2101,6 +2689,96 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Nothing was saved.'**
   String get errorNotSaved;
+
+  /// iOS blocked the connection to a server in the home network because the Local Network permission is off.
+  ///
+  /// In en, this message translates to:
+  /// **'StashTube can\'t reach your local network. Allow it in Settings → Privacy & Security → Local Network → StashTube.'**
+  String get errorLocalNetworkDenied;
+
+  /// No description provided for @errorLocalNetworkTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'No access to the local network'**
+  String get errorLocalNetworkTitle;
+
+  /// No description provided for @errorUnreachableTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Can\'t reach the server'**
+  String get errorUnreachableTitle;
+
+  /// No description provided for @errorUnreachableHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Check that the server is running and that you\'re in its network or connected to your VPN.'**
+  String get errorUnreachableHint;
+
+  /// No description provided for @errorUnauthorizedTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Access denied'**
+  String get errorUnauthorizedTitle;
+
+  /// No description provided for @errorUnauthorizedHint.
+  ///
+  /// In en, this message translates to:
+  /// **'The server didn\'t accept the API key or login. Check them in the server settings.'**
+  String get errorUnauthorizedHint;
+
+  /// No description provided for @errorInvalidCredentialsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign-in failed'**
+  String get errorInvalidCredentialsTitle;
+
+  /// No description provided for @errorNotReadyTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Server not ready'**
+  String get errorNotReadyTitle;
+
+  /// No description provided for @errorNotReadyHint.
+  ///
+  /// In en, this message translates to:
+  /// **'The server is running but not set up yet. Finish its setup in Stash\'s web interface.'**
+  String get errorNotReadyHint;
+
+  /// No description provided for @errorNotFoundTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Not found'**
+  String get errorNotFoundTitle;
+
+  /// No description provided for @errorNotFoundHint.
+  ///
+  /// In en, this message translates to:
+  /// **'It may have been deleted or moved on the server.'**
+  String get errorNotFoundHint;
+
+  /// No description provided for @errorServerHint.
+  ///
+  /// In en, this message translates to:
+  /// **'The server reported an error. The details may help.'**
+  String get errorServerHint;
+
+  /// No description provided for @errorUnexpectedHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Something unexpected happened. Try again, or look at the details.'**
+  String get errorUnexpectedHint;
+
+  /// Button under an error that shows its technical message.
+  ///
+  /// In en, this message translates to:
+  /// **'Details'**
+  String get errorShowDetails;
+
+  /// No description provided for @errorHideDetails.
+  ///
+  /// In en, this message translates to:
+  /// **'Hide details'**
+  String get errorHideDetails;
 
   /// No description provided for @navBarCount.
   ///
@@ -2186,6 +2864,54 @@ abstract class AppLocalizations {
   /// **'Modified'**
   String get fileModified;
 
+  /// Tooltip of the image viewer's info button and title of its sheet.
+  ///
+  /// In en, this message translates to:
+  /// **'Image info'**
+  String get imageInfo;
+
+  /// No description provided for @imagePhotographer.
+  ///
+  /// In en, this message translates to:
+  /// **'Photographer'**
+  String get imagePhotographer;
+
+  /// No description provided for @imageDimensions.
+  ///
+  /// In en, this message translates to:
+  /// **'Dimensions'**
+  String get imageDimensions;
+
+  /// No description provided for @imageOCounter.
+  ///
+  /// In en, this message translates to:
+  /// **'O-counter'**
+  String get imageOCounter;
+
+  /// No description provided for @imageTags.
+  ///
+  /// In en, this message translates to:
+  /// **'Tags'**
+  String get imageTags;
+
+  /// No description provided for @imageGalleries.
+  ///
+  /// In en, this message translates to:
+  /// **'Galleries'**
+  String get imageGalleries;
+
+  /// When the image was added to Stash.
+  ///
+  /// In en, this message translates to:
+  /// **'Added'**
+  String get imageCreated;
+
+  /// No description provided for @imageUpdated.
+  ///
+  /// In en, this message translates to:
+  /// **'Updated'**
+  String get imageUpdated;
+
   /// No description provided for @copyPath.
   ///
   /// In en, this message translates to:
@@ -2246,6 +2972,30 @@ abstract class AppLocalizations {
   /// **'Leave out videos without any of the tags'**
   String get shortsOnlyTagsHint;
 
+  /// No description provided for @shortsModeShorts.
+  ///
+  /// In en, this message translates to:
+  /// **'Shorts'**
+  String get shortsModeShorts;
+
+  /// No description provided for @shortsModeLoops.
+  ///
+  /// In en, this message translates to:
+  /// **'Loops'**
+  String get shortsModeLoops;
+
+  /// No description provided for @shortsModeSemantics.
+  ///
+  /// In en, this message translates to:
+  /// **'Shorts or loops'**
+  String get shortsModeSemantics;
+
+  /// No description provided for @shortsLoopsHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Loops play scene markers, each one repeating on its own; the tags and \"portrait only\" apply to them, the length doesn\'t.'**
+  String get shortsLoopsHint;
+
   /// No description provided for @shortsMaxLength.
   ///
   /// In en, this message translates to:
@@ -2270,11 +3020,23 @@ abstract class AppLocalizations {
   /// **'Up to 10 min'**
   String get shortsLengthTenMinutes;
 
+  /// No description provided for @shortsMaxLengthHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Only for videos: a marker plays its marked part.'**
+  String get shortsMaxLengthHint;
+
   /// No description provided for @shortsPortraitOnly.
   ///
   /// In en, this message translates to:
   /// **'Portrait videos only'**
   String get shortsPortraitOnly;
+
+  /// No description provided for @shortMarkerSemantics.
+  ///
+  /// In en, this message translates to:
+  /// **'Marker: {title}'**
+  String shortMarkerSemantics(String title);
 
   /// No description provided for @shortsEmpty.
   ///
@@ -2300,6 +3062,12 @@ abstract class AppLocalizations {
   /// **'Video cards'**
   String get sectionSceneCards;
 
+  /// No description provided for @sectionPreviewsCards.
+  ///
+  /// In en, this message translates to:
+  /// **'Previews & cards'**
+  String get sectionPreviewsCards;
+
   /// No description provided for @cardChannel.
   ///
   /// In en, this message translates to:
@@ -2317,6 +3085,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Performers'**
   String get cardChannelPerformers;
+
+  /// No description provided for @thumbnailFit.
+  ///
+  /// In en, this message translates to:
+  /// **'Thumbnails'**
+  String get thumbnailFit;
+
+  /// No description provided for @thumbnailFitWhole.
+  ///
+  /// In en, this message translates to:
+  /// **'Show whole'**
+  String get thumbnailFitWhole;
+
+  /// No description provided for @thumbnailFitFill.
+  ///
+  /// In en, this message translates to:
+  /// **'Fill (crop)'**
+  String get thumbnailFitFill;
 
   /// No description provided for @cardShowPlays.
   ///
@@ -2359,6 +3145,114 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'2× speed'**
   String get fastForward2x;
+
+  /// No description provided for @gestureTipsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Player gestures'**
+  String get gestureTipsTitle;
+
+  /// No description provided for @gestureTipDoubleTap.
+  ///
+  /// In en, this message translates to:
+  /// **'Double-tap left or right: {seconds} s back/forward, keep tapping to skip further'**
+  String gestureTipDoubleTap(int seconds);
+
+  /// No description provided for @gestureTipHold.
+  ///
+  /// In en, this message translates to:
+  /// **'Hold: 2× speed'**
+  String get gestureTipHold;
+
+  /// No description provided for @gestureTipPinch.
+  ///
+  /// In en, this message translates to:
+  /// **'Pinch: zoom'**
+  String get gestureTipPinch;
+
+  /// No description provided for @gestureTipSwipeDown.
+  ///
+  /// In en, this message translates to:
+  /// **'Swipe down: minimize'**
+  String get gestureTipSwipeDown;
+
+  /// No description provided for @gestureTipsDone.
+  ///
+  /// In en, this message translates to:
+  /// **'Got it'**
+  String get gestureTipsDone;
+
+  /// No description provided for @showGestureTipsAgain.
+  ///
+  /// In en, this message translates to:
+  /// **'Show gesture tips again'**
+  String get showGestureTipsAgain;
+
+  /// No description provided for @showGestureTipsAgainSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'The next time the player\'s controls appear'**
+  String get showGestureTipsAgainSubtitle;
+
+  /// No description provided for @sectionDoubleTapSeek.
+  ///
+  /// In en, this message translates to:
+  /// **'Double-tap to seek'**
+  String get sectionDoubleTapSeek;
+
+  /// No description provided for @doubleTapSeek.
+  ///
+  /// In en, this message translates to:
+  /// **'Double-tap seeking'**
+  String get doubleTapSeek;
+
+  /// No description provided for @doubleTapSeekSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Double-tap the left or right side of the video. Off: a tap shows the controls right away.'**
+  String get doubleTapSeekSubtitle;
+
+  /// No description provided for @seekStep.
+  ///
+  /// In en, this message translates to:
+  /// **'Skip by'**
+  String get seekStep;
+
+  /// No description provided for @seekCumulative.
+  ///
+  /// In en, this message translates to:
+  /// **'Keep tapping to skip further'**
+  String get seekCumulative;
+
+  /// No description provided for @seekSequenceExample.
+  ///
+  /// In en, this message translates to:
+  /// **'In total: {totals} s …'**
+  String seekSequenceExample(String totals);
+
+  /// No description provided for @lockTouch.
+  ///
+  /// In en, this message translates to:
+  /// **'Lock screen'**
+  String get lockTouch;
+
+  /// No description provided for @touchLocked.
+  ///
+  /// In en, this message translates to:
+  /// **'Screen locked'**
+  String get touchLocked;
+
+  /// No description provided for @holdToUnlock.
+  ///
+  /// In en, this message translates to:
+  /// **'Hold to unlock'**
+  String get holdToUnlock;
+
+  /// No description provided for @unlockTouch.
+  ///
+  /// In en, this message translates to:
+  /// **'Unlock'**
+  String get unlockTouch;
 
   /// No description provided for @unknownStudio.
   ///
@@ -2414,17 +3308,17 @@ abstract class AppLocalizations {
   /// **'Apple TV and AirPlay TVs'**
   String get airPlayHint;
 
-  /// No description provided for @allViews.
+  /// No description provided for @moreViews.
   ///
   /// In en, this message translates to:
-  /// **'All views'**
-  String get allViews;
+  /// **'More views'**
+  String get moreViews;
 
-  /// No description provided for @tabAll.
+  /// No description provided for @tabYou.
   ///
   /// In en, this message translates to:
-  /// **'All'**
-  String get tabAll;
+  /// **'You'**
+  String get tabYou;
 
   /// No description provided for @colorStashTube.
   ///
@@ -2449,6 +3343,54 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Nothing matches \"{term}\"'**
   String searchNoResults(String term);
+
+  /// Screen reader label of a search completion row.
+  ///
+  /// In en, this message translates to:
+  /// **'Search for {text}'**
+  String searchFor(String text);
+
+  /// Tooltip of the arrow that puts a completion into the search field without searching.
+  ///
+  /// In en, this message translates to:
+  /// **'Fill in'**
+  String get searchFillIn;
+
+  /// No description provided for @searchFillInText.
+  ///
+  /// In en, this message translates to:
+  /// **'Fill in {text}'**
+  String searchFillInText(String text);
+
+  /// No description provided for @searchRemoveFromHistory.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove {text} from recent searches'**
+  String searchRemoveFromHistory(String text);
+
+  /// Header above performers, tags and studios matching the typed text, which open their pages.
+  ///
+  /// In en, this message translates to:
+  /// **'Go to'**
+  String get searchGoTo;
+
+  /// No description provided for @searchOtherAreas.
+  ///
+  /// In en, this message translates to:
+  /// **'Search other areas'**
+  String get searchOtherAreas;
+
+  /// No description provided for @searchClearFilters.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear filters'**
+  String get searchClearFilters;
+
+  /// No description provided for @searchFiltersActiveHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Active filters may hide results.'**
+  String get searchFiltersActiveHint;
 
   /// No description provided for @pictureInPicture.
   ///
@@ -2492,6 +3434,168 @@ abstract class AppLocalizations {
   /// **'{count, plural, =1{1 short} other{{count} shorts}}'**
   String performerShorts(int count);
 
+  /// No description provided for @channelTabVideos.
+  ///
+  /// In en, this message translates to:
+  /// **'Videos'**
+  String get channelTabVideos;
+
+  /// No description provided for @channelTabShorts.
+  ///
+  /// In en, this message translates to:
+  /// **'Shorts'**
+  String get channelTabShorts;
+
+  /// No description provided for @channelTabMarkers.
+  ///
+  /// In en, this message translates to:
+  /// **'Markers'**
+  String get channelTabMarkers;
+
+  /// No description provided for @channelTabImages.
+  ///
+  /// In en, this message translates to:
+  /// **'Images'**
+  String get channelTabImages;
+
+  /// No description provided for @channelTabGalleries.
+  ///
+  /// In en, this message translates to:
+  /// **'Galleries'**
+  String get channelTabGalleries;
+
+  /// Tab of a performer's or studio's page with their details and links.
+  ///
+  /// In en, this message translates to:
+  /// **'About'**
+  String get channelTabAbout;
+
+  /// No description provided for @channelAboutEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing here yet'**
+  String get channelAboutEmpty;
+
+  /// No description provided for @channelLinks.
+  ///
+  /// In en, this message translates to:
+  /// **'Links'**
+  String get channelLinks;
+
+  /// No description provided for @copyLink.
+  ///
+  /// In en, this message translates to:
+  /// **'Copy link'**
+  String get copyLink;
+
+  /// No description provided for @linkCopied.
+  ///
+  /// In en, this message translates to:
+  /// **'Link copied'**
+  String get linkCopied;
+
+  /// No description provided for @openLink.
+  ///
+  /// In en, this message translates to:
+  /// **'Open link'**
+  String get openLink;
+
+  /// No description provided for @openLinkFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t open {url}'**
+  String openLinkFailed(String url);
+
+  /// Opens the scene in the Stash web interface in the browser.
+  ///
+  /// In en, this message translates to:
+  /// **'Open in Stash'**
+  String get openInStash;
+
+  /// No description provided for @fieldAliases.
+  ///
+  /// In en, this message translates to:
+  /// **'Also known as'**
+  String get fieldAliases;
+
+  /// No description provided for @fieldDeathDate.
+  ///
+  /// In en, this message translates to:
+  /// **'Died'**
+  String get fieldDeathDate;
+
+  /// No description provided for @fieldCountry.
+  ///
+  /// In en, this message translates to:
+  /// **'Country'**
+  String get fieldCountry;
+
+  /// No description provided for @fieldEthnicity.
+  ///
+  /// In en, this message translates to:
+  /// **'Ethnicity'**
+  String get fieldEthnicity;
+
+  /// No description provided for @fieldHairColor.
+  ///
+  /// In en, this message translates to:
+  /// **'Hair color'**
+  String get fieldHairColor;
+
+  /// No description provided for @fieldEyeColor.
+  ///
+  /// In en, this message translates to:
+  /// **'Eye color'**
+  String get fieldEyeColor;
+
+  /// No description provided for @fieldHeight.
+  ///
+  /// In en, this message translates to:
+  /// **'Height'**
+  String get fieldHeight;
+
+  /// No description provided for @fieldWeight.
+  ///
+  /// In en, this message translates to:
+  /// **'Weight'**
+  String get fieldWeight;
+
+  /// No description provided for @fieldMeasurements.
+  ///
+  /// In en, this message translates to:
+  /// **'Measurements'**
+  String get fieldMeasurements;
+
+  /// No description provided for @fieldCareer.
+  ///
+  /// In en, this message translates to:
+  /// **'Career'**
+  String get fieldCareer;
+
+  /// No description provided for @fieldTattoos.
+  ///
+  /// In en, this message translates to:
+  /// **'Tattoos'**
+  String get fieldTattoos;
+
+  /// No description provided for @fieldPiercings.
+  ///
+  /// In en, this message translates to:
+  /// **'Piercings'**
+  String get fieldPiercings;
+
+  /// No description provided for @heightCm.
+  ///
+  /// In en, this message translates to:
+  /// **'{cm} cm'**
+  String heightCm(int cm);
+
+  /// No description provided for @weightKg.
+  ///
+  /// In en, this message translates to:
+  /// **'{kg} kg'**
+  String weightKg(int kg);
+
   /// No description provided for @themeWelcomeTitle.
   ///
   /// In en, this message translates to:
@@ -2533,6 +3637,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Mark a moment in the player with \"Marker\".'**
   String get markersEmptyHint;
+
+  /// No description provided for @markersPlayAsShorts.
+  ///
+  /// In en, this message translates to:
+  /// **'Play as loops'**
+  String get markersPlayAsShorts;
+
+  /// No description provided for @markerPlayAsShort.
+  ///
+  /// In en, this message translates to:
+  /// **'Play as loop'**
+  String get markerPlayAsShort;
+
+  /// No description provided for @markerMoreOptions.
+  ///
+  /// In en, this message translates to:
+  /// **'Marker options'**
+  String get markerMoreOptions;
 
   /// No description provided for @markersCount.
   ///
@@ -2576,6 +3698,12 @@ abstract class AppLocalizations {
   /// **'Play previews in lists'**
   String get feedPreviews;
 
+  /// No description provided for @previewsOffSummary.
+  ///
+  /// In en, this message translates to:
+  /// **'Previews off'**
+  String get previewsOffSummary;
+
   /// No description provided for @feedPreviewsSubtitle.
   ///
   /// In en, this message translates to:
@@ -2605,6 +3733,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Markers loop a short clip instead of a still frame.'**
   String get markerPreviewsSubtitle;
+
+  /// No description provided for @previewsWifiOnly.
+  ///
+  /// In en, this message translates to:
+  /// **'Only on Wi-Fi'**
+  String get previewsWifiOnly;
+
+  /// No description provided for @previewsWifiOnlySubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'No previews play on mobile data.'**
+  String get previewsWifiOnlySubtitle;
+
+  /// No description provided for @previewsHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Previews need Stash\'s animated (WebP) previews, which it doesn\'t create by default. Generate them in Stash under Settings → Tasks → Generate with \"Animated image previews\" and \"Marker animated image previews\".'**
+  String get previewsHint;
 
   /// No description provided for @sectionAbout.
   ///
@@ -2677,6 +3823,564 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'While casting, the cast device receives the stream address including your API key. Other devices on this Wi-Fi may be able to read it.'**
   String get castApiKeyHint;
+
+  /// No description provided for @serverTasks.
+  ///
+  /// In en, this message translates to:
+  /// **'Server tasks'**
+  String get serverTasks;
+
+  /// No description provided for @serverTasksSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Scan, generate, check previews'**
+  String get serverTasksSubtitle;
+
+  /// No description provided for @sectionPreviewCheck.
+  ///
+  /// In en, this message translates to:
+  /// **'Previews on the server'**
+  String get sectionPreviewCheck;
+
+  /// No description provided for @previewCheckAnimated.
+  ///
+  /// In en, this message translates to:
+  /// **'Animated previews (WebP)'**
+  String get previewCheckAnimated;
+
+  /// No description provided for @previewCheckVideo.
+  ///
+  /// In en, this message translates to:
+  /// **'Video previews (MP4)'**
+  String get previewCheckVideo;
+
+  /// No description provided for @previewCheckMarkers.
+  ///
+  /// In en, this message translates to:
+  /// **'Marker previews (WebP)'**
+  String get previewCheckMarkers;
+
+  /// No description provided for @previewCheckFound.
+  ///
+  /// In en, this message translates to:
+  /// **'Found for {found} of {checked} random samples'**
+  String previewCheckFound(int found, int checked);
+
+  /// No description provided for @previewCheckNothing.
+  ///
+  /// In en, this message translates to:
+  /// **'No scenes to check'**
+  String get previewCheckNothing;
+
+  /// No description provided for @previewCheckMissingHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Lists and markers play the animated previews, which Stash doesn\'t create by default. Generate them here, or switch the preview format to video in the settings.'**
+  String get previewCheckMissingHint;
+
+  /// No description provided for @generateAnimatedPreviews.
+  ///
+  /// In en, this message translates to:
+  /// **'Generate animated previews'**
+  String get generateAnimatedPreviews;
+
+  /// No description provided for @checkAgain.
+  ///
+  /// In en, this message translates to:
+  /// **'Check again'**
+  String get checkAgain;
+
+  /// No description provided for @sectionTasks.
+  ///
+  /// In en, this message translates to:
+  /// **'Tasks'**
+  String get sectionTasks;
+
+  /// No description provided for @taskScan.
+  ///
+  /// In en, this message translates to:
+  /// **'Scan library'**
+  String get taskScan;
+
+  /// No description provided for @taskScanSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Finds new and changed files'**
+  String get taskScanSubtitle;
+
+  /// No description provided for @taskGenerate.
+  ///
+  /// In en, this message translates to:
+  /// **'Generate'**
+  String get taskGenerate;
+
+  /// No description provided for @taskGenerateSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Previews, sprites, covers and more for files that lack them'**
+  String get taskGenerateSubtitle;
+
+  /// No description provided for @taskAutoTag.
+  ///
+  /// In en, this message translates to:
+  /// **'Auto tag'**
+  String get taskAutoTag;
+
+  /// No description provided for @taskAutoTagSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Assigns performers, studios and tags named in file paths'**
+  String get taskAutoTagSubtitle;
+
+  /// No description provided for @taskClean.
+  ///
+  /// In en, this message translates to:
+  /// **'Clean'**
+  String get taskClean;
+
+  /// No description provided for @taskCleanSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Removes entries of files that no longer exist'**
+  String get taskCleanSubtitle;
+
+  /// No description provided for @taskCleanConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove the entries of missing files from the library? Their ratings, play counts and markers are lost.'**
+  String get taskCleanConfirm;
+
+  /// No description provided for @taskScanGenerates.
+  ///
+  /// In en, this message translates to:
+  /// **'Also create for new files'**
+  String get taskScanGenerates;
+
+  /// No description provided for @startTask.
+  ///
+  /// In en, this message translates to:
+  /// **'Start'**
+  String get startTask;
+
+  /// No description provided for @taskStarted.
+  ///
+  /// In en, this message translates to:
+  /// **'Task started on the server'**
+  String get taskStarted;
+
+  /// No description provided for @taskFinishedNamed.
+  ///
+  /// In en, this message translates to:
+  /// **'Finished: {task}'**
+  String taskFinishedNamed(String task);
+
+  /// No description provided for @taskFailedNamed.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed: {task}'**
+  String taskFailedNamed(String task);
+
+  /// No description provided for @sectionNotifications.
+  ///
+  /// In en, this message translates to:
+  /// **'Notifications'**
+  String get sectionNotifications;
+
+  /// No description provided for @systemNotifications.
+  ///
+  /// In en, this message translates to:
+  /// **'System notifications'**
+  String get systemNotifications;
+
+  /// No description provided for @systemNotificationsSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Tells you when a server task you started ends while StashTube is in the background. Only while the system keeps the app running: Android ends it after a while, iOS pauses it soon after you leave it.'**
+  String get systemNotificationsSubtitle;
+
+  /// No description provided for @discreetNotifications.
+  ///
+  /// In en, this message translates to:
+  /// **'Discreet notifications'**
+  String get discreetNotifications;
+
+  /// No description provided for @discreetNotificationsSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Only “StashTube” and a neutral text, without task or server names. Hidden on the lock screen.'**
+  String get discreetNotificationsSubtitle;
+
+  /// No description provided for @notificationsDenied.
+  ///
+  /// In en, this message translates to:
+  /// **'Notifications not allowed'**
+  String get notificationsDenied;
+
+  /// No description provided for @notificationsDeniedBody.
+  ///
+  /// In en, this message translates to:
+  /// **'StashTube may not show notifications. Allow them in the system settings, then switch them on here again.'**
+  String get notificationsDeniedBody;
+
+  /// No description provided for @notificationTaskFinished.
+  ///
+  /// In en, this message translates to:
+  /// **'A task has finished'**
+  String get notificationTaskFinished;
+
+  /// No description provided for @notificationTaskFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'A task has failed'**
+  String get notificationTaskFailed;
+
+  /// No description provided for @sectionJobs.
+  ///
+  /// In en, this message translates to:
+  /// **'Running tasks'**
+  String get sectionJobs;
+
+  /// No description provided for @noJobs.
+  ///
+  /// In en, this message translates to:
+  /// **'No tasks running'**
+  String get noJobs;
+
+  /// No description provided for @stopJob.
+  ///
+  /// In en, this message translates to:
+  /// **'Stop task'**
+  String get stopJob;
+
+  /// No description provided for @jobReady.
+  ///
+  /// In en, this message translates to:
+  /// **'Waiting'**
+  String get jobReady;
+
+  /// No description provided for @jobRunning.
+  ///
+  /// In en, this message translates to:
+  /// **'Running'**
+  String get jobRunning;
+
+  /// No description provided for @jobFinished.
+  ///
+  /// In en, this message translates to:
+  /// **'Finished'**
+  String get jobFinished;
+
+  /// No description provided for @jobStopping.
+  ///
+  /// In en, this message translates to:
+  /// **'Stopping'**
+  String get jobStopping;
+
+  /// No description provided for @jobCancelled.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancelled'**
+  String get jobCancelled;
+
+  /// No description provided for @jobFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed'**
+  String get jobFailed;
+
+  /// No description provided for @optionRescan.
+  ///
+  /// In en, this message translates to:
+  /// **'Rescan unchanged files'**
+  String get optionRescan;
+
+  /// No description provided for @optionCovers.
+  ///
+  /// In en, this message translates to:
+  /// **'Covers'**
+  String get optionCovers;
+
+  /// No description provided for @optionPreviews.
+  ///
+  /// In en, this message translates to:
+  /// **'Video previews (MP4)'**
+  String get optionPreviews;
+
+  /// No description provided for @optionImagePreviews.
+  ///
+  /// In en, this message translates to:
+  /// **'Animated previews (WebP)'**
+  String get optionImagePreviews;
+
+  /// No description provided for @optionSprites.
+  ///
+  /// In en, this message translates to:
+  /// **'Seek bar thumbnails (sprites)'**
+  String get optionSprites;
+
+  /// No description provided for @optionMarkers.
+  ///
+  /// In en, this message translates to:
+  /// **'Marker previews (MP4)'**
+  String get optionMarkers;
+
+  /// No description provided for @optionMarkerImagePreviews.
+  ///
+  /// In en, this message translates to:
+  /// **'Marker animated previews (WebP)'**
+  String get optionMarkerImagePreviews;
+
+  /// No description provided for @optionMarkerScreenshots.
+  ///
+  /// In en, this message translates to:
+  /// **'Marker screenshots'**
+  String get optionMarkerScreenshots;
+
+  /// No description provided for @optionPhashes.
+  ///
+  /// In en, this message translates to:
+  /// **'Perceptual hashes (duplicates)'**
+  String get optionPhashes;
+
+  /// No description provided for @previewSource.
+  ///
+  /// In en, this message translates to:
+  /// **'Preview format'**
+  String get previewSource;
+
+  /// No description provided for @previewSourceAnimated.
+  ///
+  /// In en, this message translates to:
+  /// **'Animated image (WebP)'**
+  String get previewSourceAnimated;
+
+  /// No description provided for @previewSourceVideo.
+  ///
+  /// In en, this message translates to:
+  /// **'Video (MP4)'**
+  String get previewSourceVideo;
+
+  /// No description provided for @previewSourceVideoHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Video previews use the phone\'s video decoder and play smoothly; each one opens a short-lived video player of its own. Animated images are decoded frame by frame and can stutter with large previews. Markers keep playing the WebP previews.'**
+  String get previewSourceVideoHint;
+
+  /// No description provided for @previewsOnServer.
+  ///
+  /// In en, this message translates to:
+  /// **'Check previews on the server'**
+  String get previewsOnServer;
+
+  /// No description provided for @previewsOnServerSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Whether Stash has created them, and generate missing ones'**
+  String get previewsOnServerSubtitle;
+
+  /// No description provided for @introSkip.
+  ///
+  /// In en, this message translates to:
+  /// **'Skip'**
+  String get introSkip;
+
+  /// No description provided for @introNext.
+  ///
+  /// In en, this message translates to:
+  /// **'Next'**
+  String get introNext;
+
+  /// No description provided for @introDone.
+  ///
+  /// In en, this message translates to:
+  /// **'Let\'s go'**
+  String get introDone;
+
+  /// No description provided for @introProgress.
+  ///
+  /// In en, this message translates to:
+  /// **'Step {current} of {total}'**
+  String introProgress(int current, int total);
+
+  /// No description provided for @introTour.
+  ///
+  /// In en, this message translates to:
+  /// **'App tour'**
+  String get introTour;
+
+  /// No description provided for @introTourSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'How StashTube works: player, shorts and loops, library'**
+  String get introTourSubtitle;
+
+  /// No description provided for @introWelcomeTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Welcome to StashTube'**
+  String get introWelcomeTitle;
+
+  /// No description provided for @introWelcomeText.
+  ///
+  /// In en, this message translates to:
+  /// **'Your Stash library, browsed like YouTube. Home shows new and random scenes with filters and sort chips; search finds scenes, images, galleries, performers and studios in one place.'**
+  String get introWelcomeText;
+
+  /// No description provided for @introPlayerTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'The player'**
+  String get introPlayerTitle;
+
+  /// No description provided for @introPlayerText.
+  ///
+  /// In en, this message translates to:
+  /// **'Tap a video to play it; swipe the player down to keep it running in the mini bar. Double-tap the left or right of the video to skip, hold it for 2× speed, pinch to zoom. Open another video from \"Up next\" and the arrows beside play take you back and forth between them.'**
+  String get introPlayerText;
+
+  /// No description provided for @introShortsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Shorts and loops'**
+  String get introShortsTitle;
+
+  /// No description provided for @introShortsText.
+  ///
+  /// In en, this message translates to:
+  /// **'The Shorts tab has two feeds, switched at its top: Shorts are short (portrait) videos to swipe through. Loops are scene markers, each repeating on its own like a GIF. The tune button picks your favorite tags, the length and \"portrait only\".'**
+  String get introShortsText;
+
+  /// No description provided for @introLibraryTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Library and You'**
+  String get introLibraryTitle;
+
+  /// No description provided for @introLibraryText.
+  ///
+  /// In en, this message translates to:
+  /// **'The library holds all scenes, images and galleries. \"You\" collects your history, watch later, groups, markers, performers, studios, tags and stats. Which tabs the bottom bar shows is up to you, in the settings.'**
+  String get introLibraryText;
+
+  /// No description provided for @introFavoritesTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Favorites and ratings'**
+  String get introFavoritesTitle;
+
+  /// No description provided for @introFavoritesText.
+  ///
+  /// In en, this message translates to:
+  /// **'Mark performers and studios as favorites and rate them and your scenes with stars. Favorites get their own feed, and long-pressing a tile or tapping its ⋮ shows more actions. You can also edit metadata and create performers, studios, tags and groups.'**
+  String get introFavoritesText;
+
+  /// No description provided for @introSettingsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Make it yours'**
+  String get introSettingsTitle;
+
+  /// No description provided for @introSettingsText.
+  ///
+  /// In en, this message translates to:
+  /// **'Your avatar at the top right switches servers and opens the settings: app lock, previews, how thumbnails fit, haptics, playback and more. This tour is there too, under About.'**
+  String get introSettingsText;
+
+  /// No description provided for @whatsNewTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'What\'s new'**
+  String get whatsNewTitle;
+
+  /// No description provided for @whatsNewDone.
+  ///
+  /// In en, this message translates to:
+  /// **'Got it'**
+  String get whatsNewDone;
+
+  /// No description provided for @whatsNewSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'What the latest updates brought'**
+  String get whatsNewSubtitle;
+
+  /// No description provided for @whatsNew1Title.
+  ///
+  /// In en, this message translates to:
+  /// **'Loops, a new watch page and more'**
+  String get whatsNew1Title;
+
+  /// No description provided for @whatsNew1.
+  ///
+  /// In en, this message translates to:
+  /// **'New navigation: Home · Shorts · Search · Library · You.\nLoops: scene markers that repeat on their own. Switch at the top of the Shorts tab.\nA new watch page: rating, O-counter, watch later, marker and more in one bar.\nSearch suggestions while you type.\nDouble tap to skip adds up like on YouTube: 5, 10, 20, 30 seconds …\nBack and forward between the videos you opened, with arrows beside play.\nPerformer and studio pages with tabs: videos, shorts, markers, images, galleries, about.\nFavorites: the newest videos of your favorite performers.'**
+  String get whatsNew1;
+
+  /// No description provided for @whatsNew1More.
+  ///
+  /// In en, this message translates to:
+  /// **'The You tab gathers history, watch later, groups and markers.\nSkip step and counting can be set in Settings → Playback.\nStars and favorites for performers and studios.\nCreate performers, studios and groups.\n\"Full video\" from a short continues where the short was.\nOn tablets the video sits beside \"Up next\".\nPicture-in-picture opens in the video\'s shape.\nServer tasks: scan, generate, auto tag and clean.\nA check for missing previews.\nA notification when a server task finishes (optional).\nMarkers with a start and an end on newer Stash versions.\n\"New since your last visit\" on the home page.\nClear playback errors with \"Try again\" and \"Change quality\".\nA banner when the server can\'t be reached; loaded lists stay.\nA simpler login: credentials only when the server asks for them.\nImage details behind the (i) button; swipe down to close an image.\nThe dice on the home page plays a random scene.\nWatch time as a chart in the stats.\nA touch lock in fullscreen.\nOn phones the app stays upright; tilting the phone with a wide video turns it into fullscreen.\nWhile a short plays, only its main buttons show and its text fades out; pause for the rest.\nEdit or delete markers with a long press.\nPortrait scenes show whole in thumbnails, or filled (settings).\nA tour of the app (Settings → About).\nSettings sorted into categories.'**
+  String get whatsNew1More;
+
+  /// No description provided for @whatsNewShowMore.
+  ///
+  /// In en, this message translates to:
+  /// **'Show {count} more'**
+  String whatsNewShowMore(int count);
+
+  /// No description provided for @whatsNewShowLess.
+  ///
+  /// In en, this message translates to:
+  /// **'Show less'**
+  String get whatsNewShowLess;
+
+  /// No description provided for @markerEdit.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit marker'**
+  String get markerEdit;
+
+  /// No description provided for @markerEditAt.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit marker at {time}'**
+  String markerEditAt(String time);
+
+  /// No description provided for @markerDelete.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete marker'**
+  String get markerDelete;
+
+  /// No description provided for @markerDeleteTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete marker?'**
+  String get markerDeleteTitle;
+
+  /// No description provided for @markerDeleteConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'\"{title}\" at {time} will be removed from the scene.'**
+  String markerDeleteConfirm(String title, String time);
+
+  /// No description provided for @markerDeleteAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete'**
+  String get markerDeleteAction;
+
+  /// No description provided for @markerDeleted.
+  ///
+  /// In en, this message translates to:
+  /// **'Marker deleted'**
+  String get markerDeleted;
+
+  /// No description provided for @markerSaved.
+  ///
+  /// In en, this message translates to:
+  /// **'Marker saved'**
+  String get markerSaved;
 }
 
 class _AppLocalizationsDelegate

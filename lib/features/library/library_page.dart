@@ -12,10 +12,11 @@ import 'images_tab.dart';
 import 'markers_tab.dart';
 import 'stats_tab.dart';
 import 'watch_later_tab.dart';
-import '../settings/settings_button.dart';
+import '../auth/server_avatar.dart';
 
-/// The parts of the library. Each is a tab of [LibraryPage] and can also be
-/// its own tab in the navigation bar ([LibrarySectionPage], 13.7).
+/// The parts of the library. The [media] are the tabs of [LibraryPage]; the
+/// user's own lists and the stats are on the "You" page (NAV-1). Each can
+/// also be its own tab in the navigation bar ([LibrarySectionPage], 13.7).
 enum LibrarySection {
   scenes(Icons.movie_outlined),
   history(Icons.history),
@@ -29,6 +30,9 @@ enum LibrarySection {
   const LibrarySection(this.icon);
 
   final IconData icon;
+
+  /// The tabs of [LibraryPage]: the server's media.
+  static const media = [scenes, images, galleries];
 
   String label(AppLocalizations l) => switch (this) {
         scenes => l.libraryScenes,
@@ -72,15 +76,17 @@ enum LibrarySection {
       };
 }
 
-/// Library tab: all [LibrarySection]s as swipeable tabs.
+/// Library tab: the server's media ([LibrarySection.media]) as swipeable,
+/// text-only tabs (NAV-1).
 class LibraryPage extends ConsumerWidget {
   const LibraryPage({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l = context.l10n;
+    const sections = LibrarySection.media;
     return DefaultTabController(
-      length: LibrarySection.values.length,
+      length: sections.length,
       child: Scaffold(
         appBar: AppBar(
           title: Text(l.libraryTitle),
@@ -92,23 +98,22 @@ class LibraryPage extends ConsumerWidget {
                 icon: const Icon(Icons.search),
                 onPressed: () => openSearch(
                   ref,
-                  scope: LibrarySection.values[DefaultTabController.of(context).index].searchScope,
+                  scope: sections[DefaultTabController.of(context).index].searchScope,
                 ),
               ),
             ),
-            const SettingsButton(),
+            const ServerAvatarButton(),
           ],
           bottom: TabBar(
-            isScrollable: true,
-            tabAlignment: TabAlignment.start,
             tabs: [
-              for (final section in LibrarySection.values) Tab(icon: Icon(section.icon), text: section.label(l)),
+              for (final section in sections)
+                Tab(child: Text(section.label(l), maxLines: 1, overflow: TextOverflow.ellipsis)),
             ],
           ),
         ),
         body: TabBarView(
           children: [
-            for (final section in LibrarySection.values) _KeepAlive(child: section.body(l)),
+            for (final section in sections) _KeepAlive(child: section.body(l)),
           ],
         ),
       ),
@@ -132,7 +137,7 @@ class LibrarySectionPage extends ConsumerWidget {
               icon: const Icon(Icons.search),
               onPressed: () => openSearch(ref, scope: section.searchScope),
             ),
-            const SettingsButton(),
+            const ServerAvatarButton(),
           ],
         ),
         body: section.body(context.l10n),

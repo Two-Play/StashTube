@@ -27,4 +27,51 @@ void main() {
     }
   }
 
+  for (final brightness in Brightness.values) {
+    test('rating stars in $brightness mode stand out from the surface', () {
+      final theme = brightness == Brightness.light ? AppTheme.light(stashTubeBlue) : AppTheme.dark(stashTubeBlue);
+      final rating = theme.extension<AppColors>()!.rating;
+      // Non-text contrast (WCAG 1.4.11): icons need 3:1.
+      expect(_contrast(rating, theme.colorScheme.surface), greaterThanOrEqualTo(3));
+      if (brightness == Brightness.dark) expect(rating, Colors.amber.shade600);
+    });
+  }
+
+  for (final brightness in Brightness.values) {
+    final theme = brightness == Brightness.light ? AppTheme.light(stashTubeBlue) : AppTheme.dark(stashTubeBlue);
+    final colors = theme.extension<AppColors>()!;
+
+    test('badge text in $brightness mode is readable', () {
+      // The badge sits on a thumbnail of any color: check against the badge
+      // alone (its own contrast) and composited over a white frame (worst case).
+      expect(_contrast(colors.onBadge, colors.badgeBackground), greaterThanOrEqualTo(4.5));
+      final overWhite = Color.alphaBlend(colors.badgeBackground, Colors.white);
+      expect(_contrast(colors.onBadge, overWhite), greaterThanOrEqualTo(4.5));
+    });
+
+    test('video scrims in $brightness mode are sane', () {
+      for (final (name, scrim) in [
+        ('videoScrim', colors.videoScrim),
+        ('videoScrimSoft', colors.videoScrimSoft),
+        ('videoDim', colors.videoDim),
+      ]) {
+        // Black with partial opacity: dark, but never hiding the video.
+        expect((scrim.r, scrim.g, scrim.b), (0.0, 0.0, 0.0), reason: '$name is black');
+        expect(scrim.a, inExclusiveRange(0.2, 0.9), reason: '$name is translucent');
+      }
+      // Ordered from strongest to lightest.
+      expect(colors.videoScrim.a, greaterThan(colors.videoScrimSoft.a));
+      expect(colors.videoScrimSoft.a, greaterThan(colors.videoDim.a));
+      // White text at the scrim's dark end stays readable even over white.
+      expect(_contrast(Colors.white, Color.alphaBlend(colors.videoScrim, Colors.white)), greaterThanOrEqualTo(4.5));
+    });
+  }
+
+  test('AppColors lerps every color', () {
+    final light = AppTheme.light(stashTubeBlue).extension<AppColors>()!;
+    final custom = light.copyWith(badgeBackground: Colors.red, videoScrim: Colors.blue);
+    expect(light.lerp(custom, 1).badgeBackground, isSameColorAs(Colors.red));
+    expect(light.lerp(custom, 1).videoScrim, isSameColorAs(Colors.blue));
+    expect(light.lerp(custom, 0).badgeBackground, isSameColorAs(light.badgeBackground));
+  });
 }

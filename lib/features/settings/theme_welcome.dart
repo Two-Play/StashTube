@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/config/server_config.dart';
 import '../../l10n/l10n.dart';
+import '../intro/intro_tour.dart';
 import 'appearance_picker.dart';
 
 /// Whether the theme picker is still to be shown: set when the first server
@@ -27,12 +28,15 @@ class ThemeWelcomeNotifier extends Notifier<bool> {
 
 final themeWelcomeProvider = NotifierProvider<ThemeWelcomeNotifier, bool>(ThemeWelcomeNotifier.new);
 
-/// Shows the theme picker once if it is pending; call after a frame.
+/// Shows the theme picker once if it is pending, then the tour through the
+/// app ([showIntroTour]); call after a frame.
 Future<void> showThemeWelcomeIfPending(BuildContext context, WidgetRef ref) async {
   if (!ref.read(themeWelcomeProvider)) return;
   await ref.read(themeWelcomeProvider.notifier).done();
   if (!context.mounted) return;
   await showDialog<void>(context: context, builder: (_) => const ThemeWelcomeDialog());
+  if (!context.mounted) return;
+  await showIntroTour(context);
 }
 
 /// "Choose your look": light, system or dark and the accent color, applied

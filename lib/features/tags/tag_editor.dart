@@ -8,6 +8,7 @@ import '../../data/models/scene.dart';
 import '../../data/models/tag.dart';
 import '../../data/providers.dart';
 import '../../data/repositories/stash_repository.dart';
+import '../edit/create_dialog.dart';
 import '../player/scene_edits.dart';
 import '../../l10n/l10n.dart';
 
@@ -22,66 +23,14 @@ Future<Tag> createTag(WidgetRef ref, String name) async {
 }
 
 /// Dialog asking for a new tag's name; returns the created tag.
-Future<Tag?> showCreateTagDialog(BuildContext context, WidgetRef ref, {String initialName = ''}) => showDialog<Tag>(
-  context: context,
-  builder: (_) => _CreateTagDialog(initialName: initialName),
+Future<Tag?> showCreateTagDialog(BuildContext context, WidgetRef ref, {String initialName = ''}) => showCreateDialog(
+  context,
+  title: context.l10n.newTag,
+  create: (name) => createTag(ref, name),
+  initialName: initialName,
+  prefix: '#',
+  capitalization: TextCapitalization.none,
 );
-
-class _CreateTagDialog extends ConsumerStatefulWidget {
-  const _CreateTagDialog({required this.initialName});
-
-  final String initialName;
-
-  @override
-  ConsumerState<_CreateTagDialog> createState() => _CreateTagDialogState();
-}
-
-class _CreateTagDialogState extends ConsumerState<_CreateTagDialog> {
-  late final _name = TextEditingController(text: widget.initialName);
-  bool _saving = false;
-  String? _error;
-
-  @override
-  void dispose() {
-    _name.dispose();
-    super.dispose();
-  }
-
-  Future<void> _save() async {
-    if (_name.text.trim().isEmpty) return;
-    setState(() {
-      _saving = true;
-      _error = null;
-    });
-    try {
-      final tag = await createTag(ref, _name.text);
-      if (mounted) Navigator.pop(context, tag);
-    } catch (e) {
-      if (mounted) {
-        setState(() {
-          _saving = false;
-          _error = errorText(context.l10n, e);
-        });
-      }
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) => AlertDialog(
-    title: Text(context.l10n.newTag),
-    content: TextField(
-      controller: _name,
-      autofocus: true,
-      textInputAction: TextInputAction.done,
-      onSubmitted: (_) => _save(),
-      decoration: InputDecoration(labelText: context.l10n.name, errorText: _error, prefixText: '#'),
-    ),
-    actions: [
-      TextButton(onPressed: () => Navigator.pop(context), child: Text(context.l10n.cancel)),
-      FilledButton(onPressed: _saving ? null : _save, child: Text(context.l10n.create)),
-    ],
-  );
-}
 
 Future<void> showSceneTagEditor(BuildContext context, Scene scene, List<Tag> current) => showModalBottomSheet<void>(
   context: context,

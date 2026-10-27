@@ -22,6 +22,27 @@ query FindPerformer($id: ID!) {
   findPerformer(id: $id) { ...PerformerFields details }
 }
 
+# The channel's about tab and which of its tabs have content; separate from
+# FindPerformer so the page shows even if a server lacks one of the fields.
+query PerformerProfile($id: ID!) {
+  findPerformer(id: $id) {
+    id
+    alias_list
+    death_date
+    ethnicity
+    hair_color
+    eye_color
+    height_cm
+    weight
+    measurements
+    career_length
+    tattoos
+    piercings
+    image_count
+    gallery_count
+  }
+}
+
 query PerformerUrls($id: ID!) {
   findPerformer(id: $id) { id urls }
 }
@@ -32,4 +53,12 @@ mutation PerformerEdit($input: PerformerUpdateInput!) {
 
 mutation PerformerSetFavorite($id: ID!, $favorite: Boolean!) {
   performerUpdate(input: { id: $id, favorite: $favorite }) { id favorite }
+}
+
+mutation PerformerSetRating($id: ID!, $rating100: Int) {
+  performerUpdate(input: { id: $id, rating100: $rating100 }) { id rating100 }
+}
+
+mutation PerformerCreate($name: String!) {
+  performerCreate(input: { name: $name }) { ...PerformerFields }
 }

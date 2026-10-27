@@ -36,6 +36,23 @@ void main() {
     expect(t.detailsOpacity, 1);
   });
 
+  test('tablets: the expanded video takes half the width, the column below it', () {
+    const tablet = 1194.0;
+    expect(PlayerTransition.columnWidth(tablet), tablet / 2);
+    expect(PlayerTransition.columnWidth(width), width, reason: 'phones keep the full width');
+    final t = PlayerTransition(
+      height: 834,
+      minHeight: minHeight,
+      maxHeight: 834,
+      screenWidth: tablet,
+      topInset: 24,
+      expandedWidth: PlayerTransition.columnWidth(tablet),
+    );
+    expect(t.videoWidth, tablet / 2);
+    expect(t.videoHeight, closeTo(tablet / 2 * 9 / 16, 0.01));
+    expect(t.baseVideoHeight, closeTo(tablet / 2 * 9 / 16, 0.01));
+  });
+
   test('every value changes continuously and monotonically while dragging up', () {
     PlayerTransition? previous;
     for (var h = minHeight; h <= maxHeight; h += 1) {

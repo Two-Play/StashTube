@@ -4,14 +4,16 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/config/haptics.dart';
 import '../../data/models/performer.dart';
 import '../../widgets/confetti.dart';
+import '../studios/studio_favorites.dart';
 import 'performer_favorites.dart';
 import '../../l10n/l10n.dart';
 
-Future<void> _toggle(BuildContext context, WidgetRef ref, Performer performer) async {
+/// Runs [toggle], reporting a failed save in a snack bar.
+Future<void> _toggle(BuildContext context, Future<void> Function() toggle) async {
   final messenger = ScaffoldMessenger.of(context);
   final l = context.l10n;
   try {
-    await ref.read(performerFavoritesProvider.notifier).toggle(performer);
+    await toggle();
   } catch (e) {
     messenger.showSnackBar(SnackBar(content: Text(l.favoriteUpdateFailed(errorText(l, e)))));
   }
@@ -23,13 +25,13 @@ final _heartPop = TweenSequence<double>([
   TweenSequenceItem(tween: Tween(begin: 1.45, end: 1.0).chain(CurveTween(curve: Curves.elasticOut)), weight: 70),
 ]);
 
-/// Shared by both buttons: confetti and the heart pop when a performer
-/// becomes a favorite, a plain change when removed.
+/// Shared by the buttons: confetti and the heart pop when a performer or
+/// studio becomes a favorite, a plain change when removed.
 mixin _FavoriteAnimation<T extends ConsumerStatefulWidget> on ConsumerState<T>, TickerProvider {
   late final heart = AnimationController(vsync: this, duration: const Duration(milliseconds: 700), value: 1);
   int bursts = 0;
 
-  Future<void> onPressed(Performer performer, {required bool favorite}) async {
+  Future<void> onPressed(Future<void> Function() toggle, {required bool favorite}) async {
     if (favorite) {
       Haptics.light();
     } else {
@@ -39,7 +41,7 @@ mixin _FavoriteAnimation<T extends ConsumerStatefulWidget> on ConsumerState<T>, 
         heart.forward(from: 0);
       }
     }
-    await _toggle(context, ref, performer);
+    await _toggle(context, toggle);
   }
 
   @override
@@ -49,25 +51,59 @@ mixin _FavoriteAnimation<T extends ConsumerStatefulWidget> on ConsumerState<T>, 
   }
 }
 
-/// Compact YouTube "Subscribe"-style button under a performer's name. It
-/// bursts into confetti when the performer becomes a favorite, and morphs
-/// into the new state (color, label, width).
-class FavoriteButton extends ConsumerStatefulWidget {
+/// [ChannelFavoriteButton] for a performer.
+class FavoriteButton extends ConsumerWidget {
   const FavoriteButton({super.key, required this.performer});
 
   final Performer performer;
 
   @override
-  ConsumerState<FavoriteButton> createState() => _FavoriteButtonState();
+  Widget build(BuildContext context, WidgetRef ref) => ChannelFavoriteButton(
+        favorite: effectiveFavorite(ref, performer),
+        onToggle: () => ref.read(performerFavoritesProvider.notifier).toggle(performer),
+      );
 }
 
-class _FavoriteButtonState extends ConsumerState<FavoriteButton>
+/// [ChannelFavoriteButton] for a studio; nothing on servers without studio
+/// favorites (Stash before 0.25) or while that is loading.
+class StudioFavoriteButton extends ConsumerWidget {
+  const StudioFavoriteButton({super.key, required this.studioId});
+
+  final String studioId;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final favorite = effectiveStudioFavorite(ref, studioId);
+    if (favorite == null) return const SizedBox.shrink();
+    return ChannelFavoriteButton(
+      favorite: favorite,
+      onToggle: () => ref.read(studioFavoritesProvider.notifier).toggle(studioId, current: favorite),
+    );
+  }
+}
+
+/// Compact YouTube "Subscribe"-style button under a channel's name. It
+/// bursts into confetti when the channel becomes a favorite, and morphs
+/// into the new state (color, label, width).
+class ChannelFavoriteButton extends ConsumerStatefulWidget {
+  const ChannelFavoriteButton({super.key, required this.favorite, required this.onToggle});
+
+  final bool favorite;
+
+  /// Saves the change; a failure shows a snack bar.
+  final Future<void> Function() onToggle;
+
+  @override
+  ConsumerState<ChannelFavoriteButton> createState() => _ChannelFavoriteButtonState();
+}
+
+class _ChannelFavoriteButtonState extends ConsumerState<ChannelFavoriteButton>
     with SingleTickerProviderStateMixin, _FavoriteAnimation {
   @override
   Widget build(BuildContext context) {
-    final favorite = effectiveFavorite(ref, widget.performer);
+    final favorite = widget.favorite;
     final colors = Theme.of(context).colorScheme;
-    void press() => onPressed(widget.performer, favorite: favorite);
+    void press() => onPressed(widget.onToggle, favorite: favorite);
 
     return ConfettiBurst(
       trigger: bursts,
@@ -138,7 +174,10 @@ class _FavoriteIconButtonState extends ConsumerState<FavoriteIconButton>
         tooltip: favorite ? context.l10n.favoriteRemove : context.l10n.favoriteAdd,
         visualDensity: VisualDensity.compact,
         style: IconButton.styleFrom(backgroundColor: Colors.black38),
-        onPressed: () => onPressed(widget.performer, favorite: favorite),
+        onPressed: () => onPressed(
+          () => ref.read(performerFavoritesProvider.notifier).toggle(widget.performer),
+          favorite: favorite,
+        ),
         icon: ScaleTransition(
           scale: _heartPop.animate(heart),
           child: Icon(
@@ -148,6 +187,107 @@ class _FavoriteIconButtonState extends ConsumerState<FavoriteIconButton>
           ),
         ),
       ),
+    );
+  }
+}
+
+/// Heart toggle at the end of a channel row (the player's studio or
+/// performer): 48 dp target, tooltip, haptics, the heart pop and a small
+/// burst when it becomes a favorite.
+class ChannelFavoriteToggle extends StatefulWidget {
+  const ChannelFavoriteToggle({super.key, required this.favorite, required this.onToggle});
+
+  final bool favorite;
+
+  /// Saves the new state; may throw, which shows a snack bar.
+  final Future<void> Function() onToggle;
+
+  @override
+  State<ChannelFavoriteToggle> createState() => _ChannelFavoriteToggleState();
+}
+
+class _ChannelFavoriteToggleState extends State<ChannelFavoriteToggle> with SingleTickerProviderStateMixin {
+  late final _heart = AnimationController(vsync: this, duration: const Duration(milliseconds: 700), value: 1);
+  int _bursts = 0;
+
+  Future<void> _press() async {
+    if (widget.favorite) {
+      Haptics.light();
+    } else {
+      Haptics.medium();
+      if (!MediaQuery.disableAnimationsOf(context)) {
+        setState(() => _bursts++);
+        _heart.forward(from: 0);
+      }
+    }
+    final messenger = ScaffoldMessenger.maybeOf(context);
+    final l = context.l10n;
+    try {
+      await widget.onToggle();
+    } catch (e) {
+      messenger?.showSnackBar(SnackBar(content: Text(l.favoriteUpdateFailed(errorText(l, e)))));
+    }
+  }
+
+  @override
+  void dispose() {
+    _heart.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
+    final favorite = widget.favorite;
+    return ConfettiBurst(
+      trigger: _bursts,
+      pieces: 18,
+      power: 0.6,
+      child: IconButton(
+        tooltip: favorite ? context.l10n.favoriteRemove : context.l10n.favoriteAdd,
+        isSelected: favorite,
+        constraints: const BoxConstraints(minWidth: 48, minHeight: 48),
+        onPressed: _press,
+        icon: ScaleTransition(
+          scale: _heartPop.animate(_heart),
+          child: Icon(
+            favorite ? Icons.favorite : Icons.favorite_border,
+            color: favorite ? Colors.redAccent : colors.onSurfaceVariant,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// [ChannelFavoriteToggle] for a performer, sharing the favorite state of
+/// the other performer buttons.
+class PerformerChannelFavorite extends ConsumerWidget {
+  const PerformerChannelFavorite({super.key, required this.performer});
+
+  final Performer performer;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) => ChannelFavoriteToggle(
+        favorite: effectiveFavorite(ref, performer),
+        onToggle: () => ref.read(performerFavoritesProvider.notifier).toggle(performer),
+      );
+}
+
+/// [ChannelFavoriteToggle] for a studio; nothing while loading or when the
+/// server has no studio favorites (Stash before 0.25).
+class StudioChannelFavorite extends ConsumerWidget {
+  const StudioChannelFavorite({super.key, required this.studioId});
+
+  final String studioId;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final favorite = effectiveStudioFavorite(ref, studioId);
+    if (favorite == null) return const SizedBox.shrink();
+    return ChannelFavoriteToggle(
+      favorite: favorite,
+      onToggle: () => ref.read(studioFavoritesProvider.notifier).toggle(studioId, current: favorite),
     );
   }
 }

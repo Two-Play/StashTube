@@ -2,29 +2,25 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../core/config/haptics.dart';
-import '../../core/config/locale.dart';
-import '../../core/pagination/paging_mode.dart';
 import '../../core/config/server_config.dart';
+import '../../core/config/theme.dart';
 import '../../data/models/scene_details.dart';
 import '../../data/providers.dart';
-import '../pip/pip.dart';
-import '../player/lock_screen.dart';
-import '../player/player_providers.dart';
-import '../security/app_lock.dart';
-import '../auth/server_switcher.dart';
-import '../security/app_icon.dart';
-import '../security/app_lock_gate.dart';
-import '../shell/nav_bar_config.dart';
-import 'about.dart';
-import 'appearance_picker.dart';
-import 'nav_bar_settings_page.dart';
-import 'scene_card_config.dart';
 import '../../l10n/l10n.dart';
 import '../../widgets/animated_previews.dart';
+import '../pip/pip.dart';
+import '../player/player_providers.dart';
+import '../security/app_icon.dart';
+import '../security/app_lock.dart';
+import 'about.dart';
+import 'appearance_picker.dart';
+import 'scene_card_config.dart';
+import 'settings_categories.dart';
 
-/// Shown as a sheet by `openSettings`; [scrollController] lets swiping the
-/// list down past its top close the sheet.
+/// Shown as a sheet by `openSettings`: one entry per category with a short
+/// summary of its current values (SET-1); each opens its page inside the
+/// sheet. [scrollController] lets swiping the list down past its top close
+/// the sheet.
 class SettingsPage extends ConsumerWidget {
   const SettingsPage({super.key, this.scrollController});
 
@@ -32,15 +28,20 @@ class SettingsPage extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final config = ref.watch(serverConfigProvider);
-    final profiles = ref.watch(serverProfilesProvider).profiles;
+    final l = context.l10n;
     final server = ref.watch(serverProfilesProvider).active;
     final version = ref.watch(serverVersionProvider);
-    final preferredStream = ref.watch(preferredStreamProvider);
-    final theme = Theme.of(context);
-    final l = context.l10n;
-    final locale = ref.watch(appLocaleProvider);
-    final cardConfig = ref.watch(sceneCardConfigProvider);
+    final accent = ref.watch(accentColorProvider);
+    final accentName = accentColors.entries
+        .where((e) => e.value.toARGB32() == accent.toARGB32())
+        .map((e) => accentColorName(l, e.key))
+        .firstOrNull;
+    final preferred = ref.watch(preferredStreamProvider);
+    final height = preferred == null ? null : streamHeightOf(preferred);
+    final cards = ref.watch(sceneCardConfigProvider);
+    final appInfo = ref.watch(appInfoProvider).value;
+
+    String join(Iterable<String?> parts) => parts.whereType<String>().join(' · ');
 
     return Scaffold(
       appBar: AppBar(
@@ -57,459 +58,101 @@ class SettingsPage extends ConsumerWidget {
       body: ListView(
         controller: scrollController,
         children: [
-          _SectionTitle(l.sectionServer),
-          ListTile(
-            leading: const Icon(Icons.dns_outlined),
-            title: Text(server?.name ?? '-', maxLines: 1, overflow: TextOverflow.ellipsis),
-            subtitle: Text(
-              '${config?.baseUrl ?? ''}\n${switch (version) {
+          _CategoryTile(
+            icon: Icons.dns_outlined,
+            title: l.sectionServer,
+            summary: join([
+              server?.name,
+              switch (version) {
                 AsyncData(:final value) => l.stashVersion(value ?? l.unknownVersion),
                 AsyncError() => l.notReachable,
                 _ => l.checking,
-              }}',
-            ),
-            isThreeLine: true,
-            trailing: const Icon(Icons.edit_outlined),
-            onTap: server == null ? null : () => openServerEditor(context, server),
-          ),
-          ListTile(
-            leading: const Icon(Icons.swap_horiz),
-            title: Text(l.switchServer),
-            subtitle: Text(l.savedServersCount(profiles.length)),
-            trailing: const Icon(Icons.chevron_right),
-            onTap: () => showServerSwitcher(context),
-          ),
-          ListTile(
-            leading: const Icon(Icons.key_outlined),
-            title: Text(l.serverAccess),
-            subtitle: Text(switch (config) {
-              ServerConfig(apiKey: final key?) when key.isNotEmpty => '${l.apiKey}: ${l.isSet}',
-              ServerConfig(hasCredentials: true, :final username?) => l.signedInAs(username),
-              _ => l.notSet,
-            }),
-            trailing: const Icon(Icons.edit_outlined),
-            onTap: server == null ? null : () => openServerEditor(context, server),
-          ),
-          _SectionTitle(l.sectionAppearance),
-          const Padding(
-            padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            child: ThemeModeSelector(),
-          ),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
-            child: Text(l.accentColor, style: theme.textTheme.bodyLarge),
-          ),
-          const Padding(
-            padding: EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-            child: AccentColorPicker(),
-          ),
-          ListTile(
-            leading: const Icon(Icons.space_dashboard_outlined),
-            title: Text(l.navBarTitle),
-            subtitle: Text(ref.watch(navBarConfigProvider).visible.map((t) => t.label(context.l10n)).join(' · ')),
-            trailing: const Icon(Icons.chevron_right),
-            // Inside the settings sheet.
-            onTap: () => Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => const NavBarSettingsPage())),
-          ),
-          ListTile(
-            leading: const Icon(Icons.translate),
-            title: Text(l.language),
-            trailing: DropdownButton<String>(
-              value: locale?.languageCode ?? '',
-              underline: const SizedBox.shrink(),
-              items: [
-                DropdownMenuItem(value: '', child: Text(l.languageSystem)),
-                // Each language in its own name, so it can be found in either.
-                const DropdownMenuItem(value: 'de', child: Text('Deutsch')),
-                const DropdownMenuItem(value: 'en', child: Text('English')),
-              ],
-              onChanged: (code) =>
-                  ref.read(appLocaleProvider.notifier).set(code == null || code.isEmpty ? null : Locale(code)),
-            ),
-          ),
-          ListTile(
-            leading: const Icon(Icons.view_agenda_outlined),
-            title: Text(l.listPaging),
-            trailing: DropdownButton<PagingMode>(
-              value: ref.watch(pagingModeProvider),
-              underline: const SizedBox.shrink(),
-              items: [
-                DropdownMenuItem(value: PagingMode.infinite, child: Text(l.pagingInfinite)),
-                DropdownMenuItem(value: PagingMode.pages, child: Text(l.pagingPages)),
-              ],
-              onChanged: (mode) {
-                if (mode != null) ref.read(pagingModeProvider.notifier).set(mode);
               },
-            ),
+            ]),
+            page: const ServerSettingsPage(),
           ),
-          ListTile(
-            leading: const Icon(Icons.vibration),
-            title: Text(l.haptics),
-            trailing: DropdownButton<HapticLevel>(
-              value: ref.watch(hapticLevelProvider),
-              underline: const SizedBox.shrink(),
-              items: [
-                DropdownMenuItem(value: HapticLevel.off, child: Text(l.hapticsOff)),
-                DropdownMenuItem(value: HapticLevel.light, child: Text(l.hapticsLight)),
-                DropdownMenuItem(value: HapticLevel.normal, child: Text(l.hapticsNormal)),
-              ],
-              onChanged: (level) {
-                if (level != null) ref.read(hapticLevelProvider.notifier).set(level);
+          _CategoryTile(
+            icon: Icons.palette_outlined,
+            title: l.sectionAppearance,
+            summary: join([
+              switch (ref.watch(themeModeProvider)) {
+                ThemeMode.light => l.themeLight,
+                ThemeMode.dark => l.themeDark,
+                ThemeMode.system => l.themeSystem,
               },
-            ),
+              accentName,
+            ]),
+            page: const AppearanceSettingsPage(),
           ),
-          _SectionTitle(l.sectionSceneCards),
-          SwitchListTile(
-            secondary: const Icon(Icons.motion_photos_on_outlined),
-            title: Text(l.feedPreviews),
-            subtitle: Text(l.feedPreviewsSubtitle),
-            value: ref.watch(feedPreviewsProvider),
-            onChanged: withHaptic((v) => ref.read(feedPreviewsProvider.notifier).set(v)),
-          ),
-          ListTile(
-            leading: const Icon(Icons.timer_outlined),
-            title: Text(l.feedPreviewDelay),
-            enabled: ref.watch(feedPreviewsProvider),
-            trailing: DropdownButton<Duration>(
-              value: ref.watch(feedPreviewDelayProvider),
-              underline: const SizedBox.shrink(),
-              items: [
-                for (final delay in {...FeedPreviewDelayNotifier.choices, ref.watch(feedPreviewDelayProvider)})
-                  DropdownMenuItem(value: delay, child: Text(l.secondsValue(delay.inMilliseconds / 1000))),
-              ],
-              onChanged: ref.watch(feedPreviewsProvider)
-                  ? (delay) {
-                      if (delay != null) ref.read(feedPreviewDelayProvider.notifier).set(delay);
-                    }
-                  : null,
-            ),
-          ),
-          SwitchListTile(
-            secondary: const Icon(Icons.bookmarks_outlined),
-            title: Text(l.markerPreviews),
-            subtitle: Text(l.markerPreviewsSubtitle),
-            value: ref.watch(markerPreviewsProvider),
-            onChanged: withHaptic((v) => ref.read(markerPreviewsProvider.notifier).set(v)),
-          ),
-          ListTile(
-            leading: const Icon(Icons.account_circle_outlined),
-            title: Text(l.cardChannel),
-            trailing: DropdownButton<CardChannel>(
-              value: cardConfig.channel,
-              underline: const SizedBox.shrink(),
-              items: [
-                DropdownMenuItem(value: CardChannel.studio, child: Text(l.cardChannelStudio)),
-                DropdownMenuItem(value: CardChannel.performers, child: Text(l.cardChannelPerformers)),
-              ],
-              onChanged: (channel) => ref.read(sceneCardConfigProvider.notifier).set(cardConfig.copyWith(channel: channel)),
-            ),
-          ),
-          SwitchListTile(
-            secondary: const Icon(Icons.visibility_outlined),
-            title: Text(l.cardShowPlays),
-            value: cardConfig.showPlays,
-            onChanged: withHaptic(
-              (v) => ref.read(sceneCardConfigProvider.notifier).set(cardConfig.copyWith(showPlays: v)),
-            ),
-          ),
-          SwitchListTile(
-            secondary: const Icon(Icons.star_outline),
-            title: Text(l.cardShowRating),
-            value: cardConfig.showRating,
-            onChanged: withHaptic(
-              (v) => ref.read(sceneCardConfigProvider.notifier).set(cardConfig.copyWith(showRating: v)),
-            ),
-          ),
-          _SectionTitle(l.sectionPlayback),
-          _QualityTile(preferred: preferredStream),
-          const _PlaybackModeTiles(),
-          _SectionTitle(l.sectionPrivacy),
-          const _SecuritySettings(),
-          _SectionTitle(l.sectionAbout),
-          const AboutSettings(),
-          const SizedBox(height: 16),
-          ListTile(
-            leading: Icon(Icons.logout, color: theme.colorScheme.error),
-            title: Text(l.removeThisServer, style: TextStyle(color: theme.colorScheme.error)),
-            onTap: () async {
-              if (server == null || !await confirmRemoveServer(context, server)) return;
-              // The sheet sits on the root navigator, above the login page
-              // that follows removing the last server.
-              if (context.mounted) CupertinoSheetRoute.popSheet(context);
-              ref.read(nowPlayingProvider.notifier).close();
-              await ref.read(serverProfilesProvider.notifier).remove(server.id);
-            },
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-/// Picture-in-picture when leaving the app (Android) and background
-/// playback (4.12).
-class _PlaybackModeTiles extends ConsumerWidget {
-  const _PlaybackModeTiles();
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final l = context.l10n;
-    final modes = ref.watch(playbackModesProvider);
-    return Column(
-      children: [
-        if (ref.watch(pipServiceProvider).canAutoEnter)
-          SwitchListTile(
-            secondary: const Icon(Icons.picture_in_picture_alt_outlined),
-            title: Text(l.autoPip),
-            subtitle: Text(l.autoPipSubtitle),
-            value: modes.autoPip,
-            onChanged: withHaptic((v) => ref.read(playbackModesProvider.notifier).setAutoPip(v)),
-          ),
-        SwitchListTile(
-          secondary: const Icon(Icons.headphones_outlined),
-          title: Text(l.backgroundPlayback),
-          subtitle: Text(l.backgroundPlaybackSubtitle),
-          value: modes.background,
-          onChanged: withHaptic((v) => ref.read(playbackModesProvider.notifier).setBackground(v)),
-        ),
-        if (ref.watch(lockScreenSupportedProvider))
-          SwitchListTile(
-            secondary: const Icon(Icons.lock_outline),
-            title: Text(l.lockScreenControls),
-            subtitle: Text(l.lockScreenControlsSubtitle),
-            isThreeLine: true,
-            value: modes.lockScreen,
-            onChanged: withHaptic((v) => ref.read(playbackModesProvider.notifier).setLockScreen(v)),
-          ),
-      ],
-    );
-  }
-}
-
-/// Default resolution of new scenes (4.10). Stored as a stream label like
-/// the player's HD choice; picking a height here keeps that choice's format
-/// (HLS by default), see `pickPreferredStream`.
-class _QualityTile extends ConsumerWidget {
-  const _QualityTile({required this.preferred});
-
-  final String? preferred;
-
-  static const _heights = [1080, 720, 480, 240];
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final l = context.l10n;
-    final height = preferred == null ? null : streamHeightOf(preferred!);
-    final heights = [
-      if (height != null && !_heights.contains(height)) height,
-      ..._heights,
-    ];
-    return ListTile(
-      leading: const Icon(Icons.high_quality_outlined),
-      title: Text(l.preferredQuality),
-      subtitle: Text(l.preferredQualityHint),
-      isThreeLine: true,
-      trailing: DropdownButton<int>(
-        // 0 = the original file.
-        value: height ?? 0,
-        underline: const SizedBox.shrink(),
-        items: [
-          DropdownMenuItem(value: 0, child: Text(l.qualityOriginal)),
-          for (final h in heights) DropdownMenuItem(value: h, child: Text(h == 2160 ? '4K' : '${h}p')),
-        ],
-        onChanged: (h) {
-          final format = preferred == null ? 'HLS' : streamFormatOf(preferred!);
-          ref.read(preferredStreamProvider.notifier).set(h == null || h == 0 ? null : '$format ${h}p');
-        },
-      ),
-    );
-  }
-}
-
-/// App lock (11.1) and app switcher privacy (11.2).
-class _SecuritySettings extends ConsumerWidget {
-  const _SecuritySettings();
-
-  static Map<Duration, String> _delays(AppLocalizations l) => {
-    Duration.zero: l.lockImmediately,
-    for (final minutes in const [1, 5, 15]) Duration(minutes: minutes): l.lockAfterMinutes(minutes),
-  };
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final settings = ref.watch(appLockSettingsProvider);
-    final notifier = ref.read(appLockSettingsProvider.notifier);
-    final biometricsAvailable = ref.watch(_biometricsAvailableProvider).value ?? false;
-    final l = context.l10n;
-    final delays = _delays(l);
-
-    return Column(
-      children: [
-        SwitchListTile(
-          secondary: const Icon(Icons.lock_outline),
-          title: Text(l.appLock),
-          subtitle: Text(l.appLockSubtitle),
-          value: settings.enabled,
-          onChanged: withHaptic((on) async {
-            if (on) {
-              final pin = await showCreatePin(context);
-              if (pin != null) await notifier.enable(pin);
-            } else if (await confirmPin(context, ref)) {
-              await notifier.disable();
-            }
-          }),
-        ),
-        if (settings.enabled) ...[
-          if (biometricsAvailable)
-            SwitchListTile(
-              secondary: const Icon(Icons.fingerprint),
-              title: Text(l.unlockBiometric),
-              value: settings.biometrics,
-              // Turning it on asks once, so it surely works.
-              onChanged: withHaptic((on) async {
-                final reason = l.unlockReason;
-                if (on && !await ref.read(biometricAuthProvider).authenticate(reason)) return;
-                await notifier.setBiometrics(on);
+          _CategoryTile(
+            icon: Icons.play_circle_outline,
+            title: l.sectionPlayback,
+            summary: join([
+              l.qualitySummary(switch (height) {
+                null => l.qualityOriginal,
+                2160 => '4K',
+                final h => '${h}p',
               }),
-            ),
-          ListTile(
-            leading: const Icon(Icons.timer_outlined),
-            title: Text(l.lockNow),
-            trailing: DropdownButton<Duration>(
-              value: delays.containsKey(settings.lockAfter) ? settings.lockAfter : Duration.zero,
-              underline: const SizedBox.shrink(),
-              items: [
-                for (final MapEntry(:key, :value) in delays.entries) DropdownMenuItem(value: key, child: Text(value)),
-              ],
-              onChanged: (v) {
-                if (v != null) notifier.setLockAfter(v);
-              },
-            ),
+              if (ref.watch(playbackModesProvider).background) l.backgroundPlayback,
+            ]),
+            page: const PlaybackSettingsPage(),
           ),
-          ListTile(
-            leading: const Icon(Icons.pin_outlined),
-            title: Text(l.changePin),
-            onTap: () async {
-              if (!await confirmPin(context, ref)) return;
-              if (!context.mounted) return;
-              final pin = await showCreatePin(context);
-              if (pin != null) await notifier.enable(pin);
-            },
+          _CategoryTile(
+            icon: Icons.motion_photos_on_outlined,
+            title: l.sectionPreviewsCards,
+            summary: join([
+              if (!ref.watch(feedPreviewsProvider))
+                l.previewsOffSummary
+              else
+                switch (ref.watch(previewSourceProvider)) {
+                  PreviewSource.animatedImage => l.previewSourceAnimated,
+                  PreviewSource.video => l.previewSourceVideo,
+                },
+              switch (cards.channel) {
+                CardChannel.studio => l.cardChannelStudio,
+                CardChannel.performers => l.cardChannelPerformers,
+              },
+            ]),
+            page: const PreviewSettingsPage(),
+          ),
+          _CategoryTile(
+            icon: Icons.shield_outlined,
+            title: l.sectionPrivacy,
+            summary: join([
+              ref.watch(appLockSettingsProvider).enabled ? l.appLockOnSummary : l.appLockOffSummary,
+              ref.watch(appIconProvider).label(l),
+            ]),
+            page: const PrivacySettingsPage(),
+          ),
+          _CategoryTile(
+            icon: Icons.info_outline,
+            title: l.sectionAbout,
+            summary: appInfo == null
+                ? l.openSourceLicenses
+                : join([l.appVersionValue(appInfo.version, appInfo.buildNumber), l.openSourceLicenses]),
+            page: const AboutSettingsPage(),
           ),
         ],
-        const _AppIconTile(),
-        SwitchListTile(
-          secondary: const Icon(Icons.visibility_off_outlined),
-          title: Text(l.hideInSwitcher),
-          subtitle: Text(settings.enabled ? l.hideInSwitcherLocked : l.hideInSwitcherSubtitle),
-          // Always on while the app lock is on.
-          value: settings.hidesApp,
-          onChanged: withHaptic(settings.enabled ? null : notifier.setHideInSwitcher),
-        ),
-      ],
-    );
-  }
-}
-
-/// Disguised launcher icon (11.3).
-class _AppIconTile extends ConsumerWidget {
-  const _AppIconTile();
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final current = ref.watch(appIconProvider);
-    return ListTile(
-      leading: ClipRRect(
-        borderRadius: BorderRadius.circular(6),
-        child: Image.asset(current.preview, width: 28, height: 28),
-      ),
-      title: Text(context.l10n.appIcon),
-      subtitle: Text(current.label(context.l10n)),
-      trailing: const Icon(Icons.chevron_right),
-      onTap: () => showModalBottomSheet<void>(
-        context: context,
-        useRootNavigator: true,
-        showDragHandle: true,
-        builder: (sheetContext) => SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(context.l10n.appIcon, style: Theme.of(sheetContext).textTheme.titleMedium),
-                const SizedBox(height: 4),
-                Text(context.l10n.appIconHint, style: Theme.of(sheetContext).textTheme.bodySmall),
-                const SizedBox(height: 16),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                  children: [
-                    for (final choice in AppIconChoice.values)
-                      InkWell(
-                        borderRadius: BorderRadius.circular(12),
-                        onTap: () async {
-                          final messenger = ScaffoldMessenger.of(context);
-                          final l = context.l10n;
-                          Navigator.pop(sheetContext);
-                          try {
-                            await ref.read(appIconProvider.notifier).set(choice);
-                          } catch (e) {
-                            messenger.showSnackBar(SnackBar(content: Text(l.appIconFailed(errorText(l, e)))));
-                          }
-                        },
-                        child: Padding(
-                          padding: const EdgeInsets.all(8),
-                          child: Column(
-                            children: [
-                              Container(
-                                decoration: BoxDecoration(
-                                  borderRadius: BorderRadius.circular(16),
-                                  border: Border.all(
-                                    color: choice == current
-                                        ? Theme.of(sheetContext).colorScheme.primary
-                                        : Colors.transparent,
-                                    width: 3,
-                                  ),
-                                ),
-                                child: ClipRRect(
-                                  borderRadius: BorderRadius.circular(13),
-                                  child: Image.asset(choice.preview, width: 64, height: 64),
-                                ),
-                              ),
-                              const SizedBox(height: 6),
-                              Text(choice.label(context.l10n)),
-                            ],
-                          ),
-                        ),
-                      ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-        ),
       ),
     );
   }
 }
 
-final _biometricsAvailableProvider = FutureProvider.autoDispose<bool>(
-  (ref) => ref.watch(biometricAuthProvider).isAvailable(),
-);
+/// A category of the settings; opens [page] inside the settings sheet.
+class _CategoryTile extends StatelessWidget {
+  const _CategoryTile({required this.icon, required this.title, required this.summary, required this.page});
 
-
-class _SectionTitle extends StatelessWidget {
-  const _SectionTitle(this.text);
-
-  final String text;
+  final IconData icon;
+  final String title;
+  final String summary;
+  final Widget page;
 
   @override
-  Widget build(BuildContext context) => Padding(
-    padding: const EdgeInsets.fromLTRB(16, 20, 16, 4),
-    child: Text(
-      text,
-      style: Theme.of(context).textTheme.labelLarge?.copyWith(color: Theme.of(context).colorScheme.primary),
-    ),
+  Widget build(BuildContext context) => ListTile(
+    leading: Icon(icon),
+    title: Text(title),
+    subtitle: Text(summary, maxLines: 1, overflow: TextOverflow.ellipsis),
+    trailing: const Icon(Icons.chevron_right),
+    onTap: () => Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => page)),
   );
 }
-

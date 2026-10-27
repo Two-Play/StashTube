@@ -119,6 +119,8 @@ class _ShortsSettingsSheetState extends ConsumerState<ShortsSettingsSheet> {
                         : (v) => setState(() => _settings = _settings.copyWith(onlyTags: v))),
                   ),
                   section(l.shortsMaxLength),
+                  Text(l.shortsMaxLengthHint, style: theme.textTheme.bodySmall),
+                  const SizedBox(height: 8),
                   Wrap(
                     spacing: 6,
                     runSpacing: 6,
@@ -137,6 +139,8 @@ class _ShortsSettingsSheetState extends ConsumerState<ShortsSettingsSheet> {
                     value: _settings.portraitOnly,
                     onChanged: withHaptic((v) => setState(() => _settings = _settings.copyWith(portraitOnly: v))),
                   ),
+                  // The loops follow the tags and the orientation too.
+                  Text(l.shortsLoopsHint, style: theme.textTheme.bodySmall),
                   const SizedBox(height: 16),
                 ],
               ),
@@ -145,15 +149,20 @@ class _ShortsSettingsSheetState extends ConsumerState<ShortsSettingsSheet> {
               top: false,
               child: Padding(
                 padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
-                child: Row(
+                // Side by side; stacked (apply on top) when large text
+                // doesn't fit them in one row.
+                child: OverflowBar(
+                  alignment: MainAxisAlignment.spaceBetween,
+                  overflowAlignment: OverflowBarAlignment.end,
+                  overflowDirection: VerticalDirection.up,
                   children: [
                     TextButton(
                       onPressed: () => setState(() => _settings = const ShortsSettings()),
                       child: Text(l.reset),
                     ),
-                    const Spacer(),
                     FilledButton(
                       onPressed: () {
+                        Haptics.light();
                         ref.read(shortsSettingsProvider.notifier).set(_settings);
                         Navigator.pop(context);
                       },

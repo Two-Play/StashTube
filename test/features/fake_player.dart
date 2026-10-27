@@ -11,13 +11,15 @@ class FakePlayer implements Player {
   final seeks = <Duration>[];
   final position = StreamController<Duration>.broadcast();
   final completed = StreamController<bool>.broadcast();
+  final error = StreamController<String>.broadcast();
+  final playlist = StreamController<Playlist>.broadcast();
 
   @override
   PlayerState get state => _state;
 
   @override
   PlayerStream get stream => PlayerStream(
-        const Stream.empty(), // playlist
+        playlist.stream,
         const Stream.empty(), // playing
         completed.stream,
         position.stream,
@@ -41,12 +43,16 @@ class FakePlayer implements Player {
         const Stream.empty(), // height
         const Stream.empty(), // subtitle
         const Stream.empty(), // log
-        const Stream.empty(), // error
+        error.stream,
       );
+
+  /// Like mpv right after a seek: the position stays where it was.
+  bool lagging = false;
 
   @override
   Future<void> seek(Duration duration) async {
     seeks.add(duration);
+    if (lagging) return;
     _state = _state.copyWith(position: duration);
     position.add(duration);
   }
@@ -57,9 +63,14 @@ class FakePlayer implements Player {
   /// Opened media with whether it started playing.
   final opened = <({String uri, bool play})>[];
 
+  /// Start positions of the opened media.
+  final openedStarts = <Duration?>[];
+
   @override
   Future<void> open(Playable playable, {bool play = true}) async {
     opened.add((uri: (playable as Media).uri, play: play));
+    openedStarts.add(playable.start);
+    playlist.add(Playlist([playable]));
     _state = _state.copyWith(playing: play);
   }
 

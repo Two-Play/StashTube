@@ -1,10 +1,13 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/config/design_tokens.dart';
 import '../../core/config/haptics.dart';
-import '../../core/utils/format.dart';
 import '../../data/models/list_queries.dart';
+import '../../data/models/performer.dart';
 import '../../data/models/scene.dart';
 import '../../data/providers.dart';
 import '../../widgets/play_pause_icon.dart';
@@ -13,14 +16,14 @@ import '../../widgets/scene_feed.dart';
 import '../../widgets/stash_image.dart';
 import '../shell/navigation.dart';
 import '../cast/cast_providers.dart';
+import '../performers/favorite_button.dart';
 import 'drag_to_minimize.dart';
-import 'file_info.dart';
 import 'player_controls.dart';
 import 'player_providers.dart';
 import 'player_transition.dart';
-import '../tags/tag_editor.dart';
 import 'scene_actions.dart';
-import 'scene_edits.dart';
+import 'scene_description.dart';
+import 'scene_tags_row.dart';
 import '../../l10n/l10n.dart';
 
 /// Width / height of [scene]'s video, updated once the player knows the
@@ -64,11 +67,41 @@ class _PlayerPanelState extends ConsumerState<PlayerPanel> {
   /// How far the details list is scrolled.
   final _detailsScroll = ValueNotifier<double>(0);
 
+  /// The details exist for this scene; collapsed they are only hidden, so
+  /// expanding doesn't build and load "Up next" mid-animation.
+  bool _keepDetails = false;
+
+  /// The details widgets (info and list, or both in one), reused while only
+  /// the panel's height changes, so the frames of the transition don't
+  /// rebuild them.
+  final _details = <PlayerDetailsPart, PlayerDetails>{};
+
   @override
   void didUpdateWidget(PlayerPanel oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.scene.id != widget.scene.id) _detailsScroll.value = 0;
   }
+
+  PlayerDetails _detailsFor(Scene scene, double topSpacer, PlayerDetailsPart part) {
+    final details = _details[part];
+    if (details != null && details.scene == scene && details.topSpacer == topSpacer) return details;
+    return _details[part] = PlayerDetails(scene: scene, topSpacer: topSpacer, part: part);
+  }
+
+  /// Hidden while collapsed (kept, see [_keepDetails]), faded in as the
+  /// panel opens.
+  Widget _fading(PlayerTransition t, Widget child) => Visibility(
+        visible: t.showDetails,
+        maintainState: true,
+        child: Opacity(
+          opacity: t.detailsOpacity,
+          // Fading repaints only the opacity, not the list.
+          child: RepaintBoundary(
+            // Ink of the list tiles above the panel's color.
+            child: Material(type: MaterialType.transparency, child: child),
+          ),
+        ),
+      );
 
   @override
   void dispose() {
@@ -80,8 +113,20 @@ class _PlayerPanelState extends ConsumerState<PlayerPanel> {
   Widget build(BuildContext context) {
     final scene = widget.scene;
     final height = widget.height;
+    // A scene that couldn't be handed to the cast device.
+    ref.listen(castFailureProvider, (_, failure) {
+      if (failure == null) return;
+      final l = context.l10n;
+      ScaffoldMessenger.maybeOf(context)?.showSnackBar(SnackBar(
+        content: Text(l.castPlayFailed(failure.deviceName ?? l.castDevice, errorText(l, failure.error))),
+      ));
+    });
     final colors = Theme.of(context).colorScheme;
     final media = MediaQuery.of(context);
+    // Tablets: the video and its info in a column on the left, "Up next"
+    // on the right, instead of a video across the whole width.
+    final columnWidth = PlayerTransition.columnWidth(media.size.width);
+    final split = columnWidth < media.size.width;
     final t = PlayerTransition(
       height: height,
       minHeight: kMiniPlayerHeight,
@@ -90,6 +135,7 @@ class _PlayerPanelState extends ConsumerState<PlayerPanel> {
       topInset: media.padding.top,
       // Portrait videos get a taller video area (4.20).
       videoAspect: ref.watch(_videoAspectProvider(scene)) ?? 16 / 9,
+      expandedWidth: columnWidth,
     );
 
     // Only status bar fields: the collapsed panel sits over Android's
@@ -102,6 +148,12 @@ class _PlayerPanelState extends ConsumerState<PlayerPanel> {
     );
     final progressLineHeight = 2 * t.miniBarOpacity;
     final detailsTop = t.topPadding + t.baseVideoHeight + progressLineHeight;
+    // The details keep their expanded height during the transition (the
+    // panel clips them), so their list isn't laid out anew every frame.
+    final detailsHeight = math.max(0.0, widget.maxHeight - media.padding.top - columnWidth * 9 / 16);
+    // Built while the panel rests (collapsed or open), not in the middle of
+    // its animation: building and loading the list there dropped frames.
+    if (t.isExpanded || t.isCollapsed) _keepDetails = true;
 
     // Every wrapper below is always present (only flags change), so the
     // video keeps its place in the tree during the transition.
@@ -118,110 +170,120 @@ class _PlayerPanelState extends ConsumerState<PlayerPanel> {
             minHeight: kMiniPlayerHeight,
             maxHeight: widget.maxHeight,
             videoBottom: t.topPadding + shownVideoHeight,
-            child: PanelTapGuard(
-              // Collapsed or mid-drag, a tap should still expand the panel.
-              enabled: t.isExpanded,
-              child: ColoredBox(
-                color: Color.lerp(colors.surfaceContainer, colors.surface, t.progress)!,
-                // Always the panel's height: while the phone turns, the space can
-                // briefly be smaller than the miniplayer's height.
-                child: ClipRect(
-                  child: OverflowBox(
-                    alignment: Alignment.topCenter,
-                    minHeight: height,
-                    maxHeight: height,
-                    child: Stack(
-                      children: [
-                        // Below the 16:9 area; the taller video covers their spacer.
-                        Positioned(
-                          top: detailsTop,
-                          left: 0,
-                          right: 0,
-                          bottom: 0,
-                          child: t.showDetails
-                              ? NotificationListener<ScrollNotification>(
-                                  onNotification: (n) {
-                                    if (n.depth == 0 && n.metrics.axis == Axis.vertical) {
-                                      _detailsScroll.value = n.metrics.pixels;
-                                    }
-                                    return false;
-                                  },
-                                  child: Opacity(
-                                    opacity: t.detailsOpacity,
-                                    // Ink of the list tiles above the panel's color.
-                                    child: Material(
-                                      type: MaterialType.transparency,
-                                      child: _SceneDetails(scene: scene, topSpacer: t.extraVideoHeight),
-                                    ),
-                                  ),
-                                )
-                              : const SizedBox.shrink(),
-                        ),
-                        Positioned(
-                          top: 0,
-                          left: 0,
-                          right: 0,
-                          child: Column(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              // Status bar area: black like the video, so no colored band
-                              // grows above it while expanding.
-                              SizedBox(
-                                height: t.topPadding,
-                                width: double.infinity,
-                                child: const ColoredBox(color: Colors.black),
-                              ),
-                      SizedBox(
-                        height: shownVideoHeight,
-                        // The panel's width even while the phone turns (the video width
-                        // comes from the screen size, which can be ahead of the layout).
-                        child: ClipRect(
-                          child: OverflowBox(
-                            alignment: Alignment.centerLeft,
-                            minWidth: media.size.width,
-                            maxWidth: media.size.width,
-                            child: Row(
-                              children: [
-                                SizedBox(
-                                  width: t.videoWidth,
-                                  child: ColoredBox(
-                                    color: Colors.black,
-                                    child: PlayerVideo(scene: scene, showControls: t.isExpanded),
+            child: ColoredBox(
+              color: Color.lerp(colors.surfaceContainer, colors.surface, t.progress)!,
+              // Always the panel's height: while the phone turns, the space can
+              // briefly be smaller than the miniplayer's height.
+              child: ClipRect(
+                child: OverflowBox(
+                  alignment: Alignment.topCenter,
+                  minHeight: height,
+                  maxHeight: height,
+                  child: Stack(
+                    children: [
+                      // Below the 16:9 area; the taller video covers their spacer.
+                      Positioned(
+                        top: detailsTop,
+                        left: 0,
+                        width: columnWidth,
+                        height: detailsHeight,
+                        child: _keepDetails
+                            ? NotificationListener<ScrollNotification>(
+                                onNotification: (n) {
+                                  if (n.depth == 0 && n.metrics.axis == Axis.vertical) {
+                                    _detailsScroll.value = n.metrics.pixels;
+                                  }
+                                  return false;
+                                },
+                                child: _fading(
+                                  t,
+                                  _detailsFor(
+                                    scene,
+                                    t.extraVideoHeight,
+                                    split ? PlayerDetailsPart.info : PlayerDetailsPart.all,
                                   ),
                                 ),
-                                // Mini bar info keeps its natural width and is clipped while
-                                // the video takes over the row.
-                                Expanded(
-                                  child: ClipRect(
-                                    child: OverflowBox(
-                                      alignment: Alignment.centerLeft,
-                                      minWidth: 0,
-                                      maxWidth: media.size.width - kMiniPlayerHeight * 16 / 9,
-                                      child: Opacity(
-                                        opacity: t.miniBarOpacity,
-                                        child: IgnorePointer(
-                                          ignoring: t.miniBarOpacity < 0.5,
-                                          child: _MiniInfo(scene: scene),
-                                        ),
+                              )
+                            : const SizedBox.shrink(),
+                      ),
+                      Positioned(
+                        top: 0,
+                        left: 0,
+                        right: 0,
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            // Status bar area: black like the video, so no colored band
+                            // grows above it while expanding.
+                            SizedBox(
+                              height: t.topPadding,
+                              width: double.infinity,
+                              child: const ColoredBox(color: Colors.black),
+                            ),
+                    SizedBox(
+                      height: shownVideoHeight,
+                      // The panel's width even while the phone turns (the video width
+                      // comes from the screen size, which can be ahead of the layout).
+                      child: ClipRect(
+                        child: OverflowBox(
+                          alignment: Alignment.centerLeft,
+                          minWidth: media.size.width,
+                          maxWidth: media.size.width,
+                          child: Row(
+                            children: [
+                              SizedBox(
+                                width: t.videoWidth,
+                                child: ColoredBox(
+                                  color: Colors.black,
+                                  // A playback error shows inside the controls
+                                  // (StashVideoControls), so also in fullscreen.
+                                  child: PlayerVideo(scene: scene, showControls: t.isExpanded),
+                                ),
+                              ),
+                              // Mini bar info keeps its natural width and is clipped while
+                              // the video takes over the row.
+                              Expanded(
+                                child: ClipRect(
+                                  child: OverflowBox(
+                                    alignment: Alignment.centerLeft,
+                                    minWidth: 0,
+                                    maxWidth: media.size.width - kMiniPlayerHeight * 16 / 9,
+                                    child: Opacity(
+                                      opacity: t.miniBarOpacity,
+                                      child: IgnorePointer(
+                                        ignoring: t.miniBarOpacity < 0.5,
+                                        child: _MiniInfo(scene: scene),
                                       ),
                                     ),
                                   ),
                                 ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ),
-                              // Mini progress line shrinks away so no gap remains under the video.
-                              SizedBox(
-                                height: progressLineHeight,
-                                child: Opacity(opacity: t.miniBarOpacity, child: const _ProgressBar(height: 2)),
                               ),
                             ],
                           ),
                         ),
-                      ],
+                      ),
                     ),
+                            // Mini progress line shrinks away so no gap remains under the video.
+                            SizedBox(
+                              height: progressLineHeight,
+                              child: Opacity(opacity: t.miniBarOpacity, child: const _ProgressBar(height: 2)),
+                            ),
+                          ],
+                        ),
+                      ),
+                      // "Up next" beside the video's column on tablets. Always in
+                      // the tree (empty on phones), so turning a tablet doesn't
+                      // move the video to another place in it.
+                      Positioned(
+                        top: t.topPadding,
+                        left: columnWidth,
+                        right: 0,
+                        height: math.max(0.0, widget.maxHeight - media.padding.top),
+                        child: split && _keepDetails
+                            ? _fading(t, _detailsFor(scene, 0, PlayerDetailsPart.list))
+                            : const SizedBox.shrink(),
+                      ),
+                    ],
                   ),
                 ),
               ),
@@ -243,58 +305,77 @@ class _MiniInfo extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final player = ref.watch(playerProvider);
+    final l = context.l10n;
+    final casting = ref.watch(isCastingProvider);
+    final failed = !casting && ref.watch(playbackErrorProvider) != null;
 
-    return Row(
-      children: [
-        Expanded(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 12),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(scene.title, maxLines: 1, overflow: TextOverflow.ellipsis, style: theme.textTheme.bodyMedium),
-                Text(
-                  scene.studio?.name ?? scene.performers.firstOrNull?.name ?? '',
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurfaceVariant),
-                ),
-              ],
+    // The bar has a fixed height: two lines of text fit up to 1.3×.
+    return MediaQuery.withClampedTextScaling(
+      maxScaleFactor: 1.3,
+      child: Row(
+        children: [
+          Expanded(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 12),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(scene.title, maxLines: 1, overflow: TextOverflow.ellipsis, style: theme.textTheme.bodyMedium),
+                  Text(
+                    scene.studio?.name ?? scene.performers.firstOrNull?.name ?? '',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+                  ),
+                ],
+              ),
             ),
           ),
-        ),
-        if (ref.watch(isCastingProvider))
-          // Controls the cast device while casting.
-          Builder(builder: (_) {
-            final playing = ref.watch(castPlaybackProvider).value?.playing ?? false;
-            final cast = ref.watch(castServiceProvider);
-            return IconButton(
-              icon: PlayPauseIcon(playing: playing),
+          if (failed)
+            // Playback failed: tapping tries again.
+            IconButton(
+              tooltip: l.retry,
+              icon: Icon(Icons.error_outline, color: theme.colorScheme.error),
               onPressed: () {
                 Haptics.light();
-                playing ? cast.pause() : cast.play();
+                ref.read(playbackErrorProvider.notifier).retry();
               },
-            );
-          })
-        else
-          StreamBuilder<bool>(
-            stream: player.stream.playing,
-            initialData: player.state.playing,
-            builder: (_, snapshot) => IconButton(
-              icon: PlayPauseIcon(playing: snapshot.data == true),
-              onPressed: () {
-                Haptics.light();
-                player.playOrPause();
-              },
+            )
+          else if (casting)
+            // Controls the cast device while casting.
+            Builder(builder: (_) {
+              final playing = ref.watch(castPlaybackProvider).value?.playing ?? false;
+              final cast = ref.watch(castServiceProvider);
+              return IconButton(
+                tooltip: playing ? l.pause : l.play,
+                icon: PlayPauseIcon(playing: playing),
+                onPressed: () {
+                  Haptics.light();
+                  playing ? cast.pause() : cast.play();
+                },
+              );
+            })
+          else
+            StreamBuilder<bool>(
+              stream: player.stream.playing,
+              initialData: player.state.playing,
+              builder: (_, snapshot) => IconButton(
+                tooltip: snapshot.data == true ? l.pause : l.play,
+                icon: PlayPauseIcon(playing: snapshot.data == true),
+                onPressed: () {
+                  Haptics.light();
+                  player.playOrPause();
+                },
+              ),
             ),
+          IconButton(
+            tooltip: context.l10n.close,
+            icon: const Icon(Icons.close),
+            onPressed: () => ref.read(nowPlayingProvider.notifier).dismiss(),
           ),
-        IconButton(
-          tooltip: context.l10n.close,
-          icon: const Icon(Icons.close),
-          onPressed: () => ref.read(nowPlayingProvider.notifier).dismiss(),
-        ),
-      ],
+        ],
+      ),
     );
   }
 }
@@ -324,20 +405,47 @@ class _ProgressBar extends ConsumerWidget {
   }
 }
 
-/// Everything below the video: title, channel, performers, tags, description
-/// and "Up next".
-class _SceneDetails extends ConsumerWidget {
-  const _SceneDetails({required this.scene, this.topSpacer = 0});
+/// Which part of [PlayerDetails] to show.
+enum PlayerDetailsPart {
+  /// Info, then "Up next" (or the queue) in one list (phones).
+  all,
+
+  /// Only the scene's info, under the video's column (tablets).
+  info,
+
+  /// Only "Up next" (or the queue), beside the video (tablets).
+  list,
+}
+
+/// Everything below the video: the scene's title, channel, actions,
+/// performers and chapters, then "Up next" (or the queue). On wide windows
+/// the panel shows the [PlayerDetailsPart.info] and [PlayerDetailsPart.list]
+/// side by side.
+class PlayerDetails extends ConsumerWidget {
+  const PlayerDetails({super.key, required this.scene, this.topSpacer = 0, this.part = PlayerDetailsPart.all});
 
   final Scene scene;
+  final PlayerDetailsPart part;
 
   /// Room at the top for a portrait video's extra height.
   final double topSpacer;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    if (part == PlayerDetailsPart.info) {
+      return CustomScrollView(
+        key: ValueKey(scene.id),
+        physics: const ClampingScrollPhysics(),
+        slivers: [
+          SliverToBoxAdapter(child: SizedBox(height: topSpacer)),
+          SliverToBoxAdapter(child: _SceneInfo(scene: scene)),
+          const SliverToBoxAdapter(child: SizedBox(height: 24)),
+        ],
+      );
+    }
+    final withInfo = part == PlayerDetailsPart.all;
     final queue = ref.watch(playQueueProvider);
-    if (queue != null) return _QueueDetails(scene: scene, queue: queue, topSpacer: topSpacer);
+    if (queue != null) return _QueueDetails(scene: scene, queue: queue, topSpacer: topSpacer, withInfo: withInfo);
 
     // Prefer more scenes from the same studio, then performer, else random.
     final upNext = SceneQuery(
@@ -359,8 +467,10 @@ class _SceneDetails extends ConsumerWidget {
       emptyMessage: context.l10n.upNextEmpty,
       emptyIcon: Icons.playlist_play,
       headerSlivers: [
-        SliverToBoxAdapter(child: SizedBox(height: topSpacer)),
-        SliverToBoxAdapter(child: _SceneInfo(scene: scene)),
+        if (withInfo) ...[
+          SliverToBoxAdapter(child: SizedBox(height: topSpacer)),
+          SliverToBoxAdapter(child: _SceneInfo(scene: scene)),
+        ],
         SliverToBoxAdapter(
           child: Padding(
             padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
@@ -377,21 +487,27 @@ class _SceneDetails extends ConsumerWidget {
 
 /// Details plus the queue being played (watch later, a group).
 class _QueueDetails extends StatelessWidget {
-  const _QueueDetails({required this.scene, required this.queue, this.topSpacer = 0});
+  const _QueueDetails({required this.scene, required this.queue, this.topSpacer = 0, this.withInfo = true});
 
   final Scene scene;
   final PlayQueue queue;
   final double topSpacer;
 
+  /// False beside the video on tablets, where the info has its own column.
+  final bool withInfo;
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final l = context.l10n;
     return CustomScrollView(
       key: ValueKey(scene.id),
       physics: const ClampingScrollPhysics(),
       slivers: [
-        SliverToBoxAdapter(child: SizedBox(height: topSpacer)),
-        SliverToBoxAdapter(child: _SceneInfo(scene: scene)),
+        if (withInfo) ...[
+          SliverToBoxAdapter(child: SizedBox(height: topSpacer)),
+          SliverToBoxAdapter(child: _SceneInfo(scene: scene)),
+        ],
         SliverToBoxAdapter(
           child: Padding(
             padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
@@ -401,11 +517,18 @@ class _QueueDetails extends StatelessWidget {
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
-                    '${queue.title} · ${queue.index + 1} / ${queue.scenes.length}',
+                    queue.title,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: theme.textTheme.titleMedium,
                   ),
+                ),
+                const SizedBox(width: 8),
+                // Where the queue stands: "3 / 12".
+                Text(
+                  l.queuePosition(queue.index + 1, queue.scenes.length),
+                  semanticsLabel: l.queuePositionSemantics(queue.index + 1, queue.scenes.length),
+                  style: theme.textTheme.titleSmall?.copyWith(color: theme.colorScheme.onSurfaceVariant),
                 ),
               ],
             ),
@@ -424,141 +547,136 @@ class _QueueDetails extends StatelessWidget {
   }
 }
 
-class _SceneInfo extends ConsumerStatefulWidget {
+/// The scene's part of the details, ordered like YouTube's watch page
+/// (WATCH-2): title and meta (tap for the description sheet), the channel,
+/// one action bar, the performers and the chapters, so "Up next" starts
+/// within the first screen.
+class _SceneInfo extends ConsumerWidget {
   const _SceneInfo({required this.scene});
 
   final Scene scene;
 
   @override
-  ConsumerState<_SceneInfo> createState() => _SceneInfoState();
-}
-
-class _SceneInfoState extends ConsumerState<_SceneInfo> {
-  bool _expanded = false;
-  bool _titleExpanded = false;
-
-  @override
-  Widget build(BuildContext context) {
-    final scene = widget.scene;
+  Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
+    final l = context.l10n;
     final muted = theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurfaceVariant);
-    final studio = scene.studio;
     final details = ref.watch(sceneDetailsProvider(scene.id)).value;
-    final tags = effectiveTags(ref, scene);
+    final meta = sceneMetaText(l, scene);
 
-    final meta = [
-      if (scene.playCount > 0) context.l10n.playsCount(scene.playCount),
-      if (scene.date != null) formatDate(scene.date!),
-      if (resolutionLabel(scene.height) != null) resolutionLabel(scene.height)!,
-    ].join(' • ');
+    // The studio, else the first performer, is the scene's channel.
+    final studio = scene.studio;
+    final performer = studio == null ? scene.performers.firstOrNull : null;
+    final performers = performer != null && scene.performers.length == 1 ? const <Performer>[] : scene.performers;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Padding(
-          padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
-          // Long titles (often file names) are cut to two lines; tap to expand.
-          child: GestureDetector(
-            onTap: () => setState(() => _titleExpanded = !_titleExpanded),
-            child: AnimatedSize(
-              duration: const Duration(milliseconds: 150),
-              alignment: Alignment.topCenter,
-              child: Text(
-                scene.title,
-                maxLines: _titleExpanded ? null : 2,
-                overflow: _titleExpanded ? TextOverflow.visible : TextOverflow.ellipsis,
-                style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w600),
+        // Long titles (often file names) are cut to two lines; the sheet
+        // shows all of it (WATCH-5).
+        Semantics(
+          button: true,
+          onTapHint: l.showDescription,
+          child: InkWell(
+            onTap: () => showSceneDescription(context, scene),
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(AppSpacing.l, AppSpacing.m, AppSpacing.l, AppSpacing.s),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    scene.title,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w600),
+                  ),
+                  const SizedBox(height: AppSpacing.xs),
+                  Text.rich(
+                    TextSpan(children: [
+                      if (meta.isNotEmpty) ...[
+                        TextSpan(text: meta),
+                        const WidgetSpan(child: SizedBox(width: AppSpacing.s)),
+                      ],
+                      TextSpan(
+                        text: l.showMore,
+                        style: TextStyle(color: theme.colorScheme.onSurface, fontWeight: FontWeight.w600),
+                      ),
+                    ]),
+                    style: muted,
+                  ),
+                ],
               ),
             ),
           ),
         ),
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16),
-          child: Text(meta, style: muted),
-        ),
-        SceneActions(scene: scene),
         if (studio != null)
           ListTile(
             leading: ChannelAvatar(name: studio.name, imageUrl: studio.imageUrl),
             title: Text(studio.name, maxLines: 1, overflow: TextOverflow.ellipsis, style: theme.textTheme.titleSmall),
-            trailing: const Icon(Icons.chevron_right),
+            trailing: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [StudioChannelFavorite(studioId: studio.id), const Icon(Icons.chevron_right)],
+            ),
             onTap: () => openStudio(ref, studio.id),
-          ),
-        if (scene.performers.isNotEmpty)
-          SizedBox(
-            height: 48,
-            child: ListView.separated(
-              scrollDirection: Axis.horizontal,
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              itemCount: scene.performers.length,
-              separatorBuilder: (_, _) => const SizedBox(width: 8),
-              itemBuilder: (_, i) {
-                final p = scene.performers[i];
-                return ActionChip(
-                  avatar: ChannelAvatar(name: p.name, imageUrl: p.imageUrl, radius: 12),
-                  label: Text(p.name),
-                  onPressed: () => openPerformer(ref, p.id),
-                );
-              },
+          )
+        else if (performer != null)
+          ListTile(
+            leading: ChannelAvatar(name: performer.name, imageUrl: performer.imageUrl),
+            title: Text(performer.name, maxLines: 1, overflow: TextOverflow.ellipsis, style: theme.textTheme.titleSmall),
+            trailing: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [PerformerChannelFavorite(performer: performer), const Icon(Icons.chevron_right)],
             ),
+            onTap: () => openPerformer(ref, performer.id),
           ),
-        SizedBox(
-          height: 44,
-          child: ListView.separated(
-            scrollDirection: Axis.horizontal,
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            itemCount: tags.length + 1,
-            separatorBuilder: (_, _) => const SizedBox(width: 6),
-            itemBuilder: (_, i) {
-              if (i == tags.length) {
-                return ActionChip(
-                  avatar: Icon(tags.isEmpty ? Icons.add : Icons.edit_outlined, size: 16),
-                  label: Text(tags.isEmpty ? context.l10n.addTags : context.l10n.editTags),
-                  visualDensity: VisualDensity.compact,
-                  onPressed: () => showSceneTagEditor(context, scene, tags),
-                );
-              }
-              final tag = tags[i];
-              return ActionChip(
-                label: Text('#${tag.name}'),
-                labelStyle: TextStyle(color: theme.colorScheme.primary),
-                visualDensity: VisualDensity.compact,
-                onPressed: () => openTag(ref, tag.id),
-              );
-            },
-          ),
-        ),
-        if (details != null && details.markers.isNotEmpty) ChapterList(details: details),
-        if (scene.details != null)
+        SceneActions(scene: scene),
+        if (performers.isNotEmpty)
+          // Rows as tall as their chips, so large text isn't cut off.
           Padding(
-            padding: const EdgeInsets.fromLTRB(12, 8, 12, 0),
-            child: Material(
-              color: theme.colorScheme.surfaceContainerHighest,
-              borderRadius: BorderRadius.circular(12),
-              child: InkWell(
-                borderRadius: BorderRadius.circular(12),
-                onTap: () => setState(() => _expanded = !_expanded),
-                child: Padding(
-                  padding: const EdgeInsets.all(12),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        scene.details!,
-                        maxLines: _expanded ? null : 2,
-                        overflow: _expanded ? null : TextOverflow.ellipsis,
-                        style: theme.textTheme.bodyMedium,
-                      ),
-                      Text(_expanded ? context.l10n.showLess : context.l10n.showMore, style: theme.textTheme.labelMedium),
-                    ],
+            padding: const EdgeInsets.only(top: AppSpacing.xs),
+            child: _ChipRow(
+              spacing: AppSpacing.s,
+              children: [
+                for (final p in performers)
+                  ActionChip(
+                    avatar: ChannelAvatar(name: p.name, imageUrl: p.imageUrl, radius: 12),
+                    label: Text(p.name),
+                    onPressed: () => openPerformer(ref, p.id),
                   ),
-                ),
-              ),
+              ],
             ),
           ),
-        if (details != null && details.files.isNotEmpty) FileInfoCard(files: details.files),
-        const SizedBox(height: 8),
+        // The first tags; "+N" opens the description sheet with all of them.
+        Padding(
+          padding: const EdgeInsets.only(top: AppSpacing.xs),
+          child: SceneTagsRow(scene: scene),
+        ),
+        if (details != null && details.markers.isNotEmpty) ChapterList(sceneId: scene.id, details: details),
+        const SizedBox(height: AppSpacing.s),
       ],
     );
   }
+}
+
+/// A horizontally scrolling row of chips that takes their height (which
+/// grows with the text size) instead of a fixed one.
+class _ChipRow extends StatelessWidget {
+  const _ChipRow({required this.spacing, required this.children});
+
+  final double spacing;
+  final List<Widget> children;
+
+  @override
+  Widget build(BuildContext context) => SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        child: Row(
+          children: [
+            for (final (i, child) in children.indexed) ...[
+              if (i > 0) SizedBox(width: spacing),
+              child,
+            ],
+          ],
+        ),
+      );
 }
