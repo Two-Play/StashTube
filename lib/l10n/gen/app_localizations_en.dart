@@ -2091,6 +2091,13 @@ class AppLocalizationsEn extends AppLocalizations {
       'The sound keeps playing while the app is in the background.';
 
   @override
+  String get bufferFully => 'Buffer fully before playing';
+
+  @override
+  String get bufferFullySubtitle =>
+      'Playback starts once the whole video is loaded. Needs memory and time on long videos; the play button starts it sooner.';
+
+  @override
   String performerShorts(int count) {
     String _temp0 = intl.Intl.pluralLogic(
       count,

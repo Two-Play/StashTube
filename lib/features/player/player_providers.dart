@@ -14,6 +14,7 @@ import '../../data/repositories/stash_session.dart';
 import '../cast/cast_media.dart';
 import '../cast/cast_providers.dart';
 import '../cast/cast_service.dart' show CastKind;
+import '../pip/pip.dart' show playbackModesProvider;
 import 'playback_tracker.dart';
 import 'sliding_panel.dart';
 import 'video_zoom.dart';
@@ -520,14 +521,56 @@ class NowPlayingNotifier extends Notifier<Scene?> {
 
   void _open(String url, Duration start, {bool play = true}) {
     _openedAt = start;
-    ref.read(playerProvider).open(
-          Media(
-            url,
-            httpHeaders: ref.read(authHeadersProvider),
-            start: start > Duration.zero ? start : null,
-          ),
-          play: play,
-        );
+    final player = ref.read(playerProvider);
+    final buffering = play && ref.read(playbackModesProvider).fullBuffer;
+    _bufferWait?.cancel();
+    _bufferWait = null;
+    final platform = player.platform;
+    if (platform is NativePlayer) {
+      // Room for a whole video, else mpv stops reading ahead at its default.
+      unawaited(platform.setProperty('demuxer-max-bytes', buffering ? '$_fullBufferBytes' : '$_defaultBufferBytes'));
+      unawaited(platform.setProperty('demuxer-readahead-secs', buffering ? '86400' : '1'));
+    }
+    player.open(
+      Media(
+        url,
+        httpHeaders: ref.read(authHeadersProvider),
+        start: start > Duration.zero ? start : null,
+      ),
+      play: play && !buffering,
+    );
+    if (buffering) _playWhenBuffered(player);
+  }
+
+  static const _defaultBufferBytes = 32 * 1024 * 1024;
+  static const _fullBufferBytes = 1024 * 1024 * 1024;
+  StreamSubscription<Duration>? _bufferWait;
+
+  /// Starts [player] once everything is buffered (the playback setting
+  /// "buffer fully"); the play button starts it earlier.
+  void _playWhenBuffered(Player player) {
+    void start() {
+      _bufferWait?.cancel();
+      _bufferWait = null;
+      if (ref.mounted && !ref.read(isCastingProvider)) unawaited(player.play());
+    }
+
+    bool done(Duration buffer) {
+      final total = player.state.duration;
+      return total > Duration.zero && buffer >= total - const Duration(seconds: 1);
+    }
+
+    _bufferWait = player.stream.buffer.listen((buffer) {
+      if (done(buffer)) start();
+    });
+    // The play button ends the wait.
+    late final StreamSubscription<bool> playing;
+    playing = player.stream.playing.listen((on) {
+      if (!on) return;
+      _bufferWait?.cancel();
+      _bufferWait = null;
+      playing.cancel();
+    });
   }
 
   /// Whether the panel is open, not just the mini bar.

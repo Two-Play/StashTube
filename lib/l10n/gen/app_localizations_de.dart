@@ -2100,6 +2100,13 @@ class AppLocalizationsDe extends AppLocalizations {
       'Der Ton läuft weiter, während die App im Hintergrund ist.';
 
   @override
+  String get bufferFully => 'Vor dem Abspielen vollständig puffern';
+
+  @override
+  String get bufferFullySubtitle =>
+      'Die Wiedergabe startet, sobald das ganze Video geladen ist. Braucht bei langen Videos Speicher und Zeit; die Play-Taste startet früher.';
+
+  @override
   String performerShorts(int count) {
     String _temp0 = intl.Intl.pluralLogic(
       count,

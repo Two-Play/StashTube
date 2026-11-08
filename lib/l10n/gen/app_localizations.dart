@@ -3428,6 +3428,18 @@ abstract class AppLocalizations {
   /// **'The sound keeps playing while the app is in the background.'**
   String get backgroundPlaybackSubtitle;
 
+  /// No description provided for @bufferFully.
+  ///
+  /// In en, this message translates to:
+  /// **'Buffer fully before playing'**
+  String get bufferFully;
+
+  /// No description provided for @bufferFullySubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Playback starts once the whole video is loaded. Needs memory and time on long videos; the play button starts it sooner.'**
+  String get bufferFullySubtitle;
+
   /// No description provided for @performerShorts.
   ///
   /// In en, this message translates to:

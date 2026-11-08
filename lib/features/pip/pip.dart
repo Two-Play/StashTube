@@ -24,7 +24,7 @@ final pipServiceProvider = Provider<PipService>((ref) => PipService.create());
 /// Picture-in-picture and background playback (4.12), chosen in the
 /// settings and stored for all servers.
 class PlaybackModes {
-  const PlaybackModes({this.autoPip = true, this.background = false, this.lockScreen = false});
+  const PlaybackModes({this.autoPip = true, this.background = false, this.lockScreen = false, this.fullBuffer = false});
 
   /// Android: a playing video continues in picture-in-picture when the user
   /// leaves the app.
@@ -38,7 +38,12 @@ class PlaybackModes {
   /// notification (lock_screen.dart). Off by default, for discretion.
   final bool lockScreen;
 
-  PlaybackModes copyWith({bool? autoPip, bool? background, bool? lockScreen}) => PlaybackModes(
+  /// Playback starts once the whole video is buffered (needs memory, so
+  /// off by default).
+  final bool fullBuffer;
+
+  PlaybackModes copyWith({bool? autoPip, bool? background, bool? lockScreen, bool? fullBuffer}) => PlaybackModes(
+        fullBuffer: fullBuffer ?? this.fullBuffer,
         autoPip: autoPip ?? this.autoPip,
         background: background ?? this.background,
         lockScreen: lockScreen ?? this.lockScreen,
@@ -49,6 +54,7 @@ class PlaybackModesNotifier extends Notifier<PlaybackModes> {
   static const _autoPipKey = 'auto_pip';
   static const _backgroundKey = 'background_playback';
   static const _lockScreenKey = 'lock_screen_controls';
+  static const _fullBufferKey = 'buffer_fully';
 
   @override
   PlaybackModes build() {
@@ -57,6 +63,7 @@ class PlaybackModesNotifier extends Notifier<PlaybackModes> {
       autoPip: prefs.getBool(_autoPipKey) ?? true,
       background: prefs.getBool(_backgroundKey) ?? false,
       lockScreen: prefs.getBool(_lockScreenKey) ?? false,
+      fullBuffer: prefs.getBool(_fullBufferKey) ?? false,
     );
   }
 
@@ -68,6 +75,11 @@ class PlaybackModesNotifier extends Notifier<PlaybackModes> {
   Future<void> setLockScreen(bool value) async {
     state = state.copyWith(lockScreen: value);
     await ref.read(sharedPreferencesProvider).setBool(_lockScreenKey, value);
+  }
+
+  Future<void> setFullBuffer(bool value) async {
+    state = state.copyWith(fullBuffer: value);
+    await ref.read(sharedPreferencesProvider).setBool(_fullBufferKey, value);
   }
 
   Future<void> setBackground(bool value) async {
@@ -239,11 +251,35 @@ final pipProvider = NotifierProvider<PipNotifier, bool>(PipNotifier.new);
 /// or in picture-in-picture.
 final backgroundPlaybackProvider = Provider<void>((ref) {
   var videoOff = false;
+  // Where playback was when the app was hidden, and when, to catch a jump
+  // after coming back.
+  Duration? hiddenAt;
+  DateTime? hiddenSince;
+  var keptPlaying = false;
 
-  void setVideo(bool on) {
+  Future<void> setVideo(bool on) async {
     final platform = ref.read(playerProvider).platform;
-    if (platform is NativePlayer) unawaited(platform.setProperty('vid', on ? 'auto' : 'no'));
+    if (platform is NativePlayer) await platform.setProperty('vid', on ? 'auto' : 'no');
     videoOff = !on;
+  }
+
+  /// Back in the app: mpv rebuilds its video output when the video comes
+  /// back, which can reseek a transcode or leave the picture black. Seeking
+  /// to where playback really is brings the picture back at the right place.
+  Future<void> restore() async {
+    final player = ref.read(playerProvider);
+    final since = hiddenSince;
+    final at = hiddenAt;
+    hiddenSince = hiddenAt = null;
+    var position = player.state.position;
+    if (at != null && since != null) {
+      final expected = keptPlaying ? at + DateTime.now().difference(since) : at;
+      // The player's own position is trusted unless it jumped.
+      if ((position - expected).abs() > const Duration(seconds: 3)) position = expected;
+    }
+    if (videoOff) await setVideo(true);
+    if (!ref.mounted || ref.read(nowPlayingProvider) == null) return;
+    await player.seek(position);
   }
 
   final lifecycle = AppLifecycleListener(
@@ -253,14 +289,22 @@ final backgroundPlaybackProvider = Provider<void>((ref) {
       if (ref.read(pipProvider) && !pip.endedJustNow()) return;
       final player = ref.read(playerProvider);
       if (!player.state.playing) return;
+      hiddenAt = player.state.position;
+      hiddenSince = DateTime.now();
       if (ref.read(playbackModesProvider).background && !pip.endedJustNow()) {
-        setVideo(false);
+        keptPlaying = true;
+        unawaited(setVideo(false));
       } else {
+        keptPlaying = false;
         unawaited(player.pause());
       }
     },
     onShow: () {
-      if (videoOff) setVideo(true);
+      if (hiddenSince == null || ref.read(nowPlayingProvider) == null || ref.read(isCastingProvider)) {
+        if (videoOff) unawaited(setVideo(true));
+        return;
+      }
+      unawaited(restore());
     },
   );
   ref.onDispose(lifecycle.dispose);

@@ -40,6 +40,9 @@ void main() {
   });
 
   testWidgets('the playback settings change them', (tester) async {
+    tester.view.physicalSize = const Size(800, 1400);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
     final c = await container();
     await tester.pumpWidget(UncontrolledProviderScope(
       container: c,

@@ -1277,6 +1277,8 @@
   "autoPipSubtitle": "A playing video continues in a small window.",
   "backgroundPlayback": "Background playback",
   "backgroundPlaybackSubtitle": "The sound keeps playing while the app is in the background.",
+  "bufferFully": "Buffer fully before playing",
+  "bufferFullySubtitle": "Playback starts once the whole video is loaded. Needs memory and time on long videos; the play button starts it sooner.",
   "performerShorts": "{count, plural, =1{1 short} other{{count} shorts}}",
   "@performerShorts": {
     "placeholders": {
