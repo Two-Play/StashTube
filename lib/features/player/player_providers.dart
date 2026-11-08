@@ -367,7 +367,10 @@ class NowPlayingNotifier extends Notifier<Scene?> {
   void playQueue(List<Scene> scenes, {required String title, int start = 0}) {
     if (scenes.isEmpty) return;
     _autoplay ??= ref.listen(playerCompletedProvider, (_, next) {
-      if (next.value == true) playNext();
+      if (next.value != true) return;
+      final queue = ref.read(playQueueProvider);
+      if (queue == null || !queue.hasNext) return;
+      ref.read(autoplayCountdownProvider.notifier).start(queue.scenes[queue.index + 1]);
     });
     final queue = PlayQueue(title: title, scenes: scenes, index: start.clamp(0, scenes.length - 1));
     ref.read(playQueueProvider.notifier).set(queue);
@@ -426,6 +429,7 @@ class NowPlayingNotifier extends Notifier<Scene?> {
       ref.read(playQueueProvider.notifier).set(i < 0 ? null : queue.at(i));
     }
 
+    ref.read(autoplayCountdownProvider.notifier).cancel();
     if (state == null) ref.read(miniplayerHeightProvider).value = kMiniPlayerHeight;
     ref.read(playerClosingProvider.notifier).set(false);
     if (state?.id != scene.id) {
@@ -621,6 +625,7 @@ class NowPlayingNotifier extends Notifier<Scene?> {
   }
 
   void close() {
+    ref.read(autoplayCountdownProvider.notifier).cancel();
     ref.read(playerClosingProvider.notifier).set(false);
     ref.read(playQueueProvider.notifier).set(null);
     ref.read(playerHistoryProvider.notifier).clear();
@@ -634,3 +639,50 @@ class NowPlayingNotifier extends Notifier<Scene?> {
 }
 
 final nowPlayingProvider = NotifierProvider<NowPlayingNotifier, Scene?>(NowPlayingNotifier.new);
+
+/// The queue's next scene waiting to start after one ended: a short
+/// countdown the user can cancel or skip.
+typedef AutoplayCountdown = ({Scene next, int seconds});
+
+class AutoplayCountdownNotifier extends Notifier<AutoplayCountdown?> {
+  /// How long the next scene waits.
+  static const delay = 5;
+
+  Timer? _timer;
+
+  @override
+  AutoplayCountdown? build() {
+    ref.onDispose(() => _timer?.cancel());
+    return null;
+  }
+
+  void start(Scene next) {
+    _timer?.cancel();
+    state = (next: next, seconds: delay);
+    _timer = Timer.periodic(const Duration(seconds: 1), (_) {
+      final current = state;
+      if (current == null) return;
+      if (current.seconds <= 1) {
+        skip();
+      } else {
+        state = (next: current.next, seconds: current.seconds - 1);
+      }
+    });
+  }
+
+  /// Plays the next scene now.
+  void skip() {
+    if (state == null) return;
+    cancel();
+    ref.read(nowPlayingProvider.notifier).playNext();
+  }
+
+  void cancel() {
+    _timer?.cancel();
+    _timer = null;
+    if (state != null) state = null;
+  }
+}
+
+final autoplayCountdownProvider =
+    NotifierProvider<AutoplayCountdownNotifier, AutoplayCountdown?>(AutoplayCountdownNotifier.new);

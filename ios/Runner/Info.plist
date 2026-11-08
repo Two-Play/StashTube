@@ -44,6 +44,8 @@
 	<string>Unlock Stash with Face ID.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>Choose photos to use as covers and images in Stash.</string>
+	<key>NSPhotoLibraryAddUsageDescription</key>
+	<string>Save a frame of a video to your photos.</string>
 	<key>NSLocalNetworkUsageDescription</key>
 	<string>Stash connects to your media server and finds Chromecast devices on the local network.</string>
 	<key>NSBonjourServices</key>

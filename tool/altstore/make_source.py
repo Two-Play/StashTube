@@ -23,6 +23,8 @@ PRIVACY = {
     'NSLocalNetworkUsageDescription':
         'Stash connects to your media server and finds Chromecast devices '
         'on the local network.',
+    'NSPhotoLibraryAddUsageDescription':
+        'Save a frame of a video to your photos.',
     'NSPhotoLibraryUsageDescription':
         'Choose photos to use as covers and images in Stash.',
 }

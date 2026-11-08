@@ -2091,6 +2091,29 @@ class AppLocalizationsEn extends AppLocalizations {
       'The sound keeps playing while the app is in the background.';
 
   @override
+  String nextVideoIn(int seconds) {
+    String _temp0 = intl.Intl.pluralLogic(
+      seconds,
+      locale: localeName,
+      other: '$seconds seconds',
+      one: '1 second',
+    );
+    return 'Next video in $_temp0';
+  }
+
+  @override
+  String get playNow => 'Play now';
+
+  @override
+  String get saveStill => 'Save current frame';
+
+  @override
+  String get stillSaved => 'Frame saved to your photos.';
+
+  @override
+  String get stillNotSaved => 'The frame could not be saved.';
+
+  @override
   String get bufferFully => 'Buffer fully before playing';
 
   @override

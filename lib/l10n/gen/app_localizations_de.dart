@@ -2100,6 +2100,29 @@ class AppLocalizationsDe extends AppLocalizations {
       'Der Ton läuft weiter, während die App im Hintergrund ist.';
 
   @override
+  String nextVideoIn(int seconds) {
+    String _temp0 = intl.Intl.pluralLogic(
+      seconds,
+      locale: localeName,
+      other: '$seconds Sekunden',
+      one: '1 Sekunde',
+    );
+    return 'Nächstes Video in $_temp0';
+  }
+
+  @override
+  String get playNow => 'Jetzt abspielen';
+
+  @override
+  String get saveStill => 'Aktuelles Bild speichern';
+
+  @override
+  String get stillSaved => 'Bild in den Fotos gespeichert.';
+
+  @override
+  String get stillNotSaved => 'Das Bild konnte nicht gespeichert werden.';
+
+  @override
   String get bufferFully => 'Vor dem Abspielen vollständig puffern';
 
   @override

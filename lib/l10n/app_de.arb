@@ -585,6 +585,16 @@
   "autoPipSubtitle": "Ein laufendes Video spielt in einem kleinen Fenster weiter.",
   "backgroundPlayback": "Hintergrundwiedergabe",
   "backgroundPlaybackSubtitle": "Der Ton läuft weiter, während die App im Hintergrund ist.",
+  "nextVideoIn": "Nächstes Video in {seconds, plural, =1{1 Sekunde} other{{seconds} Sekunden}}",
+  "@nextVideoIn": {
+    "placeholders": {
+      "seconds": {"type": "int"}
+    }
+  },
+  "playNow": "Jetzt abspielen",
+  "saveStill": "Aktuelles Bild speichern",
+  "stillSaved": "Bild in den Fotos gespeichert.",
+  "stillNotSaved": "Das Bild konnte nicht gespeichert werden.",
   "bufferFully": "Vor dem Abspielen vollständig puffern",
   "bufferFullySubtitle": "Die Wiedergabe startet, sobald das ganze Video geladen ist. Braucht bei langen Videos Speicher und Zeit; die Play-Taste startet früher.",
   "performerShorts": "{count, plural, =1{1 Short} other{{count} Shorts}}",

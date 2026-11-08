@@ -695,6 +695,8 @@ class _StashVideoControlsState extends ConsumerState<StashVideoControls> {
           ),
           // Always there (empty without an error), so the tree stays the same.
           _PlaybackErrorOverlay(error: error, sceneId: widget.scene.id, onQuality: widget.onQuality),
+          // Always there too (empty unless the queue's next scene is waiting).
+          const _AutoplayOverlay(),
           if (_tipsShowing)
             GestureTipsOverlay(seekSeconds: seek.enabled ? seek.step.inSeconds : null, onDismiss: _dismissTips),
           // Always there (empty while unlocked), above the gestures and buttons.
@@ -1015,3 +1017,80 @@ Future<void> showSpeedSheet(BuildContext context, Player player) => showModalBot
         );
       },
     );
+
+/// Over the video after a queue's scene ended: "Next: <title> in 5 s" with
+/// "Cancel" and "Play now". Empty otherwise; taps outside its buttons reach
+/// the controls below.
+class _AutoplayOverlay extends ConsumerWidget {
+  const _AutoplayOverlay();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final countdown = ref.watch(autoplayCountdownProvider);
+    if (countdown == null) return const SizedBox.shrink();
+    final l = context.l10n;
+    final theme = Theme.of(context);
+    const onVideo = Colors.white;
+    final notifier = ref.read(autoplayCountdownProvider.notifier);
+
+    return Stack(
+      fit: StackFit.expand,
+      children: [
+        const IgnorePointer(child: ColoredBox(color: Colors.black54)),
+        LayoutBuilder(
+          builder: (context, constraints) => FittedBox(
+            fit: BoxFit.scaleDown,
+            child: SizedBox(
+              width: constraints.maxWidth,
+              child: Padding(
+                padding: const EdgeInsets.all(AppSpacing.l),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Semantics(
+                      liveRegion: true,
+                      child: Text(
+                        l.nextVideoIn(countdown.seconds),
+                        textAlign: TextAlign.center,
+                        style: theme.textTheme.titleSmall?.copyWith(color: onVideo),
+                      ),
+                    ),
+                    Text(
+                      countdown.next.title,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: theme.textTheme.bodySmall?.copyWith(color: Colors.white70),
+                    ),
+                    const SizedBox(height: AppSpacing.s),
+                    Wrap(
+                      alignment: WrapAlignment.center,
+                      spacing: AppSpacing.s,
+                      children: [
+                        FilledButton.icon(
+                          icon: const Icon(Icons.skip_next),
+                          label: Text(l.playNow),
+                          onPressed: () {
+                            Haptics.light();
+                            notifier.skip();
+                          },
+                        ),
+                        OutlinedButton(
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: onVideo,
+                            side: const BorderSide(color: Colors.white70),
+                          ),
+                          onPressed: notifier.cancel,
+                          child: Text(l.cancel),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
