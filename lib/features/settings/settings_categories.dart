@@ -6,6 +6,7 @@ import '../../core/config/haptics.dart';
 import '../../core/config/locale.dart';
 import '../../core/config/server_config.dart';
 import '../../core/pagination/paging_mode.dart';
+import '../../core/utils/external_links.dart';
 import '../../data/models/scene_details.dart';
 import '../../data/providers.dart';
 import '../../l10n/l10n.dart';
@@ -533,6 +534,12 @@ class AboutSettingsPage extends StatelessWidget {
             title: Text(context.l10n.whatsNewTitle),
             subtitle: Text(context.l10n.whatsNewSubtitle),
             onTap: () => showWhatsNew(context),
+          ),
+          ListTile(
+            leading: const Icon(Icons.feedback_outlined),
+            title: Text(context.l10n.feedbackTitle),
+            subtitle: Text(context.l10n.feedbackSubtitle),
+            onTap: () => openExternalUrl(context, githubIssuesUrl),
           ),
           const AboutSettings(),
         ],

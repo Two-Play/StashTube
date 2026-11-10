@@ -57,6 +57,7 @@ List<ChangelogEntry> changelog(AppLocalizations l) => [
           Icons.crop_outlined, // thumbnails
           Icons.explore_outlined, // tour
           Icons.settings_outlined, // settings
+          Icons.feedback_outlined, // feedback and bugs
         ]),
       ),
     ];

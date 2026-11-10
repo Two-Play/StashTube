@@ -1,9 +1,27 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:stash_app_mobile/core/utils/external_links.dart';
 import 'package:stash_app_mobile/features/settings/about.dart';
+import 'package:stash_app_mobile/features/settings/settings_categories.dart';
 
 void main() {
+  testWidgets('feedback opens GitHub\'s issue forms', (tester) async {
+    final opened = <Uri>[];
+    urlOpener = (uri) async {
+      opened.add(uri);
+      return true;
+    };
+    addTearDown(() => urlOpener = (uri) async => false);
+    await tester.pumpWidget(const ProviderScope(child: MaterialApp(home: Scaffold(body: AboutSettingsPage()))));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Feedback and bugs'));
+    await tester.pumpAndSettle();
+    expect(opened, [Uri.parse(githubIssuesUrl)]);
+    expect(opened.single.toString(), startsWith('https://github.com/Two-Play/StashTube/'));
+  });
+
   testWidgets('the licenses include StashTube\'s own and the native video libraries', (tester) async {
     registerAppLicenses();
     // Tall enough for the whole list.

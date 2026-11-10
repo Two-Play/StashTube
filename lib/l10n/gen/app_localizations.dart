@@ -3830,6 +3830,18 @@ abstract class AppLocalizations {
   /// **'A client for Stash servers. Not affiliated with the Stash project.'**
   String get aboutLegalese;
 
+  /// No description provided for @feedbackTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Feedback and bugs'**
+  String get feedbackTitle;
+
+  /// No description provided for @feedbackSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Report a bug or share an idea on GitHub'**
+  String get feedbackSubtitle;
+
   /// No description provided for @pinTooManyAttempts.
   ///
   /// In en, this message translates to:
@@ -4361,7 +4373,7 @@ abstract class AppLocalizations {
   /// No description provided for @whatsNew1More.
   ///
   /// In en, this message translates to:
-  /// **'The You tab gathers history, watch later, groups and markers.\nSkip step and counting can be set in Settings → Playback.\nStars and favorites for performers and studios.\nCreate performers, studios and groups.\n\"Full video\" from a short continues where the short was.\nOn tablets the video sits beside \"Up next\".\nPicture-in-picture opens in the video\'s shape.\nServer tasks: scan, generate, auto tag and clean.\nA check for missing previews.\nA notification when a server task finishes (optional).\nMarkers with a start and an end on newer Stash versions.\n\"New since your last visit\" on the home page.\nClear playback errors with \"Try again\" and \"Change quality\".\nA banner when the server can\'t be reached; loaded lists stay.\nA simpler login: credentials only when the server asks for them.\nImage details behind the (i) button; swipe down to close an image.\nThe dice on the home page plays a random scene.\nWatch time as a chart in the stats.\nA touch lock in fullscreen.\nOn phones the app stays upright; tilting the phone with a wide video turns it into fullscreen.\nWhile a short plays, only its main buttons show and its text fades out; pause for the rest.\nEdit or delete markers with a long press.\nPortrait scenes show whole in thumbnails, or filled (settings).\nA tour of the app (Settings → About).\nSettings sorted into categories.'**
+  /// **'The You tab gathers history, watch later, groups and markers.\nSkip step and counting can be set in Settings → Playback.\nStars and favorites for performers and studios.\nCreate performers, studios and groups.\n\"Full video\" from a short continues where the short was.\nOn tablets the video sits beside \"Up next\".\nPicture-in-picture opens in the video\'s shape.\nServer tasks: scan, generate, auto tag and clean.\nA check for missing previews.\nA notification when a server task finishes (optional).\nMarkers with a start and an end on newer Stash versions.\n\"New since your last visit\" on the home page.\nClear playback errors with \"Try again\" and \"Change quality\".\nA banner when the server can\'t be reached; loaded lists stay.\nA simpler login: credentials only when the server asks for them.\nImage details behind the (i) button; swipe down to close an image.\nThe dice on the home page plays a random scene.\nWatch time as a chart in the stats.\nA touch lock in fullscreen.\nOn phones the app stays upright; tilting the phone with a wide video turns it into fullscreen.\nWhile a short plays, only its main buttons show and its text fades out; pause for the rest.\nEdit or delete markers with a long press.\nPortrait scenes show whole in thumbnails, or filled (settings).\nA tour of the app (Settings → About).\nSettings sorted into categories.\nFeedback and bugs straight from Settings → About.'**
   String get whatsNew1More;
 
   /// No description provided for @whatsNewShowMore.
