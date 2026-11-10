@@ -255,6 +255,9 @@ void main() {
   });
 
   testWidgets('"More" lists the rarer actions and opens the file info', (tester) async {
+    tester.view.physicalSize = const Size(800, 1400);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
     await pumpActions(tester);
     await tester.tap(find.byTooltip('More'));
     await tester.pumpAndSettle();
@@ -269,6 +272,9 @@ void main() {
   });
 
   testWidgets('"More" opens the scene editor', (tester) async {
+    tester.view.physicalSize = const Size(800, 1400);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
     await pumpActions(tester);
     await tester.tap(find.byTooltip('More'));
     await tester.pumpAndSettle();

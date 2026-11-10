@@ -130,9 +130,11 @@ class PlaybackTracker {
     // Snapshot before the await: the session may change meanwhile.
     _unsavedWatched = 0;
     _lastSavedResume = resume;
+    // Known at once, so a scene reopened right away starts from here even
+    // while the save is still on its way.
+    onResumeSaved?.call(scene.id, resume);
     try {
       await api.saveActivity(scene.id, resumeTime: resume, playDuration: watched);
-      onResumeSaved?.call(scene.id, resume);
     } catch (e) {
       debugPrint('sceneSaveActivity failed: $e');
       if (identical(_scene, scene)) {

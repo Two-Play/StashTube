@@ -14,6 +14,7 @@ import '../../data/repositories/stash_session.dart';
 import '../cast/cast_media.dart';
 import '../cast/cast_providers.dart';
 import '../cast/cast_service.dart' show CastKind;
+import '../pip/pip.dart' show playbackModesProvider;
 import 'playback_tracker.dart';
 import 'sliding_panel.dart';
 import 'video_zoom.dart';
@@ -366,7 +367,10 @@ class NowPlayingNotifier extends Notifier<Scene?> {
   void playQueue(List<Scene> scenes, {required String title, int start = 0}) {
     if (scenes.isEmpty) return;
     _autoplay ??= ref.listen(playerCompletedProvider, (_, next) {
-      if (next.value == true) playNext();
+      if (next.value != true) return;
+      final queue = ref.read(playQueueProvider);
+      if (queue == null || !queue.hasNext) return;
+      ref.read(autoplayCountdownProvider.notifier).start(queue.scenes[queue.index + 1]);
     });
     final queue = PlayQueue(title: title, scenes: scenes, index: start.clamp(0, scenes.length - 1));
     ref.read(playQueueProvider.notifier).set(queue);
@@ -425,6 +429,7 @@ class NowPlayingNotifier extends Notifier<Scene?> {
       ref.read(playQueueProvider.notifier).set(i < 0 ? null : queue.at(i));
     }
 
+    ref.read(autoplayCountdownProvider.notifier).cancel();
     if (state == null) ref.read(miniplayerHeightProvider).value = kMiniPlayerHeight;
     ref.read(playerClosingProvider.notifier).set(false);
     if (state?.id != scene.id) {
@@ -520,14 +525,56 @@ class NowPlayingNotifier extends Notifier<Scene?> {
 
   void _open(String url, Duration start, {bool play = true}) {
     _openedAt = start;
-    ref.read(playerProvider).open(
-          Media(
-            url,
-            httpHeaders: ref.read(authHeadersProvider),
-            start: start > Duration.zero ? start : null,
-          ),
-          play: play,
-        );
+    final player = ref.read(playerProvider);
+    final buffering = play && ref.read(playbackModesProvider).fullBuffer;
+    _bufferWait?.cancel();
+    _bufferWait = null;
+    final platform = player.platform;
+    if (platform is NativePlayer) {
+      // Room for a whole video, else mpv stops reading ahead at its default.
+      unawaited(platform.setProperty('demuxer-max-bytes', buffering ? '$_fullBufferBytes' : '$_defaultBufferBytes'));
+      unawaited(platform.setProperty('demuxer-readahead-secs', buffering ? '86400' : '1'));
+    }
+    player.open(
+      Media(
+        url,
+        httpHeaders: ref.read(authHeadersProvider),
+        start: start > Duration.zero ? start : null,
+      ),
+      play: play && !buffering,
+    );
+    if (buffering) _playWhenBuffered(player);
+  }
+
+  static const _defaultBufferBytes = 32 * 1024 * 1024;
+  static const _fullBufferBytes = 1024 * 1024 * 1024;
+  StreamSubscription<Duration>? _bufferWait;
+
+  /// Starts [player] once everything is buffered (the playback setting
+  /// "buffer fully"); the play button starts it earlier.
+  void _playWhenBuffered(Player player) {
+    void start() {
+      _bufferWait?.cancel();
+      _bufferWait = null;
+      if (ref.mounted && !ref.read(isCastingProvider)) unawaited(player.play());
+    }
+
+    bool done(Duration buffer) {
+      final total = player.state.duration;
+      return total > Duration.zero && buffer >= total - const Duration(seconds: 1);
+    }
+
+    _bufferWait = player.stream.buffer.listen((buffer) {
+      if (done(buffer)) start();
+    });
+    // The play button ends the wait.
+    late final StreamSubscription<bool> playing;
+    playing = player.stream.playing.listen((on) {
+      if (!on) return;
+      _bufferWait?.cancel();
+      _bufferWait = null;
+      playing.cancel();
+    });
   }
 
   /// Whether the panel is open, not just the mini bar.
@@ -578,6 +625,7 @@ class NowPlayingNotifier extends Notifier<Scene?> {
   }
 
   void close() {
+    ref.read(autoplayCountdownProvider.notifier).cancel();
     ref.read(playerClosingProvider.notifier).set(false);
     ref.read(playQueueProvider.notifier).set(null);
     ref.read(playerHistoryProvider.notifier).clear();
@@ -591,3 +639,50 @@ class NowPlayingNotifier extends Notifier<Scene?> {
 }
 
 final nowPlayingProvider = NotifierProvider<NowPlayingNotifier, Scene?>(NowPlayingNotifier.new);
+
+/// The queue's next scene waiting to start after one ended: a short
+/// countdown the user can cancel or skip.
+typedef AutoplayCountdown = ({Scene next, int seconds});
+
+class AutoplayCountdownNotifier extends Notifier<AutoplayCountdown?> {
+  /// How long the next scene waits.
+  static const delay = 5;
+
+  Timer? _timer;
+
+  @override
+  AutoplayCountdown? build() {
+    ref.onDispose(() => _timer?.cancel());
+    return null;
+  }
+
+  void start(Scene next) {
+    _timer?.cancel();
+    state = (next: next, seconds: delay);
+    _timer = Timer.periodic(const Duration(seconds: 1), (_) {
+      final current = state;
+      if (current == null) return;
+      if (current.seconds <= 1) {
+        skip();
+      } else {
+        state = (next: current.next, seconds: current.seconds - 1);
+      }
+    });
+  }
+
+  /// Plays the next scene now.
+  void skip() {
+    if (state == null) return;
+    cancel();
+    ref.read(nowPlayingProvider.notifier).playNext();
+  }
+
+  void cancel() {
+    _timer?.cancel();
+    _timer = null;
+    if (state != null) state = null;
+  }
+}
+
+final autoplayCountdownProvider =
+    NotifierProvider<AutoplayCountdownNotifier, AutoplayCountdown?>(AutoplayCountdownNotifier.new);

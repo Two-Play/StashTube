@@ -580,6 +580,14 @@ class _PlaybackModeTiles extends ConsumerWidget {
           value: modes.background,
           onChanged: withHaptic((v) => ref.read(playbackModesProvider.notifier).setBackground(v)),
         ),
+        SwitchListTile(
+          secondary: const Icon(Icons.downloading_outlined),
+          title: Text(l.bufferFully),
+          subtitle: Text(l.bufferFullySubtitle),
+          isThreeLine: true,
+          value: modes.fullBuffer,
+          onChanged: withHaptic((v) => ref.read(playbackModesProvider.notifier).setFullBuffer(v)),
+        ),
         if (ref.watch(lockScreenSupportedProvider))
           SwitchListTile(
             secondary: const Icon(Icons.lock_outline),

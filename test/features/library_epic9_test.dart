@@ -115,6 +115,16 @@ void main() {
 
       player.completed.add(true);
       await tester.pump();
+      // A countdown first; cancelling it keeps the scene, letting it run plays the next.
+      expect(container.read(autoplayCountdownProvider)?.next.id, 'b');
+      expect(container.read(nowPlayingProvider)?.id, 'a');
+      container.read(autoplayCountdownProvider.notifier).cancel();
+      await tester.pump(const Duration(seconds: 6));
+      expect(container.read(nowPlayingProvider)?.id, 'a');
+      player.completed.add(false);
+      player.completed.add(true);
+      await tester.pump();
+      await tester.pump(const Duration(seconds: AutoplayCountdownNotifier.delay));
       expect(container.read(nowPlayingProvider)?.id, 'b');
       expect(player.opened.last.uri, 'http://s/scene/b/stream');
 

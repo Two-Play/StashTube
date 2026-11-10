@@ -3428,6 +3428,48 @@ abstract class AppLocalizations {
   /// **'The sound keeps playing while the app is in the background.'**
   String get backgroundPlaybackSubtitle;
 
+  /// No description provided for @nextVideoIn.
+  ///
+  /// In en, this message translates to:
+  /// **'Next video in {seconds, plural, =1{1 second} other{{seconds} seconds}}'**
+  String nextVideoIn(int seconds);
+
+  /// No description provided for @playNow.
+  ///
+  /// In en, this message translates to:
+  /// **'Play now'**
+  String get playNow;
+
+  /// No description provided for @saveStill.
+  ///
+  /// In en, this message translates to:
+  /// **'Save current frame'**
+  String get saveStill;
+
+  /// No description provided for @stillSaved.
+  ///
+  /// In en, this message translates to:
+  /// **'Frame saved to your photos.'**
+  String get stillSaved;
+
+  /// No description provided for @stillNotSaved.
+  ///
+  /// In en, this message translates to:
+  /// **'The frame could not be saved.'**
+  String get stillNotSaved;
+
+  /// No description provided for @bufferFully.
+  ///
+  /// In en, this message translates to:
+  /// **'Buffer fully before playing'**
+  String get bufferFully;
+
+  /// No description provided for @bufferFullySubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Playback starts once the whole video is loaded. Needs memory and time on long videos; the play button starts it sooner.'**
+  String get bufferFullySubtitle;
+
   /// No description provided for @performerShorts.
   ///
   /// In en, this message translates to:

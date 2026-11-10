@@ -1277,6 +1277,18 @@
   "autoPipSubtitle": "A playing video continues in a small window.",
   "backgroundPlayback": "Background playback",
   "backgroundPlaybackSubtitle": "The sound keeps playing while the app is in the background.",
+  "nextVideoIn": "Next video in {seconds, plural, =1{1 second} other{{seconds} seconds}}",
+  "@nextVideoIn": {
+    "placeholders": {
+      "seconds": {"type": "int"}
+    }
+  },
+  "playNow": "Play now",
+  "saveStill": "Save current frame",
+  "stillSaved": "Frame saved to your photos.",
+  "stillNotSaved": "The frame could not be saved.",
+  "bufferFully": "Buffer fully before playing",
+  "bufferFullySubtitle": "Playback starts once the whole video is loaded. Needs memory and time on long videos; the play button starts it sooner.",
   "performerShorts": "{count, plural, =1{1 short} other{{count} shorts}}",
   "@performerShorts": {
     "placeholders": {
