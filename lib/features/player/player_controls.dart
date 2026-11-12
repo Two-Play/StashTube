@@ -24,6 +24,7 @@ import 'fullscreen_morph.dart';
 import 'fullscreen_route.dart';
 import 'held_orientation.dart';
 import 'player_providers.dart';
+import 'video_zoom.dart';
 import 'preview_seek_bar.dart';
 import 'scene_actions.dart' show showMarkerMenu;
 import 'video_controls.dart';
@@ -208,7 +209,8 @@ class _PlayerVideoState extends ConsumerState<PlayerVideo> {
   @override
   Widget build(BuildContext context) {
     final scene = widget.scene;
-    return Video(
+    return ZoomedVideo(
+        child: Video(
       key: playerVideoKey,
       controller: ref.watch(videoControllerProvider),
       // backgroundPlaybackProvider decides (4.12): keep the sound, or pause.
@@ -230,17 +232,19 @@ class _PlayerVideoState extends ConsumerState<PlayerVideo> {
                   } else {
                     _controlsContext = controlsContext;
                   }
-                  return StashVideoControls(
-                    fullscreen: fullscreen,
-                    onToggleFullscreen: () =>
-                        togglePlayerFullscreen(controlsContext, held: _buttonHeld, inline: inlineVideoRect),
-                    scene: scene,
-                    onQuality: () => showQualitySheet(context, scene.id),
+                  return ZoomCounter(
+                    child: StashVideoControls(
+                      fullscreen: fullscreen,
+                      onToggleFullscreen: () =>
+                          togglePlayerFullscreen(controlsContext, held: _buttonHeld, inline: inlineVideoRect),
+                      scene: scene,
+                      onQuality: () => showQualitySheet(context, scene.id),
+                    ),
                   );
                 },
               )
           : _noControls,
-    );
+    ));
   }
 }
 

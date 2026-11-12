@@ -69,6 +69,11 @@ class DemoHandler {
       if (vtt == null) return const DemoResponse(HttpStatus.notFound);
       return DemoResponse(HttpStatus.ok, body: utf8.encode(vtt), contentType: type);
     }
+    if (file.startsWith('caption/')) {
+      final vtt = library.captionVtt(file.substring('caption/'.length), uri.queryParameters['lang'] ?? 'en');
+      if (vtt == null) return const DemoResponse(HttpStatus.notFound);
+      return DemoResponse(HttpStatus.ok, body: utf8.encode(vtt), contentType: _types['vtt']);
+    }
     final bytes = await (_files[file] ??= _load(file));
     if (bytes == null) return const DemoResponse(HttpStatus.notFound);
     return _ranged(bytes, type, range);

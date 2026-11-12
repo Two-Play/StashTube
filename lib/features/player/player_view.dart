@@ -23,24 +23,9 @@ import 'player_providers.dart';
 import 'player_transition.dart';
 import 'scene_actions.dart';
 import 'scene_description.dart';
+import 'video_zoom.dart';
 import 'scene_tags_row.dart';
 import '../../l10n/l10n.dart';
-
-/// Width / height of [scene]'s video, updated once the player knows the
-/// decoded size.
-final _videoAspectProvider = Provider.autoDispose.family<double?, Scene>((ref, scene) {
-  final player = ref.watch(playerProvider);
-  final subscriptions = [
-    player.stream.width.listen((_) => ref.invalidateSelf()),
-    player.stream.height.listen((_) => ref.invalidateSelf()),
-  ];
-  ref.onDispose(() {
-    for (final s in subscriptions) {
-      s.cancel();
-    }
-  });
-  return videoAspect(player.state, scene, sceneFirst: true);
-});
 
 /// Content of the miniplayer panel: one layout that [PlayerTransition]
 /// morphs continuously from the collapsed bar into the full player page.
@@ -134,7 +119,7 @@ class _PlayerPanelState extends ConsumerState<PlayerPanel> {
       screenWidth: media.size.width,
       topInset: media.padding.top,
       // Portrait videos get a taller video area (4.20).
-      videoAspect: ref.watch(_videoAspectProvider(scene)) ?? 16 / 9,
+      videoAspect: ref.watch(sceneVideoAspectProvider(scene)) ?? 16 / 9,
       expandedWidth: columnWidth,
     );
 

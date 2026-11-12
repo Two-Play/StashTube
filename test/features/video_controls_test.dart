@@ -188,13 +188,17 @@ void main() {
     expect(player.rates, [1.5]);
   });
 
-  testWidgets('pinching zooms into the video, and the zoom stays after letting go', (tester) async {
+  testWidgets('pinching zooms into the video continuously, and the zoom stays after letting go', (tester) async {
     await pump(tester);
     final container = ProviderScope.containerOf(tester.element(find.byType(StashVideoControls)));
     final center = tester.getCenter(find.byType(StashVideoControls));
     final a = await tester.startGesture(center - const Offset(40, 0));
     final b = await tester.startGesture(center + const Offset(40, 0));
     await tester.pump();
+    await a.moveTo(center - const Offset(60, 0));
+    await b.moveTo(center + const Offset(60, 0));
+    await tester.pump();
+    expect(container.read(videoZoomProvider).scale, closeTo(1.5, 0.01), reason: 'follows the fingers');
     await a.moveTo(center - const Offset(80, 0));
     await b.moveTo(center + const Offset(80, 0));
     await tester.pump();
@@ -205,6 +209,19 @@ void main() {
     await b.up();
     await tester.pumpAndSettle();
     expect(container.read(videoZoomProvider).scale, closeTo(2, 0.01));
+  });
+
+  testWidgets('zooming the video leaves the controls where and as big as they were', (tester) async {
+    await pump(tester);
+    await tapVideo(tester);
+    final before = tester.getRect(find.byTooltip('Fullscreen'));
+    final container = ProviderScope.containerOf(tester.element(find.byType(StashVideoControls)));
+    container.read(videoZoomProvider.notifier).set(const VideoZoom(scale: 2, panX: 0.1));
+    await tester.pump();
+    final after = tester.getRect(find.byTooltip('Fullscreen'));
+    expect(after.center.dx, closeTo(before.center.dx, 0.01));
+    expect(after.center.dy, closeTo(before.center.dy, 0.01));
+    expect(after.size, before.size);
   });
 
   group('playback error', () {

@@ -3,6 +3,7 @@ import 'package:media_kit_video/media_kit_video.dart';
 
 import 'fullscreen_morph.dart';
 import 'held_orientation.dart';
+import 'video_zoom.dart';
 
 /// Like media_kit's [toggleFullscreen], with [enterPlayerFullscreen] and
 /// [exitPlayerFullscreen]. [context] is below the [Video] (its controls').
@@ -79,7 +80,8 @@ Future<void> enterPlayerFullscreen(BuildContext context, {HeldOrientation? held,
                 contextNotifier: inherited.contextNotifier,
                 videoViewParametersNotifier: inherited.videoViewParametersNotifier,
                 disposeNotifiers: false,
-                child: Video(
+                child: ZoomedVideo(
+                  child: Video(
                   controller: controller,
                   fit: parameters.fit,
                   fill: parameters.fill,
@@ -95,6 +97,7 @@ Future<void> enterPlayerFullscreen(BuildContext context, {HeldOrientation? held,
                   focusNode: parameters.focusNode,
                   onEnterFullscreen: state.widget.onEnterFullscreen,
                   onExitFullscreen: state.widget.onExitFullscreen,
+                  ),
                 ),
               ),
             ),

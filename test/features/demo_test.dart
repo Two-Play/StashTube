@@ -364,6 +364,17 @@ void main() {
     expect((await repo.findGroup('1')).sceneCount, filmCount - 1);
   });
 
+  test('scenes have subtitles in two languages that the server serves', () async {
+    final details = await repo.findSceneDetails('1');
+    expect(details.captions.map((c) => c.languageCode), ['en', 'de']);
+    final response = await handler.handle('GET', Uri.parse(details.captions.last.url));
+    expect(response.status, HttpStatus.ok);
+    final text = utf8.decode(response.body!);
+    expect(text, startsWith('WEBVTT'));
+    expect(text, contains('Untertitel 1'));
+    expect((await handler.handle('GET', Uri.parse('${ServerConfig.demoUrl}/demo/caption/none?lang=en'))).status, 404);
+  });
+
   test('media with byte ranges, for the player', () async {
     final uri = Uri.parse('${ServerConfig.demoUrl}/demo/scenes/riverside.mp4');
     final whole = await handler.handle('GET', uri);

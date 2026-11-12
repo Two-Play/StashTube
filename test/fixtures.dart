@@ -187,7 +187,8 @@ ActivityStats activityFrom([Json fields = const {}]) =>
 
 Json sceneDetailsJson([Json fields = const {}]) => typed('Scene', {
       'id': '1',
-      'paths': const {'sprite': null, 'vtt': null},
+      'paths': const {'sprite': null, 'vtt': null, 'caption': null},
+      'captions': const <Object>[],
       'sceneStreams': const [],
       'scene_markers': const [],
       'files': const [],
