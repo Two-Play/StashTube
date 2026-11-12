@@ -56,7 +56,8 @@ query FindScenesByIds($ids: [ID!]) {
 query FindSceneDetails($id: ID!) {
   findScene(id: $id) {
     id
-    paths { sprite vtt }
+    paths { sprite vtt caption }
+    captions { language_code caption_type }
     sceneStreams { url mime_type label }
     scene_markers { ...MarkerFields }
     files { path size format width height duration video_codec audio_codec frame_rate bit_rate mod_time }

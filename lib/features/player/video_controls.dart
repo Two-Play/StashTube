@@ -17,6 +17,7 @@ import '../../widgets/play_pause_icon.dart';
 import '../cast/cast_providers.dart';
 import '../cast/cast_ui.dart';
 import '../pip/pip.dart';
+import 'captions.dart';
 import 'gesture_hints.dart';
 import 'player_controls.dart' show playerVideoKey, videoAspect;
 import 'player_providers.dart';
@@ -622,6 +623,16 @@ class _StashVideoControlsState extends ConsumerState<StashVideoControls> {
                               ),
                             ),
                           ),
+                          if (ref.watch(hasCaptionsProvider(widget.scene.id)))
+                            IconButton(
+                              tooltip: context.l10n.subtitles,
+                              icon: Icon(
+                                ref.watch(activeCaptionProvider) == null
+                                    ? Icons.closed_caption_outlined
+                                    : Icons.closed_caption,
+                              ),
+                              onPressed: () => _act(() => showCaptionSheet(context, widget.scene.id)),
+                            ),
                           IconButton(
                             tooltip: context.l10n.quality,
                             icon: const Icon(Icons.hd_outlined),

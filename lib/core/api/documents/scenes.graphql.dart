@@ -2906,6 +2906,44 @@ const documentNodeQueryFindSceneDetails = DocumentNode(
                         selectionSet: null,
                       ),
                       FieldNode(
+                        name: NameNode(value: 'caption'),
+                        alias: null,
+                        arguments: [],
+                        directives: [],
+                        selectionSet: null,
+                      ),
+                      FieldNode(
+                        name: NameNode(value: '__typename'),
+                        alias: null,
+                        arguments: [],
+                        directives: [],
+                        selectionSet: null,
+                      ),
+                    ],
+                  ),
+                ),
+                FieldNode(
+                  name: NameNode(value: 'captions'),
+                  alias: null,
+                  arguments: [],
+                  directives: [],
+                  selectionSet: SelectionSetNode(
+                    selections: [
+                      FieldNode(
+                        name: NameNode(value: 'language_code'),
+                        alias: null,
+                        arguments: [],
+                        directives: [],
+                        selectionSet: null,
+                      ),
+                      FieldNode(
+                        name: NameNode(value: 'caption_type'),
+                        alias: null,
+                        arguments: [],
+                        directives: [],
+                        selectionSet: null,
+                      ),
+                      FieldNode(
                         name: NameNode(value: '__typename'),
                         alias: null,
                         arguments: [],
@@ -3232,6 +3270,7 @@ class Query$FindSceneDetails$findScene {
   Query$FindSceneDetails$findScene({
     required this.id,
     required this.paths,
+    this.captions,
     required this.sceneStreams,
     required this.scene_markers,
     required this.files,
@@ -3241,6 +3280,7 @@ class Query$FindSceneDetails$findScene {
   factory Query$FindSceneDetails$findScene.fromJson(Map<String, dynamic> json) {
     final l$id = json['id'];
     final l$paths = json['paths'];
+    final l$captions = json['captions'];
     final l$sceneStreams = json['sceneStreams'];
     final l$scene_markers = json['scene_markers'];
     final l$files = json['files'];
@@ -3250,6 +3290,13 @@ class Query$FindSceneDetails$findScene {
       paths: Query$FindSceneDetails$findScene$paths.fromJson(
         (l$paths as Map<String, dynamic>),
       ),
+      captions: (l$captions as List<dynamic>?)
+          ?.map(
+            (e) => Query$FindSceneDetails$findScene$captions.fromJson(
+              (e as Map<String, dynamic>),
+            ),
+          )
+          .toList(),
       sceneStreams: (l$sceneStreams as List<dynamic>)
           .map(
             (e) => Query$FindSceneDetails$findScene$sceneStreams.fromJson(
@@ -3277,6 +3324,8 @@ class Query$FindSceneDetails$findScene {
 
   final Query$FindSceneDetails$findScene$paths paths;
 
+  final List<Query$FindSceneDetails$findScene$captions>? captions;
+
   final List<Query$FindSceneDetails$findScene$sceneStreams> sceneStreams;
 
   final List<Fragment$MarkerFields> scene_markers;
@@ -3291,6 +3340,8 @@ class Query$FindSceneDetails$findScene {
     _resultData['id'] = l$id;
     final l$paths = paths;
     _resultData['paths'] = l$paths.toJson();
+    final l$captions = captions;
+    _resultData['captions'] = l$captions?.map((e) => e.toJson()).toList();
     final l$sceneStreams = sceneStreams;
     _resultData['sceneStreams'] = l$sceneStreams
         .map((e) => e.toJson())
@@ -3310,6 +3361,7 @@ class Query$FindSceneDetails$findScene {
   int get hashCode {
     final l$id = id;
     final l$paths = paths;
+    final l$captions = captions;
     final l$sceneStreams = sceneStreams;
     final l$scene_markers = scene_markers;
     final l$files = files;
@@ -3317,6 +3369,7 @@ class Query$FindSceneDetails$findScene {
     return Object.hashAll([
       l$id,
       l$paths,
+      l$captions == null ? null : Object.hashAll(l$captions.map((v) => v)),
       Object.hashAll(l$sceneStreams.map((v) => v)),
       Object.hashAll(l$scene_markers.map((v) => v)),
       Object.hashAll(l$files.map((v) => v)),
@@ -3341,6 +3394,22 @@ class Query$FindSceneDetails$findScene {
     final l$paths = paths;
     final lOther$paths = other.paths;
     if (l$paths != lOther$paths) {
+      return false;
+    }
+    final l$captions = captions;
+    final lOther$captions = other.captions;
+    if (l$captions != null && lOther$captions != null) {
+      if (l$captions.length != lOther$captions.length) {
+        return false;
+      }
+      for (int i = 0; i < l$captions.length; i++) {
+        final l$captions$entry = l$captions[i];
+        final lOther$captions$entry = lOther$captions[i];
+        if (l$captions$entry != lOther$captions$entry) {
+          return false;
+        }
+      }
+    } else if (l$captions != lOther$captions) {
       return false;
     }
     final l$sceneStreams = sceneStreams;
@@ -3392,6 +3461,7 @@ class Query$FindSceneDetails$findScene$paths {
   Query$FindSceneDetails$findScene$paths({
     this.sprite,
     this.vtt,
+    this.caption,
     this.$__typename = 'ScenePathsType',
   });
 
@@ -3400,10 +3470,12 @@ class Query$FindSceneDetails$findScene$paths {
   ) {
     final l$sprite = json['sprite'];
     final l$vtt = json['vtt'];
+    final l$caption = json['caption'];
     final l$$__typename = json['__typename'];
     return Query$FindSceneDetails$findScene$paths(
       sprite: (l$sprite as String?),
       vtt: (l$vtt as String?),
+      caption: (l$caption as String?),
       $__typename: (l$$__typename as String),
     );
   }
@@ -3411,6 +3483,8 @@ class Query$FindSceneDetails$findScene$paths {
   final String? sprite;
 
   final String? vtt;
+
+  final String? caption;
 
   final String $__typename;
 
@@ -3420,6 +3494,8 @@ class Query$FindSceneDetails$findScene$paths {
     _resultData['sprite'] = l$sprite;
     final l$vtt = vtt;
     _resultData['vtt'] = l$vtt;
+    final l$caption = caption;
+    _resultData['caption'] = l$caption;
     final l$$__typename = $__typename;
     _resultData['__typename'] = l$$__typename;
     return _resultData;
@@ -3429,8 +3505,9 @@ class Query$FindSceneDetails$findScene$paths {
   int get hashCode {
     final l$sprite = sprite;
     final l$vtt = vtt;
+    final l$caption = caption;
     final l$$__typename = $__typename;
-    return Object.hashAll([l$sprite, l$vtt, l$$__typename]);
+    return Object.hashAll([l$sprite, l$vtt, l$caption, l$$__typename]);
   }
 
   @override
@@ -3450,6 +3527,84 @@ class Query$FindSceneDetails$findScene$paths {
     final l$vtt = vtt;
     final lOther$vtt = other.vtt;
     if (l$vtt != lOther$vtt) {
+      return false;
+    }
+    final l$caption = caption;
+    final lOther$caption = other.caption;
+    if (l$caption != lOther$caption) {
+      return false;
+    }
+    final l$$__typename = $__typename;
+    final lOther$$__typename = other.$__typename;
+    if (l$$__typename != lOther$$__typename) {
+      return false;
+    }
+    return true;
+  }
+}
+
+class Query$FindSceneDetails$findScene$captions {
+  Query$FindSceneDetails$findScene$captions({
+    required this.language_code,
+    required this.caption_type,
+    this.$__typename = 'VideoCaption',
+  });
+
+  factory Query$FindSceneDetails$findScene$captions.fromJson(
+    Map<String, dynamic> json,
+  ) {
+    final l$language_code = json['language_code'];
+    final l$caption_type = json['caption_type'];
+    final l$$__typename = json['__typename'];
+    return Query$FindSceneDetails$findScene$captions(
+      language_code: (l$language_code as String),
+      caption_type: (l$caption_type as String),
+      $__typename: (l$$__typename as String),
+    );
+  }
+
+  final String language_code;
+
+  final String caption_type;
+
+  final String $__typename;
+
+  Map<String, dynamic> toJson() {
+    final _resultData = <String, dynamic>{};
+    final l$language_code = language_code;
+    _resultData['language_code'] = l$language_code;
+    final l$caption_type = caption_type;
+    _resultData['caption_type'] = l$caption_type;
+    final l$$__typename = $__typename;
+    _resultData['__typename'] = l$$__typename;
+    return _resultData;
+  }
+
+  @override
+  int get hashCode {
+    final l$language_code = language_code;
+    final l$caption_type = caption_type;
+    final l$$__typename = $__typename;
+    return Object.hashAll([l$language_code, l$caption_type, l$$__typename]);
+  }
+
+  @override
+  bool operator ==(Object other) {
+    if (identical(this, other)) {
+      return true;
+    }
+    if (other is! Query$FindSceneDetails$findScene$captions ||
+        runtimeType != other.runtimeType) {
+      return false;
+    }
+    final l$language_code = language_code;
+    final lOther$language_code = other.language_code;
+    if (l$language_code != lOther$language_code) {
+      return false;
+    }
+    final l$caption_type = caption_type;
+    final lOther$caption_type = other.caption_type;
+    if (l$caption_type != lOther$caption_type) {
       return false;
     }
     final l$$__typename = $__typename;

@@ -15,6 +15,7 @@ import '../cast/cast_media.dart';
 import '../cast/cast_providers.dart';
 import '../cast/cast_service.dart' show CastKind;
 import '../pip/pip.dart' show playbackModesProvider;
+import 'captions.dart';
 import 'playback_tracker.dart';
 import 'sliding_panel.dart';
 import 'video_zoom.dart';
@@ -439,6 +440,8 @@ class NowPlayingNotifier extends Notifier<Scene?> {
       final resume = at ?? ref.read(resumeTimesProvider)[scene.id] ?? scene.resumeTime;
       unawaited(ref.read(playbackTrackerProvider).start(scene.copyWith(resumeTime: resume)));
       ref.read(currentStreamProvider.notifier).set(null);
+      ref.read(activeCaptionProvider.notifier).set(null);
+      _restoreCaption(scene);
       final start = Duration(milliseconds: (resume * 1000).round());
       unawaited(_openPreferredStream(scene, url, start));
       if (ref.read(isCastingProvider)) unawaited(_castScene(scene, start));
@@ -448,6 +451,59 @@ class NowPlayingNotifier extends Notifier<Scene?> {
     state = scene;
     // On first play the miniplayer is only mounted in the next frame.
     WidgetsBinding.instance.addPostFrameCallback((_) => expand());
+  }
+
+  Future<SceneCaption?>? _pendingCaption;
+  StreamSubscription<Duration>? _captionWatch;
+
+  /// Switches the subtitles on again for [scene] if the user's last pick has
+  /// a file in their language: as soon as the file is loaded (mpv can only
+  /// add subtitles to a loaded file), and only if this scene still plays.
+  void _restoreCaption(Scene scene) {
+    final language = ref.read(preferredCaptionProvider);
+    if (language == null) {
+      _pendingCaption = null;
+      return;
+    }
+    _pendingCaption = () async {
+      final details = ref.listen(sceneDetailsProvider(scene.id).future, (_, _) {});
+      try {
+        final captions = (await details.read()).captions;
+        if (state?.id != scene.id) return null;
+        return captions.where((c) => c.languageCode == language).firstOrNull;
+      } catch (_) {
+        return null; // subtitles are optional
+      } finally {
+        details.close();
+      }
+    }();
+    if (_captionWatch != null) return;
+    _captionWatch = ref.read(playerProvider).stream.duration.listen((duration) async {
+      final pending = _pendingCaption;
+      if (duration <= Duration.zero || pending == null) return;
+      _pendingCaption = null;
+      final caption = await pending;
+      if (caption != null && ref.mounted && state != null) await _showCaption(caption);
+    });
+    ref.onDispose(() => _captionWatch?.cancel());
+  }
+
+  Future<void> _showCaption(SceneCaption? caption) async {
+    await ref.read(playerProvider).setSubtitleTrack(
+          caption == null
+              ? SubtitleTrack.no()
+              : SubtitleTrack.uri(caption.url, language: caption.languageCode, title: caption.type),
+        );
+    if (ref.mounted) ref.read(activeCaptionProvider.notifier).set(caption);
+  }
+
+  /// Switches the subtitles of the current scene ([caption] null: off) and
+  /// remembers the language for the next scenes.
+  Future<void> selectCaption(SceneCaption? caption) async {
+    if (state == null) return;
+    _pendingCaption = null;
+    await _showCaption(caption);
+    if (ref.mounted) await ref.read(preferredCaptionProvider.notifier).set(caption?.languageCode);
   }
 
   /// Opens the user's preferred transcode if this scene offers it, else the
@@ -633,6 +689,8 @@ class NowPlayingNotifier extends Notifier<Scene?> {
     _autoplay = null;
     unawaited(ref.read(playbackTrackerProvider).stop());
     ref.read(videoZoomProvider.notifier).reset();
+    _pendingCaption = null;
+    ref.read(activeCaptionProvider.notifier).set(null);
     ref.read(playerProvider).stop();
     state = null;
   }

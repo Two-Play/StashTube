@@ -1501,6 +1501,15 @@ class AppLocalizationsDe extends AppLocalizations {
   String get fullscreen => 'Vollbild';
 
   @override
+  String get subtitles => 'Untertitel';
+
+  @override
+  String get subtitlesOff => 'Aus';
+
+  @override
+  String get captionUnknownLanguage => 'Unbekannte Sprache';
+
+  @override
   String get fillScreen => 'Bildschirm füllen';
 
   @override

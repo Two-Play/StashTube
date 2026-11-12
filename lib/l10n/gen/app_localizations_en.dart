@@ -1497,6 +1497,15 @@ class AppLocalizationsEn extends AppLocalizations {
   String get fullscreen => 'Fullscreen';
 
   @override
+  String get subtitles => 'Subtitles';
+
+  @override
+  String get subtitlesOff => 'Off';
+
+  @override
+  String get captionUnknownLanguage => 'Unknown language';
+
+  @override
   String get fillScreen => 'Fill screen';
 
   @override

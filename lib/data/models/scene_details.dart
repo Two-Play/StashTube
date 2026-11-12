@@ -190,6 +190,38 @@ class SceneFile {
   String get name => path.split(RegExp(r'[/\\]')).last;
 }
 
+/// A subtitle file Stash has for a scene (`captions`), served by
+/// `paths.caption?lang=…&type=…` as WebVTT.
+class SceneCaption {
+  const SceneCaption({required this.languageCode, required this.type, required this.url});
+
+  /// ISO 639 code as Stash stores it; "00" (or empty) = language unknown.
+  final String languageCode;
+
+  /// The file's format ("srt", "vtt").
+  final String type;
+  final String url;
+
+  bool get languageKnown => languageCode.isNotEmpty && languageCode != '00';
+
+  /// Identifies the caption within its scene.
+  String get id => '$languageCode:$type';
+
+  static SceneCaption? build(String? base, String languageCode, String type) {
+    final root = nonEmpty(base);
+    final uri = root == null ? null : Uri.tryParse(root);
+    if (uri == null) return null;
+    final url = uri.replace(queryParameters: {...uri.queryParameters, 'lang': languageCode, 'type': type});
+    return SceneCaption(languageCode: languageCode, type: type, url: url.toString());
+  }
+
+  @override
+  bool operator ==(Object other) => other is SceneCaption && other.url == url;
+
+  @override
+  int get hashCode => url.hashCode;
+}
+
 /// Per-scene data that is only needed while the scene is playing.
 class SceneDetails {
   const SceneDetails({
@@ -199,9 +231,13 @@ class SceneDetails {
     this.spriteUrl,
     this.vttUrl,
     this.markerRanges = false,
+    this.captions = const [],
   });
 
   final List<SceneStream> streams;
+
+  /// Subtitles the server has for the scene.
+  final List<SceneCaption> captions;
 
   /// The scene's files; the first is the one that plays.
   final List<SceneFile> files;
@@ -224,6 +260,7 @@ class SceneDetails {
       ? this
       : SceneDetails(
           streams: streams,
+          captions: captions,
           files: files,
           spriteUrl: spriteUrl,
           vttUrl: vttUrl,
@@ -234,6 +271,10 @@ class SceneDetails {
   factory SceneDetails.fromGraphql(Query$FindSceneDetails$findScene s) => SceneDetails(
         spriteUrl: nonEmpty(s.paths.sprite),
         vttUrl: nonEmpty(s.paths.vtt),
+        captions: [
+          for (final c in s.captions ?? const <Query$FindSceneDetails$findScene$captions>[])
+            ?SceneCaption.build(s.paths.caption, c.language_code, c.caption_type),
+        ],
         streams: [
           for (final stream in s.sceneStreams)
             if (stream.url.isNotEmpty) SceneStream.fromGraphql(stream),

@@ -2354,6 +2354,24 @@ abstract class AppLocalizations {
   /// **'Fullscreen'**
   String get fullscreen;
 
+  /// No description provided for @subtitles.
+  ///
+  /// In en, this message translates to:
+  /// **'Subtitles'**
+  String get subtitles;
+
+  /// No description provided for @subtitlesOff.
+  ///
+  /// In en, this message translates to:
+  /// **'Off'**
+  String get subtitlesOff;
+
+  /// No description provided for @captionUnknownLanguage.
+  ///
+  /// In en, this message translates to:
+  /// **'Unknown language'**
+  String get captionUnknownLanguage;
+
   /// No description provided for @fillScreen.
   ///
   /// In en, this message translates to:
