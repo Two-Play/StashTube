@@ -1501,6 +1501,12 @@ class AppLocalizationsDe extends AppLocalizations {
   String get fullscreen => 'Vollbild';
 
   @override
+  String get fillScreen => 'Bildschirm füllen';
+
+  @override
+  String get fitVideo => 'Ganzes Bild zeigen';
+
+  @override
   String get clearField => 'Leeren';
 
   @override

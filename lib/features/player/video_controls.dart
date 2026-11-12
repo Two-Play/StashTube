@@ -18,7 +18,7 @@ import '../cast/cast_providers.dart';
 import '../cast/cast_ui.dart';
 import '../pip/pip.dart';
 import 'gesture_hints.dart';
-import 'player_controls.dart' show playerVideoKey;
+import 'player_controls.dart' show playerVideoKey, videoAspect;
 import 'player_providers.dart';
 import 'preview_seek_bar.dart';
 import 'seek_settings.dart';
@@ -235,6 +235,15 @@ class _StashVideoControlsState extends ConsumerState<StashVideoControls> {
     setState(() => _tipsShowing = false);
     unawaited(ref.read(gestureTipsSeenProvider.notifier).dismiss());
     _show();
+  }
+
+  /// The fill button (4.31): zoom until the video covers the whole box, or
+  /// back to the whole picture.
+  void _toggleFill() {
+    final box = context.size;
+    if (box == null) return;
+    final aspect = videoAspect(ref.read(playerProvider).state, widget.scene);
+    ref.read(videoZoomProvider.notifier).toggleFill(box: box, aspect: aspect);
   }
 
   void _lock() {
@@ -480,6 +489,7 @@ class _StashVideoControlsState extends ConsumerState<StashVideoControls> {
   @override
   Widget build(BuildContext context) {
     final player = ref.watch(playerProvider);
+    final zoomed = ref.watch(videoZoomProvider.select((z) => z.isZoomed));
     final fullscreen = widget.fullscreen;
     final seek = ref.watch(seekSettingsProvider);
 
@@ -664,6 +674,11 @@ class _StashVideoControlsState extends ConsumerState<StashVideoControls> {
                                 icon: const Icon(Icons.lock_outline),
                                 onPressed: _lock,
                               ),
+                            IconButton(
+                              tooltip: zoomed ? context.l10n.fitVideo : context.l10n.fillScreen,
+                              icon: Icon(zoomed ? Icons.fit_screen : Icons.crop_free),
+                              onPressed: () => _act(_toggleFill),
+                            ),
                             IconButton(
                               tooltip: fullscreen ? context.l10n.exitFullscreen : context.l10n.fullscreen,
                               icon: Icon(fullscreen ? Icons.fullscreen_exit : Icons.fullscreen),

@@ -2354,6 +2354,18 @@ abstract class AppLocalizations {
   /// **'Fullscreen'**
   String get fullscreen;
 
+  /// No description provided for @fillScreen.
+  ///
+  /// In en, this message translates to:
+  /// **'Fill screen'**
+  String get fillScreen;
+
+  /// No description provided for @fitVideo.
+  ///
+  /// In en, this message translates to:
+  /// **'Fit to screen'**
+  String get fitVideo;
+
   /// No description provided for @clearField.
   ///
   /// In en, this message translates to:

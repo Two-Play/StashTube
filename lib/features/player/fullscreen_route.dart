@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:media_kit_video/media_kit_video.dart';
 
 import 'fullscreen_morph.dart';
 import 'held_orientation.dart';
+import 'video_zoom.dart';
 
 /// Like media_kit's [toggleFullscreen], with [enterPlayerFullscreen] and
 /// [exitPlayerFullscreen]. [context] is below the [Video] (its controls').
@@ -45,6 +47,7 @@ double playingAspect(VideoController controller) {
 Future<void> enterPlayerFullscreen(BuildContext context, {HeldOrientation? held, required Rect? Function() inline}) =>
     lock.synchronized(() async {
       if (!context.mounted || isFullscreen(context) || playerFullscreenOpen) return;
+      ProviderScope.containerOf(context).read(videoZoomProvider.notifier).resetFill();
       final inherited = VideoStateInheritedWidget.of(context);
       final state = inherited.state;
       final parameters = inherited.videoViewParametersNotifier.value;
@@ -124,6 +127,7 @@ Future<void> enterPlayerFullscreen(BuildContext context, {HeldOrientation? held,
 /// first fades to black, and `onExitFullscreen` fades it in again.
 Future<void> exitPlayerFullscreen(BuildContext context) => lock.synchronized(() async {
   if (!context.mounted || !isFullscreen(context)) return;
+  ProviderScope.containerOf(context).read(videoZoomProvider.notifier).resetFill();
   final morph = fullscreenMorphKey.currentState;
   if (FullscreenMorph.curtainOnly) await morph?.cover();
   if (!context.mounted || !await Navigator.of(context).maybePop()) await morph?.uncover();

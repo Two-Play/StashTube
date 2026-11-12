@@ -967,6 +967,8 @@
   "later": "Later",
   "exitFullscreen": "Exit fullscreen",
   "fullscreen": "Fullscreen",
+  "fillScreen": "Fill screen",
+  "fitVideo": "Fit to screen",
   "clearField": "Clear",
   "searchStudios": "Search studios",
   "searchPerformers": "Search performers",

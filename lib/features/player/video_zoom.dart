@@ -13,7 +13,7 @@ import 'player_providers.dart';
 /// controls on top keep their size.
 @immutable
 class VideoZoom {
-  const VideoZoom({this.scale = 1, this.panX = 0, this.panY = 0});
+  const VideoZoom({this.scale = 1, this.panX = 0, this.panY = 0, this.fill = false});
 
   static const none = VideoZoom();
   static const maxScale = 4.0;
@@ -27,7 +27,23 @@ class VideoZoom {
   final double panX;
   final double panY;
 
+  /// Set by the "fill" button: the zoom that makes the video cover its
+  /// box. It belongs to the box it was computed for, so entering or leaving
+  /// fullscreen drops it ([VideoZoomNotifier.resetFill]). A pinch clears it.
+  final bool fill;
+
   bool get isZoomed => scale > 1;
+
+  /// The zoom that makes a video of [aspect] (width / height) cover a [box]
+  /// completely, cutting off what sticks out, or null when it already does
+  /// (or would need more than [maxScale]).
+  static VideoZoom? covering({required Size box, required double aspect}) {
+    if (box.isEmpty || aspect <= 0) return null;
+    final boxAspect = box.width / box.height;
+    final scale = boxAspect > aspect ? boxAspect / aspect : aspect / boxAspect;
+    if (scale < 1.02) return null;
+    return VideoZoom(scale: math.min(scale, maxScale), fill: true);
+  }
 
   /// The zoom after a pinch that started at [startFocal] with this zoom and
   /// is now at [focal] with the fingers [factor] times as far apart, in a
@@ -56,10 +72,10 @@ class VideoZoom {
 
   @override
   bool operator ==(Object other) =>
-      other is VideoZoom && other.scale == scale && other.panX == panX && other.panY == panY;
+      other is VideoZoom && other.scale == scale && other.panX == panX && other.panY == panY && other.fill == fill;
 
   @override
-  int get hashCode => Object.hash(scale, panX, panY);
+  int get hashCode => Object.hash(scale, panX, panY, fill);
 }
 
 /// The current zoom; kept until the user zooms out or another scene starts
@@ -75,6 +91,25 @@ class VideoZoomNotifier extends Notifier<VideoZoom> {
   }
 
   void reset() => set(VideoZoom.none);
+
+  /// Drops a zoom made by the fill button (it fits one box only); a pinch
+  /// zoom stays.
+  void resetFill() {
+    if (state.fill) reset();
+  }
+
+  /// The fill button: back to the whole picture when zoomed, else cover the
+  /// [box]. Returns whether anything changed (false: it fits already).
+  bool toggleFill({required Size box, required double? aspect}) {
+    if (state.isZoomed) {
+      reset();
+      return true;
+    }
+    final zoom = aspect == null ? null : VideoZoom.covering(box: box, aspect: aspect);
+    if (zoom == null) return false;
+    set(zoom);
+    return true;
+  }
 
   static void _apply(Player player, VideoZoom zoom) {
     final platform = player.platform;
