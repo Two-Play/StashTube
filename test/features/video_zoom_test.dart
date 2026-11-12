@@ -36,14 +36,16 @@ void main() {
   });
 
   test('covering zooms a 16:9 video to fill a 20:9 screen, and nothing that fits', () {
-    final z = VideoZoom.covering(box: const Size(2000, 900), aspect: 16 / 9)!;
+    final z = VideoZoom.covering(box: const Size(2000, 900), aspect: 16 / 9);
     expect(z.scale, closeTo((20 / 9) / (16 / 9), 0.001));
     expect(z.fill, isTrue);
     // A portrait video in a landscape box needs the other ratio.
-    expect(VideoZoom.covering(box: const Size(1600, 900), aspect: 9 / 16)!.scale, closeTo(3.16, 0.01));
-    expect(VideoZoom.covering(box: const Size(2400, 900), aspect: 9 / 16)!.scale, VideoZoom.maxScale);
-    expect(VideoZoom.covering(box: const Size(1600, 900), aspect: 16 / 9), isNull);
-    // A pinch ends the fill, so leaving fullscreen keeps the pinch zoom.
+    expect(VideoZoom.covering(box: const Size(1600, 900), aspect: 9 / 16).scale, closeTo(3.16, 0.01));
+    expect(VideoZoom.covering(box: const Size(2400, 900), aspect: 9 / 16).scale, VideoZoom.maxScale);
+    // Already filling: the fill stays on (for the next box) without zooming.
+    final fits = VideoZoom.covering(box: const Size(1600, 900), aspect: 16 / 9);
+    expect((fits.scale, fits.fill), (1.0, true));
+    // A pinch ends the fill.
     expect(z.pinch(factor: 1.1, startFocal: center, focal: center, box: box).fill, isFalse);
   });
 }

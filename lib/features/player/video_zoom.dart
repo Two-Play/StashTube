@@ -27,22 +27,22 @@ class VideoZoom {
   final double panX;
   final double panY;
 
-  /// Set by the "fill" button: the zoom that makes the video cover its
-  /// box. It belongs to the box it was computed for, so entering or leaving
-  /// fullscreen drops it ([VideoZoomNotifier.resetFill]). A pinch clears it.
+  /// Set by the "fill" button: the video covers whatever box it is shown
+  /// in, so the scale is worked out again for every box (inline, fullscreen,
+  /// turned screen) by the controls ([VideoZoomNotifier.fitTo]). A pinch
+  /// ends it.
   final bool fill;
 
   bool get isZoomed => scale > 1;
 
   /// The zoom that makes a video of [aspect] (width / height) cover a [box]
-  /// completely, cutting off what sticks out, or null when it already does
-  /// (or would need more than [maxScale]).
-  static VideoZoom? covering({required Size box, required double aspect}) {
-    if (box.isEmpty || aspect <= 0) return null;
+  /// completely, cutting off what sticks out (at most [maxScale]; 1 when it
+  /// fills the box already).
+  static VideoZoom covering({required Size box, required double aspect}) {
+    if (box.isEmpty || aspect <= 0) return const VideoZoom(fill: true);
     final boxAspect = box.width / box.height;
     final scale = boxAspect > aspect ? boxAspect / aspect : aspect / boxAspect;
-    if (scale < 1.02) return null;
-    return VideoZoom(scale: math.min(scale, maxScale), fill: true);
+    return VideoZoom(scale: scale < 1.02 ? 1 : math.min(scale, maxScale), fill: true);
   }
 
   /// The zoom after a pinch that started at [startFocal] with this zoom and
@@ -92,23 +92,20 @@ class VideoZoomNotifier extends Notifier<VideoZoom> {
 
   void reset() => set(VideoZoom.none);
 
-  /// Drops a zoom made by the fill button (it fits one box only); a pinch
-  /// zoom stays.
-  void resetFill() {
-    if (state.fill) reset();
+  /// The fill button: off when on or zoomed, else covers the [box].
+  void toggleFill({required Size box, required double? aspect}) {
+    if (state.fill || state.isZoomed) {
+      reset();
+    } else {
+      set(aspect == null ? const VideoZoom(fill: true) : VideoZoom.covering(box: box, aspect: aspect));
+    }
   }
 
-  /// The fill button: back to the whole picture when zoomed, else cover the
-  /// [box]. Returns whether anything changed (false: it fits already).
-  bool toggleFill({required Size box, required double? aspect}) {
-    if (state.isZoomed) {
-      reset();
-      return true;
-    }
-    final zoom = aspect == null ? null : VideoZoom.covering(box: box, aspect: aspect);
-    if (zoom == null) return false;
-    set(zoom);
-    return true;
+  /// Works the fill zoom out again for the box the video is shown in now
+  /// (fullscreen, a turned screen); does nothing unless the fill is on.
+  void syncFill({required Size box, required double? aspect}) {
+    if (!state.fill || aspect == null) return;
+    set(VideoZoom.covering(box: box, aspect: aspect));
   }
 
   static void _apply(Player player, VideoZoom zoom) {

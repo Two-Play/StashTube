@@ -247,6 +247,12 @@ class _StashVideoControlsState extends ConsumerState<StashVideoControls> {
     ref.read(videoZoomProvider.notifier).toggleFill(box: box, aspect: aspect);
   }
 
+  void _syncFill() {
+    final box = mounted ? context.size : null;
+    if (box == null || !TickerMode.valuesOf(context).enabled) return;
+    ref.read(videoZoomProvider.notifier).syncFill(box: box, aspect: videoAspect(ref.read(playerProvider).state, widget.scene));
+  }
+
   void _lock() {
     Haptics.medium();
     _endHold();
@@ -490,7 +496,14 @@ class _StashVideoControlsState extends ConsumerState<StashVideoControls> {
   @override
   Widget build(BuildContext context) {
     final player = ref.watch(playerProvider);
-    final zoomed = ref.watch(videoZoomProvider.select((z) => z.isZoomed));
+    final filling = ref.watch(videoZoomProvider.select((z) => z.fill || z.isZoomed));
+    // The fill covers the box this video is in, so it is worked out here again
+    // for the controls that are on show (the inline ones sit hidden under
+    // the fullscreen route), also when the window turns.
+    MediaQuery.sizeOf(context);
+    if (ref.watch(videoZoomProvider.select((z) => z.fill)) && TickerMode.valuesOf(context).enabled) {
+      WidgetsBinding.instance.addPostFrameCallback((_) => _syncFill());
+    }
     final fullscreen = widget.fullscreen;
     final seek = ref.watch(seekSettingsProvider);
 
@@ -686,8 +699,8 @@ class _StashVideoControlsState extends ConsumerState<StashVideoControls> {
                                 onPressed: _lock,
                               ),
                             IconButton(
-                              tooltip: zoomed ? context.l10n.fitVideo : context.l10n.fillScreen,
-                              icon: Icon(zoomed ? Icons.zoom_out : Icons.zoom_in),
+                              tooltip: filling ? context.l10n.fitVideo : context.l10n.fillScreen,
+                              icon: Icon(filling ? Icons.close_fullscreen : Icons.open_in_full),
                               onPressed: () => _act(_toggleFill),
                             ),
                             IconButton(
