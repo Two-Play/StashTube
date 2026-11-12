@@ -65,6 +65,22 @@ void main() {
       expect(pinch(cover * 1.5).fill, isFalse);
     });
 
+    test('it also sticks to the fitted size, and the pan to the center and the edges', () {
+      VideoZoom pinch(double factor, {Offset shift = Offset.zero}) => VideoZoom.none.pinch(
+          factor: factor, startFocal: screen.center(Offset.zero), focal: screen.center(Offset.zero) + shift, box: screen, aspect: wide);
+      expect(pinch(1.05).scale, 1, reason: 'full height: back to the fitted size');
+      expect(pinch(1.15).scale, closeTo(1.15, 0.001));
+      // Fingers that drift a few pixels up or down don't move the picture...
+      expect(pinch(2, shift: const Offset(0, 9)).panY, 0);
+      expect(pinch(2, shift: const Offset(9, 0)).panX, 0);
+      // ...but a real move does, and sticks to the edge when close to it.
+      final moved = pinch(2, shift: const Offset(0, 100));
+      expect(moved.panY * screen.height * moved.scale, closeTo(100, 0.001));
+      final limit = VideoZoom.panLimit(screen, wide, 2);
+      final nearEdge = pinch(2, shift: Offset(0, limit.dy - 8));
+      expect(nearEdge.panY * screen.height * 2, closeTo(limit.dy, 0.001));
+    });
+
     test('a fill is worked out again for another box', () {
       const filled = VideoZoom(scale: 1.25, fill: true);
       expect(filled.scaleIn(screen, wide), closeTo(1.25, 0.001));

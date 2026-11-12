@@ -23,8 +23,12 @@ class VideoZoom {
   /// Below this a pinch snaps back to no zoom.
   static const snapBack = 1.05;
 
-  /// A pinch within this share of the fill scale sticks to it.
+  /// A pinch within this share of the fit scale (1: the video's height or
+  /// width fills the box) or the fill scale (both do) sticks to it.
   static const fillSnap = 0.07;
+
+  /// The pan sticks to the center and to the edges within this many pixels.
+  static const panSnap = 14.0;
 
   final double scale;
 
@@ -90,7 +94,7 @@ class VideoZoom {
     final cover = coverScale(box, aspect);
     final raw = (startScale * factor).clamp(1.0, maxScale);
     final snapped = cover > 1.02 && (raw - cover).abs() <= cover * fillSnap;
-    final newScale = snapped ? cover : raw;
+    final newScale = snapped ? cover : (raw <= 1 + fillSnap ? 1.0 : raw);
     final startLimit = panLimit(box, aspect, startScale);
     final start = Offset(
       (panX * box.width * startScale).clamp(-startLimit.dx, startLimit.dx),
@@ -103,10 +107,19 @@ class VideoZoom {
     final limit = panLimit(box, aspect, newScale);
     return VideoZoom(
       scale: newScale,
-      panX: translation.dx.clamp(-limit.dx, limit.dx) / (box.width * newScale),
-      panY: translation.dy.clamp(-limit.dy, limit.dy) / (box.height * newScale),
+      panX: _snapPan(translation.dx, limit.dx) / (box.width * newScale),
+      panY: _snapPan(translation.dy, limit.dy) / (box.height * newScale),
       fill: snapped,
     );
+  }
+
+  /// [value] kept within ±[limit], sticking to the center and to the edges.
+  static double _snapPan(double value, double limit) {
+    final v = value.clamp(-limit, limit);
+    if (v.abs() <= panSnap) return 0;
+    if ((v - limit).abs() <= panSnap) return limit;
+    if ((v + limit).abs() <= panSnap) return -limit;
+    return v;
   }
 
   /// What a pinch ends with: no zoom when barely zoomed.

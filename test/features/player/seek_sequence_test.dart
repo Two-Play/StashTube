@@ -148,8 +148,8 @@ void main() {
     await tap(tester, right(tester));
     expect(find.text('5 seconds'), findsOneWidget);
     expect(halfDisc(), findsOneWidget);
-    expect(tester.getSize(halfDisc()).width, closeTo(area(tester).width * 0.42, 1), reason: 'covers the outer 42 % of the video');
-    expect(tester.getTopLeft(halfDisc()).dx, closeTo(area(tester).right - area(tester).width * 0.42, 1), reason: 'on the tapped side');
+    expect(tester.getSize(halfDisc()).width, closeTo(area(tester).width * 0.3, 1), reason: 'covers the outer 30 % of the video');
+    expect(tester.getTopLeft(halfDisc()).dx, closeTo(area(tester).right - area(tester).width * 0.3, 1), reason: 'on the tapped side');
     for (var i = 0; i < 4; i++) {
       await tap(tester, right(tester));
     }

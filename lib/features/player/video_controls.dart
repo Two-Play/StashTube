@@ -425,7 +425,7 @@ class _StashVideoControlsState extends ConsumerState<StashVideoControls> {
           child: Align(
             alignment: _seekDirection < 0 ? Alignment.centerLeft : Alignment.centerRight,
             child: FractionallySizedBox(
-              widthFactor: 0.42,
+              widthFactor: _SeekFeedback.widthFactor,
               heightFactor: 1,
               child: _SeekFeedback(
                 forward: _seekDirection > 0,
@@ -939,9 +939,12 @@ class _TimeLabel extends StatelessWidget {
 /// The feedback of a seek sequence, like YouTube's: a half disc that covers
 /// the side that was tapped, with the total jump and arrows that run again
 /// on every tap ([taps]); still with reduced motion. Fills the space it is
-/// given (the controls give it the outer 42 % of their width).
+/// given (the controls give it the outer 30 % of their width).
 class _SeekFeedback extends StatelessWidget {
   const _SeekFeedback({required this.forward, required this.seconds, required this.taps});
+
+  /// The share of the video's width it covers, from the tapped edge.
+  static const widthFactor = 0.3;
 
   final bool forward;
   final int seconds;
@@ -971,7 +974,9 @@ class _SeekFeedback extends StatelessWidget {
           child: ColoredBox(
             // A tap flashes the disc a little brighter, which fades out.
             color: Color.alphaBlend(Colors.white.withValues(alpha: animate ? (1 - t) * 0.12 : 0), scrim),
-            child: Center(
+            // Toward the outer edge, away from the middle of the video.
+            child: Align(
+              alignment: Alignment(forward ? 0.3 : -0.3, 0),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
