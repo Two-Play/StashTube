@@ -17,6 +17,7 @@ import '../../widgets/play_pause_icon.dart';
 import '../cast/cast_providers.dart';
 import '../cast/cast_ui.dart';
 import '../pip/pip.dart';
+import 'captions.dart';
 import 'gesture_hints.dart';
 import 'player_controls.dart' show playerVideoKey;
 import 'player_providers.dart';
@@ -137,12 +138,18 @@ class _StashVideoControlsState extends ConsumerState<StashVideoControls> {
     final start = _pinchStartZoom;
     final box = context.size;
     if (start == null || _pointers.length < 2 || box == null) return;
-    ref.read(videoZoomProvider.notifier).set(start.pinch(
-          factor: _distance / _pinchStartDistance,
-          startFocal: _pinchStartFocal,
-          focal: _focal,
-          box: box,
-        ));
+    final notifier = ref.read(videoZoomProvider.notifier);
+    final was = ref.read(videoZoomProvider);
+    final zoom = start.pinch(
+      factor: _distance / _pinchStartDistance,
+      startFocal: _pinchStartFocal,
+      focal: _focal,
+      box: box,
+      aspect: ref.read(videoAspectProvider),
+    );
+    // A light tick whenever it newly sticks: to a size or the center/edges.
+    if (zoom.snaps & ~was.snaps != 0) Haptics.selection();
+    notifier.set(zoom);
   }
 
   void _onPointerEnd(PointerEvent e) {
@@ -183,6 +190,10 @@ class _StashVideoControlsState extends ConsumerState<StashVideoControls> {
   /// [_seekTaps] taps jump [_seekTotal] ([SeekSettings.total]) from
   /// [_seekBase], the position when it started.
   int _seekDirection = 0;
+
+  /// The side the feedback fades out on after the sequence ended.
+  int _shownDirection = 1;
+  bool _feedbackFading = false;
   int _seekTaps = 0;
   Duration _seekTotal = Duration.zero;
   Duration _seekBase = Duration.zero;
@@ -366,6 +377,8 @@ class _StashVideoControlsState extends ConsumerState<StashVideoControls> {
             ? ref.read(castPlaybackProvider).value?.position ?? Duration.zero
             : ref.read(playerProvider).state.position;
     _seekDirection = direction;
+    _shownDirection = direction;
+    _feedbackFading = false;
     _seekTaps = 0;
     _lastSeekTarget = null;
     _extendSeekSequence();
@@ -409,22 +422,46 @@ class _StashVideoControlsState extends ConsumerState<StashVideoControls> {
   void _endSeekSequence() {
     _seekTimer?.cancel();
     if (_seekDirection == 0) return;
-    if (mounted) setState(() => _seekDirection = 0);
+    if (mounted) {
+      final animate = !MediaQuery.disableAnimationsOf(context);
+      setState(() {
+        _seekDirection = 0;
+        _feedbackFading = animate;
+      });
+    }
   }
 
-  /// The bubble of the running seek sequence, on its side.
-  Widget _seekFeedback() => IgnorePointer(
-        child: ExcludeSemantics(
+  /// The half disc of the running seek sequence, on its side; it fades in
+  /// with the first tap and out after the last.
+  Widget _seekFeedback() {
+    final showing = _seekDirection != 0;
+    final direction = showing ? _seekDirection : _shownDirection;
+    final animate = !MediaQuery.disableAnimationsOf(context);
+    return IgnorePointer(
+      child: ExcludeSemantics(
+        child: TweenAnimationBuilder<double>(
+          tween: Tween(begin: animate ? 0 : 1, end: showing ? 1 : 0),
+          duration: animate ? const Duration(milliseconds: 180) : Duration.zero,
+          onEnd: () {
+            if (mounted && _seekDirection == 0 && _feedbackFading) setState(() => _feedbackFading = false);
+          },
+          builder: (_, opacity, child) => Opacity(opacity: opacity, child: child),
           child: Align(
-            alignment: _seekDirection < 0 ? const Alignment(-0.6, 0) : const Alignment(0.6, 0),
-            child: _SeekFeedback(
-              forward: _seekDirection > 0,
-              seconds: _seekTotal.inSeconds,
-              taps: _seekTaps,
+            alignment: direction < 0 ? Alignment.centerLeft : Alignment.centerRight,
+            child: FractionallySizedBox(
+              widthFactor: _SeekFeedback.widthFactor,
+              heightFactor: 1,
+              child: _SeekFeedback(
+                forward: direction > 0,
+                seconds: _seekTotal.inSeconds,
+                taps: _seekTaps,
+              ),
             ),
           ),
         ),
-      );
+      ),
+    );
+  }
 
   /// While casting: tap areas left and right of [CastingControls]' buttons,
   /// so double taps seek on the TV as well.
@@ -491,7 +528,7 @@ class _StashVideoControlsState extends ConsumerState<StashVideoControls> {
         children: [
           CastingControls(connection: casting, showMinimize: !fullscreen),
           if (seek.enabled) _castSeekZones(),
-          if (_seekDirection != 0) _seekFeedback(),
+          if (_seekDirection != 0 || _feedbackFading) _seekFeedback(),
         ],
       );
     }
@@ -543,7 +580,7 @@ class _StashVideoControlsState extends ConsumerState<StashVideoControls> {
               ),
             ),
           ),
-          if (_seekDirection != 0) _seekFeedback(),
+          if (_seekDirection != 0 || _feedbackFading) _seekFeedback(),
           if (_rateBeforeHold != null)
             IgnorePointer(
               child: Align(
@@ -612,6 +649,16 @@ class _StashVideoControlsState extends ConsumerState<StashVideoControls> {
                               ),
                             ),
                           ),
+                          if (ref.watch(hasCaptionsProvider(widget.scene.id)))
+                            IconButton(
+                              tooltip: context.l10n.subtitles,
+                              icon: Icon(
+                                ref.watch(activeCaptionProvider) == null
+                                    ? Icons.closed_caption_outlined
+                                    : Icons.closed_caption,
+                              ),
+                              onPressed: () => _act(() => showCaptionSheet(context, widget.scene.id)),
+                            ),
                           IconButton(
                             tooltip: context.l10n.quality,
                             icon: const Icon(Icons.hd_outlined),
@@ -695,6 +742,8 @@ class _StashVideoControlsState extends ConsumerState<StashVideoControls> {
           ),
           // Always there (empty without an error), so the tree stays the same.
           _PlaybackErrorOverlay(error: error, sceneId: widget.scene.id, onQuality: widget.onQuality),
+          // Always there too (empty unless the queue's next scene is waiting).
+          const _AutoplayOverlay(),
           if (_tipsShowing)
             GestureTipsOverlay(seekSeconds: seek.enabled ? seek.step.inSeconds : null, onDismiss: _dismissTips),
           // Always there (empty while unlocked), above the gestures and buttons.
@@ -913,10 +962,15 @@ class _TimeLabel extends StatelessWidget {
       );
 }
 
-/// The bubble of a seek sequence: the total jump, with a ripple and arrows
-/// that run again on every tap ([taps]); still with reduced motion.
+/// The feedback of a seek sequence, like YouTube's: a half disc that covers
+/// the side that was tapped, with the total jump and arrows that run again
+/// on every tap ([taps]); still with reduced motion. Fills the space it is
+/// given (the controls give it the outer 30 % of their width).
 class _SeekFeedback extends StatelessWidget {
   const _SeekFeedback({required this.forward, required this.seconds, required this.taps});
+
+  /// The share of the video's width it covers, from the tapped edge.
+  static const widthFactor = 0.3;
 
   final bool forward;
   final int seconds;
@@ -936,50 +990,68 @@ class _SeekFeedback extends StatelessWidget {
           final lit = animate ? (1 - ((t * 3) - i - 0.5).abs()).clamp(0.0, 1.0) : 1.0;
           return Opacity(
             opacity: 0.35 + 0.65 * lit,
-            child: const Icon(Icons.play_arrow, color: Colors.white, size: 18),
+            child: const Icon(Icons.play_arrow, color: Colors.white, size: 28),
           );
         }
 
         final arrows = [for (var i = 0; i < 3; i++) arrow(i)];
-        return Stack(
-          alignment: Alignment.center,
-          children: [
-            if (animate)
-              Opacity(
-                opacity: (1 - t) * 0.6,
-                child: Transform.scale(
-                  scale: 1 + t * 0.6,
-                  child: DecoratedBox(
-                    decoration: BoxDecoration(color: scrim, shape: BoxShape.circle),
-                    child: const SizedBox.square(dimension: 96),
+        return ClipPath(
+          clipper: _HalfDiscClipper(onLeft: !forward),
+          child: ColoredBox(
+            // A tap flashes the disc a little brighter, which fades out.
+            color: Color.alphaBlend(Colors.white.withValues(alpha: animate ? (1 - t) * 0.12 : 0), scrim),
+            // Toward the outer edge, away from the middle of the video.
+            child: Align(
+              alignment: Alignment(forward ? 0.3 : -0.3, 0),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // Back: the arrows point left and run right to left.
+                  Transform.flip(
+                    flipX: !forward,
+                    child: Row(mainAxisSize: MainAxisSize.min, children: arrows),
                   ),
-                ),
-              ),
-            DecoratedBox(
-              decoration: BoxDecoration(color: scrim, shape: BoxShape.circle),
-              child: Padding(
-                padding: const EdgeInsets.all(AppSpacing.l),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    // Back: the arrows point left and run right to left.
-                    Transform.flip(
-                      flipX: !forward,
-                      child: Row(mainAxisSize: MainAxisSize.min, children: arrows),
-                    ),
-                    Text(
-                      context.l10n.durationSeconds(seconds),
-                      style: const TextStyle(color: Colors.white, fontSize: AppTextSize.overlayLabel),
-                    ),
-                  ],
-                ),
+                  const SizedBox(height: AppSpacing.xs),
+                  Text(
+                    context.l10n.durationSeconds(seconds),
+                    style: const TextStyle(color: Colors.white, fontSize: AppTextSize.overlayBody),
+                  ),
+                ],
               ),
             ),
-          ],
+          ),
         );
       },
     );
   }
+}
+
+/// The seek feedback's shape: the outer edge of the box, a circular arc
+/// for the inner one that meets the top and bottom 25 % in and bulges to the
+/// full width in the middle.
+class _HalfDiscClipper extends CustomClipper<Path> {
+  const _HalfDiscClipper({required this.onLeft});
+
+  final bool onLeft;
+
+  @override
+  Path getClip(Size size) {
+    final w = size.width;
+    final h = size.height;
+    final sagitta = w * 0.25;
+    final radius = (h * h / 4 + sagitta * sagitta) / (2 * sagitta);
+    // Mirrored for the right side: x' = w - x.
+    double x(double v) => onLeft ? v : w - v;
+    return Path()
+      ..moveTo(x(0), 0)
+      ..lineTo(x(w - sagitta), 0)
+      ..arcToPoint(Offset(x(w - sagitta), h), radius: Radius.circular(radius), clockwise: onLeft)
+      ..lineTo(x(0), h)
+      ..close();
+  }
+
+  @override
+  bool shouldReclip(_HalfDiscClipper old) => old.onLeft != onLeft;
 }
 
 /// Playback speeds offered in [showSpeedSheet].
@@ -1015,3 +1087,80 @@ Future<void> showSpeedSheet(BuildContext context, Player player) => showModalBot
         );
       },
     );
+
+/// Over the video after a queue's scene ended: "Next: <title> in 5 s" with
+/// "Cancel" and "Play now". Empty otherwise; taps outside its buttons reach
+/// the controls below.
+class _AutoplayOverlay extends ConsumerWidget {
+  const _AutoplayOverlay();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final countdown = ref.watch(autoplayCountdownProvider);
+    if (countdown == null) return const SizedBox.shrink();
+    final l = context.l10n;
+    final theme = Theme.of(context);
+    const onVideo = Colors.white;
+    final notifier = ref.read(autoplayCountdownProvider.notifier);
+
+    return Stack(
+      fit: StackFit.expand,
+      children: [
+        const IgnorePointer(child: ColoredBox(color: Colors.black54)),
+        LayoutBuilder(
+          builder: (context, constraints) => FittedBox(
+            fit: BoxFit.scaleDown,
+            child: SizedBox(
+              width: constraints.maxWidth,
+              child: Padding(
+                padding: const EdgeInsets.all(AppSpacing.l),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Semantics(
+                      liveRegion: true,
+                      child: Text(
+                        l.nextVideoIn(countdown.seconds),
+                        textAlign: TextAlign.center,
+                        style: theme.textTheme.titleSmall?.copyWith(color: onVideo),
+                      ),
+                    ),
+                    Text(
+                      countdown.next.title,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: theme.textTheme.bodySmall?.copyWith(color: Colors.white70),
+                    ),
+                    const SizedBox(height: AppSpacing.s),
+                    Wrap(
+                      alignment: WrapAlignment.center,
+                      spacing: AppSpacing.s,
+                      children: [
+                        FilledButton.icon(
+                          icon: const Icon(Icons.skip_next),
+                          label: Text(l.playNow),
+                          onPressed: () {
+                            Haptics.light();
+                            notifier.skip();
+                          },
+                        ),
+                        OutlinedButton(
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: onVideo,
+                            side: const BorderSide(color: Colors.white70),
+                          ),
+                          onPressed: notifier.cancel,
+                          child: Text(l.cancel),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}

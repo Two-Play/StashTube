@@ -1501,6 +1501,15 @@ class AppLocalizationsDe extends AppLocalizations {
   String get fullscreen => 'Vollbild';
 
   @override
+  String get subtitles => 'Untertitel';
+
+  @override
+  String get subtitlesOff => 'Aus';
+
+  @override
+  String get captionUnknownLanguage => 'Unbekannte Sprache';
+
+  @override
   String get clearField => 'Leeren';
 
   @override
@@ -2100,6 +2109,36 @@ class AppLocalizationsDe extends AppLocalizations {
       'Der Ton läuft weiter, während die App im Hintergrund ist.';
 
   @override
+  String nextVideoIn(int seconds) {
+    String _temp0 = intl.Intl.pluralLogic(
+      seconds,
+      locale: localeName,
+      other: '$seconds Sekunden',
+      one: '1 Sekunde',
+    );
+    return 'Nächstes Video in $_temp0';
+  }
+
+  @override
+  String get playNow => 'Jetzt abspielen';
+
+  @override
+  String get saveStill => 'Aktuelles Bild speichern';
+
+  @override
+  String get stillSaved => 'Bild in den Fotos gespeichert.';
+
+  @override
+  String get stillNotSaved => 'Das Bild konnte nicht gespeichert werden.';
+
+  @override
+  String get bufferFully => 'Vor dem Abspielen vollständig puffern';
+
+  @override
+  String get bufferFullySubtitle =>
+      'Die Wiedergabe startet, sobald das ganze Video geladen ist. Braucht bei langen Videos Speicher und Zeit; die Play-Taste startet früher.';
+
+  @override
   String performerShorts(int count) {
     String _temp0 = intl.Intl.pluralLogic(
       count,
@@ -2317,6 +2356,12 @@ class AppLocalizationsDe extends AppLocalizations {
   @override
   String get aboutLegalese =>
       'Ein Client für Stash-Server. Nicht mit dem Stash-Projekt verbunden.';
+
+  @override
+  String get feedbackTitle => 'Feedback und Fehler';
+
+  @override
+  String get feedbackSubtitle => 'Melde Fehler oder teile Ideen auf GitHub';
 
   @override
   String get pinTooManyAttempts => 'Zu viele falsche PINs.';
@@ -2607,6 +2652,13 @@ class AppLocalizationsDe extends AppLocalizations {
   String get whatsNewSubtitle => 'Was die letzten Updates gebracht haben';
 
   @override
+  String get whatsNew2Title => 'Untertitel, Zoom ohne schwarze Balken und mehr';
+
+  @override
+  String get whatsNew2 =>
+      'Untertitel: Wähle die Untertitel, die dein Stash zu einem Video hat; die Sprache gilt auch für die nächsten.\nMit zwei Fingern auf den ganzen Bildschirm ziehen, ohne schwarze Balken; es rastet bei voller Breite und in der Mitte ein, mit leichtem Tick.\nDoppeltippen zum Spulen zeigt eine Halbscheibe über der angetippten Seite, die ein- und ausblendet.\nVideos können vor dem Abspielen ganz puffern und behalten Position und Bild, wenn du in die App zurückkommst.\nEin Countdown, bevor das nächste Video der Warteschlange startet.\nDas aktuelle Bild als Foto speichern.';
+
+  @override
   String get whatsNew1Title => 'Loops, eine neue Player-Seite und mehr';
 
   @override
@@ -2615,7 +2667,7 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get whatsNew1More =>
-      'Der Du-Tab bündelt Verlauf, Später ansehen, Gruppen und Marker.\nSchrittweite und Zählung beim Spulen unter Einstellungen → Wiedergabe.\nSterne und Favoriten für Darsteller und Studios.\nDarsteller, Studios und Gruppen anlegen.\n„Ganzes Video“ aus einem Short spielt dort weiter, wo das Short war.\nAuf dem Tablet steht das Video neben „Als Nächstes“.\nBild-im-Bild öffnet im Format des Videos.\nServer-Aufgaben: Scannen, Generieren, Auto-Tag und Aufräumen.\nEine Prüfung fehlender Vorschauen.\nEine Benachrichtigung, wenn eine Server-Aufgabe fertig ist (optional).\nMarker mit Start und Ende bei neueren Stash-Versionen.\n„Neu seit deinem letzten Besuch“ auf der Startseite.\nVerständliche Wiedergabefehler mit „Erneut versuchen“ und „Qualität wechseln“.\nEin Hinweis, wenn der Server nicht erreichbar ist; geladene Listen bleiben.\nEinfacherer Login: Zugangsdaten erst, wenn der Server sie verlangt.\nBilddetails hinter dem (i)-Knopf; nach unten wischen schließt ein Bild.\nDer Würfel auf der Startseite spielt eine zufällige Szene.\nDie Sehzeit als Diagramm in der Statistik.\nEine Touch-Sperre im Vollbild.\nAuf dem Handy bleibt die App hochkant; Kippen mit einem breiten Video dreht es ins Vollbild.\nWährend ein Short läuft, zeigt er nur die wichtigsten Knöpfe und blendet seinen Text aus; Pausieren zeigt den Rest.\nMarker per langem Drücken bearbeiten oder löschen.\nHochkant-Szenen erscheinen ganz in den Vorschaubildern, oder gefüllt (Einstellungen).\nEine Einführung in die App (Einstellungen → Über).\nEinstellungen nach Kategorien geordnet.';
+      'Der Du-Tab bündelt Verlauf, Später ansehen, Gruppen und Marker.\nSchrittweite und Zählung beim Spulen unter Einstellungen → Wiedergabe.\nSterne und Favoriten für Darsteller und Studios.\nDarsteller, Studios und Gruppen anlegen.\n„Ganzes Video“ aus einem Short spielt dort weiter, wo das Short war.\nAuf dem Tablet steht das Video neben „Als Nächstes“.\nBild-im-Bild öffnet im Format des Videos.\nServer-Aufgaben: Scannen, Generieren, Auto-Tag und Aufräumen.\nEine Prüfung fehlender Vorschauen.\nEine Benachrichtigung, wenn eine Server-Aufgabe fertig ist (optional).\nMarker mit Start und Ende bei neueren Stash-Versionen.\n„Neu seit deinem letzten Besuch“ auf der Startseite.\nVerständliche Wiedergabefehler mit „Erneut versuchen“ und „Qualität wechseln“.\nEin Hinweis, wenn der Server nicht erreichbar ist; geladene Listen bleiben.\nEinfacherer Login: Zugangsdaten erst, wenn der Server sie verlangt.\nBilddetails hinter dem (i)-Knopf; nach unten wischen schließt ein Bild.\nDer Würfel auf der Startseite spielt eine zufällige Szene.\nDie Sehzeit als Diagramm in der Statistik.\nEine Touch-Sperre im Vollbild.\nAuf dem Handy bleibt die App hochkant; Kippen mit einem breiten Video dreht es ins Vollbild.\nWährend ein Short läuft, zeigt er nur die wichtigsten Knöpfe und blendet seinen Text aus; Pausieren zeigt den Rest.\nMarker per langem Drücken bearbeiten oder löschen.\nHochkant-Szenen erscheinen ganz in den Vorschaubildern, oder gefüllt (Einstellungen).\nEine Einführung in die App (Einstellungen → Über).\nEinstellungen nach Kategorien geordnet.\nFeedback und Fehler direkt aus Einstellungen → Über.';
 
   @override
   String whatsNewShowMore(int count) {

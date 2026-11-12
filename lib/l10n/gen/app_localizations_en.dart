@@ -1497,6 +1497,15 @@ class AppLocalizationsEn extends AppLocalizations {
   String get fullscreen => 'Fullscreen';
 
   @override
+  String get subtitles => 'Subtitles';
+
+  @override
+  String get subtitlesOff => 'Off';
+
+  @override
+  String get captionUnknownLanguage => 'Unknown language';
+
+  @override
   String get clearField => 'Clear';
 
   @override
@@ -2091,6 +2100,36 @@ class AppLocalizationsEn extends AppLocalizations {
       'The sound keeps playing while the app is in the background.';
 
   @override
+  String nextVideoIn(int seconds) {
+    String _temp0 = intl.Intl.pluralLogic(
+      seconds,
+      locale: localeName,
+      other: '$seconds seconds',
+      one: '1 second',
+    );
+    return 'Next video in $_temp0';
+  }
+
+  @override
+  String get playNow => 'Play now';
+
+  @override
+  String get saveStill => 'Save current frame';
+
+  @override
+  String get stillSaved => 'Frame saved to your photos.';
+
+  @override
+  String get stillNotSaved => 'The frame could not be saved.';
+
+  @override
+  String get bufferFully => 'Buffer fully before playing';
+
+  @override
+  String get bufferFullySubtitle =>
+      'Playback starts once the whole video is loaded. Needs memory and time on long videos; the play button starts it sooner.';
+
+  @override
   String performerShorts(int count) {
     String _temp0 = intl.Intl.pluralLogic(
       count,
@@ -2306,6 +2345,12 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get aboutLegalese =>
       'A client for Stash servers. Not affiliated with the Stash project.';
+
+  @override
+  String get feedbackTitle => 'Feedback and bugs';
+
+  @override
+  String get feedbackSubtitle => 'Report a bug or share an idea on GitHub';
 
   @override
   String get pinTooManyAttempts => 'Too many wrong PINs.';
@@ -2596,6 +2641,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get whatsNewSubtitle => 'What the latest updates brought';
 
   @override
+  String get whatsNew2Title => 'Subtitles, zoom without black bars and more';
+
+  @override
+  String get whatsNew2 =>
+      'Subtitles: pick the captions your Stash has for a video; the language is remembered for the next ones.\nPinch to fill the whole screen without black bars; it snaps at full width and in the center, with a light tick.\nDouble tap to skip shows a half disc over the tapped side that fades in and out.\nVideos can buffer fully before they play, and keep position and picture when you come back to the app.\nA countdown before the next video of a queue starts.\nSave the current frame as an image.';
+
+  @override
   String get whatsNew1Title => 'Loops, a new watch page and more';
 
   @override
@@ -2604,7 +2656,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get whatsNew1More =>
-      'The You tab gathers history, watch later, groups and markers.\nSkip step and counting can be set in Settings → Playback.\nStars and favorites for performers and studios.\nCreate performers, studios and groups.\n\"Full video\" from a short continues where the short was.\nOn tablets the video sits beside \"Up next\".\nPicture-in-picture opens in the video\'s shape.\nServer tasks: scan, generate, auto tag and clean.\nA check for missing previews.\nA notification when a server task finishes (optional).\nMarkers with a start and an end on newer Stash versions.\n\"New since your last visit\" on the home page.\nClear playback errors with \"Try again\" and \"Change quality\".\nA banner when the server can\'t be reached; loaded lists stay.\nA simpler login: credentials only when the server asks for them.\nImage details behind the (i) button; swipe down to close an image.\nThe dice on the home page plays a random scene.\nWatch time as a chart in the stats.\nA touch lock in fullscreen.\nOn phones the app stays upright; tilting the phone with a wide video turns it into fullscreen.\nWhile a short plays, only its main buttons show and its text fades out; pause for the rest.\nEdit or delete markers with a long press.\nPortrait scenes show whole in thumbnails, or filled (settings).\nA tour of the app (Settings → About).\nSettings sorted into categories.';
+      'The You tab gathers history, watch later, groups and markers.\nSkip step and counting can be set in Settings → Playback.\nStars and favorites for performers and studios.\nCreate performers, studios and groups.\n\"Full video\" from a short continues where the short was.\nOn tablets the video sits beside \"Up next\".\nPicture-in-picture opens in the video\'s shape.\nServer tasks: scan, generate, auto tag and clean.\nA check for missing previews.\nA notification when a server task finishes (optional).\nMarkers with a start and an end on newer Stash versions.\n\"New since your last visit\" on the home page.\nClear playback errors with \"Try again\" and \"Change quality\".\nA banner when the server can\'t be reached; loaded lists stay.\nA simpler login: credentials only when the server asks for them.\nImage details behind the (i) button; swipe down to close an image.\nThe dice on the home page plays a random scene.\nWatch time as a chart in the stats.\nA touch lock in fullscreen.\nOn phones the app stays upright; tilting the phone with a wide video turns it into fullscreen.\nWhile a short plays, only its main buttons show and its text fades out; pause for the rest.\nEdit or delete markers with a long press.\nPortrait scenes show whole in thumbnails, or filled (settings).\nA tour of the app (Settings → About).\nSettings sorted into categories.\nFeedback and bugs straight from Settings → About.';
 
   @override
   String whatsNewShowMore(int count) {

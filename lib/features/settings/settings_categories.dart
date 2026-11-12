@@ -6,6 +6,7 @@ import '../../core/config/haptics.dart';
 import '../../core/config/locale.dart';
 import '../../core/config/server_config.dart';
 import '../../core/pagination/paging_mode.dart';
+import '../../core/utils/external_links.dart';
 import '../../data/models/scene_details.dart';
 import '../../data/providers.dart';
 import '../../l10n/l10n.dart';
@@ -534,6 +535,12 @@ class AboutSettingsPage extends StatelessWidget {
             subtitle: Text(context.l10n.whatsNewSubtitle),
             onTap: () => showWhatsNew(context),
           ),
+          ListTile(
+            leading: const Icon(Icons.feedback_outlined),
+            title: Text(context.l10n.feedbackTitle),
+            subtitle: Text(context.l10n.feedbackSubtitle),
+            onTap: () => openExternalUrl(context, githubIssuesUrl),
+          ),
           const AboutSettings(),
         ],
       );
@@ -579,6 +586,14 @@ class _PlaybackModeTiles extends ConsumerWidget {
           subtitle: Text(l.backgroundPlaybackSubtitle),
           value: modes.background,
           onChanged: withHaptic((v) => ref.read(playbackModesProvider.notifier).setBackground(v)),
+        ),
+        SwitchListTile(
+          secondary: const Icon(Icons.downloading_outlined),
+          title: Text(l.bufferFully),
+          subtitle: Text(l.bufferFullySubtitle),
+          isThreeLine: true,
+          value: modes.fullBuffer,
+          onChanged: withHaptic((v) => ref.read(playbackModesProvider.notifier).setFullBuffer(v)),
         ),
         if (ref.watch(lockScreenSupportedProvider))
           SwitchListTile(

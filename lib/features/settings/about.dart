@@ -74,6 +74,10 @@ void registerAppLicenses() {
   });
 }
 
+/// Where feedback goes: GitHub's issue forms (bug report and feature
+/// request; security reports stay private, see SECURITY.md).
+const githubIssuesUrl = 'https://github.com/Two-Play/StashTube/issues/new/choose';
+
 /// "About" in the settings: the version and the open source licenses of
 /// every package the app uses.
 class AboutSettings extends ConsumerWidget {

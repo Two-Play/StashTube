@@ -2354,6 +2354,24 @@ abstract class AppLocalizations {
   /// **'Fullscreen'**
   String get fullscreen;
 
+  /// No description provided for @subtitles.
+  ///
+  /// In en, this message translates to:
+  /// **'Subtitles'**
+  String get subtitles;
+
+  /// No description provided for @subtitlesOff.
+  ///
+  /// In en, this message translates to:
+  /// **'Off'**
+  String get subtitlesOff;
+
+  /// No description provided for @captionUnknownLanguage.
+  ///
+  /// In en, this message translates to:
+  /// **'Unknown language'**
+  String get captionUnknownLanguage;
+
   /// No description provided for @clearField.
   ///
   /// In en, this message translates to:
@@ -3428,6 +3446,48 @@ abstract class AppLocalizations {
   /// **'The sound keeps playing while the app is in the background.'**
   String get backgroundPlaybackSubtitle;
 
+  /// No description provided for @nextVideoIn.
+  ///
+  /// In en, this message translates to:
+  /// **'Next video in {seconds, plural, =1{1 second} other{{seconds} seconds}}'**
+  String nextVideoIn(int seconds);
+
+  /// No description provided for @playNow.
+  ///
+  /// In en, this message translates to:
+  /// **'Play now'**
+  String get playNow;
+
+  /// No description provided for @saveStill.
+  ///
+  /// In en, this message translates to:
+  /// **'Save current frame'**
+  String get saveStill;
+
+  /// No description provided for @stillSaved.
+  ///
+  /// In en, this message translates to:
+  /// **'Frame saved to your photos.'**
+  String get stillSaved;
+
+  /// No description provided for @stillNotSaved.
+  ///
+  /// In en, this message translates to:
+  /// **'The frame could not be saved.'**
+  String get stillNotSaved;
+
+  /// No description provided for @bufferFully.
+  ///
+  /// In en, this message translates to:
+  /// **'Buffer fully before playing'**
+  String get bufferFully;
+
+  /// No description provided for @bufferFullySubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Playback starts once the whole video is loaded. Needs memory and time on long videos; the play button starts it sooner.'**
+  String get bufferFullySubtitle;
+
   /// No description provided for @performerShorts.
   ///
   /// In en, this message translates to:
@@ -3787,6 +3847,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'A client for Stash servers. Not affiliated with the Stash project.'**
   String get aboutLegalese;
+
+  /// No description provided for @feedbackTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Feedback and bugs'**
+  String get feedbackTitle;
+
+  /// No description provided for @feedbackSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Report a bug or share an idea on GitHub'**
+  String get feedbackSubtitle;
 
   /// No description provided for @pinTooManyAttempts.
   ///
@@ -4304,6 +4376,18 @@ abstract class AppLocalizations {
   /// **'What the latest updates brought'**
   String get whatsNewSubtitle;
 
+  /// No description provided for @whatsNew2Title.
+  ///
+  /// In en, this message translates to:
+  /// **'Subtitles, zoom without black bars and more'**
+  String get whatsNew2Title;
+
+  /// No description provided for @whatsNew2.
+  ///
+  /// In en, this message translates to:
+  /// **'Subtitles: pick the captions your Stash has for a video; the language is remembered for the next ones.\nPinch to fill the whole screen without black bars; it snaps at full width and in the center, with a light tick.\nDouble tap to skip shows a half disc over the tapped side that fades in and out.\nVideos can buffer fully before they play, and keep position and picture when you come back to the app.\nA countdown before the next video of a queue starts.\nSave the current frame as an image.'**
+  String get whatsNew2;
+
   /// No description provided for @whatsNew1Title.
   ///
   /// In en, this message translates to:
@@ -4319,7 +4403,7 @@ abstract class AppLocalizations {
   /// No description provided for @whatsNew1More.
   ///
   /// In en, this message translates to:
-  /// **'The You tab gathers history, watch later, groups and markers.\nSkip step and counting can be set in Settings → Playback.\nStars and favorites for performers and studios.\nCreate performers, studios and groups.\n\"Full video\" from a short continues where the short was.\nOn tablets the video sits beside \"Up next\".\nPicture-in-picture opens in the video\'s shape.\nServer tasks: scan, generate, auto tag and clean.\nA check for missing previews.\nA notification when a server task finishes (optional).\nMarkers with a start and an end on newer Stash versions.\n\"New since your last visit\" on the home page.\nClear playback errors with \"Try again\" and \"Change quality\".\nA banner when the server can\'t be reached; loaded lists stay.\nA simpler login: credentials only when the server asks for them.\nImage details behind the (i) button; swipe down to close an image.\nThe dice on the home page plays a random scene.\nWatch time as a chart in the stats.\nA touch lock in fullscreen.\nOn phones the app stays upright; tilting the phone with a wide video turns it into fullscreen.\nWhile a short plays, only its main buttons show and its text fades out; pause for the rest.\nEdit or delete markers with a long press.\nPortrait scenes show whole in thumbnails, or filled (settings).\nA tour of the app (Settings → About).\nSettings sorted into categories.'**
+  /// **'The You tab gathers history, watch later, groups and markers.\nSkip step and counting can be set in Settings → Playback.\nStars and favorites for performers and studios.\nCreate performers, studios and groups.\n\"Full video\" from a short continues where the short was.\nOn tablets the video sits beside \"Up next\".\nPicture-in-picture opens in the video\'s shape.\nServer tasks: scan, generate, auto tag and clean.\nA check for missing previews.\nA notification when a server task finishes (optional).\nMarkers with a start and an end on newer Stash versions.\n\"New since your last visit\" on the home page.\nClear playback errors with \"Try again\" and \"Change quality\".\nA banner when the server can\'t be reached; loaded lists stay.\nA simpler login: credentials only when the server asks for them.\nImage details behind the (i) button; swipe down to close an image.\nThe dice on the home page plays a random scene.\nWatch time as a chart in the stats.\nA touch lock in fullscreen.\nOn phones the app stays upright; tilting the phone with a wide video turns it into fullscreen.\nWhile a short plays, only its main buttons show and its text fades out; pause for the rest.\nEdit or delete markers with a long press.\nPortrait scenes show whole in thumbnails, or filled (settings).\nA tour of the app (Settings → About).\nSettings sorted into categories.\nFeedback and bugs straight from Settings → About.'**
   String get whatsNew1More;
 
   /// No description provided for @whatsNewShowMore.

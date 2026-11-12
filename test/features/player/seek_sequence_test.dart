@@ -110,10 +110,8 @@ void main() {
   bool controlsVisible(WidgetTester tester) =>
       tester.widget<AnimatedOpacity>(find.byType(AnimatedOpacity).last).opacity == 1;
 
-  // The bubble and, while it animates, the ripple behind it.
-  Finder circles() => find.byWidgetPredicate(
-        (w) => w is DecoratedBox && w.decoration is BoxDecoration && (w.decoration as BoxDecoration).shape == BoxShape.circle,
-      );
+  // The half disc over the tapped side.
+  Finder halfDisc() => find.byWidgetPredicate((w) => w is ClipPath && w.clipper.runtimeType.toString() == '_HalfDiscClipper');
 
   Rect area(WidgetTester tester) => tester.getRect(find.byType(StashVideoControls));
   Offset right(WidgetTester tester) => Offset(area(tester).right - 20, area(tester).center.dy);
@@ -149,7 +147,9 @@ void main() {
     expect(player.seeks, isEmpty, reason: 'a single tap does not seek');
     await tap(tester, right(tester));
     expect(find.text('5 seconds'), findsOneWidget);
-    expect(circles(), findsNWidgets(2), reason: 'the bubble and its ripple');
+    expect(halfDisc(), findsOneWidget);
+    expect(tester.getSize(halfDisc()).width, closeTo(area(tester).width * 0.3, 1), reason: 'covers the outer 30 % of the video');
+    expect(tester.getTopLeft(halfDisc()).dx, closeTo(area(tester).right - area(tester).width * 0.3, 1), reason: 'on the tapped side');
     for (var i = 0; i < 4; i++) {
       await tap(tester, right(tester));
     }
@@ -158,7 +158,10 @@ void main() {
     expect(controlsVisible(tester), isFalse, reason: 'the taps of a sequence do not toggle the controls');
 
     await tester.pump(StashVideoControls.seekSequenceWindow);
-    expect(find.text('40 seconds'), findsNothing, reason: 'the bubble goes after the last tap');
+    expect(find.text('40 seconds'), findsOneWidget, reason: 'it fades out first');
+    await tester.pump(const Duration(milliseconds: 100));
+    await tester.pump(const Duration(milliseconds: 200));
+    expect(find.text('40 seconds'), findsNothing, reason: 'the half disc goes after the last tap');
     expect(controlsVisible(tester), isFalse);
   });
 
@@ -223,6 +226,7 @@ void main() {
     await tap(tester, right(tester));
     await tap(tester, right(tester));
     await tap(tester, middle(tester));
+    await tester.pump(const Duration(milliseconds: 300)); // fades out
     expect(find.text('5 seconds'), findsNothing);
     await tester.pump(kDoubleTapTimeout);
     expect(controlsVisible(tester), isTrue);
@@ -260,12 +264,12 @@ void main() {
     await tester.pump(StashVideoControls.seekSequenceWindow);
   });
 
-  testWidgets('with reduced motion the bubble shows without the ripple', (tester) async {
+  testWidgets('with reduced motion the half disc shows too', (tester) async {
     await pump(tester, reduceMotion: true);
     await tap(tester, right(tester));
     await tap(tester, right(tester));
     expect(find.text('5 seconds'), findsOneWidget);
-    expect(circles(), findsOneWidget, reason: 'the bubble, no ripple');
+    expect(halfDisc(), findsOneWidget);
     await tester.pump(StashVideoControls.seekSequenceWindow);
   });
 
@@ -333,7 +337,7 @@ void main() {
       await tester.tapAt(right(tester));
       await tester.pump();
       expect(player.seeks, isEmpty);
-      expect(circles(), findsNothing);
+      expect(halfDisc(), findsNothing);
       await tester.pump(const Duration(seconds: 4));
     });
 

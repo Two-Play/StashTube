@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:gal/gal.dart';
 
 import '../../core/config/haptics.dart';
 import '../../core/config/theme.dart';
@@ -409,6 +410,11 @@ class _SceneMoreSheet extends ConsumerWidget {
             title: Text(l.addToGroup),
             onTap: () => then((below) => showAddToGroupSheet(below, scene)),
           ),
+          ListTile(
+            leading: const Icon(Icons.photo_camera_outlined),
+            title: Text(l.saveStill),
+            onTap: () => then((below) => unawaited(_saveStill(below, ref, scene))),
+          ),
           if (files.isNotEmpty)
             ListTile(
               leading: const Icon(Icons.info_outline),
@@ -769,5 +775,19 @@ class WatchLaterButton extends ConsumerWidget {
         },
       ),
     );
+  }
+}
+
+/// Saves the frame on screen to the photo gallery (Pictures on Android).
+Future<void> _saveStill(BuildContext context, WidgetRef ref, Scene scene) async {
+  final l = context.l10n;
+  final messenger = ScaffoldMessenger.of(context);
+  try {
+    final bytes = await ref.read(playerProvider).screenshot(format: 'image/png');
+    if (bytes == null) throw StateError('no frame');
+    await Gal.putImageBytes(bytes, name: 'stashtube_${scene.id}_${DateTime.now().millisecondsSinceEpoch}');
+    messenger.showSnackBar(SnackBar(content: Text(l.stillSaved)));
+  } catch (e) {
+    messenger.showSnackBar(SnackBar(content: Text(l.stillNotSaved)));
   }
 }

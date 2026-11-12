@@ -74,6 +74,7 @@ dependencies:
   # System notifications when a server task ends (features/notifications/).
   # No Google services, so it stays in the F-Droid build.
   flutter_local_notifications: ^22.3.2
+  gal: ^2.3.3
 
 dev_dependencies:
   integration_test:
