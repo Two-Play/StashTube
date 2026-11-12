@@ -435,7 +435,7 @@ class NowPlayingNotifier extends Notifier<Scene?> {
     ref.read(playerClosingProvider.notifier).set(false);
     if (state?.id != scene.id) {
       // A zoom belongs to its video; mpv would keep it for the next file.
-      ref.read(videoZoomProvider.notifier).reset();
+      ref.read(videoZoomProvider.notifier).resetZoom();
       // Prefer the position saved in this session over the (possibly stale) list data.
       final resume = at ?? ref.read(resumeTimesProvider)[scene.id] ?? scene.resumeTime;
       unawaited(ref.read(playbackTrackerProvider).start(scene.copyWith(resumeTime: resume)));

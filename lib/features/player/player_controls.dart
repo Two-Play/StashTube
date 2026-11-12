@@ -24,6 +24,7 @@ import 'fullscreen_morph.dart';
 import 'fullscreen_route.dart';
 import 'held_orientation.dart';
 import 'player_providers.dart';
+import 'video_zoom.dart';
 import 'preview_seek_bar.dart';
 import 'scene_actions.dart' show showMarkerMenu;
 import 'video_controls.dart';
@@ -211,6 +212,8 @@ class _PlayerVideoState extends ConsumerState<PlayerVideo> {
     return Video(
       key: playerVideoKey,
       controller: ref.watch(videoControllerProvider),
+      // The fill button (4.31): cover the box instead of fitting inside it.
+      fit: VideoZoom.fillFit(ref.watch(videoZoomProvider.select((z) => z.fill))),
       // backgroundPlaybackProvider decides (4.12): keep the sound, or pause.
       pauseUponEnteringBackgroundMode: false,
       onEnterFullscreen: _onEnterFullscreen,

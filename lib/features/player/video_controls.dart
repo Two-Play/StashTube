@@ -19,7 +19,7 @@ import '../cast/cast_ui.dart';
 import '../pip/pip.dart';
 import 'captions.dart';
 import 'gesture_hints.dart';
-import 'player_controls.dart' show playerVideoKey, videoAspect;
+import 'player_controls.dart' show playerVideoKey;
 import 'player_providers.dart';
 import 'preview_seek_bar.dart';
 import 'seek_settings.dart';
@@ -238,20 +238,9 @@ class _StashVideoControlsState extends ConsumerState<StashVideoControls> {
     _show();
   }
 
-  /// The fill button (4.31): zoom until the video covers the whole box, or
-  /// back to the whole picture.
-  void _toggleFill() {
-    final box = context.size;
-    if (box == null) return;
-    final aspect = videoAspect(ref.read(playerProvider).state, widget.scene);
-    ref.read(videoZoomProvider.notifier).toggleFill(box: box, aspect: aspect);
-  }
-
-  void _syncFill() {
-    final box = mounted ? context.size : null;
-    if (box == null || !TickerMode.valuesOf(context).enabled) return;
-    ref.read(videoZoomProvider.notifier).syncFill(box: box, aspect: videoAspect(ref.read(playerProvider).state, widget.scene));
-  }
+  /// The fill button (4.31): the video covers the whole box (no black
+  /// bars), or fits inside it again.
+  void _toggleFill() => ref.read(videoZoomProvider.notifier).toggleFill();
 
   void _lock() {
     Haptics.medium();
@@ -496,14 +485,7 @@ class _StashVideoControlsState extends ConsumerState<StashVideoControls> {
   @override
   Widget build(BuildContext context) {
     final player = ref.watch(playerProvider);
-    final filling = ref.watch(videoZoomProvider.select((z) => z.fill || z.isZoomed));
-    // The fill covers the box this video is in, so it is worked out here again
-    // for the controls that are on show (the inline ones sit hidden under
-    // the fullscreen route), also when the window turns.
-    MediaQuery.sizeOf(context);
-    if (ref.watch(videoZoomProvider.select((z) => z.fill)) && TickerMode.valuesOf(context).enabled) {
-      WidgetsBinding.instance.addPostFrameCallback((_) => _syncFill());
-    }
+    final filling = ref.watch(videoZoomProvider.select((z) => z.fill));
     final fullscreen = widget.fullscreen;
     final seek = ref.watch(seekSettingsProvider);
 
@@ -700,7 +682,7 @@ class _StashVideoControlsState extends ConsumerState<StashVideoControls> {
                               ),
                             IconButton(
                               tooltip: filling ? context.l10n.fitVideo : context.l10n.fillScreen,
-                              icon: Icon(filling ? Icons.close_fullscreen : Icons.open_in_full),
+                              icon: Icon(filling ? Icons.width_normal : Icons.width_full),
                               onPressed: () => _act(_toggleFill),
                             ),
                             IconButton(

@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:media_kit_video/media_kit_video.dart';
 
 import 'fullscreen_morph.dart';
 import 'held_orientation.dart';
+import 'video_zoom.dart';
 
 /// Like media_kit's [toggleFullscreen], with [enterPlayerFullscreen] and
 /// [exitPlayerFullscreen]. [context] is below the [Video] (its controls').
@@ -79,9 +81,11 @@ Future<void> enterPlayerFullscreen(BuildContext context, {HeldOrientation? held,
                 contextNotifier: inherited.contextNotifier,
                 videoViewParametersNotifier: inherited.videoViewParametersNotifier,
                 disposeNotifiers: false,
-                child: Video(
+                // The fill button (4.31): the inline Video's fit follows it, this one is built once.
+                child: Consumer(
+                  builder: (_, ref, _) => Video(
                   controller: controller,
-                  fit: parameters.fit,
+                  fit: ref.watch(videoZoomProvider.select((z) => z.fill)) ? BoxFit.cover : parameters.fit,
                   fill: parameters.fill,
                   alignment: parameters.alignment,
                   aspectRatio: parameters.aspectRatio,
@@ -95,6 +99,7 @@ Future<void> enterPlayerFullscreen(BuildContext context, {HeldOrientation? held,
                   focusNode: parameters.focusNode,
                   onEnterFullscreen: state.widget.onEnterFullscreen,
                   onExitFullscreen: state.widget.onExitFullscreen,
+                  ),
                 ),
               ),
             ),

@@ -2,6 +2,7 @@ import 'dart:math' as math;
 import 'dart:ui';
 
 import 'package:flutter/foundation.dart';
+import 'package:flutter/painting.dart' show BoxFit;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:media_kit/media_kit.dart';
 
@@ -27,23 +28,16 @@ class VideoZoom {
   final double panX;
   final double panY;
 
-  /// Set by the "fill" button: the video covers whatever box it is shown
-  /// in, so the scale is worked out again for every box (inline, fullscreen,
-  /// turned screen) by the controls ([VideoZoomNotifier.fitTo]). A pinch
-  /// ends it.
+  /// Set by the "fill" button: the video covers its whole box (the `Video`
+  /// widget's `BoxFit.cover`, [fillFit]) instead of fitting inside it, so the
+  /// black bars go. Kept across fullscreen, turning and other scenes; the
+  /// pinch zoom works on top of it.
   final bool fill;
 
-  bool get isZoomed => scale > 1;
+  /// The `Video` widget's fit for a [fill] setting.
+  static BoxFit fillFit(bool fill) => fill ? BoxFit.cover : BoxFit.contain;
 
-  /// The zoom that makes a video of [aspect] (width / height) cover a [box]
-  /// completely, cutting off what sticks out (at most [maxScale]; 1 when it
-  /// fills the box already).
-  static VideoZoom covering({required Size box, required double aspect}) {
-    if (box.isEmpty || aspect <= 0) return const VideoZoom(fill: true);
-    final boxAspect = box.width / box.height;
-    final scale = boxAspect > aspect ? boxAspect / aspect : aspect / boxAspect;
-    return VideoZoom(scale: scale < 1.02 ? 1 : math.min(scale, maxScale), fill: true);
-  }
+  bool get isZoomed => scale > 1;
 
   /// The zoom after a pinch that started at [startFocal] with this zoom and
   /// is now at [focal] with the fingers [factor] times as far apart, in a
@@ -64,11 +58,12 @@ class VideoZoom {
       scale: newScale,
       panX: translation.dx.clamp(-maxX, maxX) / (box.width * newScale),
       panY: translation.dy.clamp(-maxY, maxY) / (box.height * newScale),
+      fill: fill,
     );
   }
 
   /// What a pinch ends with: no zoom when barely zoomed.
-  VideoZoom settled() => scale < snapBack ? none : this;
+  VideoZoom settled() => scale < snapBack ? VideoZoom(fill: fill) : this;
 
   @override
   bool operator ==(Object other) =>
@@ -92,21 +87,11 @@ class VideoZoomNotifier extends Notifier<VideoZoom> {
 
   void reset() => set(VideoZoom.none);
 
-  /// The fill button: off when on or zoomed, else covers the [box].
-  void toggleFill({required Size box, required double? aspect}) {
-    if (state.fill || state.isZoomed) {
-      reset();
-    } else {
-      set(aspect == null ? const VideoZoom(fill: true) : VideoZoom.covering(box: box, aspect: aspect));
-    }
-  }
+  /// The fill button: the video covers its box, or fits inside it again.
+  void toggleFill() => set(VideoZoom(scale: state.scale, panX: state.panX, panY: state.panY, fill: !state.fill));
 
-  /// Works the fill zoom out again for the box the video is shown in now
-  /// (fullscreen, a turned screen); does nothing unless the fill is on.
-  void syncFill({required Size box, required double? aspect}) {
-    if (!state.fill || aspect == null) return;
-    set(VideoZoom.covering(box: box, aspect: aspect));
-  }
+  /// Another scene: no pinch zoom, but the fill stays.
+  void resetZoom() => set(VideoZoom(fill: state.fill));
 
   static void _apply(Player player, VideoZoom zoom) {
     final platform = player.platform;

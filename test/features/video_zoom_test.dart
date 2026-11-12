@@ -1,5 +1,7 @@
 import 'dart:ui';
 
+import 'package:flutter/painting.dart' show BoxFit;
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:stash_app_mobile/features/player/video_zoom.dart';
 
@@ -35,17 +37,12 @@ void main() {
     expect(twice.settled(), twice);
   });
 
-  test('covering zooms a 16:9 video to fill a 20:9 screen, and nothing that fits', () {
-    final z = VideoZoom.covering(box: const Size(2000, 900), aspect: 16 / 9);
-    expect(z.scale, closeTo((20 / 9) / (16 / 9), 0.001));
-    expect(z.fill, isTrue);
-    // A portrait video in a landscape box needs the other ratio.
-    expect(VideoZoom.covering(box: const Size(1600, 900), aspect: 9 / 16).scale, closeTo(3.16, 0.01));
-    expect(VideoZoom.covering(box: const Size(2400, 900), aspect: 9 / 16).scale, VideoZoom.maxScale);
-    // Already filling: the fill stays on (for the next box) without zooming.
-    final fits = VideoZoom.covering(box: const Size(1600, 900), aspect: 16 / 9);
-    expect((fits.scale, fits.fill), (1.0, true));
-    // A pinch ends the fill.
-    expect(z.pinch(factor: 1.1, startFocal: center, focal: center, box: box).fill, isFalse);
+  test('the fill stays through pinching and snapping back, and a new scene keeps it', () {
+    const filled = VideoZoom(fill: true);
+    final pinched = filled.pinch(factor: 2, startFocal: center, focal: center, box: box);
+    expect((pinched.scale, pinched.fill), (2.0, true));
+    expect(const VideoZoom(scale: 1.03, fill: true).settled(), filled);
+    expect(VideoZoom.fillFit(true), BoxFit.cover);
+    expect(VideoZoom.fillFit(false), BoxFit.contain);
   });
 }

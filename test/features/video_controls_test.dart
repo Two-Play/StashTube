@@ -207,19 +207,13 @@ void main() {
     expect(container.read(videoZoomProvider).scale, closeTo(2, 0.01));
   });
 
-  testWidgets('the fill button zooms until the video covers its box, and a second tap undoes it', (tester) async {
+  testWidgets('the fill button makes the video cover its box, and a second tap undoes it', (tester) async {
     await pump(tester);
     final container = ProviderScope.containerOf(tester.element(find.byType(StashVideoControls)));
     await tapVideo(tester);
     await tester.tap(find.byTooltip('Fill screen'));
     await tester.pump();
-    final zoom = container.read(videoZoomProvider);
-    expect(zoom.fill, isTrue);
-    final box = tester.getSize(find.byType(StashVideoControls));
-    final aspect = box.width / box.height;
-    // The scene's size decides the scale; whatever it is, a fill is on.
-    expect(zoom.scale, greaterThanOrEqualTo(1));
-    expect(aspect, greaterThan(0));
+    expect(container.read(videoZoomProvider).fill, isTrue);
 
     await tester.tap(find.byTooltip('Fit to screen'));
     await tester.pump();
