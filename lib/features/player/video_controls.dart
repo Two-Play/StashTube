@@ -132,17 +132,6 @@ class _StashVideoControlsState extends ConsumerState<StashVideoControls> {
     }
   }
 
-  /// Spreading the fingers this far fills the whole box (the first stage of
-  /// the zoom, like YouTube's); pinching back below its inverse fits the
-  /// video inside again.
-  static const _fillStep = 1.15;
-
-  void _restartPinch() {
-    _pinchStartZoom = ref.read(videoZoomProvider);
-    _pinchStartDistance = math.max(_distance, 1);
-    _pinchStartFocal = _focal;
-  }
-
   void _onPointerMove(PointerMoveEvent e) {
     if (!mounted || !_pointers.containsKey(e.pointer)) return;
     _pointers[e.pointer] = e.localPosition;
@@ -150,22 +139,17 @@ class _StashVideoControlsState extends ConsumerState<StashVideoControls> {
     final box = context.size;
     if (start == null || _pointers.length < 2 || box == null) return;
     final notifier = ref.read(videoZoomProvider.notifier);
-    final factor = _distance / _pinchStartDistance;
-    final now = ref.read(videoZoomProvider);
-    if (!now.fill && factor > _fillStep) {
-      // First stage: the video fills the box; spreading on zooms further.
-      Haptics.selection();
-      notifier.setFill(true);
-      _restartPinch();
-      return;
-    }
-    if (now.fill && start.scale * factor < 1 / _fillStep) {
-      Haptics.selection();
-      notifier.reset();
-      _restartPinch();
-      return;
-    }
-    notifier.set(start.pinch(factor: factor, startFocal: _pinchStartFocal, focal: _focal, box: box));
+    final was = ref.read(videoZoomProvider);
+    final zoom = start.pinch(
+      factor: _distance / _pinchStartDistance,
+      startFocal: _pinchStartFocal,
+      focal: _focal,
+      box: box,
+      aspect: ref.read(videoAspectProvider),
+    );
+    // A tick where it snaps to the full width.
+    if (zoom.fill && !was.fill) Haptics.selection();
+    notifier.set(zoom);
   }
 
   void _onPointerEnd(PointerEvent e) {

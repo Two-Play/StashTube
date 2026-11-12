@@ -209,11 +209,10 @@ class _PlayerVideoState extends ConsumerState<PlayerVideo> {
   @override
   Widget build(BuildContext context) {
     final scene = widget.scene;
-    return Video(
+    return ZoomedVideo(
+        child: Video(
       key: playerVideoKey,
       controller: ref.watch(videoControllerProvider),
-      // The fill button (4.31): cover the box instead of fitting inside it.
-      fit: VideoZoom.fillFit(ref.watch(videoZoomProvider.select((z) => z.fill))),
       // backgroundPlaybackProvider decides (4.12): keep the sound, or pause.
       pauseUponEnteringBackgroundMode: false,
       onEnterFullscreen: _onEnterFullscreen,
@@ -233,17 +232,19 @@ class _PlayerVideoState extends ConsumerState<PlayerVideo> {
                   } else {
                     _controlsContext = controlsContext;
                   }
-                  return StashVideoControls(
-                    fullscreen: fullscreen,
-                    onToggleFullscreen: () =>
-                        togglePlayerFullscreen(controlsContext, held: _buttonHeld, inline: inlineVideoRect),
-                    scene: scene,
-                    onQuality: () => showQualitySheet(context, scene.id),
+                  return ZoomCounter(
+                    child: StashVideoControls(
+                      fullscreen: fullscreen,
+                      onToggleFullscreen: () =>
+                          togglePlayerFullscreen(controlsContext, held: _buttonHeld, inline: inlineVideoRect),
+                      scene: scene,
+                      onQuality: () => showQualitySheet(context, scene.id),
+                    ),
                   );
                 },
               )
           : _noControls,
-    );
+    ));
   }
 }
 
