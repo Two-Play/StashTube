@@ -2641,6 +2641,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get whatsNewSubtitle => 'What the latest updates brought';
 
   @override
+  String get whatsNew2Title => 'Subtitles, zoom without black bars and more';
+
+  @override
+  String get whatsNew2 =>
+      'Subtitles: pick the captions your Stash has for a video; the language is remembered for the next ones.\nPinch to fill the whole screen without black bars; it snaps at full width and in the center, with a light tick.\nDouble tap to skip shows a half disc over the tapped side that fades in and out.\nVideos can buffer fully before they play, and keep position and picture when you come back to the app.\nA countdown before the next video of a queue starts.\nSave the current frame as an image.';
+
+  @override
   String get whatsNew1Title => 'Loops, a new watch page and more';
 
   @override

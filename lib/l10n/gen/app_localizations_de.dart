@@ -2652,6 +2652,13 @@ class AppLocalizationsDe extends AppLocalizations {
   String get whatsNewSubtitle => 'Was die letzten Updates gebracht haben';
 
   @override
+  String get whatsNew2Title => 'Untertitel, Zoom ohne schwarze Balken und mehr';
+
+  @override
+  String get whatsNew2 =>
+      'Untertitel: Wähle die Untertitel, die dein Stash zu einem Video hat; die Sprache gilt auch für die nächsten.\nMit zwei Fingern auf den ganzen Bildschirm ziehen, ohne schwarze Balken; es rastet bei voller Breite und in der Mitte ein, mit leichtem Tick.\nDoppeltippen zum Spulen zeigt eine Halbscheibe über der angetippten Seite, die ein- und ausblendet.\nVideos können vor dem Abspielen ganz puffern und behalten Position und Bild, wenn du in die App zurückkommst.\nEin Countdown, bevor das nächste Video der Warteschlange startet.\nDas aktuelle Bild als Foto speichern.';
+
+  @override
   String get whatsNew1Title => 'Loops, eine neue Player-Seite und mehr';
 
   @override
