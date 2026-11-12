@@ -158,7 +158,10 @@ void main() {
     expect(controlsVisible(tester), isFalse, reason: 'the taps of a sequence do not toggle the controls');
 
     await tester.pump(StashVideoControls.seekSequenceWindow);
-    expect(find.text('40 seconds'), findsNothing, reason: 'the bubble goes after the last tap');
+    expect(find.text('40 seconds'), findsOneWidget, reason: 'it fades out first');
+    await tester.pump(const Duration(milliseconds: 100));
+    await tester.pump(const Duration(milliseconds: 200));
+    expect(find.text('40 seconds'), findsNothing, reason: 'the half disc goes after the last tap');
     expect(controlsVisible(tester), isFalse);
   });
 
@@ -223,6 +226,7 @@ void main() {
     await tap(tester, right(tester));
     await tap(tester, right(tester));
     await tap(tester, middle(tester));
+    await tester.pump(const Duration(milliseconds: 300)); // fades out
     expect(find.text('5 seconds'), findsNothing);
     await tester.pump(kDoubleTapTimeout);
     expect(controlsVisible(tester), isTrue);

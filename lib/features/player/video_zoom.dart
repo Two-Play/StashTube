@@ -15,7 +15,7 @@ import 'player_providers.dart';
 /// ([ZoomCounter]) so they keep their size.
 @immutable
 class VideoZoom {
-  const VideoZoom({this.scale = 1, this.panX = 0, this.panY = 0, this.fill = false});
+  const VideoZoom({this.scale = 1, this.panX = 0, this.panY = 0, this.fill = false, this.snaps = 0});
 
   static const none = VideoZoom();
   static const maxScale = 4.0;
@@ -39,6 +39,13 @@ class VideoZoom {
   /// At the scale where the video covers the whole box (worked out again
   /// for every box: inline, fullscreen, turned screen).
   final bool fill;
+
+  /// What a pinch just stuck to, for a haptic tick when something new does
+  /// ([snapScale], [snapPanX], [snapPanY]); not part of the zoom itself.
+  final int snaps;
+  static const snapScale = 1;
+  static const snapPanX = 2;
+  static const snapPanY = 4;
 
   bool get isZoomed => scale > 1 || fill;
 
@@ -94,6 +101,7 @@ class VideoZoom {
     final cover = coverScale(box, aspect);
     final raw = (startScale * factor).clamp(1.0, maxScale);
     final snapped = cover > 1.02 && (raw - cover).abs() <= cover * fillSnap;
+    final snappedFit = !snapped && raw <= 1 + fillSnap && raw > 1;
     final newScale = snapped ? cover : (raw <= 1 + fillSnap ? 1.0 : raw);
     final startLimit = panLimit(box, aspect, startScale);
     final start = Offset(
@@ -105,21 +113,26 @@ class VideoZoom {
     // ...is moved to where the fingers are now.
     final translation = focal - center - point * newScale;
     final limit = panLimit(box, aspect, newScale);
+    final (px, snapX) = _snapPan(translation.dx, limit.dx);
+    final (py, snapY) = _snapPan(translation.dy, limit.dy);
     return VideoZoom(
       scale: newScale,
-      panX: _snapPan(translation.dx, limit.dx) / (box.width * newScale),
-      panY: _snapPan(translation.dy, limit.dy) / (box.height * newScale),
+      panX: px / (box.width * newScale),
+      panY: py / (box.height * newScale),
       fill: snapped,
+      snaps: (snapped || snappedFit ? snapScale : 0) | (snapX ? snapPanX : 0) | (snapY ? snapPanY : 0),
     );
   }
 
-  /// [value] kept within ±[limit], sticking to the center and to the edges.
-  static double _snapPan(double value, double limit) {
+  /// [value] kept within ±[limit], sticking to the center and to the edges
+  /// (and whether it sticks, with a limit to stick to at all).
+  static (double, bool) _snapPan(double value, double limit) {
     final v = value.clamp(-limit, limit);
-    if (v.abs() <= panSnap) return 0;
-    if ((v - limit).abs() <= panSnap) return limit;
-    if ((v + limit).abs() <= panSnap) return -limit;
-    return v;
+    if (limit <= 0) return (0, false);
+    if (v.abs() <= panSnap) return (0, true);
+    if ((v - limit).abs() <= panSnap) return (limit, true);
+    if ((v + limit).abs() <= panSnap) return (-limit, true);
+    return (v, false);
   }
 
   /// What a pinch ends with: no zoom when barely zoomed.

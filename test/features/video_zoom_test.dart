@@ -81,6 +81,16 @@ void main() {
       expect(nearEdge.panY * screen.height * 2, closeTo(limit.dy, 0.001));
     });
 
+    test('it reports what it sticks to, for the haptic tick', () {
+      VideoZoom pinch(double factor, {Offset shift = Offset.zero}) => VideoZoom.none.pinch(
+          factor: factor, startFocal: screen.center(Offset.zero), focal: screen.center(Offset.zero) + shift, box: screen, aspect: wide);
+      expect(pinch(1.05).snaps & VideoZoom.snapScale, isNonZero, reason: 'the fitted size');
+      expect(pinch(1.24).snaps & VideoZoom.snapScale, isNonZero, reason: 'the full width');
+      expect(pinch(1.15).snaps & VideoZoom.snapScale, isZero);
+      expect(pinch(2, shift: const Offset(0, 9)).snaps & VideoZoom.snapPanY, isNonZero);
+      expect(pinch(2, shift: const Offset(0, 100)).snaps & VideoZoom.snapPanY, isZero);
+    });
+
     test('a fill is worked out again for another box', () {
       const filled = VideoZoom(scale: 1.25, fill: true);
       expect(filled.scaleIn(screen, wide), closeTo(1.25, 0.001));

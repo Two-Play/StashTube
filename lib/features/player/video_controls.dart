@@ -147,8 +147,8 @@ class _StashVideoControlsState extends ConsumerState<StashVideoControls> {
       box: box,
       aspect: ref.read(videoAspectProvider),
     );
-    // A tick where it snaps to the full width.
-    if (zoom.fill && !was.fill) Haptics.selection();
+    // A light tick whenever it newly sticks: to a size or the center/edges.
+    if (zoom.snaps & ~was.snaps != 0) Haptics.selection();
     notifier.set(zoom);
   }
 
@@ -190,6 +190,10 @@ class _StashVideoControlsState extends ConsumerState<StashVideoControls> {
   /// [_seekTaps] taps jump [_seekTotal] ([SeekSettings.total]) from
   /// [_seekBase], the position when it started.
   int _seekDirection = 0;
+
+  /// The side the feedback fades out on after the sequence ended.
+  int _shownDirection = 1;
+  bool _feedbackFading = false;
   int _seekTaps = 0;
   Duration _seekTotal = Duration.zero;
   Duration _seekBase = Duration.zero;
@@ -373,6 +377,8 @@ class _StashVideoControlsState extends ConsumerState<StashVideoControls> {
             ? ref.read(castPlaybackProvider).value?.position ?? Duration.zero
             : ref.read(playerProvider).state.position;
     _seekDirection = direction;
+    _shownDirection = direction;
+    _feedbackFading = false;
     _seekTaps = 0;
     _lastSeekTarget = null;
     _extendSeekSequence();
@@ -416,26 +422,46 @@ class _StashVideoControlsState extends ConsumerState<StashVideoControls> {
   void _endSeekSequence() {
     _seekTimer?.cancel();
     if (_seekDirection == 0) return;
-    if (mounted) setState(() => _seekDirection = 0);
+    if (mounted) {
+      final animate = !MediaQuery.disableAnimationsOf(context);
+      setState(() {
+        _seekDirection = 0;
+        _feedbackFading = animate;
+      });
+    }
   }
 
-  /// The bubble of the running seek sequence, on its side.
-  Widget _seekFeedback() => IgnorePointer(
-        child: ExcludeSemantics(
+  /// The half disc of the running seek sequence, on its side; it fades in
+  /// with the first tap and out after the last.
+  Widget _seekFeedback() {
+    final showing = _seekDirection != 0;
+    final direction = showing ? _seekDirection : _shownDirection;
+    final animate = !MediaQuery.disableAnimationsOf(context);
+    return IgnorePointer(
+      child: ExcludeSemantics(
+        child: TweenAnimationBuilder<double>(
+          tween: Tween(begin: animate ? 0 : 1, end: showing ? 1 : 0),
+          duration: animate ? const Duration(milliseconds: 180) : Duration.zero,
+          onEnd: () {
+            if (mounted && _seekDirection == 0 && _feedbackFading) setState(() => _feedbackFading = false);
+          },
+          builder: (_, opacity, child) => Opacity(opacity: opacity, child: child),
           child: Align(
-            alignment: _seekDirection < 0 ? Alignment.centerLeft : Alignment.centerRight,
+            alignment: direction < 0 ? Alignment.centerLeft : Alignment.centerRight,
             child: FractionallySizedBox(
               widthFactor: _SeekFeedback.widthFactor,
               heightFactor: 1,
               child: _SeekFeedback(
-                forward: _seekDirection > 0,
+                forward: direction > 0,
                 seconds: _seekTotal.inSeconds,
                 taps: _seekTaps,
               ),
             ),
           ),
         ),
-      );
+      ),
+    );
+  }
 
   /// While casting: tap areas left and right of [CastingControls]' buttons,
   /// so double taps seek on the TV as well.
@@ -502,7 +528,7 @@ class _StashVideoControlsState extends ConsumerState<StashVideoControls> {
         children: [
           CastingControls(connection: casting, showMinimize: !fullscreen),
           if (seek.enabled) _castSeekZones(),
-          if (_seekDirection != 0) _seekFeedback(),
+          if (_seekDirection != 0 || _feedbackFading) _seekFeedback(),
         ],
       );
     }
@@ -554,7 +580,7 @@ class _StashVideoControlsState extends ConsumerState<StashVideoControls> {
               ),
             ),
           ),
-          if (_seekDirection != 0) _seekFeedback(),
+          if (_seekDirection != 0 || _feedbackFading) _seekFeedback(),
           if (_rateBeforeHold != null)
             IgnorePointer(
               child: Align(
