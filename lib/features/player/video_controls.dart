@@ -687,7 +687,7 @@ class _StashVideoControlsState extends ConsumerState<StashVideoControls> {
                               ),
                             IconButton(
                               tooltip: zoomed ? context.l10n.fitVideo : context.l10n.fillScreen,
-                              icon: Icon(zoomed ? Icons.fit_screen : Icons.crop_free),
+                              icon: Icon(zoomed ? Icons.zoom_out : Icons.zoom_in),
                               onPressed: () => _act(_toggleFill),
                             ),
                             IconButton(

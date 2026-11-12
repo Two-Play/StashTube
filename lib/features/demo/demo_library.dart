@@ -263,6 +263,30 @@ class DemoLibrary {
     return out.toString();
   }
 
+  /// The demo's subtitles: a line every few seconds in English and German
+  /// (served by the demo server at `/demo/caption/<file>?lang=`).
+  static const captionLanguages = ['en', 'de'];
+
+  String? captionVtt(String file, String lang) {
+    final clip = media.clips[file];
+    if (clip == null || !captionLanguages.contains(lang)) return null;
+    String time(double s) {
+      final ms = (s * 1000).round();
+      String two(int n) => n.toString().padLeft(2, '0');
+      return '00:${two(ms ~/ 60000)}:${two(ms % 60000 ~/ 1000)}.${(ms % 1000).toString().padLeft(3, '0')}';
+    }
+
+    final out = StringBuffer('WEBVTT\n');
+    const step = 4.0;
+    for (var i = 0; i * step < clip.duration; i++) {
+      final start = i * step;
+      final end = (start + step - 0.5).clamp(0, clip.duration).toDouble();
+      final text = lang == 'de' ? 'Untertitel ${i + 1}: Das ist eine Demo.' : 'Subtitle ${i + 1}: this is a demo.';
+      out.write('\n${time(start)} --> ${time(end)}\n$text\n');
+    }
+    return out.toString();
+  }
+
   // --- Objects --------------------------------------------------------------
 
   Map<String, Object?> _studioObject(_Studio s) => {
@@ -363,7 +387,11 @@ class DemoLibrary {
         'stream': stream,
         'sprite': _media('sprites/${s.file}.jpg'),
         'vtt': _media('vtt/${s.file}.vtt'),
+        'caption': _media('caption/${s.file}'),
       },
+      'captions': [
+        for (final lang in captionLanguages) {'__typename': 'VideoCaption', 'language_code': lang, 'caption_type': 'vtt'},
+      ],
       'sceneStreams': [
         {'__typename': 'SceneStreamEndpoint', 'url': stream, 'mime_type': 'video/mp4', 'label': 'Direct stream'},
       ],
