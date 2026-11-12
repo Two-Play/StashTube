@@ -421,11 +421,15 @@ class _StashVideoControlsState extends ConsumerState<StashVideoControls> {
   Widget _seekFeedback() => IgnorePointer(
         child: ExcludeSemantics(
           child: Align(
-            alignment: _seekDirection < 0 ? const Alignment(-0.6, 0) : const Alignment(0.6, 0),
-            child: _SeekFeedback(
-              forward: _seekDirection > 0,
-              seconds: _seekTotal.inSeconds,
-              taps: _seekTaps,
+            alignment: _seekDirection < 0 ? Alignment.centerLeft : Alignment.centerRight,
+            child: FractionallySizedBox(
+              widthFactor: 0.42,
+              heightFactor: 1,
+              child: _SeekFeedback(
+                forward: _seekDirection > 0,
+                seconds: _seekTotal.inSeconds,
+                taps: _seekTaps,
+              ),
             ),
           ),
         ),
@@ -936,8 +940,10 @@ class _TimeLabel extends StatelessWidget {
       );
 }
 
-/// The bubble of a seek sequence: the total jump, with a ripple and arrows
-/// that run again on every tap ([taps]); still with reduced motion.
+/// The feedback of a seek sequence, like YouTube's: a half disc that covers
+/// the side that was tapped, with the total jump and arrows that run again
+/// on every tap ([taps]); still with reduced motion. Fills the space it is
+/// given (the controls give it the outer 42 % of their width).
 class _SeekFeedback extends StatelessWidget {
   const _SeekFeedback({required this.forward, required this.seconds, required this.taps});
 
@@ -959,50 +965,57 @@ class _SeekFeedback extends StatelessWidget {
           final lit = animate ? (1 - ((t * 3) - i - 0.5).abs()).clamp(0.0, 1.0) : 1.0;
           return Opacity(
             opacity: 0.35 + 0.65 * lit,
-            child: const Icon(Icons.play_arrow, color: Colors.white, size: 18),
+            child: const Icon(Icons.play_arrow, color: Colors.white, size: 28),
           );
         }
 
         final arrows = [for (var i = 0; i < 3; i++) arrow(i)];
-        return Stack(
-          alignment: Alignment.center,
-          children: [
-            if (animate)
-              Opacity(
-                opacity: (1 - t) * 0.6,
-                child: Transform.scale(
-                  scale: 1 + t * 0.6,
-                  child: DecoratedBox(
-                    decoration: BoxDecoration(color: scrim, shape: BoxShape.circle),
-                    child: const SizedBox.square(dimension: 96),
+        return ClipPath(
+          clipper: _HalfDiscClipper(onLeft: !forward),
+          child: ColoredBox(
+            // A tap flashes the disc a little brighter, which fades out.
+            color: Color.alphaBlend(Colors.white.withValues(alpha: animate ? (1 - t) * 0.12 : 0), scrim),
+            child: Center(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // Back: the arrows point left and run right to left.
+                  Transform.flip(
+                    flipX: !forward,
+                    child: Row(mainAxisSize: MainAxisSize.min, children: arrows),
                   ),
-                ),
-              ),
-            DecoratedBox(
-              decoration: BoxDecoration(color: scrim, shape: BoxShape.circle),
-              child: Padding(
-                padding: const EdgeInsets.all(AppSpacing.l),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    // Back: the arrows point left and run right to left.
-                    Transform.flip(
-                      flipX: !forward,
-                      child: Row(mainAxisSize: MainAxisSize.min, children: arrows),
-                    ),
-                    Text(
-                      context.l10n.durationSeconds(seconds),
-                      style: const TextStyle(color: Colors.white, fontSize: AppTextSize.overlayLabel),
-                    ),
-                  ],
-                ),
+                  const SizedBox(height: AppSpacing.xs),
+                  Text(
+                    context.l10n.durationSeconds(seconds),
+                    style: const TextStyle(color: Colors.white, fontSize: AppTextSize.overlayBody),
+                  ),
+                ],
               ),
             ),
-          ],
+          ),
         );
       },
     );
   }
+}
+
+/// A big ellipse centered on the outer edge: what is left of it in the box
+/// is a half disc that bulges toward the middle of the video.
+class _HalfDiscClipper extends CustomClipper<Path> {
+  const _HalfDiscClipper({required this.onLeft});
+
+  final bool onLeft;
+
+  @override
+  Path getClip(Size size) => Path()
+    ..addOval(Rect.fromCenter(
+      center: Offset(onLeft ? 0 : size.width, size.height / 2),
+      width: size.width * 2,
+      height: size.height * 1.5,
+    ));
+
+  @override
+  bool shouldReclip(_HalfDiscClipper old) => old.onLeft != onLeft;
 }
 
 /// Playback speeds offered in [showSpeedSheet].
