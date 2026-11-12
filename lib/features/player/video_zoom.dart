@@ -28,7 +28,7 @@ class VideoZoom {
   final double panX;
   final double panY;
 
-  /// Set by the "fill" button: the video covers its whole box (the `Video`
+  /// The first stage of the pinch zoom: the video covers its whole box (the `Video`
   /// widget's `BoxFit.cover`, [fillFit]) instead of fitting inside it, so the
   /// black bars go. Kept across fullscreen, turning and other scenes; the
   /// pinch zoom works on top of it.
@@ -87,8 +87,9 @@ class VideoZoomNotifier extends Notifier<VideoZoom> {
 
   void reset() => set(VideoZoom.none);
 
-  /// The fill button: the video covers its box, or fits inside it again.
-  void toggleFill() => set(VideoZoom(scale: state.scale, panX: state.panX, panY: state.panY, fill: !state.fill));
+  /// The first stage of the pinch zoom: the video covers its box, or fits
+  /// inside it again (which also drops any zoom).
+  void setFill(bool fill) => set(fill ? VideoZoom(scale: state.scale, panX: state.panX, panY: state.panY, fill: true) : VideoZoom.none);
 
   /// Another scene: no pinch zoom, but the fill stays.
   void resetZoom() => set(VideoZoom(fill: state.fill));

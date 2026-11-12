@@ -1510,12 +1510,6 @@ class AppLocalizationsDe extends AppLocalizations {
   String get captionUnknownLanguage => 'Unbekannte Sprache';
 
   @override
-  String get fillScreen => 'Bildschirm füllen';
-
-  @override
-  String get fitVideo => 'Ganzes Bild zeigen';
-
-  @override
   String get clearField => 'Leeren';
 
   @override

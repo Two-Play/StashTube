@@ -1506,12 +1506,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get captionUnknownLanguage => 'Unknown language';
 
   @override
-  String get fillScreen => 'Fill screen';
-
-  @override
-  String get fitVideo => 'Fit to screen';
-
-  @override
   String get clearField => 'Clear';
 
   @override

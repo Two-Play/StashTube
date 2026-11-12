@@ -132,18 +132,40 @@ class _StashVideoControlsState extends ConsumerState<StashVideoControls> {
     }
   }
 
+  /// Spreading the fingers this far fills the whole box (the first stage of
+  /// the zoom, like YouTube's); pinching back below its inverse fits the
+  /// video inside again.
+  static const _fillStep = 1.15;
+
+  void _restartPinch() {
+    _pinchStartZoom = ref.read(videoZoomProvider);
+    _pinchStartDistance = math.max(_distance, 1);
+    _pinchStartFocal = _focal;
+  }
+
   void _onPointerMove(PointerMoveEvent e) {
     if (!mounted || !_pointers.containsKey(e.pointer)) return;
     _pointers[e.pointer] = e.localPosition;
     final start = _pinchStartZoom;
     final box = context.size;
     if (start == null || _pointers.length < 2 || box == null) return;
-    ref.read(videoZoomProvider.notifier).set(start.pinch(
-          factor: _distance / _pinchStartDistance,
-          startFocal: _pinchStartFocal,
-          focal: _focal,
-          box: box,
-        ));
+    final notifier = ref.read(videoZoomProvider.notifier);
+    final factor = _distance / _pinchStartDistance;
+    final now = ref.read(videoZoomProvider);
+    if (!now.fill && factor > _fillStep) {
+      // First stage: the video fills the box; spreading on zooms further.
+      Haptics.selection();
+      notifier.setFill(true);
+      _restartPinch();
+      return;
+    }
+    if (now.fill && start.scale * factor < 1 / _fillStep) {
+      Haptics.selection();
+      notifier.reset();
+      _restartPinch();
+      return;
+    }
+    notifier.set(start.pinch(factor: factor, startFocal: _pinchStartFocal, focal: _focal, box: box));
   }
 
   void _onPointerEnd(PointerEvent e) {
@@ -237,10 +259,6 @@ class _StashVideoControlsState extends ConsumerState<StashVideoControls> {
     unawaited(ref.read(gestureTipsSeenProvider.notifier).dismiss());
     _show();
   }
-
-  /// The fill button (4.31): the video covers the whole box (no black
-  /// bars), or fits inside it again.
-  void _toggleFill() => ref.read(videoZoomProvider.notifier).toggleFill();
 
   void _lock() {
     Haptics.medium();
@@ -489,7 +507,6 @@ class _StashVideoControlsState extends ConsumerState<StashVideoControls> {
   @override
   Widget build(BuildContext context) {
     final player = ref.watch(playerProvider);
-    final filling = ref.watch(videoZoomProvider.select((z) => z.fill));
     final fullscreen = widget.fullscreen;
     final seek = ref.watch(seekSettingsProvider);
 
@@ -684,11 +701,6 @@ class _StashVideoControlsState extends ConsumerState<StashVideoControls> {
                                 icon: const Icon(Icons.lock_outline),
                                 onPressed: _lock,
                               ),
-                            IconButton(
-                              tooltip: filling ? context.l10n.fitVideo : context.l10n.fillScreen,
-                              icon: Icon(filling ? Icons.width_normal : Icons.width_full),
-                              onPressed: () => _act(_toggleFill),
-                            ),
                             IconButton(
                               tooltip: fullscreen ? context.l10n.exitFullscreen : context.l10n.fullscreen,
                               icon: Icon(fullscreen ? Icons.fullscreen_exit : Icons.fullscreen),
@@ -999,20 +1011,29 @@ class _SeekFeedback extends StatelessWidget {
   }
 }
 
-/// A big ellipse centered on the outer edge: what is left of it in the box
-/// is a half disc that bulges toward the middle of the video.
+/// The seek feedback's shape: the outer edge of the box, a circular arc
+/// for the inner one that meets the top and bottom 25 % in and bulges to the
+/// full width in the middle.
 class _HalfDiscClipper extends CustomClipper<Path> {
   const _HalfDiscClipper({required this.onLeft});
 
   final bool onLeft;
 
   @override
-  Path getClip(Size size) => Path()
-    ..addOval(Rect.fromCenter(
-      center: Offset(onLeft ? 0 : size.width, size.height / 2),
-      width: size.width * 2,
-      height: size.height * 1.5,
-    ));
+  Path getClip(Size size) {
+    final w = size.width;
+    final h = size.height;
+    final sagitta = w * 0.25;
+    final radius = (h * h / 4 + sagitta * sagitta) / (2 * sagitta);
+    // Mirrored for the right side: x' = w - x.
+    double x(double v) => onLeft ? v : w - v;
+    return Path()
+      ..moveTo(x(0), 0)
+      ..lineTo(x(w - sagitta), 0)
+      ..arcToPoint(Offset(x(w - sagitta), h), radius: Radius.circular(radius), clockwise: onLeft)
+      ..lineTo(x(0), h)
+      ..close();
+  }
 
   @override
   bool shouldReclip(_HalfDiscClipper old) => old.onLeft != onLeft;

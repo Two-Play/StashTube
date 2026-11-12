@@ -188,36 +188,48 @@ void main() {
     expect(player.rates, [1.5]);
   });
 
-  testWidgets('pinching zooms into the video, and the zoom stays after letting go', (tester) async {
+  testWidgets('spreading two fingers first fills the box, then zooms; pinching back undoes it', (tester) async {
     await pump(tester);
     final container = ProviderScope.containerOf(tester.element(find.byType(StashVideoControls)));
     final center = tester.getCenter(find.byType(StashVideoControls));
     final a = await tester.startGesture(center - const Offset(40, 0));
     final b = await tester.startGesture(center + const Offset(40, 0));
     await tester.pump();
-    await a.moveTo(center - const Offset(80, 0));
-    await b.moveTo(center + const Offset(80, 0));
+    await a.moveTo(center - const Offset(60, 0));
+    await b.moveTo(center + const Offset(60, 0));
     await tester.pump();
-    expect(container.read(videoZoomProvider).scale, closeTo(2, 0.01));
-    expect(player.rates, isEmpty, reason: 'two fingers held still are not "hold for 2x"');
+    var zoom = container.read(videoZoomProvider);
+    expect(zoom.fill, isTrue, reason: 'first stage: fill the box');
+    expect(zoom.scale, lessThan(1.3), reason: 'barely zoomed yet');
+    expect(player.rates, isEmpty, reason: 'two fingers are not "hold for 2x"');
+
+    // Spreading on zooms further.
+    await a.moveTo(center - const Offset(120, 0));
+    await b.moveTo(center + const Offset(120, 0));
+    await tester.pump();
+    zoom = container.read(videoZoomProvider);
+    expect(zoom.fill, isTrue);
+    expect(zoom.scale, greaterThan(1.8));
 
     await a.up();
     await b.up();
     await tester.pumpAndSettle();
-    expect(container.read(videoZoomProvider).scale, closeTo(2, 0.01));
-  });
+    expect(container.read(videoZoomProvider).scale, greaterThan(1.8), reason: 'stays after letting go');
 
-  testWidgets('the fill button makes the video cover its box, and a second tap undoes it', (tester) async {
-    await pump(tester);
-    final container = ProviderScope.containerOf(tester.element(find.byType(StashVideoControls)));
-    await tapVideo(tester);
-    await tester.tap(find.byTooltip('Fill screen'));
+    // Pinching back to nothing and below fits the video inside again.
+    final c = await tester.startGesture(center - const Offset(100, 0));
+    final d = await tester.startGesture(center + const Offset(100, 0));
     await tester.pump();
-    expect(container.read(videoZoomProvider).fill, isTrue);
-
-    await tester.tap(find.byTooltip('Fit to screen'));
+    await c.moveTo(center - const Offset(20, 0));
+    await d.moveTo(center + const Offset(20, 0));
+    await tester.pump();
+    await c.moveTo(center - const Offset(10, 0));
+    await d.moveTo(center + const Offset(10, 0));
     await tester.pump();
     expect(container.read(videoZoomProvider), VideoZoom.none);
+    await c.up();
+    await d.up();
+    await tester.pumpAndSettle();
   });
 
   group('playback error', () {
