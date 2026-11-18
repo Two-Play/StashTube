@@ -82,8 +82,16 @@ void main() {
     ));
   }
 
+  // The controls' own fade, not the zoom feedback's.
   bool controlsVisible(WidgetTester tester) =>
-      tester.widget<AnimatedOpacity>(find.byType(AnimatedOpacity).last).opacity == 1;
+      (find
+                  .byType(AnimatedOpacity)
+                  .evaluate()
+                  .where((e) => e.findAncestorWidgetOfExactType<ZoomSnapFeedback>() == null)
+                  .last
+                  .widget as AnimatedOpacity)
+              .opacity ==
+          1;
 
   Future<void> tapVideo(WidgetTester tester) async {
     // Empty space: middle row, between the left edge and the play button.

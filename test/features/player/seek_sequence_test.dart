@@ -12,6 +12,7 @@ import 'package:stash_app_mobile/features/cast/cast_service.dart';
 import 'package:stash_app_mobile/features/player/player_providers.dart';
 import 'package:stash_app_mobile/features/player/seek_settings.dart';
 import 'package:stash_app_mobile/features/player/video_controls.dart';
+import 'package:stash_app_mobile/features/player/video_zoom.dart';
 
 import '../../helpers.dart';
 import '../fake_player.dart';
@@ -107,8 +108,16 @@ void main() {
     if (casting) await tester.pump(); // the stream overrides deliver
   }
 
+  // The controls' own fade, not the zoom feedback's.
   bool controlsVisible(WidgetTester tester) =>
-      tester.widget<AnimatedOpacity>(find.byType(AnimatedOpacity).last).opacity == 1;
+      (find
+                  .byType(AnimatedOpacity)
+                  .evaluate()
+                  .where((e) => e.findAncestorWidgetOfExactType<ZoomSnapFeedback>() == null)
+                  .last
+                  .widget as AnimatedOpacity)
+              .opacity ==
+          1;
 
   // The half disc over the tapped side.
   Finder halfDisc() => find.byWidgetPredicate((w) => w is ClipPath && w.clipper.runtimeType.toString() == '_HalfDiscClipper');
