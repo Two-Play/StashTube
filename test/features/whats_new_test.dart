@@ -61,13 +61,18 @@ void main() {
   testWidgets('after an update: shown once', (tester) async {
     final c = await pump(tester);
     expect(find.text(l.whatsNewTitle), findsOneWidget);
-    expect(find.text(l.whatsNew2Title), findsOneWidget);
-    expect(find.text(l.whatsNew1Title), findsNothing, reason: 'seen with an earlier release');
+    expect(find.text(l.whatsNew3Title), findsOneWidget, reason: 'the newest first');
     expect(find.byIcon(Icons.auto_awesome), findsNothing);
-    expect(find.byIcon(Icons.closed_caption_outlined), findsOneWidget, reason: 'the subtitles item has its icon');
+    expect(find.byIcon(Icons.fingerprint), findsOneWidget, reason: 'the biometrics item has its icon');
     final entry = changelog(l).first;
-    expect(entry.more, isEmpty);
-    expect(find.text(l.whatsNewShowMore(1)), findsNothing, reason: 'nothing behind "show more"');
+    expect(entry.more, hasLength(4));
+    final more = entry.more.first.text;
+    expect(find.text(more, skipOffstage: false), findsNothing, reason: 'the rest waits behind "show more"');
+    await tester.ensureVisible(find.text(l.whatsNewShowMore(4)));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text(l.whatsNewShowMore(4)));
+    await tester.pumpAndSettle();
+    expect(find.text(more, skipOffstage: false), findsOneWidget);
     expect(c.read(whatsNewSeenProvider), latestChangelogId(l));
     expect(prefs.getInt('whats_new_seen'), latestChangelogId(l), reason: 'stored');
 

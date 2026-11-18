@@ -4424,6 +4424,24 @@ abstract class AppLocalizations {
   /// **'What the latest updates brought'**
   String get whatsNewSubtitle;
 
+  /// No description provided for @whatsNew3Title.
+  ///
+  /// In en, this message translates to:
+  /// **'Back where you were, favorites and a safer app lock'**
+  String get whatsNew3Title;
+
+  /// No description provided for @whatsNew3.
+  ///
+  /// In en, this message translates to:
+  /// **'Lists keep their place when you turn the phone for fullscreen and come back.\nFavorites: pick All or one performer at the top; a long press opens their channel.\nZooming shows Original and Fill when it snaps, and guide lines where the picture snaps.\nChange the PIN or turn the app lock off with Face ID or your fingerprint, also when you forgot the PIN.\nYour API key and login only go to your server, and a warning shows when a proxy hands out wrong media addresses.'**
+  String get whatsNew3;
+
+  /// No description provided for @whatsNew3More.
+  ///
+  /// In en, this message translates to:
+  /// **'The PIN is stored with a much slower hash; your PIN stays the same.\nIf the PIN can\'t be read after a restore, the app stays locked and offers a new PIN with biometrics, or a reset.\nA password in a server address is kept in the device\'s secure storage.\nFewer requests: lists no longer pile up in a cache, and the preview check no longer downloads whole files.'**
+  String get whatsNew3More;
+
   /// No description provided for @whatsNew2Title.
   ///
   /// In en, this message translates to:

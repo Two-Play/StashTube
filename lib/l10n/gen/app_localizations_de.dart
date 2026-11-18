@@ -2679,6 +2679,18 @@ class AppLocalizationsDe extends AppLocalizations {
   String get whatsNewSubtitle => 'Was die letzten Updates gebracht haben';
 
   @override
+  String get whatsNew3Title =>
+      'Zurück an derselben Stelle, Favoriten und eine sicherere App-Sperre';
+
+  @override
+  String get whatsNew3 =>
+      'Listen behalten ihre Position, wenn du das Handy für den Vollbildmodus drehst und zurückkommst.\nFavoriten: Oben „Alle“ oder einen Darsteller wählen; langes Drücken öffnet seinen Kanal.\nBeim Zoomen erscheinen „Original“ und „Füllen“, wenn es einrastet, und Hilfslinien, wo das Bild einrastet.\nPIN ändern oder die App-Sperre ausschalten geht mit Face ID oder Fingerabdruck, auch wenn du die PIN vergessen hast.\nDein API-Key und Login gehen nur an deinen Server, und eine Warnung erscheint, wenn ein Proxy falsche Medienadressen herausgibt.';
+
+  @override
+  String get whatsNew3More =>
+      'Die PIN wird mit einem viel langsameren Hash gespeichert; deine PIN bleibt dieselbe.\nLässt sich die PIN nach einer Wiederherstellung nicht lesen, bleibt die App gesperrt und bietet per Biometrie eine neue PIN oder das Zurücksetzen an.\nEin Passwort in einer Server-Adresse liegt im sicheren Speicher des Geräts.\nWeniger Anfragen: Listen sammeln sich nicht mehr in einem Cache, und die Vorschauprüfung lädt keine ganzen Dateien mehr.';
+
+  @override
   String get whatsNew2Title => 'Untertitel, Zoom ohne schwarze Balken und mehr';
 
   @override

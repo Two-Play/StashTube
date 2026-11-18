@@ -2668,6 +2668,18 @@ class AppLocalizationsEn extends AppLocalizations {
   String get whatsNewSubtitle => 'What the latest updates brought';
 
   @override
+  String get whatsNew3Title =>
+      'Back where you were, favorites and a safer app lock';
+
+  @override
+  String get whatsNew3 =>
+      'Lists keep their place when you turn the phone for fullscreen and come back.\nFavorites: pick All or one performer at the top; a long press opens their channel.\nZooming shows Original and Fill when it snaps, and guide lines where the picture snaps.\nChange the PIN or turn the app lock off with Face ID or your fingerprint, also when you forgot the PIN.\nYour API key and login only go to your server, and a warning shows when a proxy hands out wrong media addresses.';
+
+  @override
+  String get whatsNew3More =>
+      'The PIN is stored with a much slower hash; your PIN stays the same.\nIf the PIN can\'t be read after a restore, the app stays locked and offers a new PIN with biometrics, or a reset.\nA password in a server address is kept in the device\'s secure storage.\nFewer requests: lists no longer pile up in a cache, and the preview check no longer downloads whole files.';
+
+  @override
   String get whatsNew2Title => 'Subtitles, zoom without black bars and more';
 
   @override
