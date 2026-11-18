@@ -484,6 +484,70 @@ void main() {
     expect(created, '2580');
   });
 
+  testWidgets('with biometrics on, Face ID or the fingerprint confirm instead of the PIN', (tester) async {
+    await tester.runAsync(() async {
+      final c = container();
+      await c.read(appLockSettingsProvider.notifier).enable('1234');
+      await c.read(appLockSettingsProvider.notifier).setBiometrics(true);
+    });
+    final c = container();
+    c.read(appLockedProvider.notifier).unlock();
+    bool? confirmed;
+    await tester.pumpWidget(UncontrolledProviderScope(
+      container: c,
+      child: MaterialApp(
+        home: Scaffold(
+          body: Consumer(
+            builder: (context, ref, _) => TextButton(
+              onPressed: () async => confirmed = await confirmPin(context, ref),
+              child: const Text('confirm'),
+            ),
+          ),
+        ),
+      ),
+    ));
+
+    await tester.tap(find.text('confirm'));
+    await tester.pumpAndSettle();
+    expect(biometrics.calls, 0, reason: 'not asked unprompted: the PIN pad comes first');
+    await tester.tap(find.byIcon(Icons.fingerprint));
+    await tester.pumpAndSettle();
+    expect(biometrics.calls, 1);
+    expect(confirmed, isTrue, reason: 'a forgotten PIN can still be changed');
+
+    // While wrong PINs block the pad, biometrics are asked right away.
+    for (var i = 0; i < PinThrottle.freeAttempts; i++) {
+      c.read(pinThrottleProvider.notifier).recordFailure();
+    }
+    confirmed = null;
+    await tester.tap(find.text('confirm'));
+    await tester.pumpAndSettle();
+    expect(biometrics.calls, 2);
+    expect(confirmed, isTrue);
+    expect(c.read(pinThrottleProvider).failures, 0);
+  });
+
+  testWidgets('without biometrics, the PIN pad has no fingerprint button', (tester) async {
+    await tester.runAsync(() => container().read(appLockSettingsProvider.notifier).enable('1234'));
+    final c = container();
+    await tester.pumpWidget(UncontrolledProviderScope(
+      container: c,
+      child: MaterialApp(
+        home: Scaffold(
+          body: Consumer(
+            builder: (context, ref, _) => TextButton(
+              onPressed: () => confirmPin(context, ref),
+              child: const Text('confirm'),
+            ),
+          ),
+        ),
+      ),
+    ));
+    await tester.tap(find.text('confirm'));
+    await tester.pumpAndSettle();
+    expect(find.byIcon(Icons.fingerprint), findsNothing);
+  });
+
   test('the app is always hidden in the switcher while the lock is on', () {
     expect(const AppLockSettings().hidesApp, isFalse);
     expect(const AppLockSettings(hideInSwitcher: true).hidesApp, isTrue);

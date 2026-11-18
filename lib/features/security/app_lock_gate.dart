@@ -440,12 +440,25 @@ Future<String?> showCreatePin(BuildContext context) {
 /// the whole app like the lock screen.
 ///
 /// Wrong entries count like on the lock screen; while the PIN is blocked,
-/// this only says how long to wait.
+/// this only says how long to wait. With biometric unlock on, Face ID or
+/// the fingerprint confirm as well (the PIN pad's fingerprint button, or
+/// right away while the PIN is blocked), so a forgotten PIN can still be
+/// changed by whoever can unlock the app.
 Future<bool> confirmPin(BuildContext context, WidgetRef ref) async {
   final l = context.l10n;
   final throttle = ref.read(pinThrottleProvider.notifier);
   final settings = ref.read(appLockSettingsProvider.notifier);
   final messenger = ScaffoldMessenger.of(context);
+  final biometrics = ref.read(appLockSettingsProvider).biometrics;
+  final auth = ref.read(biometricAuthProvider);
+
+  Future<bool> biometric() async {
+    if (!await auth.authenticate(l.unlockReason)) return false;
+    throttle.reset();
+    return true;
+  }
+
+  if (biometrics && throttle.remaining() > Duration.zero && await biometric()) return true;
 
   bool showBlocked() {
     final remaining = throttle.remaining();
@@ -456,7 +469,7 @@ Future<bool> confirmPin(BuildContext context, WidgetRef ref) async {
     return true;
   }
 
-  if (showBlocked()) return false;
+  if (showBlocked() || !context.mounted) return false;
   final ok = await Navigator.of(context, rootNavigator: true).push<bool>(_PinRoute(
     builder: (context) => ScreenLock(
       title: Text(l.enterYourPin),
@@ -469,6 +482,12 @@ Future<bool> confirmPin(BuildContext context, WidgetRef ref) async {
       },
       onUnlocked: () => Navigator.of(context).pop(true),
       onCancelled: () => Navigator.of(context).pop(false),
+      customizedButtonChild: biometrics ? Icon(Icons.fingerprint, semanticLabel: l.unlockBiometric) : null,
+      customizedButtonTap: biometrics
+          ? () async {
+              if (await biometric() && context.mounted) Navigator.of(context).pop(true);
+            }
+          : null,
     ),
   ));
   return ok ?? false;
