@@ -150,66 +150,27 @@ class _ConnectionBannerState extends ConsumerState<ConnectionBanner> {
   @override
   Widget build(BuildContext context) {
     final l = context.l10n;
-    final scheme = Theme.of(context).colorScheme;
     final name = ref.watch(serverProfilesProvider.select((s) => s.active?.name));
-    return Semantics(
+    return StatusBanner(
+      icon: Icons.cloud_off_outlined,
+      title: l.connectionLostTitle,
+      body: name == null ? null : l.connectionLostBody(name),
       liveRegion: true,
-      container: true,
-      child: Material(
-        color: scheme.surfaceContainerHigh,
-        child: SafeArea(
-          bottom: false,
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(16, 12, 8, 4),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Padding(
-                      padding: const EdgeInsets.only(top: 2, right: 16),
-                      child: Icon(Icons.cloud_off_outlined, color: scheme.error),
-                    ),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(l.connectionLostTitle, style: Theme.of(context).textTheme.titleSmall),
-                          if (name != null)
-                            Text(
-                              l.connectionLostBody(name),
-                              style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: scheme.onSurfaceVariant),
-                            ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-                OverflowBar(
-                  alignment: MainAxisAlignment.end,
-                  spacing: 8,
-                  children: [
-                    TextButton(
-                      onPressed: () => showServerSwitcher(context),
-                      child: Text(l.switchServer),
-                    ),
-                    TextButton(
-                      onPressed: _checking ? null : _retry,
-                      child: _checking
-                          ? SizedBox.square(
-                              dimension: 18,
-                              child: CircularProgressIndicator(strokeWidth: 2, semanticsLabel: l.retry),
-                            )
-                          : Text(l.retry),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
+      actions: [
+        TextButton(
+          onPressed: () => showServerSwitcher(context),
+          child: Text(l.switchServer),
         ),
-      ),
+        TextButton(
+          onPressed: _checking ? null : _retry,
+          child: _checking
+              ? SizedBox.square(
+                  dimension: 18,
+                  child: CircularProgressIndicator(strokeWidth: 2, semanticsLabel: l.retry),
+                )
+              : Text(l.retry),
+        ),
+      ],
     );
   }
 }
@@ -225,9 +186,50 @@ class MediaOriginBanner extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l = context.l10n;
+    return StatusBanner(
+      icon: Icons.warning_amber_rounded,
+      title: l.mediaOriginTitle,
+      body: l.mediaOriginBody(mismatch.media, mismatch.server),
+      actions: [
+        TextButton(
+          onPressed: () {
+            Haptics.light();
+            ref.read(mediaOriginHintHiddenProvider.notifier).hide(mismatch);
+          },
+          child: Text(l.mediaOriginHide),
+        ),
+      ],
+    );
+  }
+}
+
+/// The banners' shared layout (Material 3): an icon in the error color,
+/// title and body, the actions at the end; takes the status bar's space.
+class StatusBanner extends StatelessWidget {
+  const StatusBanner({
+    super.key,
+    required this.icon,
+    required this.title,
+    this.body,
+    this.actions = const [],
+    this.liveRegion = false,
+  });
+
+  final IconData icon;
+  final String title;
+  final String? body;
+  final List<Widget> actions;
+
+  /// Announced to screen readers when it appears.
+  final bool liveRegion;
+
+  @override
+  Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
+    final body = this.body;
     return Semantics(
+      liveRegion: liveRegion,
       container: true,
       child: Material(
         color: scheme.surfaceContainerHigh,
@@ -243,34 +245,21 @@ class MediaOriginBanner extends ConsumerWidget {
                   children: [
                     Padding(
                       padding: const EdgeInsets.only(top: 2, right: 16),
-                      child: Icon(Icons.warning_amber_rounded, color: scheme.error),
+                      child: Icon(icon, color: scheme.error),
                     ),
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(l.mediaOriginTitle, style: theme.textTheme.titleSmall),
-                          Text(
-                            l.mediaOriginBody(mismatch.media, mismatch.server),
-                            style: theme.textTheme.bodyMedium?.copyWith(color: scheme.onSurfaceVariant),
-                          ),
+                          Text(title, style: theme.textTheme.titleSmall),
+                          if (body != null)
+                            Text(body, style: theme.textTheme.bodyMedium?.copyWith(color: scheme.onSurfaceVariant)),
                         ],
                       ),
                     ),
                   ],
                 ),
-                OverflowBar(
-                  alignment: MainAxisAlignment.end,
-                  children: [
-                    TextButton(
-                      onPressed: () {
-                        Haptics.light();
-                        ref.read(mediaOriginHintHiddenProvider.notifier).hide(mismatch);
-                      },
-                      child: Text(l.mediaOriginHide),
-                    ),
-                  ],
-                ),
+                OverflowBar(alignment: MainAxisAlignment.end, spacing: 8, children: actions),
               ],
             ),
           ),

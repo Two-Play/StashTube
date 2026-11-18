@@ -484,6 +484,22 @@ void main() {
     expect(created, '2580');
   });
 
+  /// A button that asks [confirmPin] and hands its answer to [onResult].
+  Future<void> pumpConfirm(WidgetTester tester, ProviderContainer c, void Function(bool) onResult) =>
+      tester.pumpWidget(UncontrolledProviderScope(
+        container: c,
+        child: MaterialApp(
+          home: Scaffold(
+            body: Consumer(
+              builder: (context, ref, _) => TextButton(
+                onPressed: () async => onResult(await confirmPin(context, ref)),
+                child: const Text('confirm'),
+              ),
+            ),
+          ),
+        ),
+      ));
+
   testWidgets('with biometrics on, Face ID or the fingerprint confirm instead of the PIN', (tester) async {
     await tester.runAsync(() async {
       final c = container();
@@ -493,19 +509,7 @@ void main() {
     final c = container();
     c.read(appLockedProvider.notifier).unlock();
     bool? confirmed;
-    await tester.pumpWidget(UncontrolledProviderScope(
-      container: c,
-      child: MaterialApp(
-        home: Scaffold(
-          body: Consumer(
-            builder: (context, ref, _) => TextButton(
-              onPressed: () async => confirmed = await confirmPin(context, ref),
-              child: const Text('confirm'),
-            ),
-          ),
-        ),
-      ),
-    ));
+    await pumpConfirm(tester, c, (ok) => confirmed = ok);
 
     await tester.tap(find.text('confirm'));
     await tester.pumpAndSettle();
@@ -530,19 +534,7 @@ void main() {
   testWidgets('without biometrics, the PIN pad has no fingerprint button', (tester) async {
     await tester.runAsync(() => container().read(appLockSettingsProvider.notifier).enable('1234'));
     final c = container();
-    await tester.pumpWidget(UncontrolledProviderScope(
-      container: c,
-      child: MaterialApp(
-        home: Scaffold(
-          body: Consumer(
-            builder: (context, ref, _) => TextButton(
-              onPressed: () => confirmPin(context, ref),
-              child: const Text('confirm'),
-            ),
-          ),
-        ),
-      ),
-    ));
+    await pumpConfirm(tester, c, (_) {});
     await tester.tap(find.text('confirm'));
     await tester.pumpAndSettle();
     expect(find.byIcon(Icons.fingerprint), findsNothing);
