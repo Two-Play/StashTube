@@ -149,7 +149,7 @@ class ServerSettingsPage extends ConsumerWidget {
           leading: const Icon(Icons.dns_outlined),
           title: Text(server?.name ?? '-', maxLines: 1, overflow: TextOverflow.ellipsis),
           subtitle: Text(
-            '${config?.baseUrl ?? ''}\n${switch (version) {
+            '${config?.displayUrl ?? ''}\n${switch (version) {
               AsyncData(:final value) => l.stashVersion(value ?? l.unknownVersion),
               AsyncError() => l.notReachable,
               _ => l.checking,

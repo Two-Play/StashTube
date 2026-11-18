@@ -4465,6 +4465,72 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Marker saved'**
   String get markerSaved;
+
+  /// No description provided for @pinLostTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'The PIN is no longer on this device'**
+  String get pinLostTitle;
+
+  /// No description provided for @pinLostBody.
+  ///
+  /// In en, this message translates to:
+  /// **'The app lock is on, but its PIN couldn\'t be read from the device\'s secure storage, for example after restoring a backup.'**
+  String get pinLostBody;
+
+  /// No description provided for @pinLostBiometricHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Unlock with Face ID or your fingerprint to choose a new PIN.'**
+  String get pinLostBiometricHint;
+
+  /// No description provided for @pinLostResetHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Or reset the app: everything StashTube stored on this device is removed.'**
+  String get pinLostResetHint;
+
+  /// No description provided for @resetApp.
+  ///
+  /// In en, this message translates to:
+  /// **'Reset app'**
+  String get resetApp;
+
+  /// No description provided for @resetAppTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Reset StashTube?'**
+  String get resetAppTitle;
+
+  /// No description provided for @resetAppBody.
+  ///
+  /// In en, this message translates to:
+  /// **'All servers, settings, lists and cached images are removed from this device and the app lock is turned off. Nothing changes on your Stash servers.'**
+  String get resetAppBody;
+
+  /// No description provided for @chooseNewPin.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose a new PIN'**
+  String get chooseNewPin;
+
+  /// No description provided for @mediaOriginTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Images and videos may not load'**
+  String get mediaOriginTitle;
+
+  /// No description provided for @mediaOriginBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Stash gives out media addresses on {media}, but StashTube connects to {server}. Your API key or login only goes to {server}, so those requests are sent without it. Behind a reverse proxy, pass on the Host header and set X-Forwarded-Proto.'**
+  String mediaOriginBody(String media, String server);
+
+  /// No description provided for @mediaOriginHide.
+  ///
+  /// In en, this message translates to:
+  /// **'Hide'**
+  String get mediaOriginHide;
 }
 
 class _AppLocalizationsDelegate

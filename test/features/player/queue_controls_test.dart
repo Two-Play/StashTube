@@ -2,6 +2,7 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:stash_app_mobile/core/network/origin_guard.dart';
 import 'package:stash_app_mobile/data/models/scene.dart';
 import 'package:stash_app_mobile/data/providers.dart';
 import 'package:stash_app_mobile/data/repositories/stash_session.dart';
@@ -50,7 +51,7 @@ void main() {
         ...testServer,
         playerProvider.overrideWithValue(FakePlayer(position: const Duration(seconds: 30))),
         scrubThumbnailsProvider('1').overrideWith((ref) async => null),
-        authHeadersProvider.overrideWithValue(const {}),
+        authHeadersProvider.overrideWithValue(AuthHeaders.none),
         nowPlayingProvider.overrideWith(() => nowPlaying),
       ],
       child: MaterialApp(

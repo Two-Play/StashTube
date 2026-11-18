@@ -536,7 +536,7 @@ class NowPlayingNotifier extends Notifier<Scene?> {
       final media = castMediaFor(
         scene,
         await details.read().catchError((Object _) => const SceneDetails()),
-        apiKey: ref.read(serverConfigProvider)?.apiKey,
+        server: ref.read(serverConfigProvider),
         start: start,
         kind: ref.read(castConnectionProvider).value?.kind ?? CastKind.googleCast,
       );
@@ -594,7 +594,7 @@ class NowPlayingNotifier extends Notifier<Scene?> {
     player.open(
       Media(
         url,
-        httpHeaders: ref.read(authHeadersProvider),
+        httpHeaders: ref.read(authHeadersProvider).forUrl(url),
         start: start > Duration.zero ? start : null,
       ),
       play: play && !buffering,

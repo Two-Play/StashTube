@@ -2704,4 +2704,43 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get markerSaved => 'Marker gespeichert';
+
+  @override
+  String get pinLostTitle => 'Die PIN ist nicht mehr auf diesem Gerät';
+
+  @override
+  String get pinLostBody =>
+      'Die App-Sperre ist an, aber ihre PIN ließ sich nicht aus dem sicheren Speicher des Geräts lesen, zum Beispiel nach dem Wiederherstellen eines Backups.';
+
+  @override
+  String get pinLostBiometricHint =>
+      'Entsperre mit Face ID oder Fingerabdruck, um eine neue PIN festzulegen.';
+
+  @override
+  String get pinLostResetHint =>
+      'Oder setze die App zurück: Alles, was StashTube auf diesem Gerät gespeichert hat, wird entfernt.';
+
+  @override
+  String get resetApp => 'App zurücksetzen';
+
+  @override
+  String get resetAppTitle => 'StashTube zurücksetzen?';
+
+  @override
+  String get resetAppBody =>
+      'Alle Server, Einstellungen, Listen und zwischengespeicherten Bilder werden von diesem Gerät entfernt und die App-Sperre wird ausgeschaltet. Auf deinen Stash-Servern ändert sich nichts.';
+
+  @override
+  String get chooseNewPin => 'Neue PIN festlegen';
+
+  @override
+  String get mediaOriginTitle => 'Bilder und Videos laden eventuell nicht';
+
+  @override
+  String mediaOriginBody(String media, String server) {
+    return 'Stash gibt Medienadressen auf $media heraus, StashTube verbindet sich aber mit $server. Dein API-Key oder Login geht nur an $server, diese Anfragen gehen deshalb ohne ihn raus. Hinter einem Reverse-Proxy: den Host-Header weitergeben und X-Forwarded-Proto setzen.';
+  }
+
+  @override
+  String get mediaOriginHide => 'Ausblenden';
 }

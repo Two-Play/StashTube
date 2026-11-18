@@ -1,3 +1,5 @@
+import '../../core/config/server_config.dart';
+import '../../core/network/origin_guard.dart';
 import '../../data/models/scene.dart';
 import '../../data/models/scene_details.dart';
 import 'cast_service.dart' show CastKind;
@@ -22,10 +24,14 @@ class CastMedia {
 }
 
 /// Cast devices fetch media themselves and can't send the `ApiKey` header,
-/// so the key goes into the URL (Stash also accepts `?apikey=`).
-String withApiKey(String url, String? apiKey) {
-  if (apiKey == null || apiKey.isEmpty) return url;
-  final uri = Uri.parse(url);
+/// so [server]'s key goes into the URL (Stash also accepts `?apikey=`);
+/// only for URLs on the server itself, never for one pointing elsewhere.
+String withApiKey(String url, ServerConfig? server) {
+  final apiKey = server?.apiKey;
+  if (server == null || apiKey == null || apiKey.isEmpty) return url;
+  final uri = Uri.tryParse(url);
+  final origin = Uri.tryParse(server.baseUrl);
+  if (uri == null || origin == null || !sameOrigin(uri, origin)) return url;
   return uri.replace(queryParameters: {...uri.queryParameters, 'apikey': apiKey}).toString();
 }
 
@@ -71,18 +77,18 @@ String withApiKey(String url, String? apiKey) {
 CastMedia castMediaFor(
   Scene scene,
   SceneDetails? details, {
-  String? apiKey,
+  ServerConfig? server,
   Duration start = Duration.zero,
   CastKind kind = CastKind.googleCast,
 }) {
   final stream = kind == CastKind.airPlay ? pickAirPlayStream(scene, details) : pickCastStream(scene, details);
   final image = scene.screenshotUrl;
   return CastMedia(
-    url: withApiKey(stream.url, apiKey),
+    url: withApiKey(stream.url, server),
     contentType: stream.contentType,
     title: scene.title,
     subtitle: scene.studio?.name ?? scene.performers.firstOrNull?.name,
-    imageUrl: image == null ? null : withApiKey(image, apiKey),
+    imageUrl: image == null ? null : withApiKey(image, server),
     start: start,
   );
 }

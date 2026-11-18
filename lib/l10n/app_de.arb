@@ -762,5 +762,16 @@
   "markerDeleteConfirm": "„{title}“ bei {time} wird aus der Szene entfernt.",
   "markerDeleteAction": "Löschen",
   "markerDeleted": "Marker gelöscht",
-  "markerSaved": "Marker gespeichert"
+  "markerSaved": "Marker gespeichert",
+  "pinLostTitle": "Die PIN ist nicht mehr auf diesem Gerät",
+  "pinLostBody": "Die App-Sperre ist an, aber ihre PIN ließ sich nicht aus dem sicheren Speicher des Geräts lesen, zum Beispiel nach dem Wiederherstellen eines Backups.",
+  "pinLostBiometricHint": "Entsperre mit Face ID oder Fingerabdruck, um eine neue PIN festzulegen.",
+  "pinLostResetHint": "Oder setze die App zurück: Alles, was StashTube auf diesem Gerät gespeichert hat, wird entfernt.",
+  "resetApp": "App zurücksetzen",
+  "resetAppTitle": "StashTube zurücksetzen?",
+  "resetAppBody": "Alle Server, Einstellungen, Listen und zwischengespeicherten Bilder werden von diesem Gerät entfernt und die App-Sperre wird ausgeschaltet. Auf deinen Stash-Servern ändert sich nichts.",
+  "chooseNewPin": "Neue PIN festlegen",
+  "mediaOriginTitle": "Bilder und Videos laden eventuell nicht",
+  "mediaOriginBody": "Stash gibt Medienadressen auf {media} heraus, StashTube verbindet sich aber mit {server}. Dein API-Key oder Login geht nur an {server}, diese Anfragen gehen deshalb ohne ihn raus. Hinter einem Reverse-Proxy: den Host-Header weitergeben und X-Forwarded-Proto setzen.",
+  "mediaOriginHide": "Ausblenden"
 }

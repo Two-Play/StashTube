@@ -55,6 +55,26 @@ class ServerConfig {
     return key == null || key.isEmpty ? const {} : {'ApiKey': key};
   }
 
+  /// [baseUrl] without the user info (`user:password@`) a URL may carry
+  /// for a proxy's basic auth: for showing, and for links that leave the
+  /// app.
+  String get displayUrl => withoutUserInfo(baseUrl);
+
+  /// [url] without `user:password@`.
+  static String withoutUserInfo(String url) {
+    final uri = Uri.tryParse(url);
+    if (uri == null || uri.userInfo.isEmpty) return url;
+    return uri.replace(userInfo: '').toString();
+  }
+
+  /// [url] with [userInfo] (`user:password`) put back, as stored apart
+  /// from it.
+  static String withUserInfo(String url, String? userInfo) {
+    final uri = Uri.tryParse(url);
+    if (uri == null || userInfo == null || userInfo.isEmpty) return url;
+    return uri.replace(userInfo: userInfo).toString();
+  }
+
   /// True for plain HTTP to a server outside the home network: the API key
   /// and everything watched would cross the internet unencrypted.
   bool get isUnencryptedOverInternet {
@@ -136,7 +156,9 @@ class ServerConfig {
 }
 
 /// A saved Stash server (2.6). Its API key and password live in the
-/// [SecretStore] (2.5), not in the stored JSON.
+/// [SecretStore] (2.5), not in the stored JSON; so does user info in its
+/// URL (`https://user:password@host`, a proxy's basic auth): the JSON keeps
+/// the URL without it ([urlAuthSecret]).
 @immutable
 class ServerProfile {
   const ServerProfile({
@@ -185,12 +207,33 @@ class ServerProfile {
 
   static String apiKeySecret(String id) => 'api_key:$id';
   static String passwordSecret(String id) => 'password:$id';
+  static String urlAuthSecret(String id) => 'url_auth:$id';
+
+  /// The user info of [baseUrl] (`user:password`), kept as a secret; null
+  /// without.
+  String? get urlAuth {
+    final info = Uri.tryParse(baseUrl)?.userInfo;
+    return info == null || info.isEmpty ? null : info;
+  }
 
   /// Without the secrets.
-  Map<String, dynamic> toJson() => {'id': id, 'name': name, 'url': baseUrl, if (username != null) 'username': username};
+  Map<String, dynamic> toJson() => {
+        'id': id,
+        'name': name,
+        'url': ServerConfig.withoutUserInfo(baseUrl),
+        if (username != null) 'username': username,
+      };
 
-  /// Null for an entry that can't be read. Versions before 2.5 stored the
-  /// API key in the JSON; it is moved to the secret store on load.
+  /// Whether a stored entry still has secrets in its JSON (API key of
+  /// versions before 2.5, user info in the URL, stored by older versions),
+  /// which saving it again moves to the secret store.
+  static bool hasSecretsInJson(Map<String, dynamic> json) {
+    final url = json['url'];
+    return json.containsKey('apiKey') || (url is String && (Uri.tryParse(url)?.userInfo.isNotEmpty ?? false));
+  }
+
+  /// Null for an entry that can't be read. Secrets still in the JSON
+  /// ([hasSecretsInJson]) are used and moved to the secret store on load.
   static ServerProfile? tryFromJson(Map<String, dynamic> json, SecretStore secrets) {
     final id = json['id'];
     final url = json['url'];
@@ -198,10 +241,11 @@ class ServerProfile {
     final legacyKey = json['apiKey'];
     final username = json['username'];
     if (id is! String || id.isEmpty || url is! String || url.isEmpty) return null;
+    final storedAuth = Uri.tryParse(url)?.userInfo ?? '';
     return ServerProfile(
       id: id,
       name: name is String && name.isNotEmpty ? name : defaultName(url),
-      baseUrl: url,
+      baseUrl: storedAuth.isNotEmpty ? url : ServerConfig.withUserInfo(url, secrets.read(urlAuthSecret(id))),
       apiKey: secrets.read(apiKeySecret(id)) ?? (legacyKey is String ? legacyKey : null),
       username: username is String ? username : null,
       password: secrets.read(passwordSecret(id)),
@@ -244,8 +288,8 @@ class ServerProfilesNotifier extends Notifier<ServerProfiles> {
         profiles: [for (final p in json) ?ServerProfile.tryFromJson(p, _secrets)],
         activeId: prefs.getString(_activeKey),
       );
-      // Move API keys of older versions out of the preferences.
-      if (json.any((p) => p.containsKey('apiKey'))) _persist(profiles);
+      // Move API keys and URL passwords of older versions out of the preferences.
+      if (json.any(ServerProfile.hasSecretsInJson)) _persist(profiles);
       _moveLegacyLists(prefs, profiles.profiles.firstOrNull?.id);
       return profiles;
     }
@@ -311,6 +355,7 @@ class ServerProfilesNotifier extends Notifier<ServerProfiles> {
     for (final p in value.profiles) {
       await _secrets.write(ServerProfile.apiKeySecret(p.id), p.apiKey);
       await _secrets.write(ServerProfile.passwordSecret(p.id), p.password);
+      await _secrets.write(ServerProfile.urlAuthSecret(p.id), p.urlAuth);
     }
     await prefs.setString(_profilesKey, jsonEncode([for (final p in value.profiles) p.toJson()]));
     if (value.activeId == null) {

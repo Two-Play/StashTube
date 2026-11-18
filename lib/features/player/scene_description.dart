@@ -134,7 +134,7 @@ class SceneDescriptionSheet extends ConsumerWidget {
                   OutlinedButton.icon(
                     icon: const Icon(Icons.open_in_new),
                     label: Text(l.openInStash),
-                    onPressed: () => openExternalUrl(context, stashSceneWebUrl(server.baseUrl, scene.id)),
+                    onPressed: () => openExternalUrl(context, stashSceneWebUrl(server.displayUrl, scene.id)),
                   ),
               ],
             ),

@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -60,6 +61,16 @@ void main() {
     );
   });
 
+  test('a login that never answers times out as unreachable', () async {
+    final hanging = MockClient((_) => Completer<http.Response>().future);
+    await expectLater(
+      stashLogin(hanging, _login, timeout: const Duration(milliseconds: 10)),
+      throwsA(isA<StashApiException>()
+          .having((e) => e.isNetworkError, 'isNetworkError', isTrue)
+          .having((e) => e.kind, 'kind', StashErrorKind.unreachable)),
+    );
+  });
+
   test('a login is only used without an API key', () {
     expect(_login.usesSession, isTrue);
     expect(const ServerConfig(baseUrl: 'http://s', apiKey: 'k', username: 'me', password: 'pw').usesSession, isFalse);
@@ -83,6 +94,7 @@ void main() {
 
     StashSessionClient client() => StashSessionClient(
           stash.client,
+          origin: Uri.parse('http://s'),
           ensure: () => container.read(stashSessionProvider.notifier).ensure(),
           renew: () => container.read(stashSessionProvider.notifier).renew(),
         );
@@ -91,7 +103,24 @@ void main() {
       final response = await client().post(Uri.parse('http://s/graphql'), body: '{"query":"q"}');
       expect(response.statusCode, 200);
       expect(stash.graphqlCookies, ['session=s1']);
-      expect(container.read(authHeadersProvider), {'Cookie': 'session=s1'}, reason: 'for images and streams');
+      expect(container.read(authHeadersProvider).forUrl('http://s/image'), {'Cookie': 'session=s1'}, reason: 'for images and streams');
+      expect(container.read(authHeadersProvider).forUrl('http://elsewhere/image'), isEmpty);
+    });
+
+    test('requests to another origin get no cookie and sign nobody in', () async {
+      final sent = <Map<String, String>>[];
+      final foreign = StashSessionClient(
+        MockClient((r) async {
+          sent.add(r.headers);
+          return http.Response('', 200);
+        }),
+        origin: Uri.parse('http://s'),
+        ensure: () => container.read(stashSessionProvider.notifier).ensure(),
+        renew: () => container.read(stashSessionProvider.notifier).renew(),
+      );
+      await foreign.get(Uri.parse('http://cdn.example/image.jpg'));
+      expect(sent.single, isNot(contains('Cookie')));
+      expect(stash.logins, 0);
     });
 
     test('signs in again when the server rejects the cookie, repeating the request', () async {

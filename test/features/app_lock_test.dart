@@ -7,6 +7,7 @@ import 'package:stash_app_mobile/core/config/secret_store.dart';
 import 'package:stash_app_mobile/core/config/server_config.dart';
 import 'package:stash_app_mobile/features/security/app_lock.dart';
 import 'package:stash_app_mobile/features/security/app_lock_gate.dart';
+import 'package:stash_app_mobile/features/security/pin_hash.dart';
 
 class FakeBiometrics implements BiometricAuth {
   FakeBiometrics({this.succeed = true});
@@ -47,10 +48,28 @@ void main() {
     return c;
   }
 
-  test('PIN hashes depend on the salt and never equal the PIN', () {
-    expect(hashPin('1234', 'a'), hashPin('1234', 'a'));
-    expect(hashPin('1234', 'a'), isNot(hashPin('1234', 'b')));
-    expect(hashPin('1234', 'a'), isNot(contains('1234')));
+  test('legacy PIN hashes depend on the salt and never equal the PIN', () {
+    expect(legacyHashPin('1234', 'a'), legacyHashPin('1234', 'a'));
+    expect(legacyHashPin('1234', 'a'), isNot(legacyHashPin('1234', 'b')));
+    expect(legacyHashPin('1234', 'a'), isNot(contains('1234')));
+  });
+
+  test('PBKDF2-HMAC-SHA256 matches the RFC 7914 test vector', () {
+    String hex(List<int> b) => b.map((x) => x.toRadixString(16).padLeft(2, '0')).join();
+    expect(hex(pbkdf2Sha256('passwd'.codeUnits, 'salt'.codeUnits, 1)),
+        '55ac046e56e3089fec1691c22544b605f94185216dde0465e68b9d57c20dacbc');
+  });
+
+  test('a stored PIN round-trips and only matches its PIN', () async {
+    final stored = await StoredPin.create('2580');
+    expect(stored.isLegacy, isFalse);
+    final parsed = StoredPin.parse(stored.encode())!;
+    expect(parsed.rounds, StoredPin.iterations);
+    expect(await parsed.matches('2580'), isTrue);
+    expect(await parsed.matches('2581'), isFalse);
+    expect(StoredPin.parse('pbkdf2-sha256\$x\$s\$h'), isNull);
+    expect(StoredPin.parse('garbage'), isNull);
+    expect(StoredPin.parse('salt:${legacyHashPin('1', 'salt')}')!.isLegacy, isTrue);
   });
 
   test('enable stores only a salted hash; verify and disable', () async {
@@ -59,36 +78,78 @@ void main() {
     await settings.enable('2580');
     expect(c.read(appLockSettingsProvider).enabled, isTrue);
     expect(prefs.getKeys().map(prefs.get), isNot(contains('2580')));
-    expect(settings.verify('2580'), isTrue);
-    expect(settings.verify('0000'), isFalse);
+    expect(await settings.verify('2580'), isTrue);
+    expect(await settings.verify('0000'), isFalse);
 
     await settings.disable();
     expect(c.read(appLockSettingsProvider).enabled, isFalse);
-    expect(settings.verify('2580'), isFalse);
+    expect(await settings.verify('2580'), isFalse);
   });
 
-  test('the PIN hash is kept in the secret store, as one value', () async {
+  test('the PIN hash is kept in the secret store, as one PBKDF2 value', () async {
     final c = container();
     await c.read(appLockSettingsProvider.notifier).enable('2580');
-    expect(secrets.read('lock_pin'), matches(RegExp(r'^[^:]+:[0-9a-f]{64}$')));
+    expect(secrets.read('lock_pin'), matches(RegExp(r'^pbkdf2-sha256\$\d+\$[^$]+\$[^$]+$')));
     expect(prefs.getKeys().where((k) => k.startsWith('lock_pin_') && k != 'lock_pin_length'), isEmpty);
-    expect(container().read(appLockSettingsProvider.notifier).verify('2580'), isTrue, reason: 'after a restart');
+    expect(await container().read(appLockSettingsProvider.notifier).verify('2580'), isTrue, reason: 'after a restart');
   });
 
-  test('a PIN of an older version moves out of SharedPreferences', () async {
+  test('a PIN of an older version moves out of SharedPreferences and is upgraded', () async {
     SharedPreferences.setMockInitialValues({
       'lock_enabled': true,
       'lock_pin_salt': 'salt',
-      'lock_pin_hash': hashPin('1234', 'salt'),
+      'lock_pin_hash': legacyHashPin('1234', 'salt'),
     });
     prefs = await SharedPreferences.getInstance();
     final c = container();
     expect(c.read(appLockSettingsProvider).enabled, isTrue);
-    expect(c.read(appLockSettingsProvider.notifier).verify('1234'), isTrue);
     await pumpEventQueue();
     expect(prefs.getString('lock_pin_hash'), isNull);
-    expect(secrets.read('lock_pin'), 'salt:${hashPin('1234', 'salt')}');
-    expect(container().read(appLockSettingsProvider.notifier).verify('1234'), isTrue);
+    expect(secrets.read('lock_pin'), 'salt:${legacyHashPin('1234', 'salt')}', reason: 'moved as it was');
+    expect(await c.read(appLockSettingsProvider.notifier).verify('1234'), isTrue);
+    expect(secrets.read('lock_pin'), startsWith('pbkdf2-sha256\$'), reason: 'upgraded after the right PIN');
+    expect(await container().read(appLockSettingsProvider.notifier).verify('1234'), isTrue);
+  });
+
+  test('a legacy SHA-256 PIN stays until the right PIN, then becomes PBKDF2', () async {
+    secrets.values['lock_pin'] = 'salt:${legacyHashPin('1234', 'salt')}';
+    await prefs.setBool('lock_enabled', true);
+    final settings = container().read(appLockSettingsProvider.notifier);
+    expect(await settings.verify('0000'), isFalse);
+    expect(secrets.read('lock_pin'), startsWith('salt:'), reason: 'a wrong PIN changes nothing');
+    expect(await settings.verify('1234'), isTrue);
+    expect(StoredPin.parse(secrets.read('lock_pin'))!.isLegacy, isFalse);
+    expect(await container().read(appLockSettingsProvider.notifier).verify('1234'), isTrue);
+    expect(await container().read(appLockSettingsProvider.notifier).verify('0000'), isFalse);
+  });
+
+  test('a lock whose PIN is lost stays on and locked', () async {
+    await prefs.setBool('lock_enabled', true);
+    final c = container();
+    final settings = c.read(appLockSettingsProvider);
+    expect(settings.enabled, isTrue, reason: 'an unreadable secure storage must not open the app');
+    expect(settings.pinLost, isTrue);
+    expect(c.read(appLockedProvider), isTrue);
+    expect(await c.read(appLockSettingsProvider.notifier).verify('1234'), isFalse);
+
+    await c.read(appLockSettingsProvider.notifier).enable('4321');
+    expect(c.read(appLockSettingsProvider).pinLost, isFalse);
+    expect(await c.read(appLockSettingsProvider.notifier).verify('4321'), isTrue);
+  });
+
+  test('resetting the app removes everything and turns the lock off', () async {
+    await prefs.setBool('lock_enabled', true);
+    await prefs.setString('server_profiles', '[{"id":"1","name":"s","url":"http://s"}]');
+    await prefs.setString('active_server', '1');
+    secrets.values['api_key:1'] = 'k';
+    final c = container();
+    expect(c.read(serverProfilesProvider).profiles, hasLength(1));
+    await c.read(appLockSettingsProvider.notifier).resetApp();
+    expect(prefs.getKeys(), isEmpty);
+    expect(secrets.values, isEmpty);
+    expect(c.read(appLockSettingsProvider).enabled, isFalse);
+    expect(c.read(appLockedProvider), isFalse);
+    expect(c.read(serverProfilesProvider).profiles, isEmpty);
   });
 
   test('wrong PINs block the PIN for a growing time, across restarts', () async {
@@ -99,12 +160,12 @@ void main() {
     final settings = c.read(appLockSettingsProvider.notifier);
 
     for (var i = 0; i < PinThrottle.freeAttempts - 1; i++) {
-      expect(settings.verify('0000'), isFalse);
+      expect(await settings.verify('0000'), isFalse);
     }
     expect(throttle.remaining(), Duration.zero, reason: 'a few mistakes are free');
-    expect(settings.verify('0000'), isFalse);
+    expect(await settings.verify('0000'), isFalse);
     expect(throttle.remaining(), const Duration(seconds: 30));
-    expect(settings.verify('1234'), isFalse, reason: 'even the right PIN has to wait');
+    expect(await settings.verify('1234'), isFalse, reason: 'even the right PIN has to wait');
 
     // Restarting the app doesn't help.
     c = container();
@@ -113,7 +174,7 @@ void main() {
 
     now = now.add(const Duration(seconds: 31));
     expect(throttle.remaining(), Duration.zero);
-    expect(c.read(appLockSettingsProvider.notifier).verify('0000'), isFalse);
+    expect(await c.read(appLockSettingsProvider.notifier).verify('0000'), isFalse);
     expect(throttle.remaining(), const Duration(minutes: 1), reason: 'the next mistake waits longer');
 
     // Setting the clock back doesn't stretch the wait beyond the delay.
@@ -121,7 +182,7 @@ void main() {
     expect(throttle.remaining(), const Duration(minutes: 1));
 
     now = now.add(const Duration(days: 2));
-    expect(c.read(appLockSettingsProvider.notifier).verify('1234'), isTrue);
+    expect(await c.read(appLockSettingsProvider.notifier).verify('1234'), isTrue);
     expect(c.read(pinThrottleProvider).failures, 0, reason: 'a successful unlock starts over');
     expect(prefs.getInt('lock_failed_attempts'), isNull);
   });
@@ -254,6 +315,47 @@ void main() {
     final c = await pumpGate(tester);
     expect(biometrics.calls, 1);
     expect(c.read(appLockedProvider), isFalse);
+  });
+
+  testWidgets('a lost PIN keeps the app locked; resetting it starts over', (tester) async {
+    await prefs.setBool('lock_enabled', true);
+    await prefs.setString('server_profiles', '[{"id":"1","name":"s","url":"http://s"}]');
+    final c = await pumpGate(tester);
+    expect(c.read(appLockedProvider), isTrue);
+    expect(find.text('The PIN is no longer on this device'), findsOneWidget);
+    expect(find.descendant(of: find.byType(LockScreen), matching: find.text('1')), findsNothing,
+        reason: 'no PIN pad: there is no PIN to check');
+
+    await tester.tap(find.text('Reset app'));
+    await tester.pumpAndSettle();
+    expect(find.text('Reset StashTube?'), findsOneWidget);
+    await tester.tap(find.text('Cancel'));
+    await tester.pumpAndSettle();
+    expect(find.text('The PIN is no longer on this device'), findsOneWidget);
+
+    await tester.tap(find.text('Reset app'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.widgetWithText(FilledButton, 'Reset app'));
+    await tester.pumpAndSettle();
+    expect(c.read(appLockedProvider), isFalse);
+    expect(find.byType(LockScreen), findsNothing);
+    expect(prefs.getKeys(), isEmpty);
+    expect(c.read(serverProfilesProvider).profiles, isEmpty);
+  });
+
+  testWidgets('a lost PIN with biometrics: unlocking asks for a new PIN first', (tester) async {
+    await prefs.setBool('lock_enabled', true);
+    await prefs.setBool('lock_biometrics', true);
+    final c = await pumpGate(tester);
+    expect(biometrics.calls, 1);
+    expect(c.read(appLockedProvider), isTrue, reason: 'not open without a PIN for next time');
+    expect(find.text('Choose a new PIN'), findsOneWidget);
+
+    await enterPin(tester, '2468');
+    await enterPin(tester, '2468');
+    expect(c.read(appLockedProvider), isFalse);
+    expect(c.read(appLockSettingsProvider).pinLost, isFalse);
+    expect(await tester.runAsync(() => c.read(appLockSettingsProvider.notifier).verify('2468')), isTrue);
   });
 
   testWidgets('app switcher cover appears while inactive when enabled', (tester) async {

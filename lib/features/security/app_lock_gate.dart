@@ -152,6 +152,9 @@ class _LockScreenBodyState extends ConsumerState<_LockScreenBody> {
   bool _askBiometrics = true;
   bool _asking = false;
 
+  /// After biometrics while the PIN is lost: a new PIN is being chosen.
+  bool _choosingPin = false;
+
   @override
   void initState() {
     super.initState();
@@ -183,15 +186,43 @@ class _LockScreenBodyState extends ConsumerState<_LockScreenBody> {
       final ok = await ref.read(biometricAuthProvider).authenticate(context.l10n.unlockReason);
       if (!ok || !mounted) return;
       ref.read(pinThrottleProvider.notifier).reset();
+      // Without a PIN the lock would be useless after unlocking: a new one first.
+      if (ref.read(appLockSettingsProvider).pinLost) {
+        setState(() => _choosingPin = true);
+        return;
+      }
       ref.read(appLockedProvider.notifier).unlock();
     } finally {
       _asking = false;
     }
   }
 
+  Future<void> _setNewPin(String pin) async {
+    await ref.read(appLockSettingsProvider.notifier).enable(pin);
+    if (!mounted) return;
+    Haptics.medium();
+    _choosingPin = false;
+    ref.read(appLockedProvider.notifier).unlock();
+  }
+
   @override
   Widget build(BuildContext context) {
     final settings = ref.watch(appLockSettingsProvider);
+    if (settings.pinLost) {
+      if (_choosingPin) {
+        return ScreenLock.create(
+          title: Text(context.l10n.chooseNewPin),
+          confirmTitle: Text(context.l10n.repeatPin),
+          useBlur: false,
+          onConfirmed: _setNewPin,
+          onCancelled: () => setState(() => _choosingPin = false),
+        );
+      }
+      return PinLostView(
+        onBiometric: settings.biometrics ? _biometric : null,
+        onReset: () => ref.read(appLockSettingsProvider.notifier).resetApp(),
+      );
+    }
     ref.watch(pinThrottleProvider);
     final throttle = ref.read(pinThrottleProvider.notifier);
 
@@ -285,6 +316,104 @@ class _PinBlockedViewState extends State<PinBlockedView> {
               ),
             ],
           ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Shown instead of the PIN pad when the lock is on but its PIN can't be
+/// read ([AppLockSettings.pinLost]): biometrics lead to a new PIN; without
+/// them, the only way in is resetting the app, asked once more inline (the
+/// lock screen sits above the navigator, so no dialog).
+class PinLostView extends StatefulWidget {
+  const PinLostView({super.key, required this.onReset, this.onBiometric});
+
+  final VoidCallback? onBiometric;
+  final Future<void> Function() onReset;
+
+  @override
+  State<PinLostView> createState() => _PinLostViewState();
+}
+
+class _PinLostViewState extends State<PinLostView> {
+  bool _confirming = false;
+  bool _resetting = false;
+
+  Future<void> _reset() async {
+    setState(() => _resetting = true);
+    try {
+      await widget.onReset();
+    } finally {
+      if (mounted) setState(() => _resetting = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final l = context.l10n;
+    final muted = theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.onSurfaceVariant);
+    final biometric = widget.onBiometric;
+    return SafeArea(
+      child: Center(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(32),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: _confirming
+                ? [
+                    Icon(Icons.restart_alt, size: 56, color: theme.colorScheme.error),
+                    const SizedBox(height: 16),
+                    Text(l.resetAppTitle, textAlign: TextAlign.center, style: theme.textTheme.titleMedium),
+                    const SizedBox(height: 8),
+                    Text(l.resetAppBody, textAlign: TextAlign.center, style: muted),
+                    const SizedBox(height: 24),
+                    Wrap(
+                      alignment: WrapAlignment.center,
+                      spacing: 12,
+                      runSpacing: 8,
+                      children: [
+                        OutlinedButton(
+                          onPressed: _resetting ? null : () => setState(() => _confirming = false),
+                          child: Text(l.cancel),
+                        ),
+                        FilledButton(
+                          style: FilledButton.styleFrom(
+                            backgroundColor: theme.colorScheme.error,
+                            foregroundColor: theme.colorScheme.onError,
+                          ),
+                          onPressed: _resetting ? null : _reset,
+                          child: Text(l.resetApp),
+                        ),
+                      ],
+                    ),
+                  ]
+                : [
+                    Icon(Icons.lock_reset, size: 56, color: theme.colorScheme.onSurfaceVariant),
+                    const SizedBox(height: 16),
+                    Text(l.pinLostTitle, textAlign: TextAlign.center, style: theme.textTheme.titleMedium),
+                    const SizedBox(height: 8),
+                    Text(l.pinLostBody, textAlign: TextAlign.center, style: muted),
+                    if (biometric != null) ...[
+                      const SizedBox(height: 8),
+                      Text(l.pinLostBiometricHint, textAlign: TextAlign.center, style: muted),
+                      const SizedBox(height: 24),
+                      FilledButton.icon(
+                        icon: const Icon(Icons.fingerprint),
+                        label: Text(l.unlockBiometric),
+                        onPressed: biometric,
+                      ),
+                    ],
+                    const SizedBox(height: 16),
+                    Text(l.pinLostResetHint, textAlign: TextAlign.center, style: muted),
+                    const SizedBox(height: 8),
+                    TextButton(
+                      onPressed: () => setState(() => _confirming = true),
+                      child: Text(l.resetApp),
+                    ),
+                  ],
+          ),
         ),
       ),
     );

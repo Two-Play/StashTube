@@ -7,6 +7,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:media_kit/media_kit.dart';
 
 import '../../core/config/haptics.dart';
+import '../../core/config/image_cache.dart';
 import '../../core/config/theme.dart';
 import '../../core/utils/format.dart';
 import '../../data/models/scene_details.dart';
@@ -249,12 +250,13 @@ class _PreviewSeekBarState extends ConsumerState<PreviewSeekBar> {
     final played = _drag ?? _fractionOf(remote?.position ?? _position);
     // The duration or the window may have changed since the last position.
     if (remote == null) _played.value = _fractionOf(_position);
-    final headers = ref.watch(authHeadersProvider);
+    final auth = ref.watch(authHeadersProvider);
     final thumbs = _loadThumbnails ? ref.watch(scrubThumbnailsProvider(widget.sceneId)).value : null;
+    final headers = thumbs == null ? const <String, String>{} : auth.forUrl(thumbs.spriteUrl);
     if (thumbs != null && thumbs.spriteUrl != _precachedSprite) {
       _precachedSprite = thumbs.spriteUrl;
       // Errors are fine: the preview then shows only the time.
-      unawaited(precacheImage(CachedNetworkImageProvider(thumbs.spriteUrl, headers: headers), context,
+      unawaited(precacheImage(CachedNetworkImageProvider(thumbs.spriteUrl, headers: headers, cacheManager: stashImageCacheManager), context,
           onError: (_, _) {}));
     }
     // Like the thumbnails, only once the bar is shown or touched.
@@ -463,7 +465,7 @@ class SpriteFrame extends StatelessWidget {
                 // Natural size: one logical pixel per sprite pixel, so the
                 // cue's pixel coordinates apply directly.
                 child: Image(
-                  image: CachedNetworkImageProvider(spriteUrl, headers: headers),
+                  image: CachedNetworkImageProvider(spriteUrl, headers: headers, cacheManager: stashImageCacheManager),
                   filterQuality: FilterQuality.medium,
                   gaplessPlayback: true,
                 ),

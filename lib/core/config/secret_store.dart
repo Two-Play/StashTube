@@ -16,6 +16,9 @@ abstract interface class SecretStore {
 
   /// Deletes every secret whose key passes [test], e.g. a removed server's.
   Future<void> deleteWhere(bool Function(String key) test);
+
+  /// Deletes every secret, also ones that couldn't be read.
+  Future<void> clear();
 }
 
 class SecureSecretStore implements SecretStore {
@@ -28,7 +31,8 @@ class SecureSecretStore implements SecretStore {
       values = await storage.readAll();
     } catch (e) {
       // Unreadable (e.g. a restored Android backup): start empty, the user
-      // enters the key again.
+      // enters the key again. A PIN lost with it keeps the app locked
+      // (AppLockSettings.pinLost).
       debugPrint('Secure storage unreadable: $e');
       values = {};
     }
@@ -59,6 +63,16 @@ class SecureSecretStore implements SecretStore {
       await write(key, null);
     }
   }
+
+  @override
+  Future<void> clear() async {
+    _cache.clear();
+    try {
+      await _storage.deleteAll();
+    } catch (e) {
+      debugPrint('Secure storage not cleared: $e');
+    }
+  }
 }
 
 /// In memory only: the default in tests, which don't override
@@ -82,6 +96,9 @@ class MemorySecretStore implements SecretStore {
 
   @override
   Future<void> deleteWhere(bool Function(String key) test) async => values.removeWhere((key, _) => test(key));
+
+  @override
+  Future<void> clear() async => values.clear();
 }
 
 /// Overridden in `main()` with the [SecureSecretStore] loaded before `runApp`.

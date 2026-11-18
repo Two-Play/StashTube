@@ -7,6 +7,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:media_kit/media_kit.dart';
 import 'package:media_kit_video/media_kit_video.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:stash_app_mobile/core/network/origin_guard.dart';
 import 'package:stash_app_mobile/core/config/secret_store.dart';
 import 'package:stash_app_mobile/core/config/server_config.dart' show sharedPreferencesProvider;
 import 'package:stash_app_mobile/data/models/scene.dart';
@@ -78,7 +79,7 @@ void main() {
         ...testServer,
         sharedPreferencesProvider.overrideWithValue(prefs),
         secretStoreProvider.overrideWithValue(MemorySecretStore()),
-        authHeadersProvider.overrideWithValue(const {}),
+        authHeadersProvider.overrideWithValue(AuthHeaders.none),
         pipServiceProvider.overrideWithValue(pip),
         heldOrientationProvider.overrideWithValue(turns),
         playerProvider.overrideWithValue(player),

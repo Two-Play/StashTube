@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:stash_app_mobile/core/network/origin_guard.dart';
 import 'package:stash_app_mobile/core/config/server_config.dart';
 import 'package:stash_app_mobile/data/models/list_queries.dart';
 import 'package:stash_app_mobile/data/models/page_result.dart';
@@ -96,7 +97,7 @@ void main() {
       ...testServer,
       sharedPreferencesProvider.overrideWithValue(prefs),
       playerProvider.overrideWithValue(player),
-      authHeadersProvider.overrideWithValue(const {}),
+      authHeadersProvider.overrideWithValue(AuthHeaders.none),
       sceneDetailsProvider('s1').overrideWith((ref) async => details),
       scrubThumbnailsProvider('s1').overrideWith((ref) async => thumbs),
       stashRepositoryProvider.overrideWithValue(repository),

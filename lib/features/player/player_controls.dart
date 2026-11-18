@@ -534,7 +534,7 @@ class _ChapterThumbnailTile extends ConsumerWidget {
                 cue: cue,
                 width: width,
                 height: width * cue.height / cue.width,
-                headers: ref.watch(authHeadersProvider),
+                headers: ref.watch(authHeadersProvider).forUrl(sprite.spriteUrl),
               ),
             ),
           )

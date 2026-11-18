@@ -2,6 +2,7 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:stash_app_mobile/core/network/origin_guard.dart';
 import 'package:stash_app_mobile/data/models/scene.dart';
 import 'package:stash_app_mobile/data/models/scene_details.dart';
 import 'package:stash_app_mobile/data/providers.dart';
@@ -75,7 +76,7 @@ void main() {
         ...testServer,
         playerProvider.overrideWithValue(player),
         scrubThumbnailsProvider('1').overrideWith((ref) async => null),
-        authHeadersProvider.overrideWithValue(const {}),
+        authHeadersProvider.overrideWithValue(AuthHeaders.none),
         sceneDetailsProvider('1').overrideWith((ref) async => const SceneDetails(streams: [])),
         castServiceProvider.overrideWithValue(cast),
         seekSettingsProvider.overrideWith(() => _Seek(seek)),

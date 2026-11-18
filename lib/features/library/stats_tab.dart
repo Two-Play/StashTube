@@ -130,7 +130,7 @@ class _ServerCard extends ConsumerWidget {
             leading: Icon(Icons.dns_outlined, color: statusColor),
             title: Text(server.name, maxLines: 1, overflow: TextOverflow.ellipsis),
             subtitle: Text(
-              '${server.baseUrl}\n$status • ${l.apiKey}: ${server.apiKey == null ? l.notSet : l.isSet}',
+              '${server.config.displayUrl}\n$status • ${l.apiKey}: ${server.apiKey == null ? l.notSet : l.isSet}',
             ),
             isThreeLine: true,
             trailing: const Icon(Icons.edit_outlined),
