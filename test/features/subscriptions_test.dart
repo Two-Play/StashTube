@@ -95,6 +95,37 @@ void main() {
     expect(find.bySemanticsLabel('Anna, new scenes'), findsOneWidget);
   });
 
+  testWidgets('an avatar shows only that performer, "All" and a second tap go back', (tester) async {
+    final repo = _Repo();
+    await pumpPage(tester, repo);
+    expect(find.text('Newest from your favorites'), findsOneWidget);
+    expect(find.bySemanticsLabel('All favorites'), findsOneWidget);
+
+    Future<void> tapAndPump(Finder finder) async {
+      await tester.tap(finder);
+      for (var i = 0; i < 5; i++) {
+        await tester.pump(const Duration(milliseconds: 100));
+      }
+    }
+
+    await tapAndPump(find.text('Bea').first);
+    expect(repo.sceneQueries.last.performerId, 'p2');
+    expect(repo.sceneQueries.last.favoritePerformersOnly, isFalse);
+    expect(find.text('View channel'), findsOneWidget);
+    expect(find.text('Newest from your favorites'), findsNothing);
+    // A tap selects; it doesn't open the channel.
+    expect(find.byType(SubscriptionsPage), findsOneWidget);
+
+    await tapAndPump(find.byKey(const ValueKey('favorites-all')));
+    expect(find.text('Newest from your favorites'), findsOneWidget);
+    expect(find.text('View channel'), findsNothing);
+
+    await tapAndPump(find.text('Anna').first);
+    expect(repo.sceneQueries.last.performerId, 'p1');
+    await tapAndPump(find.text('Anna').first);
+    expect(find.text('Newest from your favorites'), findsOneWidget);
+  });
+
   testWidgets('no dots on the first visit', (tester) async {
     await pumpPage(tester, _Repo());
     expect(find.text('New with Anna'), findsOneWidget);

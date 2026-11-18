@@ -3,7 +3,9 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/config/theme.dart';
 import '../../data/models/scene.dart';
+import '../../l10n/l10n.dart';
 import 'player_controls.dart' show videoAspect;
 import 'player_providers.dart';
 
@@ -48,6 +50,21 @@ class VideoZoom {
   static const snapPanY = 4;
 
   bool get isZoomed => scale > 1 || fill;
+
+  /// Where the pan sticks horizontally, as a share of the box's width: 0.5
+  /// the center, 0 or 1 the video's edge on the box's left or right edge;
+  /// null while it doesn't stick. For [ZoomSnapFeedback]'s guide lines.
+  double? get guideX => _guide(snapPanX, panX);
+
+  /// The same vertically ([guideX]).
+  double? get guideY => _guide(snapPanY, panY);
+
+  double? _guide(int bit, double pan) {
+    if ((snaps & bit) == 0) return null;
+    if (pan == 0) return 0.5;
+    // Moved right (down): the video's left (top) edge sits on the box's.
+    return pan > 0 ? 0 : 1;
+  }
 
   /// The scale at which a video of [aspect] (width / height) covers [box].
   static double coverScale(Size box, double? aspect) {
@@ -225,4 +242,137 @@ class ZoomCounter extends ConsumerWidget {
           Transform(transform: Matrix4.inverted(zoom.matrixIn(constraints.biggest, aspect)), child: child),
     );
   }
+}
+
+/// What a pinch sticks to, shown over the video next to the haptic tick
+/// ([VideoZoom.snaps]): while pinching, a pill with the scale that reads
+/// "Original" (1×, the whole video) or "Fill" (no black bars) and turns to
+/// the accent with a small pop when it sticks there; thin guide lines where
+/// the pan sticks (the center, or the video's edge on the box's). Lives in
+/// the controls (inside [ZoomCounter], so in the box's coordinates), always
+/// in the tree and never taking touches; the video isn't touched. Without
+/// animations (reduced motion) it appears and goes without fading or popping.
+class ZoomSnapFeedback extends ConsumerStatefulWidget {
+  const ZoomSnapFeedback({super.key, required this.pinching});
+
+  /// Two fingers are on the video.
+  final bool pinching;
+
+  static const labelKey = ValueKey('zoomLabel');
+  static const guidesKey = ValueKey('zoomGuides');
+
+  /// How long the pill pops when the scale sticks.
+  static const popDuration = Duration(milliseconds: 180);
+  static const fadeDuration = Duration(milliseconds: 150);
+
+  @override
+  ConsumerState<ZoomSnapFeedback> createState() => _ZoomSnapFeedbackState();
+}
+
+class _ZoomSnapFeedbackState extends ConsumerState<ZoomSnapFeedback> {
+  /// Counts the scale's new snaps: a new value restarts the pop.
+  int _scalePops = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    ref.listenManual(videoZoomProvider, (previous, next) {
+      final newly = next.snaps & ~(previous?.snaps ?? 0);
+      if (mounted && widget.pinching && (newly & VideoZoom.snapScale) != 0) setState(() => _scalePops++);
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final zoom = ref.watch(videoZoomProvider);
+    final l = context.l10n;
+    final scheme = Theme.of(context).colorScheme;
+    final still = MediaQuery.disableAnimationsOf(context);
+    final pinching = widget.pinching;
+    final atFit = !zoom.fill && zoom.scale == 1;
+    final stuck = zoom.fill || atFit;
+    final text = zoom.fill
+        ? l.zoomFill
+        : atFit
+            ? l.zoomOriginal
+            : l.speedValue(double.parse(zoom.scale.toStringAsFixed(1)));
+    final guideX = pinching ? zoom.guideX : null;
+    final guideY = pinching ? zoom.guideY : null;
+    final fade = still ? Duration.zero : ZoomSnapFeedback.fadeDuration;
+    return IgnorePointer(
+      child: ExcludeSemantics(
+        child: Stack(
+          fit: StackFit.expand,
+          children: [
+            AnimatedOpacity(
+              opacity: guideX != null || guideY != null ? 1 : 0,
+              duration: fade,
+              child: CustomPaint(
+                key: ZoomSnapFeedback.guidesKey,
+                painter: SnapGuidesPainter(x: guideX, y: guideY),
+              ),
+            ),
+            Align(
+              alignment: const Alignment(0, -0.75),
+              child: AnimatedOpacity(
+                opacity: pinching ? 1 : 0,
+                duration: fade,
+                child: TweenAnimationBuilder<double>(
+                  // A new key restarts the pop; only the pill is rebuilt.
+                  key: ValueKey(_scalePops),
+                  tween: Tween(begin: still || _scalePops == 0 ? 1 : 1.15, end: 1),
+                  duration: still ? Duration.zero : ZoomSnapFeedback.popDuration,
+                  curve: Curves.easeOutBack,
+                  builder: (context, scale, child) => Transform.scale(scale: scale, child: child),
+                  child: AnimatedContainer(
+                    key: ZoomSnapFeedback.labelKey,
+                    duration: fade,
+                    padding: const EdgeInsets.symmetric(horizontal: AppSpacing.m, vertical: AppSpacing.xs),
+                    decoration: BoxDecoration(
+                      color: stuck ? scheme.primary : AppColors.of(context).videoScrimSoft,
+                      borderRadius: AppRadius.pillBorder,
+                    ),
+                    child: Text(text, style: TextStyle(color: stuck ? scheme.onPrimary : Colors.white)),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Thin white lines across the box where the pan sticks ([VideoZoom.guideX],
+/// [VideoZoom.guideY]), with a soft shadow so they show on bright video.
+@visibleForTesting
+class SnapGuidesPainter extends CustomPainter {
+  const SnapGuidesPainter({required this.x, required this.y});
+
+  final double? x;
+  final double? y;
+
+  static const _width = 1.5;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final line = Paint()
+      ..color = Colors.white.withValues(alpha: 0.85)
+      ..strokeWidth = _width;
+    final shadow = Paint()
+      ..color = Colors.black.withValues(alpha: 0.35)
+      ..strokeWidth = _width * 3;
+    // At an edge the line sits just inside the box.
+    double at(double share, double extent) => (share * extent).clamp(_width, math.max(_width, extent - _width));
+    final x = this.x;
+    final y = this.y;
+    for (final paint in [shadow, line]) {
+      if (x != null) canvas.drawLine(Offset(at(x, size.width), 0), Offset(at(x, size.width), size.height), paint);
+      if (y != null) canvas.drawLine(Offset(0, at(y, size.height)), Offset(size.width, at(y, size.height)), paint);
+    }
+  }
+
+  @override
+  bool shouldRepaint(SnapGuidesPainter old) => old.x != x || old.y != y;
 }

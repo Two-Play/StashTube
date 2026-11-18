@@ -508,6 +508,19 @@
       }
     }
   },
+  "subscriptionsAll": "All",
+  "subscriptionsAllLabel": "All favorites",
+  "subscriptionsLatest": "Newest from your favorites",
+  "subscriptionsViewChannel": "View channel",
+  "subscriptionsPerformerEmpty": "No videos with {name} yet",
+  "@subscriptionsPerformerEmpty": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "subscriptionsSelectHint": "Tap to show only their videos, hold to open the channel",
   "newSinceLastVisit": "{count, plural, =1{1 new video since your last visit} other{{count} new videos since your last visit}}",
   "@newSinceLastVisit": {
     "placeholders": {
@@ -1212,6 +1225,8 @@
   "unknownPerformer": "Unknown performer",
   "playbackSpeed": "Playback speed",
   "speedNormal": "Normal",
+  "zoomOriginal": "Original",
+  "zoomFill": "Fill",
   "speedValue": "{rate}×",
   "@speedValue": {
     "placeholders": {

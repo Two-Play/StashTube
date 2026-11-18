@@ -196,7 +196,7 @@ Alle Quick Wins sind auf `feature/ux-review` umgesetzt (Phase 2, Schritt 1).
 | CTRL-2 | Einmalige Gesten-Tipps, in den Einstellungen erneut zeigbar | ✅ |
 | CTRL-3 | Touch-Sperre im Vollbild | ✅ |
 | PL-1 | Zu Gruppe hinzufügen, neue Gruppe | ✅ |
-| SUB-1 | Abos: Favoriten-Avatare und ihr Feed (optionaler Tab, „Du“, Home) | ✅ |
+| SUB-1 | Abos: Favoriten-Avatare als Auswahl („Alle“ oder ein Darsteller) und ihr Feed (optionaler Tab, „Du“, Home) | ✅ |
 | NOTIF-1 | „N neu seit deinem letzten Besuch“, Meldung bei fertigen Server-Aufgaben (nur in der App) | ✅ |
 | – | Kapitel mit Vorschaubildern, Favorit in der Kanalzeile, „In Stash öffnen“, Würfel, Seh-Diagramm, Wischen zwischen Kanal-Tabs, Bild nach unten wischen zum Schließen, Pfeiltasten in der Suche, Links öffnen | ✅ |
 | – | Sleep-Timer, Offline-Downloads, System-Benachrichtigungen | offen |
