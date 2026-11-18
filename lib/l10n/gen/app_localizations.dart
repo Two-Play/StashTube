@@ -1220,6 +1220,42 @@ abstract class AppLocalizations {
   /// **'{name}, new scenes'**
   String performerHasNewScenes(String name);
 
+  /// No description provided for @subscriptionsAll.
+  ///
+  /// In en, this message translates to:
+  /// **'All'**
+  String get subscriptionsAll;
+
+  /// No description provided for @subscriptionsAllLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'All favorites'**
+  String get subscriptionsAllLabel;
+
+  /// No description provided for @subscriptionsLatest.
+  ///
+  /// In en, this message translates to:
+  /// **'Newest from your favorites'**
+  String get subscriptionsLatest;
+
+  /// No description provided for @subscriptionsViewChannel.
+  ///
+  /// In en, this message translates to:
+  /// **'View channel'**
+  String get subscriptionsViewChannel;
+
+  /// No description provided for @subscriptionsPerformerEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No videos with {name} yet'**
+  String subscriptionsPerformerEmpty(String name);
+
+  /// No description provided for @subscriptionsSelectHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Tap to show only their videos, hold to open the channel'**
+  String get subscriptionsSelectHint;
+
   /// No description provided for @newSinceLastVisit.
   ///
   /// In en, this message translates to:
@@ -3295,6 +3331,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Normal'**
   String get speedNormal;
+
+  /// No description provided for @zoomOriginal.
+  ///
+  /// In en, this message translates to:
+  /// **'Original'**
+  String get zoomOriginal;
+
+  /// No description provided for @zoomFill.
+  ///
+  /// In en, this message translates to:
+  /// **'Fill'**
+  String get zoomFill;
 
   /// No description provided for @speedValue.
   ///

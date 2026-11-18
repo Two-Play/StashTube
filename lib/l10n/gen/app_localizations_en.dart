@@ -806,6 +806,27 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get subscriptionsAll => 'All';
+
+  @override
+  String get subscriptionsAllLabel => 'All favorites';
+
+  @override
+  String get subscriptionsLatest => 'Newest from your favorites';
+
+  @override
+  String get subscriptionsViewChannel => 'View channel';
+
+  @override
+  String subscriptionsPerformerEmpty(String name) {
+    return 'No videos with $name yet';
+  }
+
+  @override
+  String get subscriptionsSelectHint =>
+      'Tap to show only their videos, hold to open the channel';
+
+  @override
   String newSinceLastVisit(int count) {
     String _temp0 = intl.Intl.pluralLogic(
       count,
@@ -2006,6 +2027,12 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get speedNormal => 'Normal';
+
+  @override
+  String get zoomOriginal => 'Original';
+
+  @override
+  String get zoomFill => 'Fill';
 
   @override
   String speedValue(double rate) {

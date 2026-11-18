@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:media_kit_video/media_kit_video.dart';
 
+import '../../widgets/layout_freeze.dart';
 import 'fullscreen_morph.dart';
 import 'held_orientation.dart';
 import 'video_zoom.dart';
@@ -105,8 +106,13 @@ Future<void> enterPlayerFullscreen(BuildContext context, {HeldOrientation? held,
         ),
       );
       _openRoute = route;
+      // The app behind keeps its layout while the window is turned
+      // (LayoutFreeze); PlayerVideo releases it once the screen has turned
+      // back, this only if that never comes.
+      shellLayoutHold.hold();
       route.popped.whenComplete(() {
         if (_openRoute == route) _openRoute = null;
+        shellLayoutHold.releaseLater(const Duration(seconds: 3));
       });
       Navigator.of(context, rootNavigator: true).push(route);
       try {
