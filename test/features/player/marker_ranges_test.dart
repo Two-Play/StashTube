@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:graphql_flutter/graphql_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:stash_app_mobile/core/network/origin_guard.dart';
 import 'package:stash_app_mobile/core/config/server_config.dart';
 import 'package:stash_app_mobile/data/models/list_queries.dart';
 import 'package:stash_app_mobile/data/models/marker.dart';
@@ -191,7 +192,7 @@ void main() {
         overrides: [
           playerProvider.overrideWithValue(FakePlayer()),
           scrubThumbnailsProvider('1').overrideWith((ref) async => null),
-          authHeadersProvider.overrideWithValue(const {}),
+          authHeadersProvider.overrideWithValue(AuthHeaders.none),
           sceneDetailsProvider('1').overrideWith((ref) async => details),
         ],
         child: const MaterialApp(
@@ -237,7 +238,7 @@ void main() {
       await tester.pumpWidget(ProviderScope(
         overrides: [
           playerProvider.overrideWithValue(player),
-          authHeadersProvider.overrideWithValue(const {}),
+          authHeadersProvider.overrideWithValue(AuthHeaders.none),
           ...testServer,
         ],
         child: const MaterialApp(home: Scaffold(body: ChapterList(sceneId: '1', details: details))),
@@ -345,7 +346,7 @@ void main() {
         overrides: [
           ...testServer,
           sharedPreferencesProvider.overrideWithValue(prefs),
-          authHeadersProvider.overrideWithValue(const {}),
+          authHeadersProvider.overrideWithValue(AuthHeaders.none),
           stashRepositoryProvider.overrideWithValue(repo),
           sceneDetailsProvider('s1').overrideWith((ref) async => const SceneDetails(markerRanges: true)),
           playerProvider.overrideWithValue(FakePlayer(position: const Duration(seconds: 30))),
@@ -417,7 +418,7 @@ void main() {
 
   testWidgets('a ranged marker tile shows its range and length', (tester) async {
     await tester.pumpWidget(ProviderScope(
-      overrides: [...testServer, authHeadersProvider.overrideWithValue(const {})],
+      overrides: [...testServer, authHeadersProvider.overrideWithValue(AuthHeaders.none)],
       child: const MaterialApp(
         home: Scaffold(
           body: SizedBox(

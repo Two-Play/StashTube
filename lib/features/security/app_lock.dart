@@ -1,14 +1,12 @@
-import 'dart:convert';
-import 'dart:math';
-
-import 'package:crypto/crypto.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:local_auth/local_auth.dart';
 
+import '../../core/config/image_cache.dart';
 import '../../core/config/secret_store.dart';
 import '../../core/config/server_config.dart';
+import 'pin_hash.dart';
 
 /// App lock (11.1) and app switcher privacy (11.2) settings.
 @immutable
@@ -19,9 +17,16 @@ class AppLockSettings {
     this.lockAfter = Duration.zero,
     this.hideInSwitcher = false,
     this.pinLength = 4,
+    this.pinLost = false,
   });
 
   final bool enabled;
+
+  /// The lock is on, but its PIN is gone: the secure storage couldn't be
+  /// read (e.g. after a restore or a Keystore problem) or no longer has it.
+  /// The app stays locked; the lock screen offers biometrics (then a new
+  /// PIN) or resetting the app instead of the PIN pad.
+  final bool pinLost;
   final bool biometrics;
 
   /// How long the app may be in the background before it locks again.
@@ -33,18 +38,23 @@ class AppLockSettings {
   /// inactive: always with the lock on, else by [hideInSwitcher].
   bool get hidesApp => enabled || hideInSwitcher;
 
-  AppLockSettings copyWith({bool? enabled, bool? biometrics, Duration? lockAfter, bool? hideInSwitcher, int? pinLength}) =>
+  AppLockSettings copyWith({
+    bool? enabled,
+    bool? biometrics,
+    Duration? lockAfter,
+    bool? hideInSwitcher,
+    int? pinLength,
+    bool? pinLost,
+  }) =>
       AppLockSettings(
         enabled: enabled ?? this.enabled,
         biometrics: biometrics ?? this.biometrics,
         lockAfter: lockAfter ?? this.lockAfter,
         hideInSwitcher: hideInSwitcher ?? this.hideInSwitcher,
         pinLength: pinLength ?? this.pinLength,
+        pinLost: pinLost ?? this.pinLost,
       );
 }
-
-/// Salted SHA-256 of a PIN; the PIN itself is never stored.
-String hashPin(String pin, String salt) => sha256.convert(utf8.encode('$salt:$pin')).toString();
 
 class AppLockSettingsNotifier extends Notifier<AppLockSettings> {
   static const _enabled = 'lock_enabled';
@@ -53,24 +63,21 @@ class AppLockSettingsNotifier extends Notifier<AppLockSettings> {
   static const _hide = 'lock_hide_in_switcher';
   static const _pinLength = 'lock_pin_length';
 
-  /// `<salt>:<hash>` in the [SecretStore]: one value, so changing the PIN
-  /// can't leave a new salt with the old hash.
+  /// The PIN's hash in the [SecretStore] ([StoredPin.encode]): one value, so
+  /// changing the PIN can't leave a new salt with the old hash.
   static const _pin = 'lock_pin';
   // Where versions before the secret store kept them (SharedPreferences).
   static const _legacySalt = 'lock_pin_salt';
   static const _legacyHash = 'lock_pin_hash';
 
-  /// Salt and hash of the PIN, or null when none is set.
-  ({String salt, String hash})? _storedPin() {
-    final stored = ref.read(secretStoreProvider).read(_pin);
-    final separator = stored?.indexOf(':') ?? -1;
-    if (stored != null && separator > 0) {
-      return (salt: stored.substring(0, separator), hash: stored.substring(separator + 1));
-    }
+  /// The stored PIN hash, or null when none is set.
+  StoredPin? _storedPin() {
+    final stored = StoredPin.parse(ref.read(secretStoreProvider).read(_pin));
+    if (stored != null) return stored;
     final prefs = ref.read(sharedPreferencesProvider);
     final salt = prefs.getString(_legacySalt);
     final hash = prefs.getString(_legacyHash);
-    return salt == null || hash == null ? null : (salt: salt, hash: hash);
+    return salt == null || hash == null ? null : StoredPin.legacy(salt, hash);
   }
 
   @override
@@ -80,14 +87,17 @@ class AppLockSettingsNotifier extends Notifier<AppLockSettings> {
     final pin = _storedPin();
     if (pin != null && secrets.read(_pin) == null) {
       // Move a PIN of an older version out of SharedPreferences.
-      secrets.write(_pin, '${pin.salt}:${pin.hash}').then((_) async {
+      secrets.write(_pin, pin.encode()).then((_) async {
         await prefs.remove(_legacySalt);
         await prefs.remove(_legacyHash);
       });
     }
+    final enabled = prefs.getBool(_enabled) ?? false;
     return AppLockSettings(
-      // Only "enabled" when a PIN exists, so a half-set-up lock can't lock out.
-      enabled: (prefs.getBool(_enabled) ?? false) && pin != null,
+      // A lock that is on stays on without its PIN (pinLost): failing to
+      // read the secure storage must not open the app.
+      enabled: enabled,
+      pinLost: enabled && pin == null,
       biometrics: prefs.getBool(_biometrics) ?? false,
       lockAfter: Duration(seconds: prefs.getInt(_lockAfter) ?? 0),
       hideInSwitcher: prefs.getBool(_hide) ?? false,
@@ -95,19 +105,20 @@ class AppLockSettingsNotifier extends Notifier<AppLockSettings> {
     );
   }
 
-  /// Turns the lock on with a new PIN (also used to change the PIN).
+  /// Turns the lock on with a new PIN (also used to change the PIN, and to
+  /// set one after it was lost).
   Future<void> enable(String pin) async {
     final prefs = ref.read(sharedPreferencesProvider);
-    final random = Random.secure();
-    final salt = base64Encode(List<int>.generate(16, (_) => random.nextInt(256)));
-    await ref.read(secretStoreProvider).write(_pin, '$salt:${hashPin(pin, salt)}');
+    final stored = await StoredPin.create(pin);
+    // The PIN first: "enabled" must never be stored without it.
+    await ref.read(secretStoreProvider).write(_pin, stored.encode());
     await prefs.remove(_legacySalt);
     await prefs.remove(_legacyHash);
     await prefs.setInt(_pinLength, pin.length);
     await prefs.setBool(_enabled, true);
     if (!ref.mounted) return;
     ref.read(pinThrottleProvider.notifier).reset();
-    state = state.copyWith(enabled: true, pinLength: pin.length);
+    state = state.copyWith(enabled: true, pinLength: pin.length, pinLost: false);
   }
 
   Future<void> disable() async {
@@ -118,22 +129,58 @@ class AppLockSettingsNotifier extends Notifier<AppLockSettings> {
     await prefs.setBool(_enabled, false);
     await prefs.setBool(_biometrics, false);
     if (!ref.mounted) return;
-    state = state.copyWith(enabled: false, biometrics: false);
+    state = state.copyWith(enabled: false, biometrics: false, pinLost: false);
   }
 
   /// Checks [pin]. Wrong PINs count towards [PinThrottle]; while it blocks,
-  /// every PIN is rejected.
-  bool verify(String pin) {
+  /// every PIN is rejected. A PIN stored in the legacy format is replaced
+  /// by the current one once it was entered correctly.
+  Future<bool> verify(String pin) async {
     final throttle = ref.read(pinThrottleProvider.notifier);
     if (throttle.remaining() > Duration.zero) return false;
     final stored = _storedPin();
-    final ok = stored != null && hashPin(pin, stored.salt) == stored.hash;
-    if (ok) {
-      throttle.reset();
-    } else {
+    final ok = stored != null && await stored.matches(pin);
+    if (!ref.mounted) return ok;
+    if (!ok) {
       throttle.recordFailure();
+      return false;
     }
-    return ok;
+    throttle.reset();
+    if (stored.isLegacy) await _upgrade(pin, stored);
+    return true;
+  }
+
+  /// Stores [pin] in the current format in place of [legacy], unless the
+  /// PIN changed meanwhile. Failing is fine: it is tried at the next unlock.
+  Future<void> _upgrade(String pin, StoredPin legacy) async {
+    try {
+      final upgraded = await StoredPin.create(pin);
+      if (!ref.mounted || _storedPin()?.encode() != legacy.encode()) return;
+      await ref.read(secretStoreProvider).write(_pin, upgraded.encode());
+      final prefs = ref.read(sharedPreferencesProvider);
+      await prefs.remove(_legacySalt);
+      await prefs.remove(_legacyHash);
+    } catch (e) {
+      debugPrint('PIN hash upgrade failed: $e');
+    }
+  }
+
+  /// The way out when the PIN is lost ([AppLockSettings.pinLost]) and
+  /// can't be confirmed otherwise: deletes everything the lock protected,
+  /// i.e. all settings, saved servers and their data, secrets and cached
+  /// images, and starts over at the login, with the lock off.
+  Future<void> resetApp() async {
+    final prefs = ref.read(sharedPreferencesProvider);
+    final clearImages = ref.read(clearImageCacheProvider);
+    await ref.read(secretStoreProvider).clear();
+    await prefs.clear();
+    clearImages();
+    if (!ref.mounted) return;
+    ref
+      ..invalidate(serverProfilesProvider)
+      ..invalidate(pinThrottleProvider)
+      ..invalidate(appLockedProvider)
+      ..invalidateSelf();
   }
 
   Future<void> setBiometrics(bool value) async {

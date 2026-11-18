@@ -6,6 +6,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:media_kit/media_kit.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:stash_app_mobile/core/network/origin_guard.dart';
 import 'package:stash_app_mobile/core/config/server_config.dart';
 import 'package:stash_app_mobile/data/models/scene.dart';
 import 'package:stash_app_mobile/data/models/scene_details.dart';
@@ -149,7 +150,7 @@ void main() {
     final c = ProviderContainer(overrides: [
       sharedPreferencesProvider.overrideWithValue(prefs),
       serverConfigProvider.overrideWithValue(const ServerConfig(baseUrl: 'http://s', apiKey: 'k')),
-      authHeadersProvider.overrideWithValue(const {'ApiKey': 'k'}),
+      authHeadersProvider.overrideWithValue(AuthHeaders(Uri.parse('http://s'), const {'ApiKey': 'k'})),
       pipServiceProvider.overrideWithValue(pip),
       playerProvider.overrideWithValue(player),
       playerPlayingProvider.overrideWith((ref) => Stream.value(playing)),

@@ -67,7 +67,7 @@ class AccountSheet extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final l = context.l10n;
     final name = _serverName(ref);
-    final url = ref.watch(serverConfigProvider)?.baseUrl;
+    final url = ref.watch(serverConfigProvider)?.displayUrl;
     final count = ref.watch(serverProfilesProvider).profiles.length;
     return SafeArea(
       child: SingleChildScrollView(

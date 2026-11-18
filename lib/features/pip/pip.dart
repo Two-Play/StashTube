@@ -224,8 +224,8 @@ class PipNotifier extends Notifier<bool> {
       // Pause first, so both don't play while the native player starts.
       await player.pause();
       final started = await service.startNative(
-        url: withApiKey(stream.url, ref.read(serverConfigProvider)?.apiKey),
-        headers: ref.read(authHeadersProvider),
+        url: withApiKey(stream.url, ref.read(serverConfigProvider)),
+        headers: ref.read(authHeadersProvider).forUrl(stream.url),
         start: start,
         from: from ?? Rect.zero,
         aspect: videoAspect(player.state, scene, sceneFirst: true),
