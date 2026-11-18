@@ -19,6 +19,23 @@ typedef ChangelogItem = ({IconData icon, String text});
 /// first, and an icon per line.
 List<ChangelogEntry> changelog(AppLocalizations l) => [
       (
+        id: 3,
+        title: l.whatsNew3Title,
+        items: _items(l.whatsNew3, const [
+          Icons.format_list_bulleted, // list position
+          Icons.favorite_border, // favorites
+          Icons.zoom_out_map, // zoom snap feedback
+          Icons.fingerprint, // biometrics for the PIN
+          Icons.shield_outlined, // credentials, proxy warning
+        ]),
+        more: _items(l.whatsNew3More, const [
+          Icons.lock_outline, // PIN hash
+          Icons.lock_reset, // lost PIN
+          Icons.key_outlined, // URL password
+          Icons.speed, // fewer requests
+        ]),
+      ),
+      (
         id: 2,
         title: l.whatsNew2Title,
         items: _items(l.whatsNew2, const [

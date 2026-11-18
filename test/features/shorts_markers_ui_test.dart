@@ -3,6 +3,7 @@ import 'package:flutter/semantics.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:stash_app_mobile/core/network/origin_guard.dart';
 import 'package:stash_app_mobile/core/config/server_config.dart';
 import 'package:stash_app_mobile/data/models/list_queries.dart';
 import 'package:stash_app_mobile/data/models/marker.dart';
@@ -78,7 +79,7 @@ void main() {
         overrides: [
           playerProvider.overrideWithValue(player),
           scrubThumbnailsProvider('1').overrideWith((ref) async => null),
-          authHeadersProvider.overrideWithValue(const {}),
+          authHeadersProvider.overrideWithValue(AuthHeaders.none),
           sceneDetailsProvider('1').overrideWith((ref) async => details),
         ],
         child: MaterialApp(
@@ -166,7 +167,7 @@ void main() {
         overrides: [
           playerProvider.overrideWithValue(player),
           scrubThumbnailsProvider('1').overrideWith((ref) async => null),
-          authHeadersProvider.overrideWithValue(const {}),
+          authHeadersProvider.overrideWithValue(AuthHeaders.none),
           sceneDetailsProvider('1').overrideWith((ref) async => details),
         ],
         child: const MaterialApp(
@@ -197,7 +198,7 @@ void main() {
 
   group('short tile', () {
     Future<void> pumpTile(WidgetTester tester, Short short) => tester.pumpWidget(ProviderScope(
-          overrides: [...testServer, authHeadersProvider.overrideWithValue(const {})],
+          overrides: [...testServer, authHeadersProvider.overrideWithValue(AuthHeaders.none)],
           child: MaterialApp(
             home: Scaffold(
               body: Center(child: SizedBox(width: 135, height: 240, child: ShortTile(short: short, onTap: () {}))),

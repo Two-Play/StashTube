@@ -20,6 +20,7 @@ import '../pip/pip.dart';
 import '../security/app_lock.dart';
 import '../../widgets/sliver_columns.dart';
 import '../../widgets/app_orientation.dart';
+import '../../widgets/layout_freeze.dart';
 import 'fullscreen_morph.dart';
 import 'fullscreen_route.dart';
 import 'held_orientation.dart';
@@ -185,6 +186,8 @@ class _PlayerVideoState extends ConsumerState<PlayerVideo> {
       try {
         await _exitFullscreen();
       } finally {
+        // The screen has turned back: the lists behind lay out as before.
+        shellLayoutHold.release();
         await morph?.uncover();
       }
       return;
@@ -195,7 +198,11 @@ class _PlayerVideoState extends ConsumerState<PlayerVideo> {
       at: 1,
     );
     try {
-      await _exitFullscreen();
+      try {
+        await _exitFullscreen();
+      } finally {
+        shellLayoutHold.release();
+      }
       await morph?.animateTo(0);
     } finally {
       morph?.hide();
@@ -534,7 +541,7 @@ class _ChapterThumbnailTile extends ConsumerWidget {
                 cue: cue,
                 width: width,
                 height: width * cue.height / cue.width,
-                headers: ref.watch(authHeadersProvider),
+                headers: ref.watch(authHeadersProvider).forUrl(sprite.spriteUrl),
               ),
             ),
           )

@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/config/haptics.dart';
 import '../../l10n/l10n.dart';
 import '../../widgets/connection_banner.dart';
+import '../../widgets/layout_freeze.dart';
 import '../home/home_page.dart';
 import '../library/library_page.dart';
 import '../performers/performers_page.dart';
@@ -29,7 +30,7 @@ import 'shell_layout.dart';
 /// Root layout after login: per-tab navigators, the miniplayer on top of
 /// them and a bottom navigation bar that slides away as the player expands,
 /// or a navigation rail on wide windows ([ShellLayout], NAV-4).
-class AppShell extends ConsumerWidget {
+class AppShell extends StatelessWidget {
   const AppShell({super.key, @visibleForTesting this.pageBuilder, @visibleForTesting this.panelBuilder});
 
   /// Replaces [rootPage] in tests.
@@ -52,6 +53,21 @@ class AppShell extends ConsumerWidget {
         AppTab.search => const SearchPage(autofocus: false),
         _ => throw StateError('No page for $tab'),
       };
+
+  // Behind the player's fullscreen the tabs keep their portrait layout, so
+  // their lists stay where they were ([LayoutFreeze]).
+  @override
+  Widget build(BuildContext context) => LayoutFreeze(
+        hold: shellLayoutHold,
+        child: _AppShellBody(pageBuilder: pageBuilder, panelBuilder: panelBuilder),
+      );
+}
+
+class _AppShellBody extends ConsumerWidget {
+  const _AppShellBody({required this.pageBuilder, required this.panelBuilder});
+
+  final Widget Function(AppTab tab)? pageBuilder;
+  final Widget Function(double height)? panelBuilder;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -141,7 +157,7 @@ class AppShell extends ConsumerWidget {
                         onGenerateRoute: (_) => MaterialPageRoute(
                           builder: (_) => PrimaryScrollController(
                             controller: scrollControllers[tab]!,
-                            child: (pageBuilder ?? rootPage)(tab),
+                            child: (pageBuilder ?? AppShell.rootPage)(tab),
                           ),
                         ),
                       ),

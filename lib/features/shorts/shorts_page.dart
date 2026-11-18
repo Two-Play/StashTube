@@ -239,7 +239,7 @@ class _ShortsPageState extends ConsumerState<ShortsPage> {
       player
           .open(
             // A marker opens only its clip (Short.playbackUrl), from 0.
-            Media(short.playbackUrl!, httpHeaders: ref.read(authHeadersProvider)),
+            Media(short.playbackUrl!, httpHeaders: ref.read(authHeadersProvider).forUrl(short.playbackUrl!)),
             play: false,
           )
           .then((_) {

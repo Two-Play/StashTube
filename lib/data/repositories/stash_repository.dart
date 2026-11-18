@@ -1,4 +1,6 @@
-import 'package:flutter/foundation.dart' show TargetPlatform, defaultTargetPlatform;
+import 'dart:async';
+
+import 'package:flutter/foundation.dart' show TargetPlatform, defaultTargetPlatform, visibleForTesting;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:graphql_flutter/graphql_flutter.dart';
 import 'package:http/http.dart' as http;
@@ -17,6 +19,7 @@ import '../../core/api/documents/tags.graphql.dart';
 import '../../core/api/documents/tasks.graphql.dart';
 import '../../core/api/stash_schema.graphql.dart';
 import '../../core/config/server_config.dart';
+import '../../core/network/origin_guard.dart';
 import '../../features/player/playback_tracker.dart';
 import '../connection_status.dart';
 import '../models/gallery.dart';
@@ -129,16 +132,27 @@ Duration? stashRetry(int retryCount, Object error) {
   return Duration(milliseconds: 500 * (1 << retryCount));
 }
 
+/// No caching at all: lists are paginated and refreshed by their providers,
+/// which hold the results. `networkOnly` would still write every response
+/// into the normalized cache, which then grows with every page, filter and
+/// random seed and is never read.
+final stashGraphQLPolicies = DefaultPolicies(
+  query: Policies(fetch: FetchPolicy.noCache),
+  mutate: Policies(fetch: FetchPolicy.noCache),
+  watchQuery: Policies(fetch: FetchPolicy.noCache),
+  watchMutation: Policies(fetch: FetchPolicy.noCache),
+);
+
 GraphQLClient createGraphQLClient(ServerConfig config, {http.Client? httpClient, StashSessionCookie? session}) =>
     GraphQLClient(
       link: HttpLink(
         config.graphqlEndpoint,
         defaultHeaders: {...config.authHeaders, if (session != null) 'Cookie': session.header},
-        httpClient: httpClient,
+        httpClient: httpClient ?? OriginGuardClient(http.Client(), origin: Uri.parse(config.baseUrl)),
       ),
-      // Lists are paginated and refreshed manually, so no normalized caching.
+      // Required by the client; stays empty with these policies.
       cache: GraphQLCache(),
-      defaultPolicies: DefaultPolicies(query: Policies(fetch: FetchPolicy.networkOnly)),
+      defaultPolicies: stashGraphQLPolicies,
     );
 
 /// A scene's place in a group: the group and the scene's position in it.
@@ -146,8 +160,8 @@ typedef SceneGroupEntry = ({String groupId, int? sceneIndex});
 
 /// All access to the Stash GraphQL API goes through this class.
 class StashRepository implements PlaybackActivityApi {
-  StashRepository(this._client, {this._authHeaders = const {}, http.Client? httpClient, this._onReachability})
-    : _http = httpClient ?? http.Client();
+  StashRepository(this._client, {this._auth = AuthHeaders.none, http.Client? httpClient, this._onReachability})
+    : _http = httpClient ?? OriginGuardClient(http.Client());
 
   final GraphQLClient _client;
 
@@ -155,7 +169,7 @@ class StashRepository implements PlaybackActivityApi {
   /// reached (false); feeds [connectionStatusProvider]. Server and auth
   /// errors aren't reported.
   final void Function(bool reachable)? _onReachability;
-  final Map<String, String> _authHeaders;
+  final AuthHeaders _auth;
 
   /// For non-GraphQL server files such as the sprite VTT.
   final http.Client _http;
@@ -615,7 +629,7 @@ class StashRepository implements PlaybackActivityApi {
     final vttUrl = details.vttUrl;
     if (vttUrl == null) return null;
     try {
-      final response = await _http.get(Uri.parse(vttUrl), headers: _authHeaders);
+      final response = await _http.get(Uri.parse(vttUrl), headers: _auth.forUrl(vttUrl));
       if (response.statusCode != 200) return null;
       return ScrubThumbnails.parse(response.body, spriteUrl: details.spriteUrl, vttUrl: vttUrl);
     } catch (_) {
@@ -915,7 +929,7 @@ class StashRepository implements PlaybackActivityApi {
     final scenes = (await findScenes(SceneQuery(sort: SceneSort.random), perPage: sample)).items;
     final markers = (await findMarkers(MarkerQuery(sort: MarkerSort.random), perPage: sample ~/ 2)).items;
     Future<int> count(Iterable<String?> urls) async =>
-        (await Future.wait(urls.map(_exists))).where((found) => found).length;
+        (await Future.wait(urls.map(fileExists))).where((found) => found).length;
     final (animated, videos, markerAnimated) = await (
       count(scenes.map((s) => s.webpUrl)),
       count(scenes.map((s) => s.previewUrl)),
@@ -930,16 +944,25 @@ class StashRepository implements PlaybackActivityApi {
     );
   }
 
-  /// Whether the server has the file at [url]; asks for one byte only.
-  Future<bool> _exists(String? url) async {
+  /// Whether the server has the file at [url]; asks for one byte only and
+  /// reads no body: a server or proxy that ignores the range would
+  /// otherwise send the whole preview.
+  @visibleForTesting
+  Future<bool> fileExists(String? url) async {
     if (url == null) return false;
     try {
-      final response = await _http.get(Uri.parse(url), headers: {..._authHeaders, 'Range': 'bytes=0-0'});
+      final request = http.Request('GET', Uri.parse(url))
+        ..headers.addAll({..._auth.forUrl(url), 'Range': 'bytes=0-0'});
+      final response = await _http.send(request).timeout(_existsTimeout);
+      // Cancelling the body closes the connection instead of downloading it.
+      unawaited(response.stream.listen(null).cancel());
       return response.statusCode == 200 || response.statusCode == 206;
     } catch (_) {
       return false;
     }
   }
+
+  static const _existsTimeout = Duration(seconds: 15);
 
   static Input$FindFilterType _findFilter({
     String? search,
@@ -1061,7 +1084,10 @@ final stashRepositoryProvider = Provider<StashRepository>((ref) {
   final serverId = ref.watch(activeServerIdProvider);
   return StashRepository(
     ref.watch(graphQLClientProvider),
-    authHeaders: ref.watch(serverConfigProvider)?.authHeaders ?? const {},
+    auth: switch (ref.watch(serverConfigProvider)) {
+      final config? => AuthHeaders(Uri.parse(config.baseUrl), config.authHeaders),
+      null => AuthHeaders.none,
+    },
     httpClient: ref.watch(stashHttpClientProvider),
     // Read on each report, not watched: the status doesn't rebuild the
     // repository. Calls that end after a server switch report nothing.

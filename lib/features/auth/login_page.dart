@@ -345,7 +345,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
               child: ListTile(
                 leading: const Icon(Icons.dns_outlined),
                 title: Text(server.name, maxLines: 1, overflow: TextOverflow.ellipsis),
-                subtitle: Text(server.baseUrl, maxLines: 1, overflow: TextOverflow.ellipsis),
+                subtitle: Text(ServerConfig.withoutUserInfo(server.baseUrl), maxLines: 1, overflow: TextOverflow.ellipsis),
                 trailing: const Icon(Icons.chevron_right),
                 onTap: () => ref.read(serverProfilesProvider.notifier).activate(server.id),
               ),

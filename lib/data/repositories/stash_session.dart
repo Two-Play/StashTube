@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:http/http.dart' as http;
 
 import '../../core/config/server_config.dart';
+import '../../core/network/origin_guard.dart';
 import 'stash_repository.dart';
 
 /// Stash's session cookie after signing in (2.7).
@@ -19,17 +20,29 @@ class StashSessionCookie {
   String get header => 'session=$value';
 }
 
+/// How long signing in may take, answer included, before it counts as
+/// unreachable: a server that keeps the connection open must not leave the
+/// login spinning forever.
+const stashLoginTimeout = Duration(seconds: 20);
+
 /// Signs in with [config]'s username and password the way Stash's login
 /// page does (`POST /login`). Stash answers a valid login with a redirect
-/// and a `session` cookie, a wrong one with the login page again.
-Future<StashSessionCookie> stashLogin(http.Client client, ServerConfig config, {DateTime Function()? now}) async {
+/// and a `session` cookie, a wrong one with the login page again. Only the
+/// headers are read; the body is dropped unread. The caller closes
+/// [client], which also ends a request that timed out.
+Future<StashSessionCookie> stashLogin(
+  http.Client client,
+  ServerConfig config, {
+  DateTime Function()? now,
+  Duration timeout = stashLoginTimeout,
+}) async {
   final request = http.Request('POST', Uri.parse('${config.baseUrl}/login'))
     ..followRedirects = false
     ..bodyFields = {'username': config.username ?? '', 'password': config.password ?? ''};
   final http.StreamedResponse response;
   try {
-    response = await client.send(request);
-    await response.stream.drain<void>();
+    response = await client.send(request).timeout(timeout);
+    unawaited(response.stream.listen(null).cancel());
   } catch (e) {
     throw unreachableException(e, host: request.url.host);
   }
@@ -108,17 +121,20 @@ class StashSessionNotifier extends Notifier<StashSessionCookie?> {
 
 final stashSessionProvider = NotifierProvider<StashSessionNotifier, StashSessionCookie?>(StashSessionNotifier.new);
 
-/// Sends the session cookie with every request and, when the server
-/// answers 401, signs in again and repeats the request once.
+/// Sends the session cookie with every request to the server's [origin]
+/// and, when the server answers 401, signs in again and repeats the request
+/// once. Requests to other origins go out without it.
 class StashSessionClient extends http.BaseClient {
-  StashSessionClient(this._inner, {required this.ensure, required this.renew});
+  StashSessionClient(this._inner, {required this.origin, required this.ensure, required this.renew});
 
   final http.Client _inner;
+  final Uri origin;
   final Future<StashSessionCookie?> Function() ensure;
   final Future<StashSessionCookie?> Function() renew;
 
   @override
   Future<http.StreamedResponse> send(http.BaseRequest request) async {
+    if (!sameOrigin(request.url, origin)) return _inner.send(request);
     final cookie = await ensure();
     if (cookie == null) return _inner.send(request);
 
@@ -147,11 +163,15 @@ class StashSessionClient extends http.BaseClient {
 }
 
 /// The HTTP client for the active server's GraphQL API and files: adds the
-/// session cookie where needed (the API key is a default header).
+/// session cookie where needed (the API key is a default header), and
+/// keeps both on the server's origin, redirects included
+/// ([OriginGuardClient]).
 final stashHttpClientProvider = Provider<http.Client>((ref) {
-  ref.watch(serverConfigProvider);
+  final config = ref.watch(serverConfigProvider);
+  final origin = Uri.parse(config?.baseUrl ?? ServerConfig.demoUrl);
   final client = StashSessionClient(
-    http.Client(),
+    OriginGuardClient(http.Client(), origin: origin),
+    origin: origin,
     ensure: () => ref.read(stashSessionProvider.notifier).ensure(),
     renew: () => ref.read(stashSessionProvider.notifier).renew(),
   );
@@ -160,9 +180,15 @@ final stashHttpClientProvider = Provider<http.Client>((ref) {
 });
 
 /// Auth headers for the current server, for image and video requests:
-/// the API key, or the session cookie once signed in.
-final authHeadersProvider = Provider<Map<String, String>>((ref) {
-  final headers = ref.watch(serverConfigProvider)?.authHeaders ?? const {};
+/// the API key, or the session cookie once signed in. Bound to the
+/// server's origin: take them with [AuthHeaders.forUrl].
+final authHeadersProvider = Provider<AuthHeaders>((ref) {
+  final config = ref.watch(serverConfigProvider);
+  if (config == null) return AuthHeaders.none;
+  final headers = config.authHeaders;
   final cookie = ref.watch(stashSessionProvider);
-  return cookie == null ? headers : {...headers, 'Cookie': cookie.header};
+  return AuthHeaders(
+    Uri.parse(config.baseUrl),
+    cookie == null ? headers : {...headers, 'Cookie': cookie.header},
+  );
 });

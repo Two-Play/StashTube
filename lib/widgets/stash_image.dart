@@ -4,6 +4,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../core/config/image_cache.dart';
 import '../data/repositories/stash_session.dart';
 
 /// Network image from the Stash server, sent with the API key header.
@@ -55,7 +56,7 @@ class StashImage extends ConsumerWidget {
     final colors = Theme.of(context).colorScheme;
     final url = this.url;
     if (url == null) return standIn ?? _fallback(colors);
-    final headers = ref.watch(authHeadersProvider);
+    final auth = ref.watch(authHeadersProvider);
 
     return LayoutBuilder(
       builder: (context, constraints) {
@@ -66,7 +67,8 @@ class StashImage extends ConsumerWidget {
         final preview = previewUrl;
         return CachedNetworkImage(
           imageUrl: url,
-          httpHeaders: headers,
+          httpHeaders: auth.forUrl(url),
+          cacheManager: stashImageCacheManager,
           width: width,
           height: height,
           fit: fit,
@@ -78,7 +80,7 @@ class StashImage extends ConsumerWidget {
               standIn ??
               (preview == null
                   ? ShimmerBox(width: width, height: height)
-                  : BlurredPreview(url: preview, headers: headers, fit: fit)),
+                  : BlurredPreview(url: preview, headers: auth.forUrl(preview), fit: fit)),
           // Stash serves SVG placeholders for missing studio/performer images,
           // which CachedNetworkImage can't decode; show an icon instead.
           errorWidget: (_, _, _) => standIn ?? _fallback(colors),
@@ -111,6 +113,7 @@ class BlurredPreview extends StatelessWidget {
           child: CachedNetworkImage(
             imageUrl: url,
             httpHeaders: headers,
+            cacheManager: stashImageCacheManager,
             fit: fit,
             fadeInDuration: Duration.zero,
             placeholder: (_, _) => const ShimmerBox(),

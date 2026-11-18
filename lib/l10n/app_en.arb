@@ -508,6 +508,19 @@
       }
     }
   },
+  "subscriptionsAll": "All",
+  "subscriptionsAllLabel": "All favorites",
+  "subscriptionsLatest": "Newest from your favorites",
+  "subscriptionsViewChannel": "View channel",
+  "subscriptionsPerformerEmpty": "No videos with {name} yet",
+  "@subscriptionsPerformerEmpty": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "subscriptionsSelectHint": "Tap to show only their videos, hold to open the channel",
   "newSinceLastVisit": "{count, plural, =1{1 new video since your last visit} other{{count} new videos since your last visit}}",
   "@newSinceLastVisit": {
     "placeholders": {
@@ -1212,6 +1225,8 @@
   "unknownPerformer": "Unknown performer",
   "playbackSpeed": "Playback speed",
   "speedNormal": "Normal",
+  "zoomOriginal": "Original",
+  "zoomFill": "Fill",
   "speedValue": "{rate}×",
   "@speedValue": {
     "placeholders": {
@@ -1538,6 +1553,9 @@
   "whatsNewTitle": "What's new",
   "whatsNewDone": "Got it",
   "whatsNewSubtitle": "What the latest updates brought",
+  "whatsNew3Title": "Back where you were, favorites and a safer app lock",
+  "whatsNew3": "Lists keep their place when you turn the phone for fullscreen and come back.\nFavorites: pick All or one performer at the top; a long press opens their channel.\nZooming shows Original and Fill when it snaps, and guide lines where the picture snaps.\nChange the PIN or turn the app lock off with Face ID or your fingerprint, also when you forgot the PIN.\nYour API key and login only go to your server, and a warning shows when a proxy hands out wrong media addresses.",
+  "whatsNew3More": "The PIN is stored with a much slower hash; your PIN stays the same.\nIf the PIN can't be read after a restore, the app stays locked and offers a new PIN with biometrics, or a reset.\nA password in a server address is kept in the device's secure storage.\nFewer requests: lists no longer pile up in a cache, and the preview check no longer downloads whole files.",
   "whatsNew2Title": "Subtitles, zoom without black bars and more",
   "whatsNew2": "Subtitles: pick the captions your Stash has for a video; the language is remembered for the next ones.\nPinch to fill the whole screen without black bars; it snaps at full width and in the center, with a light tick.\nDouble tap to skip shows a half disc over the tapped side that fades in and out.\nVideos can buffer fully before they play, and keep position and picture when you come back to the app.\nA countdown before the next video of a queue starts.\nSave the current frame as an image.",
   "whatsNew1Title": "Loops, a new watch page and more",
@@ -1555,5 +1573,17 @@
   "@markerDeleteConfirm": {"placeholders": {"title": {"type": "String"}, "time": {"type": "String"}}},
   "markerDeleteAction": "Delete",
   "markerDeleted": "Marker deleted",
-  "markerSaved": "Marker saved"
+  "markerSaved": "Marker saved",
+  "pinLostTitle": "The PIN is no longer on this device",
+  "pinLostBody": "The app lock is on, but its PIN couldn't be read from the device's secure storage, for example after restoring a backup.",
+  "pinLostBiometricHint": "Unlock with Face ID or your fingerprint to choose a new PIN.",
+  "pinLostResetHint": "Or reset the app: everything StashTube stored on this device is removed.",
+  "resetApp": "Reset app",
+  "resetAppTitle": "Reset StashTube?",
+  "resetAppBody": "All servers, settings, lists and cached images are removed from this device and the app lock is turned off. Nothing changes on your Stash servers.",
+  "chooseNewPin": "Choose a new PIN",
+  "mediaOriginTitle": "Images and videos may not load",
+  "mediaOriginBody": "Stash gives out media addresses on {media}, but StashTube connects to {server}. Your API key or login only goes to {server}, so those requests are sent without it. Behind a reverse proxy, pass on the Host header and set X-Forwarded-Proto.",
+  "@mediaOriginBody": {"placeholders": {"media": {"type": "String"}, "server": {"type": "String"}}},
+  "mediaOriginHide": "Hide"
 }

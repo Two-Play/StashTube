@@ -2,6 +2,7 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:stash_app_mobile/core/network/origin_guard.dart';
 import 'package:stash_app_mobile/data/models/scene.dart';
 import 'package:stash_app_mobile/data/models/scene_details.dart';
 import 'package:stash_app_mobile/data/providers.dart';
@@ -12,6 +13,7 @@ import 'package:stash_app_mobile/features/cast/cast_service.dart';
 import 'package:stash_app_mobile/features/player/player_providers.dart';
 import 'package:stash_app_mobile/features/player/seek_settings.dart';
 import 'package:stash_app_mobile/features/player/video_controls.dart';
+import 'package:stash_app_mobile/features/player/video_zoom.dart';
 
 import '../../helpers.dart';
 import '../fake_player.dart';
@@ -75,7 +77,7 @@ void main() {
         ...testServer,
         playerProvider.overrideWithValue(player),
         scrubThumbnailsProvider('1').overrideWith((ref) async => null),
-        authHeadersProvider.overrideWithValue(const {}),
+        authHeadersProvider.overrideWithValue(AuthHeaders.none),
         sceneDetailsProvider('1').overrideWith((ref) async => const SceneDetails(streams: [])),
         castServiceProvider.overrideWithValue(cast),
         seekSettingsProvider.overrideWith(() => _Seek(seek)),
@@ -107,8 +109,16 @@ void main() {
     if (casting) await tester.pump(); // the stream overrides deliver
   }
 
+  // The controls' own fade, not the zoom feedback's.
   bool controlsVisible(WidgetTester tester) =>
-      tester.widget<AnimatedOpacity>(find.byType(AnimatedOpacity).last).opacity == 1;
+      (find
+                  .byType(AnimatedOpacity)
+                  .evaluate()
+                  .where((e) => e.findAncestorWidgetOfExactType<ZoomSnapFeedback>() == null)
+                  .last
+                  .widget as AnimatedOpacity)
+              .opacity ==
+          1;
 
   // The half disc over the tapped side.
   Finder halfDisc() => find.byWidgetPredicate((w) => w is ClipPath && w.clipper.runtimeType.toString() == '_HalfDiscClipper');

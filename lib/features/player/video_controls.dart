@@ -748,22 +748,9 @@ class _StashVideoControlsState extends ConsumerState<StashVideoControls> {
             GestureTipsOverlay(seekSeconds: seek.enabled ? seek.step.inSeconds : null, onDismiss: _dismissTips),
           // Always there (empty while unlocked), above the gestures and buttons.
           TouchLockLayer(locked: _locked && fullscreen, onUnlock: _unlock),
-          if (_pinching)
-            IgnorePointer(
-              child: Align(
-                alignment: const Alignment(0, -0.75),
-                child: DecoratedBox(
-                  decoration: BoxDecoration(color: AppColors.of(context).videoScrimSoft, borderRadius: AppRadius.pillBorder),
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: AppSpacing.m, vertical: AppSpacing.xs),
-                    child: Text(
-                      context.l10n.speedValue(double.parse(ref.watch(videoZoomProvider).scale.toStringAsFixed(1))),
-                      style: const TextStyle(color: Colors.white),
-                    ),
-                  ),
-                ),
-              ),
-            ),
+          // Always there (empty unless pinching): the scale and what it
+          // sticks to, beside the haptic tick.
+          ZoomSnapFeedback(pinching: _pinching),
         ],
       ),
     );

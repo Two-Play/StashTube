@@ -88,8 +88,18 @@ const _details = SceneDetails(streams: [
 void main() {
   group('cast media', () {
     test('adds the API key as URL parameter, keeping existing ones', () {
-      expect(withApiKey('http://s/stream.mp4?resolution=HD', 'k'), 'http://s/stream.mp4?resolution=HD&apikey=k');
+      const server = ServerConfig(baseUrl: 'http://s', apiKey: 'k');
+      expect(withApiKey('http://s/stream.mp4?resolution=HD', server), 'http://s/stream.mp4?resolution=HD&apikey=k');
+      expect(withApiKey('http://s/stream', const ServerConfig(baseUrl: 'http://s')), 'http://s/stream');
       expect(withApiKey('http://s/stream', null), 'http://s/stream');
+    });
+
+    test('never puts the API key into a URL on another origin', () {
+      const server = ServerConfig(baseUrl: 'https://s', apiKey: 'k');
+      expect(withApiKey('https://elsewhere/stream', server), 'https://elsewhere/stream');
+      expect(withApiKey('http://s/stream', server), 'http://s/stream', reason: 'another scheme');
+      expect(withApiKey('https://s:8443/stream', server), 'https://s:8443/stream', reason: 'another port');
+      expect(withApiKey('https://s:443/stream', server), endsWith('/stream?apikey=k'), reason: 'the default port');
     });
 
     test('prefers a castable original file, then HLS, then MP4', () {
@@ -124,7 +134,7 @@ void main() {
       final media = castMediaFor(
         const Scene(id: '1', title: 'Sunset', screenshotUrl: 'http://s/shot', streamUrl: 'http://s/stream'),
         _details,
-        apiKey: 'k',
+        server: const ServerConfig(baseUrl: 'http://s', apiKey: 'k'),
         start: const Duration(seconds: 42),
       );
       expect(media.title, 'Sunset');

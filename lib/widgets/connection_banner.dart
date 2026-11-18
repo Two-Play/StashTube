@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../core/config/haptics.dart';
 import '../core/config/server_config.dart';
 import '../data/connection_status.dart';
+import '../data/media_origin_check.dart';
 import '../data/providers.dart';
 import '../data/repositories/stash_repository.dart';
 import '../features/auth/server_switcher.dart';
@@ -15,6 +16,9 @@ import '../l10n/l10n.dart';
 /// list. The banner takes the status bar's space, so [child] loses its top
 /// padding meanwhile. It goes away by itself once any call succeeds; then
 /// the lists reload, so the ones that failed meanwhile recover.
+///
+/// While the server is reachable it shows [MediaOriginBanner] instead when
+/// the server's media URLs point to another origin than the app connects to.
 class ConnectionBannerScope extends ConsumerStatefulWidget {
   const ConnectionBannerScope({super.key, required this.child});
 
@@ -67,6 +71,7 @@ class _ConnectionBannerScopeState extends ConsumerState<ConnectionBannerScope> w
   @override
   Widget build(BuildContext context) {
     ref.listen(connectionStatusProvider, _onStatus);
+    final mismatch = _bannerShown ? null : ref.watch(mediaOriginWarningProvider);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -75,8 +80,13 @@ class _ConnectionBannerScopeState extends ConsumerState<ConnectionBannerScope> w
           alignment: Alignment.topCenter,
           child: _bannerShown ? const ConnectionBanner() : const SizedBox.shrink(),
         ),
+        ?mismatch == null ? null : MediaOriginBanner(mismatch: mismatch),
         Expanded(
-          child: MediaQuery.removePadding(context: context, removeTop: _bannerShown, child: widget.child),
+          child: MediaQuery.removePadding(
+            context: context,
+            removeTop: _bannerShown || mismatch != null,
+            child: widget.child,
+          ),
         ),
       ],
     );
@@ -140,10 +150,86 @@ class _ConnectionBannerState extends ConsumerState<ConnectionBanner> {
   @override
   Widget build(BuildContext context) {
     final l = context.l10n;
-    final scheme = Theme.of(context).colorScheme;
     final name = ref.watch(serverProfilesProvider.select((s) => s.active?.name));
-    return Semantics(
+    return StatusBanner(
+      icon: Icons.cloud_off_outlined,
+      title: l.connectionLostTitle,
+      body: name == null ? null : l.connectionLostBody(name),
       liveRegion: true,
+      actions: [
+        TextButton(
+          onPressed: () => showServerSwitcher(context),
+          child: Text(l.switchServer),
+        ),
+        TextButton(
+          onPressed: _checking ? null : _retry,
+          child: _checking
+              ? SizedBox.square(
+                  dimension: 18,
+                  child: CircularProgressIndicator(strokeWidth: 2, semanticsLabel: l.retry),
+                )
+              : Text(l.retry),
+        ),
+      ],
+    );
+  }
+}
+
+/// Warns that the server's media URLs point to another origin than the app
+/// connects to ([MediaOriginMismatch]), with both addresses and how to fix
+/// the proxy; hidden per server until the mismatch changes.
+class MediaOriginBanner extends ConsumerWidget {
+  const MediaOriginBanner({super.key, required this.mismatch});
+
+  final MediaOriginMismatch mismatch;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l = context.l10n;
+    return StatusBanner(
+      icon: Icons.warning_amber_rounded,
+      title: l.mediaOriginTitle,
+      body: l.mediaOriginBody(mismatch.media, mismatch.server),
+      actions: [
+        TextButton(
+          onPressed: () {
+            Haptics.light();
+            ref.read(mediaOriginHintHiddenProvider.notifier).hide(mismatch);
+          },
+          child: Text(l.mediaOriginHide),
+        ),
+      ],
+    );
+  }
+}
+
+/// The banners' shared layout (Material 3): an icon in the error color,
+/// title and body, the actions at the end; takes the status bar's space.
+class StatusBanner extends StatelessWidget {
+  const StatusBanner({
+    super.key,
+    required this.icon,
+    required this.title,
+    this.body,
+    this.actions = const [],
+    this.liveRegion = false,
+  });
+
+  final IconData icon;
+  final String title;
+  final String? body;
+  final List<Widget> actions;
+
+  /// Announced to screen readers when it appears.
+  final bool liveRegion;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    final body = this.body;
+    return Semantics(
+      liveRegion: liveRegion,
       container: true,
       child: Material(
         color: scheme.surfaceContainerHigh,
@@ -159,42 +245,21 @@ class _ConnectionBannerState extends ConsumerState<ConnectionBanner> {
                   children: [
                     Padding(
                       padding: const EdgeInsets.only(top: 2, right: 16),
-                      child: Icon(Icons.cloud_off_outlined, color: scheme.error),
+                      child: Icon(icon, color: scheme.error),
                     ),
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(l.connectionLostTitle, style: Theme.of(context).textTheme.titleSmall),
-                          if (name != null)
-                            Text(
-                              l.connectionLostBody(name),
-                              style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: scheme.onSurfaceVariant),
-                            ),
+                          Text(title, style: theme.textTheme.titleSmall),
+                          if (body != null)
+                            Text(body, style: theme.textTheme.bodyMedium?.copyWith(color: scheme.onSurfaceVariant)),
                         ],
                       ),
                     ),
                   ],
                 ),
-                OverflowBar(
-                  alignment: MainAxisAlignment.end,
-                  spacing: 8,
-                  children: [
-                    TextButton(
-                      onPressed: () => showServerSwitcher(context),
-                      child: Text(l.switchServer),
-                    ),
-                    TextButton(
-                      onPressed: _checking ? null : _retry,
-                      child: _checking
-                          ? SizedBox.square(
-                              dimension: 18,
-                              child: CircularProgressIndicator(strokeWidth: 2, semanticsLabel: l.retry),
-                            )
-                          : Text(l.retry),
-                    ),
-                  ],
-                ),
+                OverflowBar(alignment: MainAxisAlignment.end, spacing: 8, children: actions),
               ],
             ),
           ),

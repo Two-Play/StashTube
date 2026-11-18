@@ -65,7 +65,7 @@ class ServerSwitcher extends ConsumerWidget {
                       color: server.id == state.activeId ? theme.colorScheme.primary : null,
                     ),
                     title: Text(server.name, maxLines: 1, overflow: TextOverflow.ellipsis),
-                    subtitle: Text(server.baseUrl, maxLines: 1, overflow: TextOverflow.ellipsis),
+                    subtitle: Text(ServerConfig.withoutUserInfo(server.baseUrl), maxLines: 1, overflow: TextOverflow.ellipsis),
                     onTap: () {
                       Navigator.pop(context);
                       if (server.id != state.activeId) ref.read(serverProfilesProvider.notifier).activate(server.id);

@@ -32,6 +32,7 @@ import 'package:stash_app_mobile/features/player/player_providers.dart';
 import 'package:stash_app_mobile/features/shell/app_shell.dart';
 import 'package:stash_app_mobile/features/shell/navigation.dart';
 import 'package:stash_app_mobile/features/shorts/shorts_settings_sheet.dart';
+import 'package:stash_app_mobile/features/subscriptions/subscriptions_page.dart';
 import 'package:stash_app_mobile/features/you/you_page.dart';
 import 'package:stash_app_mobile/l10n/gen/app_localizations.dart';
 import 'package:stash_app_mobile/widgets/sliver_columns.dart';
@@ -318,6 +319,17 @@ void main() {
         await tester.scrollUntilVisible(find.text(l.settingsTitle), 400, scrollable: find.byType(Scrollable).first);
         await settle(tester);
         expectNoOverflow(at, 'you, scrolled');
+      });
+
+      testScaled('favorites: all and one performer', (tester) async {
+        await pumpPage(tester, const SubscriptionsPage(), at: at);
+        expect(find.text(l.subscriptionsLatest), findsOneWidget);
+        expect(find.textContaining('A scene title'), findsWidgets);
+        expectNoOverflow(at, 'favorites');
+        await tester.tap(find.text('Performer with a long name').first);
+        await settle(tester);
+        expect(find.text(l.subscriptionsViewChannel), findsOneWidget);
+        expectNoOverflow(at, 'favorites, one performer');
       });
 
       testScaled('performer channel', (tester) async {

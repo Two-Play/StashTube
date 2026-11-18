@@ -1220,6 +1220,42 @@ abstract class AppLocalizations {
   /// **'{name}, new scenes'**
   String performerHasNewScenes(String name);
 
+  /// No description provided for @subscriptionsAll.
+  ///
+  /// In en, this message translates to:
+  /// **'All'**
+  String get subscriptionsAll;
+
+  /// No description provided for @subscriptionsAllLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'All favorites'**
+  String get subscriptionsAllLabel;
+
+  /// No description provided for @subscriptionsLatest.
+  ///
+  /// In en, this message translates to:
+  /// **'Newest from your favorites'**
+  String get subscriptionsLatest;
+
+  /// No description provided for @subscriptionsViewChannel.
+  ///
+  /// In en, this message translates to:
+  /// **'View channel'**
+  String get subscriptionsViewChannel;
+
+  /// No description provided for @subscriptionsPerformerEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No videos with {name} yet'**
+  String subscriptionsPerformerEmpty(String name);
+
+  /// No description provided for @subscriptionsSelectHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Tap to show only their videos, hold to open the channel'**
+  String get subscriptionsSelectHint;
+
   /// No description provided for @newSinceLastVisit.
   ///
   /// In en, this message translates to:
@@ -3296,6 +3332,18 @@ abstract class AppLocalizations {
   /// **'Normal'**
   String get speedNormal;
 
+  /// No description provided for @zoomOriginal.
+  ///
+  /// In en, this message translates to:
+  /// **'Original'**
+  String get zoomOriginal;
+
+  /// No description provided for @zoomFill.
+  ///
+  /// In en, this message translates to:
+  /// **'Fill'**
+  String get zoomFill;
+
   /// No description provided for @speedValue.
   ///
   /// In en, this message translates to:
@@ -4376,6 +4424,24 @@ abstract class AppLocalizations {
   /// **'What the latest updates brought'**
   String get whatsNewSubtitle;
 
+  /// No description provided for @whatsNew3Title.
+  ///
+  /// In en, this message translates to:
+  /// **'Back where you were, favorites and a safer app lock'**
+  String get whatsNew3Title;
+
+  /// No description provided for @whatsNew3.
+  ///
+  /// In en, this message translates to:
+  /// **'Lists keep their place when you turn the phone for fullscreen and come back.\nFavorites: pick All or one performer at the top; a long press opens their channel.\nZooming shows Original and Fill when it snaps, and guide lines where the picture snaps.\nChange the PIN or turn the app lock off with Face ID or your fingerprint, also when you forgot the PIN.\nYour API key and login only go to your server, and a warning shows when a proxy hands out wrong media addresses.'**
+  String get whatsNew3;
+
+  /// No description provided for @whatsNew3More.
+  ///
+  /// In en, this message translates to:
+  /// **'The PIN is stored with a much slower hash; your PIN stays the same.\nIf the PIN can\'t be read after a restore, the app stays locked and offers a new PIN with biometrics, or a reset.\nA password in a server address is kept in the device\'s secure storage.\nFewer requests: lists no longer pile up in a cache, and the preview check no longer downloads whole files.'**
+  String get whatsNew3More;
+
   /// No description provided for @whatsNew2Title.
   ///
   /// In en, this message translates to:
@@ -4465,6 +4531,72 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Marker saved'**
   String get markerSaved;
+
+  /// No description provided for @pinLostTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'The PIN is no longer on this device'**
+  String get pinLostTitle;
+
+  /// No description provided for @pinLostBody.
+  ///
+  /// In en, this message translates to:
+  /// **'The app lock is on, but its PIN couldn\'t be read from the device\'s secure storage, for example after restoring a backup.'**
+  String get pinLostBody;
+
+  /// No description provided for @pinLostBiometricHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Unlock with Face ID or your fingerprint to choose a new PIN.'**
+  String get pinLostBiometricHint;
+
+  /// No description provided for @pinLostResetHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Or reset the app: everything StashTube stored on this device is removed.'**
+  String get pinLostResetHint;
+
+  /// No description provided for @resetApp.
+  ///
+  /// In en, this message translates to:
+  /// **'Reset app'**
+  String get resetApp;
+
+  /// No description provided for @resetAppTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Reset StashTube?'**
+  String get resetAppTitle;
+
+  /// No description provided for @resetAppBody.
+  ///
+  /// In en, this message translates to:
+  /// **'All servers, settings, lists and cached images are removed from this device and the app lock is turned off. Nothing changes on your Stash servers.'**
+  String get resetAppBody;
+
+  /// No description provided for @chooseNewPin.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose a new PIN'**
+  String get chooseNewPin;
+
+  /// No description provided for @mediaOriginTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Images and videos may not load'**
+  String get mediaOriginTitle;
+
+  /// No description provided for @mediaOriginBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Stash gives out media addresses on {media}, but StashTube connects to {server}. Your API key or login only goes to {server}, so those requests are sent without it. Behind a reverse proxy, pass on the Host header and set X-Forwarded-Proto.'**
+  String mediaOriginBody(String media, String server);
+
+  /// No description provided for @mediaOriginHide.
+  ///
+  /// In en, this message translates to:
+  /// **'Hide'**
+  String get mediaOriginHide;
 }
 
 class _AppLocalizationsDelegate

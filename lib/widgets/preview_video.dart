@@ -31,7 +31,7 @@ class _PreviewVideoState extends ConsumerState<PreviewVideo> {
     _player
       ..setVolume(0)
       ..setPlaylistMode(PlaylistMode.single)
-      ..open(Media(widget.url, httpHeaders: ref.read(authHeadersProvider))).ignore();
+      ..open(Media(widget.url, httpHeaders: ref.read(authHeadersProvider).forUrl(widget.url))).ignore();
     _controller.waitUntilFirstFrameRendered.then((_) {
       if (mounted) setState(() => _shown = true);
     });

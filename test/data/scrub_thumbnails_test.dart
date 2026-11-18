@@ -2,6 +2,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:graphql_flutter/graphql_flutter.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
+import 'package:stash_app_mobile/core/network/origin_guard.dart';
 import 'package:stash_app_mobile/data/models/scene_details.dart';
 import 'package:stash_app_mobile/data/models/scrub_thumbnails.dart';
 import 'package:stash_app_mobile/data/repositories/stash_repository.dart';
@@ -64,7 +65,7 @@ void main() {
   group('StashRepository.scrubThumbnails', () {
     StashRepository repo(MockClient client) => StashRepository(
           GraphQLClient(cache: GraphQLCache(), link: HttpLink('http://s/graphql')),
-          authHeaders: const {'ApiKey': 'secret'},
+          auth: AuthHeaders(Uri.parse('http://s'), const {'ApiKey': 'secret'}),
           httpClient: client,
         );
 
@@ -86,6 +87,36 @@ void main() {
 
       final offline = repo(MockClient((_) async => throw http.ClientException('offline')));
       expect(await offline.scrubThumbnails(const SceneDetails(vttUrl: 'http://s/vtt')), isNull);
+    });
+  });
+
+  group('StashRepository.fileExists', () {
+    test('asks for one byte and never downloads the body', () async {
+      var bodyListened = false;
+      Map<String, String>? sent;
+      final repo = StashRepository(
+        GraphQLClient(cache: GraphQLCache(), link: HttpLink('http://s/graphql')),
+        auth: AuthHeaders(Uri.parse('http://s'), const {'ApiKey': 'secret'}),
+        httpClient: MockClient.streaming((request, _) async {
+          sent = request.headers;
+          // A server that ignores the range and sends an endless body.
+          final body = Stream<List<int>>.periodic(const Duration(milliseconds: 1), (_) => List.filled(1024, 0));
+          return http.StreamedResponse(
+            body.map((chunk) {
+              bodyListened = true;
+              return chunk;
+            }),
+            200,
+          );
+        }),
+      );
+      expect(await repo.fileExists('http://s/scene/1/preview'), isTrue);
+      expect(sent?['Range'], 'bytes=0-0');
+      expect(sent?['ApiKey'], 'secret');
+      await Future<void>.delayed(const Duration(milliseconds: 20));
+      expect(bodyListened, isFalse, reason: 'cancelled before the first chunk');
+      expect(await repo.fileExists('http://elsewhere/preview'), isTrue);
+      expect(sent?['ApiKey'], isNull, reason: 'no API key for another origin');
     });
   });
 }

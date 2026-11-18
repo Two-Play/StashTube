@@ -9,16 +9,18 @@ import 'package:stash_app_mobile/data/repositories/stash_repository.dart';
 import '../fixtures.dart';
 
 /// The repository through a real GraphQL client with the app's policies
-/// (network only, normalized cache): responses go through the cache, which
-/// resolves fragments by `__typename` (1.8).
+/// ([stashGraphQLPolicies]: no cache), parsing the responses into the
+/// generated types (1.8).
 void main() {
   late List<Request> sent;
+  late GraphQLCache cache;
 
   StashRepository repo(Map<String, Map<String, dynamic>> dataByOperation) {
     sent = [];
+    cache = GraphQLCache();
     return StashRepository(GraphQLClient(
-      cache: GraphQLCache(),
-      defaultPolicies: DefaultPolicies(query: Policies(fetch: FetchPolicy.networkOnly)),
+      cache: cache,
+      defaultPolicies: stashGraphQLPolicies,
       link: Link.function((request, [forward]) {
         sent.add(request);
         final data = dataByOperation[request.operation.operationName];
@@ -30,7 +32,7 @@ void main() {
   Map<String, dynamic> page(String field, String resultType, String listField, List<Map<String, dynamic>> items) =>
       {field: {'__typename': resultType, 'count': items.length, listField: items}};
 
-  test('lists and details resolve their fragments through the cache', () async {
+  test('lists and details parse their fragments, and nothing is cached', () async {
     final r = repo({
       'FindScenes': page('findScenes', 'FindScenesResultType', 'scenes', [
         sceneJson({
@@ -88,6 +90,7 @@ void main() {
     expect([details.streams.single.label, details.markers.single.title, details.files.single.height],
         ['Direct stream', 'Intro', 1080]);
     expect((await r.libraryStats()).sceneCount, 12);
+    expect(cache.store.toMap(), isEmpty, reason: 'responses must not pile up in the normalized cache');
   });
 
   test('markers come with their tag and scene', () async {

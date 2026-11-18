@@ -43,6 +43,34 @@ void main() {
     expect(prefs.getString('server_profiles'), isNotNull);
   });
 
+  test('a password in the URL goes to the secret store, not the preferences', () async {
+    final c = await containerWith({});
+    await c.read(serverProfilesProvider.notifier).add(const ServerConfig(baseUrl: 'https://alice:s3cret@proxy.example'));
+    await pumpEventQueue();
+    expect(prefs.getString('server_profiles'), isNot(contains('s3cret')));
+    expect(prefs.getString('server_profiles'), contains('"url":"https://proxy.example"'));
+    expect(secrets.values.values, contains('alice:s3cret'));
+
+    final config = restart().read(serverConfigProvider)!;
+    expect(config.baseUrl, 'https://alice:s3cret@proxy.example', reason: 'still used for requests after a restart');
+    expect(config.displayUrl, 'https://proxy.example');
+  });
+
+  test('a password in a URL stored by an older version moves out of the preferences', () async {
+    final c = await containerWith({
+      'server_profiles': '[{"id":"1","name":"Proxy","url":"https://alice:s3cret@proxy.example"}]',
+      'active_server': '1',
+    });
+    expect(c.read(serverConfigProvider)?.baseUrl, 'https://alice:s3cret@proxy.example');
+    await pumpEventQueue();
+    expect(prefs.getString('server_profiles'), isNot(contains('s3cret')));
+    expect(secrets.read('url_auth:1'), 'alice:s3cret');
+    expect(restart().read(serverConfigProvider)?.baseUrl, 'https://alice:s3cret@proxy.example');
+
+    await restart().read(serverProfilesProvider.notifier).remove('1');
+    expect(secrets.read('url_auth:1'), isNull, reason: 'removed with the server');
+  });
+
   test('tells main() whether the demo is saved', () async {
     final c = await containerWith({});
     expect(ServerProfilesNotifier.hasDemo(prefs), isFalse);

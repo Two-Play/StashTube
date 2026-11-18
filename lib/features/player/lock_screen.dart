@@ -172,7 +172,7 @@ final lockScreenControlsProvider = Provider<void>((ref) {
   }
 
   final player = ref.read(playerProvider);
-  final item = lockScreenItem(scene, headers: ref.read(authHeadersProvider));
+  final item = lockScreenItem(scene, headers: ref.read(authHeadersProvider).forUrl(scene.screenshotUrl ?? ''));
   final subscriptions = <StreamSubscription<Object?>>[];
   var disposed = false;
   ref.onDispose(() {
