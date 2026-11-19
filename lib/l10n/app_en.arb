@@ -511,6 +511,10 @@
   "subscriptionsAll": "All",
   "subscriptionsAllLabel": "All favorites",
   "subscriptionsLatest": "Newest from your favorites",
+  "scrollToTop": "Back to top",
+  "scrollToTopSetting": "\"Back to top\" button",
+  "scrollToTopSettingSubtitle": "Shows a button to jump back to the top of long lists",
+  "subscriptionsShowAll": "Show all",
   "subscriptionsViewChannel": "View channel",
   "subscriptionsPerformerEmpty": "No videos with {name} yet",
   "@subscriptionsPerformerEmpty": {
@@ -1115,6 +1119,21 @@
   "fileFrameRate": "Frame rate",
   "fileBitRate": "Bit rate",
   "fileModified": "Modified",
+  "imageVideoLabel": "Video: {title}, {duration}",
+  "@imageVideoLabel": {
+    "placeholders": {
+      "title": {
+        "type": "String"
+      },
+      "duration": {
+        "type": "String"
+      }
+    }
+  },
+  "imageVideoMute": "Mute",
+  "imageVideoUnmute": "Unmute",
+  "imageVideoPlay": "Play",
+  "imageVideoPause": "Pause",
   "imageInfo": "Image info",
   "@imageInfo": {
     "description": "Tooltip of the image viewer's info button and title of its sheet."

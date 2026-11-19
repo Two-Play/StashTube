@@ -815,6 +815,19 @@ class AppLocalizationsEn extends AppLocalizations {
   String get subscriptionsLatest => 'Newest from your favorites';
 
   @override
+  String get scrollToTop => 'Back to top';
+
+  @override
+  String get scrollToTopSetting => '\"Back to top\" button';
+
+  @override
+  String get scrollToTopSettingSubtitle =>
+      'Shows a button to jump back to the top of long lists';
+
+  @override
+  String get subscriptionsShowAll => 'Show all';
+
+  @override
   String get subscriptionsViewChannel => 'View channel';
 
   @override
@@ -1804,6 +1817,23 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get fileModified => 'Modified';
+
+  @override
+  String imageVideoLabel(String title, String duration) {
+    return 'Video: $title, $duration';
+  }
+
+  @override
+  String get imageVideoMute => 'Mute';
+
+  @override
+  String get imageVideoUnmute => 'Unmute';
+
+  @override
+  String get imageVideoPlay => 'Play';
+
+  @override
+  String get imageVideoPause => 'Pause';
 
   @override
   String get imageInfo => 'Image info';

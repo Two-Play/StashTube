@@ -1238,6 +1238,30 @@ abstract class AppLocalizations {
   /// **'Newest from your favorites'**
   String get subscriptionsLatest;
 
+  /// No description provided for @scrollToTop.
+  ///
+  /// In en, this message translates to:
+  /// **'Back to top'**
+  String get scrollToTop;
+
+  /// No description provided for @scrollToTopSetting.
+  ///
+  /// In en, this message translates to:
+  /// **'\"Back to top\" button'**
+  String get scrollToTopSetting;
+
+  /// No description provided for @scrollToTopSettingSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Shows a button to jump back to the top of long lists'**
+  String get scrollToTopSettingSubtitle;
+
+  /// No description provided for @subscriptionsShowAll.
+  ///
+  /// In en, this message translates to:
+  /// **'Show all'**
+  String get subscriptionsShowAll;
+
   /// No description provided for @subscriptionsViewChannel.
   ///
   /// In en, this message translates to:
@@ -2917,6 +2941,36 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Modified'**
   String get fileModified;
+
+  /// No description provided for @imageVideoLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Video: {title}, {duration}'**
+  String imageVideoLabel(String title, String duration);
+
+  /// No description provided for @imageVideoMute.
+  ///
+  /// In en, this message translates to:
+  /// **'Mute'**
+  String get imageVideoMute;
+
+  /// No description provided for @imageVideoUnmute.
+  ///
+  /// In en, this message translates to:
+  /// **'Unmute'**
+  String get imageVideoUnmute;
+
+  /// No description provided for @imageVideoPlay.
+  ///
+  /// In en, this message translates to:
+  /// **'Play'**
+  String get imageVideoPlay;
+
+  /// No description provided for @imageVideoPause.
+  ///
+  /// In en, this message translates to:
+  /// **'Pause'**
+  String get imageVideoPause;
 
   /// Tooltip of the image viewer's info button and title of its sheet.
   ///

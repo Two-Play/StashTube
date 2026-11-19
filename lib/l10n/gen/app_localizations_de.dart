@@ -817,6 +817,19 @@ class AppLocalizationsDe extends AppLocalizations {
   String get subscriptionsLatest => 'Neueste Videos deiner Favoriten';
 
   @override
+  String get scrollToTop => 'Nach oben';
+
+  @override
+  String get scrollToTopSetting => '„Nach oben“-Button';
+
+  @override
+  String get scrollToTopSettingSubtitle =>
+      'Zeigt in langen Listen eine Taste, um zum Anfang zurückzuspringen';
+
+  @override
+  String get subscriptionsShowAll => 'Alle zeigen';
+
+  @override
   String get subscriptionsViewChannel => 'Kanal ansehen';
 
   @override
@@ -1811,6 +1824,23 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get fileModified => 'Geändert';
+
+  @override
+  String imageVideoLabel(String title, String duration) {
+    return 'Video: $title, $duration';
+  }
+
+  @override
+  String get imageVideoMute => 'Stumm';
+
+  @override
+  String get imageVideoUnmute => 'Ton an';
+
+  @override
+  String get imageVideoPlay => 'Abspielen';
+
+  @override
+  String get imageVideoPause => 'Pause';
 
   @override
   String get imageInfo => 'Bildinfo';
