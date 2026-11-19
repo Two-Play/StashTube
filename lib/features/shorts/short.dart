@@ -4,6 +4,7 @@ import 'package:flutter/widgets.dart';
 
 import '../../core/utils/picture_fit.dart';
 
+import '../../data/models/image_item.dart';
 import '../../data/models/marker.dart';
 import '../../data/models/scene.dart';
 
@@ -11,9 +12,31 @@ import '../../data/models/scene.dart';
 /// from its scene's stream (original resolution) between [start] and [end].
 @immutable
 class Short {
-  const Short.video(this.scene) : marker = null;
+  const Short.video(this.scene)
+      : marker = null,
+        image = null;
 
-  Short.marker(Marker this.marker) : scene = marker.scene;
+  Short.marker(Marker this.marker)
+      : scene = marker.scene,
+        image = null;
+
+  /// A video file shown as an image (a gallery's clip, #64). [scene] only
+  /// stands in for display (title, thumbnail, file, performers): it is no
+  /// Stash scene, so the scene actions (rating, O-counter, plays, watch
+  /// later, full video) don't apply ([isImage]).
+  Short.image(ImageItem this.image)
+      : marker = null,
+        scene = Scene(
+          id: 'image:${image.id}',
+          title: image.title,
+          duration: image.videoDuration ?? 0,
+          width: image.width,
+          height: image.height,
+          screenshotUrl: image.thumbnailUrl,
+          streamUrl: image.imageUrl,
+          studio: image.studio,
+          performers: image.performers,
+        );
 
   /// Length of a marker clip without an end time; Stash's marker previews
   /// are as long.
@@ -21,8 +44,11 @@ class Short {
 
   final Scene scene;
   final Marker? marker;
+  final ImageItem? image;
 
   bool get isMarker => marker != null;
+
+  bool get isImage => image != null;
 
   /// Unique in a feed: a scene can be a short and have markers in it.
   String get key => marker == null ? scene.id : 'marker:${marker!.id}';

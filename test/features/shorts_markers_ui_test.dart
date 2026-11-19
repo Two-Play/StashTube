@@ -56,6 +56,26 @@ class _TagRepository implements StashRepository {
 }
 
 void main() {
+  testWidgets('a clip that is no scene (#64): the bar shows only the time', (tester) async {
+    final player = FakePlayer(position: const Duration(seconds: 3), duration: const Duration(seconds: 12));
+    await tester.pumpWidget(ProviderScope(
+      overrides: [
+        playerProvider.overrideWithValue(player),
+        authHeadersProvider.overrideWithValue(AuthHeaders.none),
+      ],
+      child: MaterialApp(
+        home: Scaffold(
+          body: Center(child: SizedBox(width: 400, child: PreviewSeekBar(sceneId: null, player: player))),
+        ),
+      ),
+    ));
+    await tester.pump();
+    // Touching it would load the sprites and markers of a scene; there is none.
+    await tester.drag(find.byType(PreviewSeekBar), const Offset(100, 0));
+    await tester.pump();
+    expect(tester.takeException(), isNull);
+  });
+
   group('seek bar with a window (marker shorts)', () {
     late FakePlayer player;
 

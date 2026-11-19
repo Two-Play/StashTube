@@ -14,14 +14,18 @@ import '../../l10n/l10n.dart';
 import '../auth/server_avatar.dart';
 
 class PerformersPage extends ConsumerStatefulWidget {
-  const PerformersPage({super.key});
+  const PerformersPage({super.key, this.initialSort = PerformerSort.name});
+
+  /// The sort chip selected at first; [PerformerSort.favorites] lists only
+  /// the favorites.
+  final PerformerSort initialSort;
 
   @override
   ConsumerState<PerformersPage> createState() => _PerformersPageState();
 }
 
 class _PerformersPageState extends ConsumerState<PerformersPage> {
-  var _query = PerformerQuery();
+  late var _query = PerformerQuery(sort: widget.initialSort);
 
   @override
   Widget build(BuildContext context) {
@@ -54,7 +58,7 @@ class _PerformersPageState extends ConsumerState<PerformersPage> {
           child: CustomScrollView(
             physics: const AlwaysScrollableScrollPhysics(),
             slivers: [
-              SliverToBoxAdapter(
+              PinnedBar(
                 child: ChipBar<PerformerSort>(
                   values: PerformerSort.values,
                   selected: _query.sort,

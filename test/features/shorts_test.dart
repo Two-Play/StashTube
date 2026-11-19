@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:stash_app_mobile/core/config/server_config.dart';
+import 'package:stash_app_mobile/data/models/image_item.dart';
 import 'package:stash_app_mobile/data/models/list_queries.dart';
 import 'package:stash_app_mobile/data/models/marker.dart';
 import 'package:stash_app_mobile/data/models/page_result.dart';
@@ -35,11 +36,17 @@ Marker _marker(String id, {double seconds = 30, double? end, double duration = 6
 /// Tagged scenes are `t<n>`, all others `o<n>`, markers `marker:m<n>`;
 /// pages of [perPage].
 class _ShortsRepository implements StashRepository {
-  _ShortsRepository({this.tagged = 10, this.others = 10, this.markers = 0});
+  _ShortsRepository({this.tagged = 10, this.others = 10, this.markers = 0, this.images = 0});
 
   final int tagged;
   final int others;
   final int markers;
+
+  /// Images `i<n>`; every third (`i0`, `i3`, ...) is a picture, the others
+  /// video files (#64).
+  final int images;
+  final imageQueries = <ImageQuery>[];
+  final imagePages = <int>[];
   final queries = <SceneQuery>[];
   final markerQueries = <MarkerQuery>[];
   final pages = <int>[];
@@ -72,8 +79,26 @@ class _ShortsRepository implements StashRepository {
   }
 
   @override
+  Future<PageResult<ImageItem>> findImages(ImageQuery query, {int page = 1, int perPage = 24}) async {
+    imageQueries.add(query);
+    imagePages.add(page);
+    final all = [for (var i = 0; i < images; i++) _image(i)];
+    return PageResult(items: all.skip((page - 1) * perPage).take(perPage).toList(), totalCount: all.length);
+  }
+
+  @override
   dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
 }
+
+ImageItem _image(int i) => ImageItem(
+      id: 'i$i',
+      title: 'Image $i',
+      thumbnailUrl: 'http://s/i$i.jpg',
+      imageUrl: 'http://s/i$i',
+      videoDuration: i % 3 == 0 ? null : 12,
+      width: 720,
+      height: 1280,
+    );
 
 Future<ProviderContainer> _container(_ShortsRepository repo, [ShortsSettings? settings]) async {
   SharedPreferences.setMockInitialValues({});
@@ -463,6 +488,38 @@ void main() {
       expect(markerShortsStart(items, 27), (startPage: 2, initialIndex: 2), reason: 'm25 cannot play');
       // Numbered pages: the grid shows only its page.
       expect(markerShortsStart(items.sublist(0, 10), 4, page: 3), (startPage: 3, initialIndex: 4));
+    });
+  });
+
+  group('an image grid\'s clips as shorts (#64)', () {
+    test('plays only its video files, in order, as image shorts', () async {
+      final repo = _ShortsRepository(images: 40);
+      final c = await _container(repo, const ShortsSettings(tags: [beach]));
+      final grid = ImageQuery(galleryId: 'g1', sort: ImageSort.path);
+      final feed = await _loaded(c, ShortsSource.images(grid));
+      final videos = [for (var i = 0; i < 40; i++) if (i % 3 != 0) 'image:i$i'];
+      expect(feed.items.map((s) => s.key), videos.take(24));
+      expect(feed.items.every((s) => s.isImage), isTrue);
+      expect(repo.queries, isEmpty, reason: 'no scenes');
+      expect(repo.imageQueries.first, same(grid));
+
+      final clip = feed.items.first;
+      expect(clip.playbackUrl, 'http://s/i1');
+      expect(clip.duration, 12);
+      expect(clip.aspect, 720 / 1280);
+    });
+
+    test('the tapped clip\'s place counts only videos', () {
+      final items = [for (var i = 0; i < 30; i++) _image(i)];
+      expect(imageShortsStart(items, 4), (startPage: 1, initialIndex: 2), reason: 'i1 and i2 before it');
+      expect(imageShortsStart(items, 26), (startPage: 2, initialIndex: 1), reason: 'i24 is a picture, i25 a clip');
+    });
+
+    test('sources are equal by their query', () {
+      final query = ImageQuery(galleryId: 'g1');
+      expect(ShortsSource.images(query, title: 'a'), ShortsSource.images(ImageQuery(galleryId: 'g1')));
+      expect(ShortsSource.images(query), isNot(ShortsSource.images(query, startPage: 2)));
+      expect(ShortsSource.images(query).isFeed, isFalse);
     });
   });
 }

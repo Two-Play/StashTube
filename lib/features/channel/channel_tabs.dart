@@ -487,7 +487,7 @@ class _ChannelGalleryGridState extends ConsumerState<ChannelGalleryGrid> {
           physics: const AlwaysScrollableScrollPhysics(),
           slivers: [
             ...widget.headerSlivers,
-            SliverToBoxAdapter(
+            PinnedBar(
               child: ChipBar<GallerySort>(
                 values: GallerySort.values,
                 selected: _query.sort,

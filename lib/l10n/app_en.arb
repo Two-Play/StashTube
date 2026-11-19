@@ -511,6 +511,10 @@
   "subscriptionsAll": "All",
   "subscriptionsAllLabel": "All favorites",
   "subscriptionsLatest": "Newest from your favorites",
+  "scrollToTop": "Back to top",
+  "scrollToTopSetting": "\"Back to top\" button",
+  "scrollToTopSettingSubtitle": "Shows a button to jump back to the top of long lists",
+  "subscriptionsShowAll": "Show all",
   "subscriptionsViewChannel": "View channel",
   "subscriptionsPerformerEmpty": "No videos with {name} yet",
   "@subscriptionsPerformerEmpty": {
@@ -1115,6 +1119,23 @@
   "fileFrameRate": "Frame rate",
   "fileBitRate": "Bit rate",
   "fileModified": "Modified",
+  "imageVideoLabel": "Video: {title}, {duration}",
+  "@imageVideoLabel": {
+    "placeholders": {
+      "title": {
+        "type": "String"
+      },
+      "duration": {
+        "type": "String"
+      }
+    }
+  },
+  "imageVideoMute": "Mute",
+  "imageVideoUnmute": "Unmute",
+  "imageVideoPlay": "Play",
+  "imageVideoPause": "Pause",
+  "imagesPlayAsShorts": "Play as shorts",
+  "imagesClips": "Clips",
   "imageInfo": "Image info",
   "@imageInfo": {
     "description": "Tooltip of the image viewer's info button and title of its sheet."
@@ -1553,6 +1574,9 @@
   "whatsNewTitle": "What's new",
   "whatsNewDone": "Got it",
   "whatsNewSubtitle": "What the latest updates brought",
+  "whatsNew4Title": "Videos in galleries, sticky filters and quicker taps",
+  "whatsNew4": "Video files in galleries play in the image viewer, with zoom, double tap to skip and hold for 2×; wide clips turn with the phone.\nPlay a gallery's clips as shorts, from the grid or the viewer.\nFilter and sort bars stay at the top of every list, and a Back to top button jumps up long lists.\nDouble tap You in the tab bar to switch servers; swipe an image up for its info.\nFavorites: double tap All for all favorite performers, or a performer for their channel.\nTag pages have filters.",
+  "whatsNew4More": "Double tap to skip: switching sides takes a new double tap.\nThe Back to top button can be turned off in Settings → Appearance.",
   "whatsNew3Title": "Back where you were, favorites and a safer app lock",
   "whatsNew3": "Lists keep their place when you turn the phone for fullscreen and come back.\nFavorites: pick All or one performer at the top; a long press opens their channel.\nZooming shows Original and Fill when it snaps, and guide lines where the picture snaps.\nChange the PIN or turn the app lock off with Face ID or your fingerprint, also when you forgot the PIN.\nYour API key and login only go to your server, and a warning shows when a proxy hands out wrong media addresses.",
   "whatsNew3More": "The PIN is stored with a much slower hash; your PIN stays the same.\nIf the PIN can't be read after a restore, the app stays locked and offers a new PIN with biometrics, or a reset.\nA password in a server address is kept in the device's secure storage.\nFewer requests: lists no longer pile up in a cache, and the preview check no longer downloads whole files.",

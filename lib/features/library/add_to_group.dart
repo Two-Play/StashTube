@@ -176,6 +176,7 @@ class _AddToGroupSheetState extends ConsumerState<AddToGroupSheet> {
         child: Scaffold(
           backgroundColor: Colors.transparent,
           body: LoadMoreListener(
+            scrollToTop: false,
             onLoadMore: () => ref.read(provider.notifier).loadMore(),
             child: CustomScrollView(
               controller: scrollController,

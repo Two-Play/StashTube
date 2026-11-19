@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/pagination/paged_notifier.dart';
+import '../../data/models/image_item.dart';
 import '../../data/models/list_queries.dart';
 import '../../data/models/marker.dart';
 import '../../data/models/page_result.dart';
@@ -98,6 +99,7 @@ class ShortsSource {
         title = null,
         lane = null,
         markers = null,
+        images = null,
         loops = false,
         startPage = 1;
 
@@ -109,6 +111,7 @@ class ShortsSource {
         title = null,
         lane = null,
         markers = null,
+        images = null,
         loops = true,
         startPage = 1;
 
@@ -116,6 +119,7 @@ class ShortsSource {
       : studioId = null,
         lane = null,
         markers = null,
+        images = null,
         loops = false,
         startPage = 1;
 
@@ -124,6 +128,7 @@ class ShortsSource {
       : performerId = null,
         lane = null,
         markers = null,
+        images = null,
         loops = false,
         startPage = 1;
 
@@ -134,6 +139,7 @@ class ShortsSource {
         studioId = null,
         title = null,
         markers = null,
+        images = null,
         loops = false,
         startPage = 1;
 
@@ -144,6 +150,16 @@ class ShortsSource {
       : performerId = null,
         studioId = null,
         lane = null,
+        images = null,
+        loops = false;
+
+  /// The video files of an image grid (a gallery's clips, #64), in its
+  /// order, from its page [startPage] on; its pictures are left out.
+  const ShortsSource.images(ImageQuery this.images, {this.startPage = 1, this.title})
+      : performerId = null,
+        studioId = null,
+        lane = null,
+        markers = null,
         loops = false;
 
   final String? performerId;
@@ -154,6 +170,9 @@ class ShortsSource {
 
   /// The markers grid's query, for [ShortsSource.markers].
   final MarkerQuery? markers;
+
+  /// The image grid's query, for [ShortsSource.images].
+  final ImageQuery? images;
 
   /// [ShortsSource.loops].
   final bool loops;
@@ -169,7 +188,7 @@ class ShortsSource {
 
   /// The shorts tab's own feed (videos or loops), which the shorts/loops
   /// switch changes.
-  bool get isFeed => performerId == null && studioId == null && lane == null && markers == null;
+  bool get isFeed => performerId == null && studioId == null && lane == null && markers == null && images == null;
 
   /// A channel's videos that fit the shorts settings' [filter] (length and
   /// orientation); null for the mixed feeds.
@@ -188,11 +207,12 @@ class ShortsSource {
       other.studioId == studioId &&
       other.lane == lane &&
       other.markers == markers &&
+      other.images == images &&
       other.loops == loops &&
       other.startPage == startPage;
 
   @override
-  int get hashCode => Object.hash(performerId, studioId, lane, markers, loops, startPage);
+  int get hashCode => Object.hash(performerId, studioId, lane, markers, images, loops, startPage);
 }
 
 /// Where a tapped marker is in the shorts of [ShortsSource.markers]: the
@@ -210,6 +230,23 @@ class ShortsSource {
   var initialIndex = 0;
   for (var i = first; i < index && i < items.length; i++) {
     if (items[i].scene.streamUrl != null) initialIndex++;
+  }
+  return (startPage: startPage, initialIndex: initialIndex);
+}
+
+/// Where a tapped clip is in the shorts of [ShortsSource.images]: like
+/// [markerShortsStart], counting only the grid's videos.
+({int startPage, int initialIndex}) imageShortsStart(
+  List<ImageItem> items,
+  int index, {
+  int? page,
+  int perPage = PagedNotifier.pageSize,
+}) {
+  final startPage = page ?? index ~/ perPage + 1;
+  final first = page == null ? (startPage - 1) * perPage : 0;
+  var initialIndex = 0;
+  for (var i = first; i < index && i < items.length; i++) {
+    if (items[i].isVideo && items[i].imageUrl != null) initialIndex++;
   }
   return (startPage: startPage, initialIndex: initialIndex);
 }
@@ -240,6 +277,11 @@ class ShortsFeedNotifier extends Notifier<ShortsFeedState> {
   /// Whether the next short is a video (else a marker), while both last.
   bool _videoTurn = true;
 
+  /// [ShortsSource.images]: the grid's videos, in its order.
+  final _clips = Queue<Short>();
+  bool _clipsDone = true;
+  int _clipsPage = 0;
+
   /// Bumped on every build, so loads of a previous build are dropped.
   int _generation = 0;
   bool _loading = false;
@@ -247,13 +289,18 @@ class ShortsFeedNotifier extends Notifier<ShortsFeedState> {
   @override
   ShortsFeedState build() {
     ref.watch(stashRepositoryProvider);
-    // A markers grid's markers: no settings apply.
-    final settings = source.markers == null ? ref.watch(shortsSettingsProvider) : const ShortsSettings();
+    // A markers or image grid's items: no settings apply.
+    final settings =
+        source.markers == null && source.images == null ? ref.watch(shortsSettingsProvider) : const ShortsSettings();
     final channelQuery = source.channelQuery(settings.baseFilter);
     if (source.markers case final markers?) {
       _preferredQuery = null;
       _othersQuery = null;
       _markerQuery = markers;
+    } else if (source.images != null) {
+      _preferredQuery = null;
+      _othersQuery = null;
+      _markerQuery = null;
     } else if (channelQuery != null) {
       _preferredQuery = null;
       _othersQuery = channelQuery;
@@ -275,6 +322,9 @@ class ShortsFeedNotifier extends Notifier<ShortsFeedState> {
     _markersDone = _markerQuery == null;
     _markersPage = source.startPage - 1;
     _videoTurn = true;
+    _clips.clear();
+    _clipsDone = source.images == null;
+    _clipsPage = source.startPage - 1;
     _loading = false;
     final generation = ++_generation;
     Future.microtask(() {
@@ -287,7 +337,9 @@ class ShortsFeedNotifier extends Notifier<ShortsFeedState> {
 
   bool get _needsMarkers => !_markersDone && _markers.length < 2;
 
-  bool get _isExhausted => _mixer.isExhausted && _markersDone && _markers.isEmpty;
+  bool get _needsClips => !_clipsDone && _clips.length < 2;
+
+  bool get _isExhausted => _mixer.isExhausted && _markersDone && _markers.isEmpty && _clipsDone && _clips.isEmpty;
 
   Future<void> loadMore() async {
     final generation = _generation;
@@ -302,10 +354,11 @@ class ShortsFeedNotifier extends Notifier<ShortsFeedState> {
           if (_mixer.needsPreferred) _load(preferred: true),
           if (_mixer.needsOthers) _load(preferred: false),
           if (_needsMarkers) _loadMarkers(),
+          if (_needsClips) _loadClips(),
         ]);
         if (!ref.mounted || generation != _generation) return;
         final taken = _take(_pageSize - added.length);
-        if (taken.isEmpty && !_mixer.needsPreferred && !_mixer.needsOthers && !_needsMarkers) break;
+        if (taken.isEmpty && !_mixer.needsPreferred && !_mixer.needsOthers && !_needsMarkers && !_needsClips) break;
         added.addAll(taken);
       }
       state = ShortsFeedState(items: [...state.items, ...added], hasMore: !_isExhausted);
@@ -321,6 +374,13 @@ class ShortsFeedNotifier extends Notifier<ShortsFeedState> {
   /// the source whose turn it is waits for its next page.
   List<Short> _take(int count) {
     final result = <Short>[];
+    // An image grid's clips: only those, in order.
+    if (source.images != null) {
+      while (result.length < count && _clips.isNotEmpty) {
+        result.add(_clips.removeFirst());
+      }
+      return result;
+    }
     while (result.length < count) {
       final videosLeft = !_mixer.isExhausted;
       final markersLeft = !_markersDone || _markers.isNotEmpty;
@@ -356,6 +416,16 @@ class ShortsFeedNotifier extends Notifier<ShortsFeedState> {
       _mixer.addOthers(playable);
       _mixer.othersDone = done;
     }
+  }
+
+  Future<void> _loadClips() async {
+    final generation = _generation;
+    final page = _clipsPage + 1;
+    final result = await ref.read(stashRepositoryProvider).findImages(source.images!, page: page, perPage: _pageSize);
+    if (!ref.mounted || generation != _generation) return;
+    _clipsPage = page;
+    _clips.addAll([for (final i in result.items) if (i.isVideo && i.imageUrl != null) Short.image(i)]);
+    _clipsDone = result.items.isEmpty || page * _pageSize >= result.totalCount;
   }
 
   Future<void> _loadMarkers() async {

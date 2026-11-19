@@ -7,6 +7,7 @@ import '../../core/config/haptics.dart';
 import '../../l10n/l10n.dart';
 import '../../widgets/connection_banner.dart';
 import '../../widgets/layout_freeze.dart';
+import '../auth/server_switcher.dart';
 import '../home/home_page.dart';
 import '../library/library_page.dart';
 import '../performers/performers_page.dart';
@@ -95,6 +96,11 @@ class _AppShellBody extends ConsumerWidget {
     final selected = tabs.indexOf(currentTab).clamp(0, tabs.length - 1);
 
     void selectTab(AppTab tab) {
+      if (ref.read(tabDoubleTapProvider).tap(tab, DateTime.now()) && tab == AppTab.you) {
+        Haptics.selection();
+        showServerSwitcher(context);
+        return;
+      }
       if (tab == currentTab) {
         reselectTab(navigatorKeys[tab]!.currentState, scrollControllers[tab]!);
         Haptics.selection();

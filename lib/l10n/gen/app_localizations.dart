@@ -1238,6 +1238,30 @@ abstract class AppLocalizations {
   /// **'Newest from your favorites'**
   String get subscriptionsLatest;
 
+  /// No description provided for @scrollToTop.
+  ///
+  /// In en, this message translates to:
+  /// **'Back to top'**
+  String get scrollToTop;
+
+  /// No description provided for @scrollToTopSetting.
+  ///
+  /// In en, this message translates to:
+  /// **'\"Back to top\" button'**
+  String get scrollToTopSetting;
+
+  /// No description provided for @scrollToTopSettingSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Shows a button to jump back to the top of long lists'**
+  String get scrollToTopSettingSubtitle;
+
+  /// No description provided for @subscriptionsShowAll.
+  ///
+  /// In en, this message translates to:
+  /// **'Show all'**
+  String get subscriptionsShowAll;
+
   /// No description provided for @subscriptionsViewChannel.
   ///
   /// In en, this message translates to:
@@ -2918,6 +2942,48 @@ abstract class AppLocalizations {
   /// **'Modified'**
   String get fileModified;
 
+  /// No description provided for @imageVideoLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Video: {title}, {duration}'**
+  String imageVideoLabel(String title, String duration);
+
+  /// No description provided for @imageVideoMute.
+  ///
+  /// In en, this message translates to:
+  /// **'Mute'**
+  String get imageVideoMute;
+
+  /// No description provided for @imageVideoUnmute.
+  ///
+  /// In en, this message translates to:
+  /// **'Unmute'**
+  String get imageVideoUnmute;
+
+  /// No description provided for @imageVideoPlay.
+  ///
+  /// In en, this message translates to:
+  /// **'Play'**
+  String get imageVideoPlay;
+
+  /// No description provided for @imageVideoPause.
+  ///
+  /// In en, this message translates to:
+  /// **'Pause'**
+  String get imageVideoPause;
+
+  /// No description provided for @imagesPlayAsShorts.
+  ///
+  /// In en, this message translates to:
+  /// **'Play as shorts'**
+  String get imagesPlayAsShorts;
+
+  /// No description provided for @imagesClips.
+  ///
+  /// In en, this message translates to:
+  /// **'Clips'**
+  String get imagesClips;
+
   /// Tooltip of the image viewer's info button and title of its sheet.
   ///
   /// In en, this message translates to:
@@ -4423,6 +4489,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'What the latest updates brought'**
   String get whatsNewSubtitle;
+
+  /// No description provided for @whatsNew4Title.
+  ///
+  /// In en, this message translates to:
+  /// **'Videos in galleries, sticky filters and quicker taps'**
+  String get whatsNew4Title;
+
+  /// No description provided for @whatsNew4.
+  ///
+  /// In en, this message translates to:
+  /// **'Video files in galleries play in the image viewer, with zoom, double tap to skip and hold for 2×; wide clips turn with the phone.\nPlay a gallery\'s clips as shorts, from the grid or the viewer.\nFilter and sort bars stay at the top of every list, and a Back to top button jumps up long lists.\nDouble tap You in the tab bar to switch servers; swipe an image up for its info.\nFavorites: double tap All for all favorite performers, or a performer for their channel.\nTag pages have filters.'**
+  String get whatsNew4;
+
+  /// No description provided for @whatsNew4More.
+  ///
+  /// In en, this message translates to:
+  /// **'Double tap to skip: switching sides takes a new double tap.\nThe Back to top button can be turned off in Settings → Appearance.'**
+  String get whatsNew4More;
 
   /// No description provided for @whatsNew3Title.
   ///

@@ -100,7 +100,7 @@ class _MarkerGridViewState extends ConsumerState<MarkerGridView> {
           physics: const AlwaysScrollableScrollPhysics(),
           slivers: [
             ...widget.headerSlivers,
-            SliverToBoxAdapter(
+            PinnedBar(
               child: ChipBar<MarkerSort>(
                 values: MarkerSort.values,
                 selected: _query.sort,

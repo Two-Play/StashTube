@@ -817,6 +817,19 @@ class AppLocalizationsDe extends AppLocalizations {
   String get subscriptionsLatest => 'Neueste Videos deiner Favoriten';
 
   @override
+  String get scrollToTop => 'Nach oben';
+
+  @override
+  String get scrollToTopSetting => '„Nach oben“-Button';
+
+  @override
+  String get scrollToTopSettingSubtitle =>
+      'Zeigt in langen Listen eine Taste, um zum Anfang zurückzuspringen';
+
+  @override
+  String get subscriptionsShowAll => 'Alle zeigen';
+
+  @override
   String get subscriptionsViewChannel => 'Kanal ansehen';
 
   @override
@@ -1813,6 +1826,29 @@ class AppLocalizationsDe extends AppLocalizations {
   String get fileModified => 'Geändert';
 
   @override
+  String imageVideoLabel(String title, String duration) {
+    return 'Video: $title, $duration';
+  }
+
+  @override
+  String get imageVideoMute => 'Stumm';
+
+  @override
+  String get imageVideoUnmute => 'Ton an';
+
+  @override
+  String get imageVideoPlay => 'Abspielen';
+
+  @override
+  String get imageVideoPause => 'Pause';
+
+  @override
+  String get imagesPlayAsShorts => 'Als Shorts abspielen';
+
+  @override
+  String get imagesClips => 'Clips';
+
+  @override
   String get imageInfo => 'Bildinfo';
 
   @override
@@ -2677,6 +2713,18 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get whatsNewSubtitle => 'Was die letzten Updates gebracht haben';
+
+  @override
+  String get whatsNew4Title =>
+      'Videos in Galerien, feste Filterleisten und schnellere Gesten';
+
+  @override
+  String get whatsNew4 =>
+      'Videodateien in Galerien laufen im Bildbetrachter, mit Zoom, Doppeltipp zum Spulen und Halten für 2×; breite Clips drehen sich mit dem Handy.\nDie Clips einer Galerie als Shorts abspielen, aus dem Raster oder dem Bildbetrachter.\nFilter- und Sortierleisten bleiben in jeder Liste oben, und ein „Nach oben“-Button springt in langen Listen zurück.\nDoppeltipp auf „Du“ in der Tab-Leiste wechselt den Server; ein Bild nach oben wischen zeigt seine Infos.\nFavoriten: Doppeltipp auf „Alle“ zeigt alle Lieblingsdarsteller, auf einen Darsteller seinen Kanal.\nTag-Seiten haben Filter.';
+
+  @override
+  String get whatsNew4More =>
+      'Doppeltipp zum Spulen: Beim Seitenwechsel braucht es einen neuen Doppeltipp.\nDer „Nach oben“-Button lässt sich unter Einstellungen → Darstellung ausschalten.';
 
   @override
   String get whatsNew3Title =>

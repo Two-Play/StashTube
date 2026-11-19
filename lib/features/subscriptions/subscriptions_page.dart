@@ -23,7 +23,7 @@ import 'last_visit.dart';
 /// filter: "All" (the default) lists the newest scenes of all favorites
 /// ([SceneQuery.newFromFavorites], shared with home's shelf), one avatar
 /// only that performer's scenes, newest first, with "View channel". The
-/// avatars open the channel only on a long press, so a tap never leaves the
+/// avatars open the channel only on a double tap or a long press, so a tap never leaves the
 /// page. A dot marks performers with scenes added since the last visit. An
 /// optional tab, a tile on the "You" page and home's "New from favorites"
 /// "See all".
@@ -116,6 +116,7 @@ class _SubscriptionsPageState extends ConsumerState<SubscriptionsPage> {
                   child: FavoritePerformersRow(
                     selectedId: selected?.id,
                     onSelected: _select,
+                    onShowAll: () => openAllFavorites(ref),
                     controller: _avatarScroll,
                   ),
                 ),
@@ -124,6 +125,13 @@ class _SubscriptionsPageState extends ConsumerState<SubscriptionsPage> {
             ),
     );
   }
+}
+
+/// All favorite performers as a grid ([PerformersPage] on its favorites
+/// sort): a double tap on "All" or "Show all" in the header.
+void openAllFavorites(WidgetRef ref) {
+  Haptics.selection();
+  openPage(ref, const PerformersPage(initialSort: PerformerSort.favorites));
 }
 
 /// What the feed below shows: all favorites, or one performer with a way
@@ -159,6 +167,12 @@ class _SelectionHeader extends ConsumerWidget {
                 Haptics.selection();
                 openPerformer(ref, performer.id);
               },
+            )
+          else
+            TextButton.icon(
+              icon: const Icon(Icons.people_outline),
+              label: Text(l.subscriptionsShowAll),
+              onPressed: () => openAllFavorites(ref),
             ),
         ],
       ),
@@ -168,13 +182,15 @@ class _SelectionHeader extends ConsumerWidget {
 
 /// The favorite performers' avatars in a horizontal row. With [onSelected]
 /// it starts with "All", and a tap selects ([onSelected] with null for
-/// "All") while a long press opens the channel; without, a tap opens the
-/// channel. Loads further pages as it scrolls.
+/// "All") while a double tap or a long press opens the channel; without, a
+/// tap opens the channel. A double tap on "All" calls [onShowAll]. Loads further pages as
+/// it scrolls.
 class FavoritePerformersRow extends ConsumerWidget {
-  const FavoritePerformersRow({super.key, this.selectedId, this.onSelected, this.controller});
+  const FavoritePerformersRow({super.key, this.selectedId, this.onSelected, this.onShowAll, this.controller});
 
   final String? selectedId;
   final ValueChanged<Performer?>? onSelected;
+  final VoidCallback? onShowAll;
   final ScrollController? controller;
 
   static const _avatarRadius = 30.0;
@@ -212,6 +228,7 @@ class FavoritePerformersRow extends ConsumerWidget {
                   width: _itemWidth,
                   radius: _avatarRadius,
                   onTap: () => onSelected(null),
+                  onDoubleTap: onShowAll,
                 );
               }
               final i = index - lead;
@@ -265,12 +282,19 @@ class _SelectionRing extends StatelessWidget {
 double _innerRadius(double radius) => radius - _SelectionRing.width - _SelectionRing.gap;
 
 class _AllAvatar extends StatelessWidget {
-  const _AllAvatar({required this.selected, required this.width, required this.radius, required this.onTap});
+  const _AllAvatar({
+    required this.selected,
+    required this.width,
+    required this.radius,
+    required this.onTap,
+    this.onDoubleTap,
+  });
 
   final bool selected;
   final double width;
   final double radius;
   final VoidCallback onTap;
+  final VoidCallback? onDoubleTap;
 
   @override
   Widget build(BuildContext context) {
@@ -286,6 +310,7 @@ class _AllAvatar extends StatelessWidget {
         key: const ValueKey('favorites-all'),
         borderRadius: AppRadius.cardBorder,
         onTap: onTap,
+        onDoubleTap: onDoubleTap,
         child: SizedBox(
           width: width,
           child: Column(
@@ -358,6 +383,7 @@ class _Avatar extends ConsumerWidget {
       child: InkWell(
         borderRadius: AppRadius.cardBorder,
         onTap: select ?? openChannel,
+        onDoubleTap: select == null ? null : openChannel,
         onLongPress: select == null ? null : openChannel,
         child: SizedBox(
           width: width,

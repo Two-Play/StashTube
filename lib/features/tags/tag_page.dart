@@ -2,8 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../data/models/list_queries.dart';
-import '../../data/models/scene_filter.dart';
-import '../../data/models/tag.dart';
 import '../../data/providers.dart';
 import '../../widgets/channel_header.dart';
 import '../../widgets/scene_feed.dart';
@@ -35,12 +33,9 @@ class TagPage extends ConsumerWidget {
           ),
       ],
       body: SceneFeedView(
-        initialQuery: SceneQuery(
-          sort: SceneSort.newest,
-          // The filter compares tags by id only.
-          filter: SceneFilter(tags: [Tag(id: tagId, name: '')]),
-        ),
+        initialQuery: SceneQuery(sort: SceneSort.newest, tagId: tagId),
         sorts: _sorts,
+        filterable: true,
         headerSlivers: [
           SliverToBoxAdapter(
             child: tag.when(

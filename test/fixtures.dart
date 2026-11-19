@@ -153,6 +153,7 @@ Json imageJson([Json fields = const {}]) => typed('Image', {
       'date': null,
       'rating100': null,
       'paths': const {'thumbnail': null, 'image': null},
+      'visual_files': const [],
       'studio': null,
       'performers': const [],
       ...fields,

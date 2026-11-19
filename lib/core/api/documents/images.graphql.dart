@@ -274,6 +274,64 @@ const documentNodeQueryFindImages = DocumentNode(
                         ),
                       ),
                       FieldNode(
+                        name: NameNode(value: 'visual_files'),
+                        alias: null,
+                        arguments: [],
+                        directives: [],
+                        selectionSet: SelectionSetNode(
+                          selections: [
+                            InlineFragmentNode(
+                              typeCondition: TypeConditionNode(
+                                on: NamedTypeNode(
+                                  name: NameNode(value: 'VideoFile'),
+                                  isNonNull: false,
+                                ),
+                              ),
+                              directives: [],
+                              selectionSet: SelectionSetNode(
+                                selections: [
+                                  FieldNode(
+                                    name: NameNode(value: 'duration'),
+                                    alias: null,
+                                    arguments: [],
+                                    directives: [],
+                                    selectionSet: null,
+                                  ),
+                                  FieldNode(
+                                    name: NameNode(value: 'width'),
+                                    alias: null,
+                                    arguments: [],
+                                    directives: [],
+                                    selectionSet: null,
+                                  ),
+                                  FieldNode(
+                                    name: NameNode(value: 'height'),
+                                    alias: null,
+                                    arguments: [],
+                                    directives: [],
+                                    selectionSet: null,
+                                  ),
+                                  FieldNode(
+                                    name: NameNode(value: '__typename'),
+                                    alias: null,
+                                    arguments: [],
+                                    directives: [],
+                                    selectionSet: null,
+                                  ),
+                                ],
+                              ),
+                            ),
+                            FieldNode(
+                              name: NameNode(value: '__typename'),
+                              alias: null,
+                              arguments: [],
+                              directives: [],
+                              selectionSet: null,
+                            ),
+                          ],
+                        ),
+                      ),
+                      FieldNode(
                         name: NameNode(value: 'studio'),
                         alias: null,
                         arguments: [],
@@ -576,6 +634,7 @@ class Query$FindImages$findImages$images {
     this.date,
     this.rating100,
     required this.paths,
+    required this.visual_files,
     this.studio,
     required this.performers,
     this.$__typename = 'Image',
@@ -589,6 +648,7 @@ class Query$FindImages$findImages$images {
     final l$date = json['date'];
     final l$rating100 = json['rating100'];
     final l$paths = json['paths'];
+    final l$visual_files = json['visual_files'];
     final l$studio = json['studio'];
     final l$performers = json['performers'];
     final l$$__typename = json['__typename'];
@@ -600,6 +660,13 @@ class Query$FindImages$findImages$images {
       paths: Query$FindImages$findImages$images$paths.fromJson(
         (l$paths as Map<String, dynamic>),
       ),
+      visual_files: (l$visual_files as List<dynamic>)
+          .map(
+            (e) => Query$FindImages$findImages$images$visual_files.fromJson(
+              (e as Map<String, dynamic>),
+            ),
+          )
+          .toList(),
       studio: l$studio == null
           ? null
           : Fragment$StudioRef.fromJson((l$studio as Map<String, dynamic>)),
@@ -622,6 +689,8 @@ class Query$FindImages$findImages$images {
 
   final Query$FindImages$findImages$images$paths paths;
 
+  final List<Query$FindImages$findImages$images$visual_files> visual_files;
+
   final Fragment$StudioRef? studio;
 
   final List<Fragment$PerformerRef> performers;
@@ -640,6 +709,10 @@ class Query$FindImages$findImages$images {
     _resultData['rating100'] = l$rating100;
     final l$paths = paths;
     _resultData['paths'] = l$paths.toJson();
+    final l$visual_files = visual_files;
+    _resultData['visual_files'] = l$visual_files
+        .map((e) => e.toJson())
+        .toList();
     final l$studio = studio;
     _resultData['studio'] = l$studio?.toJson();
     final l$performers = performers;
@@ -656,6 +729,7 @@ class Query$FindImages$findImages$images {
     final l$date = date;
     final l$rating100 = rating100;
     final l$paths = paths;
+    final l$visual_files = visual_files;
     final l$studio = studio;
     final l$performers = performers;
     final l$$__typename = $__typename;
@@ -665,6 +739,7 @@ class Query$FindImages$findImages$images {
       l$date,
       l$rating100,
       l$paths,
+      Object.hashAll(l$visual_files.map((v) => v)),
       l$studio,
       Object.hashAll(l$performers.map((v) => v)),
       l$$__typename,
@@ -704,6 +779,18 @@ class Query$FindImages$findImages$images {
     final lOther$paths = other.paths;
     if (l$paths != lOther$paths) {
       return false;
+    }
+    final l$visual_files = visual_files;
+    final lOther$visual_files = other.visual_files;
+    if (l$visual_files.length != lOther$visual_files.length) {
+      return false;
+    }
+    for (int i = 0; i < l$visual_files.length; i++) {
+      final l$visual_files$entry = l$visual_files[i];
+      final lOther$visual_files$entry = lOther$visual_files[i];
+      if (l$visual_files$entry != lOther$visual_files$entry) {
+        return false;
+      }
     }
     final l$studio = studio;
     final lOther$studio = other.studio;
@@ -793,6 +880,260 @@ class Query$FindImages$findImages$images$paths {
     final l$image = image;
     final lOther$image = other.image;
     if (l$image != lOther$image) {
+      return false;
+    }
+    final l$$__typename = $__typename;
+    final lOther$$__typename = other.$__typename;
+    if (l$$__typename != lOther$$__typename) {
+      return false;
+    }
+    return true;
+  }
+}
+
+class Query$FindImages$findImages$images$visual_files {
+  Query$FindImages$findImages$images$visual_files({required this.$__typename});
+
+  factory Query$FindImages$findImages$images$visual_files.fromJson(
+    Map<String, dynamic> json,
+  ) {
+    switch (json["__typename"] as String) {
+      case "VideoFile":
+        return Query$FindImages$findImages$images$visual_files$$VideoFile.fromJson(
+          json,
+        );
+
+      case "ImageFile":
+        return Query$FindImages$findImages$images$visual_files$$ImageFile.fromJson(
+          json,
+        );
+
+      default:
+        final l$$__typename = json['__typename'];
+        return Query$FindImages$findImages$images$visual_files(
+          $__typename: (l$$__typename as String),
+        );
+    }
+  }
+
+  final String $__typename;
+
+  Map<String, dynamic> toJson() {
+    final _resultData = <String, dynamic>{};
+    final l$$__typename = $__typename;
+    _resultData['__typename'] = l$$__typename;
+    return _resultData;
+  }
+
+  @override
+  int get hashCode {
+    final l$$__typename = $__typename;
+    return Object.hashAll([l$$__typename]);
+  }
+
+  @override
+  bool operator ==(Object other) {
+    if (identical(this, other)) {
+      return true;
+    }
+    if (other is! Query$FindImages$findImages$images$visual_files ||
+        runtimeType != other.runtimeType) {
+      return false;
+    }
+    final l$$__typename = $__typename;
+    final lOther$$__typename = other.$__typename;
+    if (l$$__typename != lOther$$__typename) {
+      return false;
+    }
+    return true;
+  }
+}
+
+extension UtilityExtension$Query$FindImages$findImages$images$visual_files
+    on Query$FindImages$findImages$images$visual_files {
+  _T when<_T>({
+    required _T Function(
+      Query$FindImages$findImages$images$visual_files$$VideoFile,
+    )
+    videoFile,
+    required _T Function(
+      Query$FindImages$findImages$images$visual_files$$ImageFile,
+    )
+    imageFile,
+    required _T Function() orElse,
+  }) {
+    switch ($__typename) {
+      case "VideoFile":
+        return videoFile(
+          this as Query$FindImages$findImages$images$visual_files$$VideoFile,
+        );
+
+      case "ImageFile":
+        return imageFile(
+          this as Query$FindImages$findImages$images$visual_files$$ImageFile,
+        );
+
+      default:
+        return orElse();
+    }
+  }
+
+  _T maybeWhen<_T>({
+    _T Function(Query$FindImages$findImages$images$visual_files$$VideoFile)?
+    videoFile,
+    _T Function(Query$FindImages$findImages$images$visual_files$$ImageFile)?
+    imageFile,
+    required _T Function() orElse,
+  }) {
+    switch ($__typename) {
+      case "VideoFile":
+        if (videoFile != null) {
+          return videoFile(
+            this as Query$FindImages$findImages$images$visual_files$$VideoFile,
+          );
+        } else {
+          return orElse();
+        }
+
+      case "ImageFile":
+        if (imageFile != null) {
+          return imageFile(
+            this as Query$FindImages$findImages$images$visual_files$$ImageFile,
+          );
+        } else {
+          return orElse();
+        }
+
+      default:
+        return orElse();
+    }
+  }
+}
+
+class Query$FindImages$findImages$images$visual_files$$VideoFile
+    implements Query$FindImages$findImages$images$visual_files {
+  Query$FindImages$findImages$images$visual_files$$VideoFile({
+    required this.duration,
+    required this.width,
+    required this.height,
+    this.$__typename = 'VideoFile',
+  });
+
+  factory Query$FindImages$findImages$images$visual_files$$VideoFile.fromJson(
+    Map<String, dynamic> json,
+  ) {
+    final l$duration = json['duration'];
+    final l$width = json['width'];
+    final l$height = json['height'];
+    final l$$__typename = json['__typename'];
+    return Query$FindImages$findImages$images$visual_files$$VideoFile(
+      duration: (l$duration as num).toDouble(),
+      width: (l$width as int),
+      height: (l$height as int),
+      $__typename: (l$$__typename as String),
+    );
+  }
+
+  final double duration;
+
+  final int width;
+
+  final int height;
+
+  final String $__typename;
+
+  Map<String, dynamic> toJson() {
+    final _resultData = <String, dynamic>{};
+    final l$duration = duration;
+    _resultData['duration'] = l$duration;
+    final l$width = width;
+    _resultData['width'] = l$width;
+    final l$height = height;
+    _resultData['height'] = l$height;
+    final l$$__typename = $__typename;
+    _resultData['__typename'] = l$$__typename;
+    return _resultData;
+  }
+
+  @override
+  int get hashCode {
+    final l$duration = duration;
+    final l$width = width;
+    final l$height = height;
+    final l$$__typename = $__typename;
+    return Object.hashAll([l$duration, l$width, l$height, l$$__typename]);
+  }
+
+  @override
+  bool operator ==(Object other) {
+    if (identical(this, other)) {
+      return true;
+    }
+    if (other is! Query$FindImages$findImages$images$visual_files$$VideoFile ||
+        runtimeType != other.runtimeType) {
+      return false;
+    }
+    final l$duration = duration;
+    final lOther$duration = other.duration;
+    if (l$duration != lOther$duration) {
+      return false;
+    }
+    final l$width = width;
+    final lOther$width = other.width;
+    if (l$width != lOther$width) {
+      return false;
+    }
+    final l$height = height;
+    final lOther$height = other.height;
+    if (l$height != lOther$height) {
+      return false;
+    }
+    final l$$__typename = $__typename;
+    final lOther$$__typename = other.$__typename;
+    if (l$$__typename != lOther$$__typename) {
+      return false;
+    }
+    return true;
+  }
+}
+
+class Query$FindImages$findImages$images$visual_files$$ImageFile
+    implements Query$FindImages$findImages$images$visual_files {
+  Query$FindImages$findImages$images$visual_files$$ImageFile({
+    this.$__typename = 'ImageFile',
+  });
+
+  factory Query$FindImages$findImages$images$visual_files$$ImageFile.fromJson(
+    Map<String, dynamic> json,
+  ) {
+    final l$$__typename = json['__typename'];
+    return Query$FindImages$findImages$images$visual_files$$ImageFile(
+      $__typename: (l$$__typename as String),
+    );
+  }
+
+  final String $__typename;
+
+  Map<String, dynamic> toJson() {
+    final _resultData = <String, dynamic>{};
+    final l$$__typename = $__typename;
+    _resultData['__typename'] = l$$__typename;
+    return _resultData;
+  }
+
+  @override
+  int get hashCode {
+    final l$$__typename = $__typename;
+    return Object.hashAll([l$$__typename]);
+  }
+
+  @override
+  bool operator ==(Object other) {
+    if (identical(this, other)) {
+      return true;
+    }
+    if (other is! Query$FindImages$findImages$images$visual_files$$ImageFile ||
+        runtimeType != other.runtimeType) {
       return false;
     }
     final l$$__typename = $__typename;

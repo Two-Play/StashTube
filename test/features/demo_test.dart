@@ -226,7 +226,9 @@ void main() {
     expect(group.sceneCount, 8);
     expect((await repo.findGroups(const GroupQuery())).items.single.name, group.name);
 
-    final gallery = (await repo.findGalleries(GalleryQuery())).items.single;
+    final galleries = (await repo.findGalleries(GalleryQuery())).items;
+    expect(galleries.map((g) => g.title), containsAll(['Stills', 'Clips']));
+    final gallery = galleries.firstWhere((g) => g.title == 'Stills');
     expect(gallery.imageCount, media.images.length);
     expect((await repo.findGallery(gallery.id)).title, 'Stills');
     final images = await repo.findImages(ImageQuery(galleryId: gallery.id, sort: ImageSort.path));
@@ -244,6 +246,18 @@ void main() {
     expect(image.performers.single.id, '1');
     expect(image.tags.single.name, 'Animation');
     expect(image.galleries.single.title, 'Stills');
+    expect(images.items.any((i) => i.isVideo), isFalse);
+
+    // Video files in a gallery (#64): the image URL serves the video.
+    final clips = await repo.findImages(ImageQuery(galleryId: galleries.firstWhere((g) => g.title == 'Clips').id));
+    expect(clips.items, isNotEmpty);
+    final clip = clips.items.first;
+    expect(clip.isVideo, isTrue);
+    expect(clip.videoDuration, isPositive);
+    expect(clip.imageUrl, endsWith('.mp4'));
+    expect(clip.thumbnailUrl, endsWith('.jpg'));
+    final clipDetails = await repo.findImageDetails(clip.id);
+    expect(clipDetails.file!.name, endsWith('.mp4'));
 
     final stats = await repo.libraryStats();
     expect(stats.sceneCount, 12);
@@ -259,28 +273,30 @@ void main() {
   });
 
   test('channel tabs: profile, counts and media by performer or studio (CH-2)', () async {
+    // The stills and the clips gallery (#64) are Big Buck Bunny's, of studio 2.
+    const clips = 3;
     final profile = await repo.performerProfile('1');
     expect(profile.aliases, ['Bunny']);
     expect(profile.heightCm, 180);
     expect(profile.career, isNotNull);
-    expect(profile.counts.images, media.images.length);
-    expect(profile.counts.galleries, 1);
+    expect(profile.counts.images, media.images.length + clips);
+    expect(profile.counts.galleries, 2);
     expect((await repo.performerProfile('2')).counts.galleries, 0);
 
-    expect((await repo.findImages(ImageQuery(performerId: '1'))).totalCount, media.images.length);
+    expect((await repo.findImages(ImageQuery(performerId: '1'))).totalCount, media.images.length + clips);
     expect((await repo.findImages(ImageQuery(performerId: '2'))).totalCount, 0);
-    expect((await repo.findGalleries(GalleryQuery(performerId: '1'))).items.single.title, 'Stills');
+    expect((await repo.findGalleries(GalleryQuery(performerId: '1'))).items.map((g) => g.title), containsAll(['Stills', 'Clips']));
     expect((await repo.findGalleries(GalleryQuery(performerId: '3'))).items, isEmpty);
 
     // The stills belong to the sub-studio "Peach Open Movie" of Blender Studio.
     final network = await repo.studioMediaCounts('1');
-    expect(network.images, media.images.length);
-    expect(network.galleries, 1);
+    expect(network.images, media.images.length + clips);
+    expect(network.galleries, 2);
     expect((await repo.studioMediaCounts('3')).images, 0);
     expect((await repo.findGalleries(GalleryQuery(studioId: '1'))).items, isEmpty);
-    expect((await repo.findGalleries(GalleryQuery(studioId: '1', includeSubStudios: true))).items, hasLength(1));
-    expect((await repo.findImages(ImageQuery(studioId: '2'))).totalCount, media.images.length);
-    expect((await repo.findImages(ImageQuery(studioId: '1', includeSubStudios: true))).totalCount, media.images.length);
+    expect((await repo.findGalleries(GalleryQuery(studioId: '1', includeSubStudios: true))).items, hasLength(2));
+    expect((await repo.findImages(ImageQuery(studioId: '2'))).totalCount, media.images.length + clips);
+    expect((await repo.findImages(ImageQuery(studioId: '1', includeSubStudios: true))).totalCount, media.images.length + clips);
   });
 
   test('edits last while the app runs', () async {

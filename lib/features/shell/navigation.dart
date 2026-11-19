@@ -1,3 +1,4 @@
+import 'package:flutter/gestures.dart' show kDoubleTapTimeout;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -141,3 +142,22 @@ void openSearch(WidgetRef ref, {SearchScope scope = SearchScope.scenes}) =>
 void openTag(WidgetRef ref, String id) => openPage(ref, TagPage(tagId: id));
 
 void openTags(WidgetRef ref) => openPage(ref, const TagsPage());
+
+/// Notices a double tap on a tab of the bar or rail (two taps on the same
+/// tab within [kDoubleTapTimeout]); the "You" tab's opens the server
+/// switcher.
+class TabDoubleTap {
+  AppTab? _tab;
+  DateTime? _at;
+
+  /// Records a tap on [tab]; true when it completes a double tap.
+  bool tap(AppTab tab, DateTime now) {
+    final at = _at;
+    final double = tab == _tab && at != null && now.difference(at) <= kDoubleTapTimeout;
+    _tab = double ? null : tab;
+    _at = double ? null : now;
+    return double;
+  }
+}
+
+final tabDoubleTapProvider = Provider<TabDoubleTap>((ref) => TabDoubleTap());

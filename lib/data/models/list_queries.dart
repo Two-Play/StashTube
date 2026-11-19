@@ -98,6 +98,7 @@ class SceneQuery {
     this.groupId,
     this.playedOnly = false,
     this.createdAfter,
+    this.tagId,
     int? seed,
   }) : seed = seed ?? (sort == SceneSort.random ? newRandomSeed() : 0);
 
@@ -136,6 +137,10 @@ class SceneQuery {
   /// visit", NOTIF-1).
   final DateTime? createdAfter;
 
+  /// Only scenes with this tag (the tag page), on top of [filter]'s tags,
+  /// so the filter sheet can't remove it.
+  final String? tagId;
+
   /// Seed for [SceneSort.random] so that pages are stable while scrolling.
   /// Always 0 for other sorts, so equal queries map to the same provider.
   final int seed;
@@ -162,7 +167,33 @@ class SceneQuery {
       if (playedOnly) 'play_count': {'value': 0, 'modifier': 'GREATER_THAN'},
       if (createdAfter case final after?) 'created_at': {'value': stashTimestamp(after), 'modifier': 'GREATER_THAN'},
     };
+    if (tagId case final tag?) _addTag(criteria, tag);
     return criteria.isEmpty ? null : criteria;
+  }
+
+  /// Adds [tag] as a required tag: into the filter's "all of" tags, or, if
+  /// the tags criterion means something else (any of, a saved filter's
+  /// excludes), as a criterion of its own under `AND`.
+  static void _addTag(Map<String, dynamic> criteria, String tag) {
+    final existing = criteria['tags'];
+    if (existing == null) {
+      criteria['tags'] = {'value': [tag], 'modifier': 'INCLUDES_ALL', 'depth': 0};
+      return;
+    }
+    if (existing is Map && existing['modifier'] == 'INCLUDES_ALL' && existing['value'] is List) {
+      criteria['tags'] = {
+        ...existing,
+        'value': {...(existing['value'] as List), tag}.toList(),
+      };
+      return;
+    }
+    var target = criteria;
+    while (target['AND'] is Map<String, dynamic>) {
+      target = target['AND'] as Map<String, dynamic>;
+    }
+    target['AND'] = <String, dynamic>{
+      'tags': {'value': [tag], 'modifier': 'INCLUDES_ALL', 'depth': 0},
+    };
   }
 
   SceneQuery copyWith({SceneSort? sort, SceneFilter? filter, String? search, bool clearSearch = false}) => SceneQuery(
@@ -178,6 +209,7 @@ class SceneQuery {
         groupId: groupId,
         playedOnly: playedOnly,
         createdAfter: createdAfter,
+        tagId: tagId,
         // Picking a sort again (e.g. "Shuffle") starts a fresh shuffle.
         seed: sort == null ? seed : null,
       );
@@ -197,6 +229,7 @@ class SceneQuery {
       other.groupId == groupId &&
       other.playedOnly == playedOnly &&
       other.createdAfter == createdAfter &&
+      other.tagId == tagId &&
       other.seed == seed;
 
   @override
@@ -213,6 +246,7 @@ class SceneQuery {
         groupId,
         playedOnly,
         createdAfter,
+        tagId,
         seed,
       );
 }

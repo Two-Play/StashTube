@@ -10,22 +10,30 @@ import 'skeleton.dart';
 import 'sliver_columns.dart';
 import 'status_views.dart';
 import '../l10n/l10n.dart';
+import 'scroll_to_top.dart';
 
 /// Calls [onLoadMore] when the user scrolls near the end of the wrapped scroll view.
 class LoadMoreListener extends StatelessWidget {
-  const LoadMoreListener({super.key, required this.onLoadMore, required this.child});
+  const LoadMoreListener({super.key, required this.onLoadMore, required this.child, this.scrollToTop = true});
 
   final VoidCallback onLoadMore;
   final Widget child;
 
+  /// Shows the "Back to top" button ([ScrollToTop]) once the list is
+  /// scrolled down; off for lists inside sheets.
+  final bool scrollToTop;
+
   @override
-  Widget build(BuildContext context) => NotificationListener<ScrollNotification>(
-        onNotification: (n) {
-          if (n.metrics.axis == Axis.vertical && n.metrics.extentAfter < 800) onLoadMore();
-          return false;
-        },
-        child: child,
-      );
+  Widget build(BuildContext context) {
+    final list = NotificationListener<ScrollNotification>(
+      onNotification: (n) {
+        if (n.metrics.axis == Axis.vertical && n.metrics.extentAfter < 800) onLoadMore();
+        return false;
+      },
+      child: child,
+    );
+    return scrollToTop ? ScrollToTop(child: list) : list;
+  }
 }
 
 /// For `RefreshIndicator.onRefresh`: reloads [future] (e.g. `provider(arg).future`).
