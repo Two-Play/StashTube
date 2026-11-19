@@ -23,7 +23,7 @@ import 'last_visit.dart';
 /// filter: "All" (the default) lists the newest scenes of all favorites
 /// ([SceneQuery.newFromFavorites], shared with home's shelf), one avatar
 /// only that performer's scenes, newest first, with "View channel". The
-/// avatars open the channel only on a long press, so a tap never leaves the
+/// avatars open the channel only on a double tap or a long press, so a tap never leaves the
 /// page. A dot marks performers with scenes added since the last visit. An
 /// optional tab, a tile on the "You" page and home's "New from favorites"
 /// "See all".
@@ -182,8 +182,8 @@ class _SelectionHeader extends ConsumerWidget {
 
 /// The favorite performers' avatars in a horizontal row. With [onSelected]
 /// it starts with "All", and a tap selects ([onSelected] with null for
-/// "All") while a long press opens the channel; without, a tap opens the
-/// channel. A double tap on "All" calls [onShowAll]. Loads further pages as
+/// "All") while a double tap or a long press opens the channel; without, a
+/// tap opens the channel. A double tap on "All" calls [onShowAll]. Loads further pages as
 /// it scrolls.
 class FavoritePerformersRow extends ConsumerWidget {
   const FavoritePerformersRow({super.key, this.selectedId, this.onSelected, this.onShowAll, this.controller});
@@ -383,6 +383,7 @@ class _Avatar extends ConsumerWidget {
       child: InkWell(
         borderRadius: AppRadius.cardBorder,
         onTap: select ?? openChannel,
+        onDoubleTap: select == null ? null : openChannel,
         onLongPress: select == null ? null : openChannel,
         child: SizedBox(
           width: width,

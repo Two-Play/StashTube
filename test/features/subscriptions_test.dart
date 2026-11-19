@@ -10,6 +10,7 @@ import 'package:stash_app_mobile/data/models/saved_filter.dart';
 import 'package:stash_app_mobile/data/models/scene.dart';
 import 'package:stash_app_mobile/data/repositories/stash_repository.dart';
 import 'package:stash_app_mobile/features/shell/nav_bar_config.dart';
+import 'package:stash_app_mobile/features/performers/performer_page.dart';
 import 'package:stash_app_mobile/features/performers/performers_page.dart';
 import 'package:stash_app_mobile/features/shell/navigation.dart';
 import 'package:stash_app_mobile/features/subscriptions/subscriptions_page.dart';
@@ -127,7 +128,7 @@ void main() {
     expect(find.text('Newest from your favorites'), findsOneWidget);
   });
 
-  testWidgets('a double tap on "All" and "Show all" list all favorite performers', (tester) async {
+  testWidgets('a double tap on "All" (or "Show all") lists all favorites, on a performer opens the channel', (tester) async {
     final prefs = (await tester.runAsync(() async {
       SharedPreferences.setMockInitialValues({});
       return SharedPreferences.getInstance();
@@ -171,6 +172,20 @@ void main() {
       await tester.pump(const Duration(milliseconds: 100));
     }
     expect(find.byType(PerformersPage), findsOneWidget);
+
+    // A double tap on a performer opens the channel.
+    await tester.pageBack();
+    for (var i = 0; i < 6; i++) {
+      await tester.pump(const Duration(milliseconds: 100));
+    }
+    final anna = find.text('Anna').first;
+    await tester.tap(anna);
+    await tester.pump(const Duration(milliseconds: 50));
+    await tester.tap(anna);
+    for (var i = 0; i < 6; i++) {
+      await tester.pump(const Duration(milliseconds: 100));
+    }
+    expect(find.byType(PerformerPage), findsOneWidget);
   });
 
   testWidgets('no dots on the first visit', (tester) async {
