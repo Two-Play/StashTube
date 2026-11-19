@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:media_kit/media_kit.dart';
+import 'package:media_kit_video/media_kit_video.dart';
 import '../../core/config/theme.dart';
 
 import '../../core/utils/format.dart';
@@ -8,15 +10,20 @@ import '../../data/models/image_item.dart';
 import '../../data/models/list_queries.dart';
 import '../../l10n/l10n.dart';
 import '../../data/providers.dart';
+import '../../data/repositories/stash_session.dart';
+import '../player/player_providers.dart';
 import '../shell/navigation.dart';
 import 'gallery_page.dart';
 import 'image_info.dart';
+import 'image_video.dart';
 import '../../widgets/stash_image.dart';
 
 /// Fullscreen image viewer: swipe between images, pinch or double tap to
 /// zoom, tap to toggle the info overlay (with the performers), "i" for the
 /// image's details, swipe down (not zoomed in) to close. Loads more images
-/// when nearing the end.
+/// when nearing the end. A video file among the images (#64) plays on its
+/// page, looping, with play/pause, a position slider and mute in the
+/// overlay.
 class ImageViewerPage extends ConsumerStatefulWidget {
   const ImageViewerPage({super.key, required this.query, required this.initialIndex});
 
@@ -49,6 +56,13 @@ class _ImageViewerPageState extends ConsumerState<ImageViewerPage> with SingleTi
   /// A swipe this far down (of the height), or a fling, closes the viewer.
   static const _closeFraction = 0.15;
 
+  /// Plays the current page's video, if it is one; created for the first.
+  Player? _videoPlayer;
+  VideoController? _videoController;
+
+  /// The image [_videoPlayer] plays; null: none (stopped).
+  String? _videoId;
+
   @override
   void initState() {
     super.initState();
@@ -58,6 +72,7 @@ class _ImageViewerPageState extends ConsumerState<ImageViewerPage> with SingleTi
   @override
   void dispose() {
     SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
+    _videoPlayer?.dispose();
     _dismiss.dispose();
     _pageController.dispose();
     super.dispose();
@@ -151,10 +166,30 @@ class _ImageViewerPageState extends ConsumerState<ImageViewerPage> with SingleTi
     Navigator.of(context).pop();
   }
 
+  /// Plays [current] if it is a video, else stops the player.
+  void _syncVideo(ImageItem? current) {
+    final url = current?.imageUrl;
+    final id = current != null && current.isVideo && url != null ? current.id : null;
+    if (id == _videoId) return;
+    _videoId = id;
+    if (id == null || url == null) {
+      _videoPlayer?.stop();
+      return;
+    }
+    final player = _videoPlayer ??= Player();
+    _videoController ??= VideoController(player);
+    // Not over the main player's sound.
+    if (ref.read(nowPlayingProvider) != null) ref.read(playerProvider).pause();
+    player
+      ..setPlaylistMode(PlaylistMode.single)
+      ..open(Media(url, httpHeaders: ref.read(authHeadersProvider).forUrl(url))).ignore();
+  }
+
   @override
   Widget build(BuildContext context) {
     final items = ref.watch(imageListProvider(widget.query)).current?.items ?? const <ImageItem>[];
     final current = _index < items.length ? items[_index] : null;
+    _syncVideo(current);
 
     final pages = PageView.builder(
       controller: _pageController,
@@ -164,12 +199,17 @@ class _ImageViewerPageState extends ConsumerState<ImageViewerPage> with SingleTi
       onPageChanged: _onPageChanged,
       itemBuilder: (_, i) => GestureDetector(
         onTap: () => setState(() => _showOverlay = !_showOverlay),
-        child: _ZoomableImage(
-          image: items[i],
-          onZoomChanged: (zoomed) {
-            if (zoomed != _zoomed) setState(() => _zoomed = zoomed);
-          },
-        ),
+        child: items[i].isVideo
+            ? ImageVideoPage(
+                image: items[i],
+                controller: items[i].id == _videoId ? _videoController : null,
+              )
+            : _ZoomableImage(
+                image: items[i],
+                onZoomChanged: (zoomed) {
+                  if (zoomed != _zoomed) setState(() => _zoomed = zoomed);
+                },
+              ),
       ),
     );
     final overlay = AnimatedOpacity(
@@ -181,6 +221,7 @@ class _ImageViewerPageState extends ConsumerState<ImageViewerPage> with SingleTi
           image: current,
           position: _index + 1,
           total: items.length,
+          video: current != null && current.id == _videoId ? _videoPlayer : null,
           onInfo: current == null ? null : () => _showInfo(current),
         ),
       ),
@@ -334,11 +375,14 @@ class _ZoomableImageState extends State<_ZoomableImage> with SingleTickerProvide
 }
 
 class _Overlay extends ConsumerWidget {
-  const _Overlay({required this.image, required this.position, required this.total, this.onInfo});
+  const _Overlay({required this.image, required this.position, required this.total, this.video, this.onInfo});
 
   final ImageItem? image;
   final int position;
   final int total;
+
+  /// The current page's video player, if it is a video.
+  final Player? video;
   final VoidCallback? onInfo;
 
   @override
@@ -403,6 +447,7 @@ class _Overlay extends ConsumerWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     mainAxisSize: MainAxisSize.min,
                     children: [
+                      if (video case final player?) ImageVideoBar(player: player),
                       Text(
                         image.title,
                         maxLines: 2,

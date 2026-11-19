@@ -14,6 +14,7 @@ class ImageItem {
     this.imageUrl,
     this.studio,
     this.performers = const [],
+    this.videoDuration,
   });
 
   final String id;
@@ -27,6 +28,12 @@ class ImageItem {
   final Studio? studio;
   final List<Performer> performers;
 
+  /// Set for a video file shown as an image (a gallery's clip, #64): its
+  /// length in seconds. [imageUrl] then serves the video.
+  final double? videoDuration;
+
+  bool get isVideo => videoDuration != null;
+
   factory ImageItem.fromGraphql(Query$FindImages$findImages$images i) {
     final studio = i.studio;
     return ImageItem(
@@ -38,6 +45,10 @@ class ImageItem {
       imageUrl: nonEmpty(i.paths.image),
       studio: studio == null ? null : Studio.fromRef(studio),
       performers: [for (final p in i.performers) Performer.fromRef(p)],
+      videoDuration: i.visual_files
+          .whereType<Query$FindImages$findImages$images$visual_files$$VideoFile>()
+          .map((f) => f.duration)
+          .firstOrNull,
     );
   }
 }

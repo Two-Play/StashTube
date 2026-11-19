@@ -7,6 +7,11 @@ query FindImages($filter: FindFilterType, $image_filter: ImageFilterType) {
       date
       rating100
       paths { thumbnail image }
+      # A video file in a gallery (a library with only images on) is an image
+      # too; the viewer plays it (#64).
+      visual_files {
+        ... on VideoFile { duration }
+      }
       studio { ...StudioRef }
       performers { ...PerformerRef }
     }

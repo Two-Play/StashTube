@@ -10,7 +10,10 @@ import '../../widgets/chip_bar.dart';
 import '../../widgets/paged_sliver.dart';
 import '../../widgets/scene_filter_sheet.dart';
 import '../../widgets/stash_image.dart';
+import 'image_video.dart';
 import 'image_viewer_page.dart';
+import '../../core/config/theme.dart';
+import '../../widgets/scene_card.dart' show spokenDuration;
 import '../../l10n/l10n.dart';
 
 /// All images, newest first.
@@ -200,9 +203,19 @@ class _ImageGridViewState extends ConsumerState<ImageGridView> {
                       .push(ImageViewerPage.route(query: _query, initialIndex: items.indexOf(image)));
                 },
                 child: Semantics(
-                  label: image.title,
+                  label: image.videoDuration == null
+                      ? image.title
+                      : context.l10n.imageVideoLabel(image.title, spokenDuration(context.l10n, image.videoDuration!)),
                   button: true,
-                  child: StashImage(image.thumbnailUrl, fallbackIcon: Icons.image_outlined),
+                  excludeSemantics: true,
+                  child: Stack(
+                    fit: StackFit.expand,
+                    children: [
+                      StashImage(image.thumbnailUrl, fallbackIcon: Icons.image_outlined),
+                      if (image.videoDuration case final seconds?)
+                        Positioned(right: AppSpacing.xs, bottom: AppSpacing.xs, child: VideoBadge(seconds: seconds)),
+                    ],
+                  ),
                 ),
               ),
             ),
