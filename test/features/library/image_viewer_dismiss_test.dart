@@ -7,6 +7,7 @@ import 'package:stash_app_mobile/data/models/image_item.dart';
 import 'package:stash_app_mobile/data/models/list_queries.dart';
 import 'package:stash_app_mobile/data/models/page_result.dart';
 import 'package:stash_app_mobile/data/repositories/stash_repository.dart';
+import 'package:stash_app_mobile/features/library/image_info.dart';
 import 'package:stash_app_mobile/features/library/image_viewer_page.dart';
 
 import '../../fixtures.dart';
@@ -23,7 +24,7 @@ class _Repo implements StashRepository {
       );
 
   @override
-  dynamic noSuchMethod(Invocation invocation) => throw UnimplementedError('${invocation.memberName}');
+  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
 }
 
 /// Swiping the image viewer down closes it (LIB, image viewer).
@@ -100,11 +101,19 @@ void main() {
     expect(find.byType(ImageViewerPage), findsNothing);
   });
 
-  testWidgets('swiping up does not close', (tester) async {
+  testWidgets('swiping up opens the image info instead of closing', (tester) async {
     await pumpViewer(tester);
     await tester.fling(find.byType(PageView), const Offset(0, -300), 1500);
     await tester.pumpAndSettle();
     expect(find.byType(ImageViewerPage), findsOneWidget);
+    expect(find.byType(ImageInfoSheet), findsOneWidget);
+  });
+
+  testWidgets('a small nudge up only springs back', (tester) async {
+    await pumpViewer(tester);
+    await tester.timedDrag(find.byType(PageView), const Offset(0, -60), const Duration(seconds: 1));
+    await tester.pumpAndSettle();
+    expect(find.byType(ImageInfoSheet), findsNothing);
   });
 
   testWidgets('horizontal swipes still page between the images', (tester) async {

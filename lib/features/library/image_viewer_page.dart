@@ -20,7 +20,7 @@ import '../../widgets/stash_image.dart';
 
 /// Fullscreen image viewer: swipe between images, pinch or double tap to
 /// zoom, tap to toggle the info overlay (with the performers), "i" for the
-/// image's details, swipe down (not zoomed in) to close. Loads more images
+/// image's details (or swipe up), swipe down (not zoomed in) to close. Loads more images
 /// when nearing the end. A video file among the images (#64) plays on its
 /// page, looping, with play/pause, a position slider and mute in the
 /// overlay.
@@ -55,6 +55,10 @@ class _ImageViewerPageState extends ConsumerState<ImageViewerPage> with SingleTi
 
   /// A swipe this far down (of the height), or a fling, closes the viewer.
   static const _closeFraction = 0.15;
+
+  /// A swipe up this far (after the resistance), or a fling up, opens the
+  /// image's info.
+  static const _infoDistance = 30.0;
 
   /// Plays the current page's video, if it is one; created for the first.
   Player? _videoPlayer;
@@ -105,7 +109,7 @@ class _ImageViewerPageState extends ConsumerState<ImageViewerPage> with SingleTi
       return;
     }
     final dy = details.primaryDelta ?? 0;
-    // Up only with resistance; only down closes.
+    // Up only with resistance (it opens the info); only down closes.
     _dismiss.value += _dismiss.value < 0 || (_dismiss.value == 0 && dy < 0) ? dy * 0.25 : dy;
   }
 
@@ -114,6 +118,13 @@ class _ImageViewerPageState extends ConsumerState<ImageViewerPage> with SingleTi
     _dismissing = false;
     final height = MediaQuery.sizeOf(context).height;
     final velocity = details.primaryVelocity ?? 0;
+    if (_dismiss.value < 0 && (velocity < -500 || _dismiss.value < -_infoDistance)) {
+      // Swiped up: the image's details.
+      _springBack();
+      final items = ref.read(imageListProvider(widget.query)).current?.items ?? const <ImageItem>[];
+      if (_index < items.length) _showInfo(items[_index]);
+      return;
+    }
     final close = velocity > 700 || (_dismiss.value > height * _closeFraction && velocity > -300);
     close ? _close(height) : _springBack();
   }
