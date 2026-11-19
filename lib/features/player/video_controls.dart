@@ -335,21 +335,20 @@ class _StashVideoControlsState extends ConsumerState<StashVideoControls> {
   }
 
   /// Double tap on a side starts a seek sequence; while it runs, every
-  /// single tap on that side extends it, a tap on the other side starts a
-  /// new one there, and a tap in the middle ends it (and toggles the
-  /// controls as usual).
+  /// single tap on that side extends it. A tap in the middle ends it (and
+  /// toggles the controls as usual); a tap on the other side ends it too and
+  /// counts as the first tap of a new double tap there, so switching sides
+  /// always takes a double tap.
   void _onSeekTap(int side, Offset position) {
     if (_locked || _tipsShowing || !ref.read(seekSettingsProvider).enabled) return;
     if (_seekDirection != 0) {
       _clearLastTap();
-      if (side == 0) {
-        _endSeekSequence();
-      } else if (side == _seekDirection) {
+      if (side == _seekDirection) {
         _extendSeekSequence();
-      } else {
-        _startSeekSequence(side);
+        return;
       }
-      return;
+      _endSeekSequence();
+      if (side == 0) return;
     }
     final last = _lastTap;
     if (side != 0 && last != null && last.side == side && (position - last.position).distance <= kDoubleTapSlop) {
