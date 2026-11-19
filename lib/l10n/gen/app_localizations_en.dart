@@ -815,6 +815,19 @@ class AppLocalizationsEn extends AppLocalizations {
   String get subscriptionsLatest => 'Newest from your favorites';
 
   @override
+  String get scrollToTop => 'Back to top';
+
+  @override
+  String get scrollToTopSetting => '\"Back to top\" button';
+
+  @override
+  String get scrollToTopSettingSubtitle =>
+      'Shows a button to jump back to the top of long lists';
+
+  @override
+  String get subscriptionsShowAll => 'Show all';
+
+  @override
   String get subscriptionsViewChannel => 'View channel';
 
   @override
@@ -1806,6 +1819,29 @@ class AppLocalizationsEn extends AppLocalizations {
   String get fileModified => 'Modified';
 
   @override
+  String imageVideoLabel(String title, String duration) {
+    return 'Video: $title, $duration';
+  }
+
+  @override
+  String get imageVideoMute => 'Mute';
+
+  @override
+  String get imageVideoUnmute => 'Unmute';
+
+  @override
+  String get imageVideoPlay => 'Play';
+
+  @override
+  String get imageVideoPause => 'Pause';
+
+  @override
+  String get imagesPlayAsShorts => 'Play as shorts';
+
+  @override
+  String get imagesClips => 'Clips';
+
+  @override
   String get imageInfo => 'Image info';
 
   @override
@@ -2666,6 +2702,18 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get whatsNewSubtitle => 'What the latest updates brought';
+
+  @override
+  String get whatsNew4Title =>
+      'Videos in galleries, sticky filters and quicker taps';
+
+  @override
+  String get whatsNew4 =>
+      'Video files in galleries play in the image viewer, with zoom, double tap to skip and hold for 2×; wide clips turn with the phone.\nPlay a gallery\'s clips as shorts, from the grid or the viewer.\nFilter and sort bars stay at the top of every list, and a Back to top button jumps up long lists.\nDouble tap You in the tab bar to switch servers; swipe an image up for its info.\nFavorites: double tap All for all favorite performers, or a performer for their channel.\nTag pages have filters.';
+
+  @override
+  String get whatsNew4More =>
+      'Double tap to skip: switching sides takes a new double tap.\nThe Back to top button can be turned off in Settings → Appearance.';
 
   @override
   String get whatsNew3Title =>

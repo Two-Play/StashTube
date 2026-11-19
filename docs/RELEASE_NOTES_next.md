@@ -1,28 +1,21 @@
-# StashTube 1.0.0-beta.9
+# StashTube 1.0.0-beta.10
 
-Pre-release. The pipeline picks the version (next beta after `v1.0.0-beta.8`).
+Pre-release. The pipeline picks the version (next beta after `v1.0.0-beta.9`).
 
 ## What's new
 
-- **Back where you were** – lists keep their place when you turn the phone for fullscreen and come back to them.
-- **Favorites** – the avatars at the top pick "All" or one performer (a long press opens the channel), with a header and "View channel".
-- **Zoom snap feedback** – "Original" and "Fill" show when the pinch zoom snaps, and guide lines where the picture snaps to the center or an edge.
-- **PIN with biometrics** – changing the PIN or turning the app lock off also accepts Face ID or the fingerprint, so a forgotten PIN can be replaced.
-- **Proxy warning** – a banner names both addresses when the server hands out media URLs on another address than the one StashTube connects to (a reverse proxy without `Host` / `X-Forwarded-Proto`), and how to fix it.
+- **Videos in galleries** (#64) – video files that Stash lists as images (a library with only images on) play in the image viewer: looping, with play/pause, a position slider and mute, pinch zoom, double tap on the left or right to skip and hold for 2×. Wide clips let the phone turn sideways. The grid marks them with a play badge and their length.
+- **Clips as shorts** – "Play as shorts" in an image grid with clips, or in the viewer, plays the grid's videos one after another in the shorts.
+- **Sticky filters** – the filter and sort bars stay at the top of every list, like on home.
+- **Back to top** – long lists show a button that jumps back up (Settings → Appearance turns it off).
+- **Tag filters** – tag pages have the filter button; the page's tag always applies.
+- **Shortcuts** – double tap "You" in the tab bar to switch servers; swipe an image up for its info.
+- **Favorites** – double tap "All" (or "Show all") for all favorite performers, double tap a performer for their channel.
 
-## Security
+## Changes
 
-- The API key and the session cookie only go to the server's own address (scheme, host and port): never to media URLs pointing elsewhere, and not along a redirect that leaves the server.
-- The PIN is stored as PBKDF2-HMAC-SHA256. PINs of earlier versions keep working and are converted after the next correct entry.
-- If the PIN can't be read (e.g. after restoring a backup), the app stays locked instead of opening: biometrics lead to a new PIN, otherwise the app can be reset.
-- A password in a server address (`https://user:pass@host`) is kept in the secure storage instead of the settings; existing servers move on the first start.
-
-## Fixes and internals
-
-- GraphQL responses are no longer written into a cache that was never read.
-- The preview check stops after the status instead of downloading whole files from servers that ignore `Range`.
-- The password login gives up after 20 s instead of waiting forever.
+- Double tap to skip: a tap on the other side only ends the running skip; skipping there takes a new double tap.
 
 ## Not tested on a device yet
 
-Proxy warning on a misconfigured server, the lost-PIN screen, and upgrading a PIN set by beta.8 or earlier.
+Gallery videos in the viewer (zoom, gestures, turning sideways) and as shorts, the sticky bars on channel pages, the Back to top button.

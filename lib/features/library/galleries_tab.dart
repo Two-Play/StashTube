@@ -66,7 +66,7 @@ class _GalleryGridViewState extends ConsumerState<GalleryGridView> {
         child: CustomScrollView(
           physics: const AlwaysScrollableScrollPhysics(),
           slivers: [
-            SliverToBoxAdapter(
+            PinnedBar(
               child: ChipBar<GallerySort>(
                 values: GallerySort.values,
                 selected: _query.sort,

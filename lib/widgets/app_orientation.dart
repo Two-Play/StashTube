@@ -26,6 +26,9 @@ abstract final class AppOrientation {
   static List<DeviceOrientation> get allowed =>
       _override ?? (_phone ? const [DeviceOrientation.portraitUp] : const []);
 
+  /// Whether the window is a phone's, which stays portrait.
+  static bool get isPhone => _phone;
+
   /// Whether the window is a phone's (its shortest side below
   /// [kWideLayoutBreakpoint]).
   static Future<void> setPhone(bool phone) {

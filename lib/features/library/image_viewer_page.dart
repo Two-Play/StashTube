@@ -1,6 +1,10 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:media_kit/media_kit.dart';
+import 'package:media_kit_video/media_kit_video.dart';
 import '../../core/config/theme.dart';
 
 import '../../core/utils/format.dart';
@@ -8,15 +12,22 @@ import '../../data/models/image_item.dart';
 import '../../data/models/list_queries.dart';
 import '../../l10n/l10n.dart';
 import '../../data/providers.dart';
+import '../../data/repositories/stash_session.dart';
+import '../../widgets/app_orientation.dart';
+import '../../widgets/layout_freeze.dart';
+import '../player/player_providers.dart';
 import '../shell/navigation.dart';
 import 'gallery_page.dart';
 import 'image_info.dart';
+import 'image_video.dart';
 import '../../widgets/stash_image.dart';
 
 /// Fullscreen image viewer: swipe between images, pinch or double tap to
 /// zoom, tap to toggle the info overlay (with the performers), "i" for the
-/// image's details, swipe down (not zoomed in) to close. Loads more images
-/// when nearing the end.
+/// image's details (or swipe up), swipe down (not zoomed in) to close. Loads more images
+/// when nearing the end. A video file among the images (#64) plays on its
+/// page, looping, with play/pause, a position slider and mute in the
+/// overlay.
 class ImageViewerPage extends ConsumerStatefulWidget {
   const ImageViewerPage({super.key, required this.query, required this.initialIndex});
 
@@ -49,6 +60,39 @@ class _ImageViewerPageState extends ConsumerState<ImageViewerPage> with SingleTi
   /// A swipe this far down (of the height), or a fling, closes the viewer.
   static const _closeFraction = 0.15;
 
+  /// A swipe up this far (after the resistance), or a fling up, opens the
+  /// image's info.
+  static const _infoDistance = 30.0;
+
+  /// Plays the current page's video, if it is one; created for the first.
+  Player? _videoPlayer;
+  VideoController? _videoController;
+
+  /// The image [_videoPlayer] plays; null: none (stopped).
+  String? _videoId;
+
+  /// A phone may turn sideways while a wide video shows (else the app
+  /// stays portrait there); the lists behind keep their layout meanwhile.
+  bool _turnable = false;
+
+  static const _anyOrientation = [
+    DeviceOrientation.portraitUp,
+    DeviceOrientation.landscapeLeft,
+    DeviceOrientation.landscapeRight,
+  ];
+
+  void _setTurnable(bool turnable) {
+    if (turnable == _turnable || !AppOrientation.isPhone) return;
+    _turnable = turnable;
+    if (turnable) {
+      shellLayoutHold.hold();
+      unawaited(AppOrientation.turnTo(_anyOrientation));
+    } else {
+      // Upright again first, then the lists may lay out anew.
+      unawaited(AppOrientation.turnTo(null).whenComplete(() => shellLayoutHold.releaseLater(const Duration(seconds: 1))));
+    }
+  }
+
   @override
   void initState() {
     super.initState();
@@ -58,6 +102,8 @@ class _ImageViewerPageState extends ConsumerState<ImageViewerPage> with SingleTi
   @override
   void dispose() {
     SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
+    _setTurnable(false);
+    _videoPlayer?.dispose();
     _dismiss.dispose();
     _pageController.dispose();
     super.dispose();
@@ -90,7 +136,7 @@ class _ImageViewerPageState extends ConsumerState<ImageViewerPage> with SingleTi
       return;
     }
     final dy = details.primaryDelta ?? 0;
-    // Up only with resistance; only down closes.
+    // Up only with resistance (it opens the info); only down closes.
     _dismiss.value += _dismiss.value < 0 || (_dismiss.value == 0 && dy < 0) ? dy * 0.25 : dy;
   }
 
@@ -99,6 +145,13 @@ class _ImageViewerPageState extends ConsumerState<ImageViewerPage> with SingleTi
     _dismissing = false;
     final height = MediaQuery.sizeOf(context).height;
     final velocity = details.primaryVelocity ?? 0;
+    if (_dismiss.value < 0 && (velocity < -500 || _dismiss.value < -_infoDistance)) {
+      // Swiped up: the image's details.
+      _springBack();
+      final items = ref.read(imageListProvider(widget.query)).current?.items ?? const <ImageItem>[];
+      if (_index < items.length) _showInfo(items[_index]);
+      return;
+    }
     final close = velocity > 700 || (_dismiss.value > height * _closeFraction && velocity > -300);
     close ? _close(height) : _springBack();
   }
@@ -151,10 +204,41 @@ class _ImageViewerPageState extends ConsumerState<ImageViewerPage> with SingleTi
     Navigator.of(context).pop();
   }
 
+  /// Plays [current] if it is a video, else stops the player.
+  void _syncVideo(ImageItem? current) {
+    final url = current?.imageUrl;
+    final id = current != null && current.isVideo && url != null ? current.id : null;
+    _setTurnable(id != null && (current!.aspect ?? 0) > 1.05);
+    if (id == _videoId) return;
+    _videoId = id;
+    if (id == null || url == null) {
+      _videoPlayer?.stop();
+      return;
+    }
+    final player = _videoPlayer ??= Player();
+    _videoController ??= VideoController(player);
+    // Not over the main player's sound.
+    if (ref.read(nowPlayingProvider) != null) ref.read(playerProvider).pause();
+    player
+      ..setPlaylistMode(PlaylistMode.single)
+      ..open(Media(url, httpHeaders: ref.read(authHeadersProvider).forUrl(url))).ignore();
+  }
+
+  /// The list's clips as shorts, from [clip]; in the current tab, behind the
+  /// viewer, which closes.
+  void _playAsShorts(ImageItem clip) {
+    final state = ref.read(imageListProvider(widget.query)).current;
+    if (state == null) return;
+    _videoPlayer?.pause();
+    openImageClipsAsShorts(ref, widget.query, state, at: clip, title: context.l10n.imagesClips);
+    Navigator.of(context).pop();
+  }
+
   @override
   Widget build(BuildContext context) {
     final items = ref.watch(imageListProvider(widget.query)).current?.items ?? const <ImageItem>[];
     final current = _index < items.length ? items[_index] : null;
+    _syncVideo(current);
 
     final pages = PageView.builder(
       controller: _pageController,
@@ -162,15 +246,25 @@ class _ImageViewerPageState extends ConsumerState<ImageViewerPage> with SingleTi
       physics: _zoomed ? const NeverScrollableScrollPhysics() : null,
       itemCount: items.length,
       onPageChanged: _onPageChanged,
-      itemBuilder: (_, i) => GestureDetector(
-        onTap: () => setState(() => _showOverlay = !_showOverlay),
-        child: _ZoomableImage(
-          image: items[i],
-          onZoomChanged: (zoomed) {
-            if (zoomed != _zoomed) setState(() => _zoomed = zoomed);
-          },
-        ),
-      ),
+      itemBuilder: (_, i) => items[i].isVideo
+          // Its own taps: double taps skip instead of zooming.
+          ? ImageVideoPage(
+              image: items[i],
+              controller: items[i].id == _videoId ? _videoController : null,
+              onTap: () => setState(() => _showOverlay = !_showOverlay),
+              onZoomChanged: (zoomed) {
+                if (zoomed != _zoomed) setState(() => _zoomed = zoomed);
+              },
+            )
+          : GestureDetector(
+              onTap: () => setState(() => _showOverlay = !_showOverlay),
+              child: _ZoomableImage(
+                image: items[i],
+                onZoomChanged: (zoomed) {
+                  if (zoomed != _zoomed) setState(() => _zoomed = zoomed);
+                },
+              ),
+            ),
     );
     final overlay = AnimatedOpacity(
       opacity: _showOverlay ? 1 : 0,
@@ -181,7 +275,9 @@ class _ImageViewerPageState extends ConsumerState<ImageViewerPage> with SingleTi
           image: current,
           position: _index + 1,
           total: items.length,
+          video: current != null && current.id == _videoId ? _videoPlayer : null,
           onInfo: current == null ? null : () => _showInfo(current),
+          onPlayAsShorts: current == null || !current.isVideo ? null : () => _playAsShorts(current),
         ),
       ),
     );
@@ -334,11 +430,24 @@ class _ZoomableImageState extends State<_ZoomableImage> with SingleTickerProvide
 }
 
 class _Overlay extends ConsumerWidget {
-  const _Overlay({required this.image, required this.position, required this.total, this.onInfo});
+  const _Overlay({
+    required this.image,
+    required this.position,
+    required this.total,
+    this.video,
+    this.onInfo,
+    this.onPlayAsShorts,
+  });
 
   final ImageItem? image;
   final int position;
   final int total;
+
+  /// The current page's video player, if it is a video.
+  final Player? video;
+
+  /// For a video: the list's clips as shorts.
+  final VoidCallback? onPlayAsShorts;
   final VoidCallback? onInfo;
 
   @override
@@ -373,6 +482,12 @@ class _Overlay extends ConsumerWidget {
                     style: const TextStyle(color: Colors.white),
                   ),
                 ),
+                if (onPlayAsShorts != null)
+                  IconButton(
+                    icon: const Icon(Icons.slow_motion_video, color: Colors.white),
+                    tooltip: l.imagesPlayAsShorts,
+                    onPressed: onPlayAsShorts,
+                  ),
                 if (onInfo != null)
                   IconButton(
                     icon: const Icon(Icons.info_outline, color: Colors.white),
@@ -403,6 +518,7 @@ class _Overlay extends ConsumerWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     mainAxisSize: MainAxisSize.min,
                     children: [
+                      if (video case final player?) ImageVideoBar(player: player),
                       Text(
                         image.title,
                         maxLines: 2,

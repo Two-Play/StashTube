@@ -306,7 +306,8 @@ class _ShortsPageState extends ConsumerState<ShortsPage> {
     _positionSub?.cancel();
     final scene = short.scene;
     final player = _players?[_slot(_index)];
-    if (player == null || _counted.contains(scene.id)) return;
+    // A gallery's clip is no scene: nothing to count.
+    if (player == null || short.isImage || _counted.contains(scene.id)) return;
     // Positions run from 0 for a marker's clip too (Short.playbackUrl).
     final threshold = Duration(milliseconds: (short.duration * 500).round().clamp(1000, 15000));
     _positionSub = player.stream.position.listen((position) {
@@ -870,6 +871,8 @@ class _ShortViewState extends ConsumerState<_ShortView> {
     // less of the video; pausing shows the rest. Screen readers get all.
     final showAll = widget.paused || MediaQuery.accessibleNavigationOf(context);
     final showInfo = showAll || _infoShown;
+    // A gallery's clip: no scene to rate, count, save or open.
+    final sceneActions = !short.isImage;
 
     return Stack(
       fit: StackFit.expand,
@@ -982,7 +985,7 @@ class _ShortViewState extends ConsumerState<_ShortView> {
                 const SizedBox(height: 4),
                 Text(
                   [
-                    l.playsCount(scene.playCount),
+                    if (sceneActions) l.playsCount(scene.playCount),
                     // A ranged marker with its place in the scene.
                     if (marker?.endSeconds case final end?)
                       markerTimeLabel(l, marker!.seconds, end, withLength: true)
@@ -1011,6 +1014,7 @@ class _ShortViewState extends ConsumerState<_ShortView> {
                       child: ChannelAvatar(name: performer.name, imageUrl: performer.imageUrl, radius: 22),
                     ),
                   ),
+                if (sceneActions) ...[
                 Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
@@ -1065,6 +1069,7 @@ class _ShortViewState extends ConsumerState<_ShortView> {
                     ],
                   ),
                 ),
+                ],
               ],
             ),
           ),
@@ -1085,7 +1090,7 @@ class _ShortViewState extends ConsumerState<_ShortView> {
                     opacity: showBar ? 1 : 0,
                     duration: const Duration(milliseconds: 250),
                     child: PreviewSeekBar(
-                      sceneId: scene.id,
+                      sceneId: short.isImage ? null : scene.id,
                       player: controller.player,
                       // A marker's bar covers only its clip.
                       window: short.isMarker ? (start: short.start!, end: short.end!) : null,

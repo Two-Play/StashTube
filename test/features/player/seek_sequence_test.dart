@@ -201,12 +201,14 @@ void main() {
     expect(find.text('5 seconds'), findsOneWidget);
   });
 
-  testWidgets('a tap on the other side starts a new sequence there', (tester) async {
+  testWidgets('the other side takes a double tap again', (tester) async {
     await pump(tester);
     await tap(tester, right(tester));
     await tap(tester, right(tester));
     await tap(tester, right(tester));
     expect(seconds(player.seeks), [35, 40]);
+    await tap(tester, left(tester));
+    expect(seconds(player.seeks), [35, 40], reason: 'one tap on the other side only ends the sequence');
     await tap(tester, left(tester));
     expect(seconds(player.seeks), [35, 40, 35], reason: '5 s back from where it is');
     expect(find.text('5 seconds'), findsOneWidget);
@@ -223,6 +225,7 @@ void main() {
     await tap(tester, left(tester));
     await tap(tester, left(tester));
     expect(seconds(player.seeks), [25, 20]);
+    await tap(tester, right(tester));
     await tap(tester, right(tester));
     expect(seconds(player.seeks).last, 25, reason: '5 s on from 0:20, not from the stale 0:30');
     expect(find.text('5 seconds'), findsOneWidget);

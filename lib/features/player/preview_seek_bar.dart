@@ -49,7 +49,9 @@ class PreviewSeekBar extends ConsumerStatefulWidget {
     this.windowRelative = false,
   });
 
-  final String sceneId;
+  /// The scene whose sprite previews and markers the bar shows; null for a
+  /// video that is no scene (a gallery's clip): only the time.
+  final String? sceneId;
 
   /// The part of the video the bar covers; null for the whole video.
   final SeekWindow? window;
@@ -251,7 +253,8 @@ class _PreviewSeekBarState extends ConsumerState<PreviewSeekBar> {
     // The duration or the window may have changed since the last position.
     if (remote == null) _played.value = _fractionOf(_position);
     final auth = ref.watch(authHeadersProvider);
-    final thumbs = _loadThumbnails ? ref.watch(scrubThumbnailsProvider(widget.sceneId)).value : null;
+    final sceneId = widget.sceneId;
+    final thumbs = _loadThumbnails && sceneId != null ? ref.watch(scrubThumbnailsProvider(sceneId)).value : null;
     final headers = thumbs == null ? const <String, String>{} : auth.forUrl(thumbs.spriteUrl);
     if (thumbs != null && thumbs.spriteUrl != _precachedSprite) {
       _precachedSprite = thumbs.spriteUrl;
@@ -260,7 +263,7 @@ class _PreviewSeekBarState extends ConsumerState<PreviewSeekBar> {
           onError: (_, _) {}));
     }
     // Like the thumbnails, only once the bar is shown or touched.
-    final details = _loadThumbnails ? ref.watch(sceneDetailsProvider(widget.sceneId)).value : null;
+    final details = _loadThumbnails && sceneId != null ? ref.watch(sceneDetailsProvider(sceneId)).value : null;
     // With a window, only the markers inside it (ranges cut to it), and not
     // the one the window starts at: that is the clip itself.
     final windowed = widget.window != null;

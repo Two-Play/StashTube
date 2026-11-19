@@ -10,6 +10,8 @@ import 'package:stash_app_mobile/data/models/saved_filter.dart';
 import 'package:stash_app_mobile/data/models/scene.dart';
 import 'package:stash_app_mobile/data/repositories/stash_repository.dart';
 import 'package:stash_app_mobile/features/shell/nav_bar_config.dart';
+import 'package:stash_app_mobile/features/performers/performer_page.dart';
+import 'package:stash_app_mobile/features/performers/performers_page.dart';
 import 'package:stash_app_mobile/features/shell/navigation.dart';
 import 'package:stash_app_mobile/features/subscriptions/subscriptions_page.dart';
 
@@ -124,6 +126,66 @@ void main() {
     expect(repo.sceneQueries.last.performerId, 'p1');
     await tapAndPump(find.text('Anna').first);
     expect(find.text('Newest from your favorites'), findsOneWidget);
+  });
+
+  testWidgets('a double tap on "All" (or "Show all") lists all favorites, on a performer opens the channel', (tester) async {
+    final prefs = (await tester.runAsync(() async {
+      SharedPreferences.setMockInitialValues({});
+      return SharedPreferences.getInstance();
+    }))!;
+    final container = ProviderContainer(overrides: [
+      ...testServer,
+      sharedPreferencesProvider.overrideWithValue(prefs),
+      stashRepositoryProvider.overrideWithValue(_Repo()),
+    ]);
+    addTearDown(container.dispose);
+    await tester.pumpWidget(UncontrolledProviderScope(
+      container: container,
+      child: MaterialApp(
+        home: Navigator(
+          key: container.read(tabNavigatorKeysProvider)[container.read(currentTabProvider)],
+          onGenerateRoute: (_) => MaterialPageRoute<void>(builder: (_) => const SubscriptionsPage()),
+        ),
+      ),
+    ));
+    for (var i = 0; i < 5; i++) {
+      await tester.pump(const Duration(milliseconds: 100));
+    }
+
+    final all = find.byKey(const ValueKey('favorites-all'));
+    await tester.tap(all);
+    await tester.pump(const Duration(milliseconds: 50));
+    await tester.tap(all);
+    for (var i = 0; i < 6; i++) {
+      await tester.pump(const Duration(milliseconds: 100));
+    }
+    expect(find.byType(PerformersPage), findsOneWidget);
+    expect(find.text('Newest from your favorites'), findsNothing);
+
+    await tester.pageBack();
+    for (var i = 0; i < 6; i++) {
+      await tester.pump(const Duration(milliseconds: 100));
+    }
+    expect(find.byType(PerformersPage), findsNothing);
+    await tester.tap(find.text('Show all'));
+    for (var i = 0; i < 6; i++) {
+      await tester.pump(const Duration(milliseconds: 100));
+    }
+    expect(find.byType(PerformersPage), findsOneWidget);
+
+    // A double tap on a performer opens the channel.
+    await tester.pageBack();
+    for (var i = 0; i < 6; i++) {
+      await tester.pump(const Duration(milliseconds: 100));
+    }
+    final anna = find.text('Anna').first;
+    await tester.tap(anna);
+    await tester.pump(const Duration(milliseconds: 50));
+    await tester.tap(anna);
+    for (var i = 0; i < 6; i++) {
+      await tester.pump(const Duration(milliseconds: 100));
+    }
+    expect(find.byType(PerformerPage), findsOneWidget);
   });
 
   testWidgets('no dots on the first visit', (tester) async {

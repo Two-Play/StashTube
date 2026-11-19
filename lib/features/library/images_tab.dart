@@ -10,7 +10,10 @@ import '../../widgets/chip_bar.dart';
 import '../../widgets/paged_sliver.dart';
 import '../../widgets/scene_filter_sheet.dart';
 import '../../widgets/stash_image.dart';
+import 'image_video.dart';
 import 'image_viewer_page.dart';
+import '../../core/config/theme.dart';
+import '../../widgets/scene_card.dart' show spokenDuration;
 import '../../l10n/l10n.dart';
 
 /// All images, newest first.
@@ -142,7 +145,7 @@ class _ImageGridViewState extends ConsumerState<ImageGridView> {
                   ),
                 ),
               ),
-            SliverToBoxAdapter(
+            PinnedBar(
               child: Row(
                 children: [
                   Padding(
@@ -171,10 +174,23 @@ class _ImageGridViewState extends ConsumerState<ImageGridView> {
             if (value.current case final state?)
               SliverToBoxAdapter(
                 child: Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
-                  child: Text(
-                    context.l10n.imagesCount(state.totalCount),
-                    style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+                  padding: const EdgeInsets.fromLTRB(16, 0, 8, 4),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          context.l10n.imagesCount(state.totalCount),
+                          style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+                        ),
+                      ),
+                      // Video files among the images (a gallery's clips, #64).
+                      if (state.items.any((i) => i.isVideo && i.imageUrl != null))
+                        TextButton.icon(
+                          onPressed: () => openImageClipsAsShorts(ref, _query, state, title: context.l10n.imagesClips),
+                          icon: const Icon(Icons.slow_motion_video),
+                          label: Text(context.l10n.imagesPlayAsShorts),
+                        ),
+                    ],
                   ),
                 ),
               ),
@@ -200,9 +216,19 @@ class _ImageGridViewState extends ConsumerState<ImageGridView> {
                       .push(ImageViewerPage.route(query: _query, initialIndex: items.indexOf(image)));
                 },
                 child: Semantics(
-                  label: image.title,
+                  label: image.videoDuration == null
+                      ? image.title
+                      : context.l10n.imageVideoLabel(image.title, spokenDuration(context.l10n, image.videoDuration!)),
                   button: true,
-                  child: StashImage(image.thumbnailUrl, fallbackIcon: Icons.image_outlined),
+                  excludeSemantics: true,
+                  child: Stack(
+                    fit: StackFit.expand,
+                    children: [
+                      StashImage(image.thumbnailUrl, fallbackIcon: Icons.image_outlined),
+                      if (image.videoDuration case final seconds?)
+                        Positioned(right: AppSpacing.xs, bottom: AppSpacing.xs, child: VideoBadge(seconds: seconds)),
+                    ],
+                  ),
                 ),
               ),
             ),

@@ -47,7 +47,7 @@ class SceneFeedView extends ConsumerStatefulWidget {
     this.emptyHint,
     this.onRefresh,
     this.belowChipsSlivers = const [],
-    this.pinChips = false,
+    this.pinChips = true,
     this.chipsTopSpace = 0,
     this.keepChipsTopSpace = false,
     this.unfilteredEmptyView,
@@ -86,7 +86,8 @@ class SceneFeedView extends ConsumerStatefulWidget {
   final List<Widget> belowChipsSlivers;
 
   /// Keeps the filter button, sort chips and saved filters at the top while
-  /// the content scrolls beneath them (HOME-1).
+  /// the content scrolls beneath them (HOME-1); on by default, like every
+  /// list's chip bar ([PinnedBar]).
   final bool pinChips;
 
   /// With [pinChips]: space above the chips, e.g. for an app bar laid over
@@ -201,13 +202,14 @@ class _SceneFeedViewState extends ConsumerState<SceneFeedView> {
       ],
     );
     final height = (hasSortRow ? ChipBar.height : 0.0) + (saved ? _SavedFilterChips.height : 0.0);
+    if (height == 0 && widget.chipsTopSpace == 0) return const SliverToBoxAdapter();
     return TweenAnimationBuilder<double>(
       tween: Tween(end: widget.keepChipsTopSpace ? widget.chipsTopSpace : 0.0),
       duration: MediaQuery.disableAnimationsOf(context) ? Duration.zero : const Duration(milliseconds: 200),
       curve: Curves.easeOut,
       builder: (context, inset, _) => SliverPersistentHeader(
         pinned: true,
-        delegate: _PinnedChipsDelegate(
+        delegate: PinnedBarDelegate(
           topSpace: widget.chipsTopSpace,
           inset: inset.clamp(0.0, widget.chipsTopSpace),
           height: height,
@@ -338,42 +340,3 @@ class _SavedFilterChips extends ConsumerWidget {
   }
 }
 
-/// The pinned chips: [topSpace] above them scrolls away down to [inset];
-/// the chips get the surface color and a hairline once content passes
-/// beneath them.
-class _PinnedChipsDelegate extends SliverPersistentHeaderDelegate {
-  _PinnedChipsDelegate({required this.topSpace, required this.inset, required this.height, required this.child});
-
-  final double topSpace;
-  final double inset;
-  final double height;
-  final Widget child;
-
-  @override
-  double get maxExtent => topSpace + height;
-
-  @override
-  double get minExtent => inset + height;
-
-  @override
-  Widget build(BuildContext context, double shrinkOffset, bool overlapsContent) {
-    final colors = Theme.of(context).colorScheme;
-    final pinned = shrinkOffset > 0 && shrinkOffset >= maxExtent - minExtent - 0.5;
-    return Align(
-      alignment: Alignment.bottomCenter,
-      child: DecoratedBox(
-        decoration: BoxDecoration(
-          color: colors.surface,
-          border: Border(
-            bottom: BorderSide(color: pinned ? colors.outlineVariant : colors.surface.withValues(alpha: 0), width: 0.5),
-          ),
-        ),
-        child: SizedBox(height: height, child: child),
-      ),
-    );
-  }
-
-  @override
-  bool shouldRebuild(_PinnedChipsDelegate old) =>
-      old.topSpace != topSpace || old.inset != inset || old.height != height || old.child != child;
-}
