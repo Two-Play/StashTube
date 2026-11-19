@@ -29,6 +29,7 @@ import 'about.dart';
 import 'appearance_picker.dart';
 import 'nav_bar_settings_page.dart';
 import 'scene_card_config.dart';
+import '../../widgets/scroll_to_top.dart';
 
 /// The sub-pages of the settings (SET-1), pushed inside the settings sheet's
 /// own navigator, so their app bars show a back button instead of the X.
@@ -265,6 +266,13 @@ class AppearanceSettingsPage extends ConsumerWidget {
               if (mode != null) ref.read(pagingModeProvider.notifier).set(mode);
             },
           ),
+        ),
+        SwitchListTile(
+          secondary: const Icon(Icons.vertical_align_top),
+          title: Text(l.scrollToTopSetting),
+          subtitle: Text(l.scrollToTopSettingSubtitle),
+          value: ref.watch(scrollToTopProvider),
+          onChanged: withHaptic((v) => ref.read(scrollToTopProvider.notifier).set(v)),
         ),
         SettingsDropdownTile(
           leading: const Icon(Icons.vibration),

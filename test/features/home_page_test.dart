@@ -77,7 +77,13 @@ void main() {
     container = ProviderScope.containerOf(tester.element(find.byWidget(home)));
   }
 
-  double barOffset(WidgetTester tester) => tester.widget<AnimatedSlide>(find.byType(AnimatedSlide)).offset.dy;
+  // The app bar's slide, not the "Back to top" button's.
+  double barOffset(WidgetTester tester) => tester
+      .widget<AnimatedSlide>(find.byWidgetPredicate(
+        (w) => w is AnimatedSlide && find.descendant(of: find.byWidget(w), matching: find.byKey(const ValueKey('scroll-to-top'))).evaluate().isEmpty,
+      ))
+      .offset
+      .dy;
 
   testWidgets('the app bar hides while scrolling down and comes back when scrolling up', (tester) async {
     await pumpHome(tester);
