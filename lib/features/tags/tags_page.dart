@@ -44,7 +44,7 @@ class _TagsPageState extends ConsumerState<TagsPage> {
           child: CustomScrollView(
             physics: const AlwaysScrollableScrollPhysics(),
             slivers: [
-              SliverToBoxAdapter(
+              PinnedBar(
                 child: ChipBar<TagSort>(
                   values: TagSort.values,
                   selected: _query.sort,

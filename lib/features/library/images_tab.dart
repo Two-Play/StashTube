@@ -145,7 +145,7 @@ class _ImageGridViewState extends ConsumerState<ImageGridView> {
                   ),
                 ),
               ),
-            SliverToBoxAdapter(
+            PinnedBar(
               child: Row(
                 children: [
                   Padding(

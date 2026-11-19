@@ -58,7 +58,7 @@ class _PerformersPageState extends ConsumerState<PerformersPage> {
           child: CustomScrollView(
             physics: const AlwaysScrollableScrollPhysics(),
             slivers: [
-              SliverToBoxAdapter(
+              PinnedBar(
                 child: ChipBar<PerformerSort>(
                   values: PerformerSort.values,
                   selected: _query.sort,
