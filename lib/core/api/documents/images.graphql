@@ -10,7 +10,7 @@ query FindImages($filter: FindFilterType, $image_filter: ImageFilterType) {
       # A video file in a gallery (a library with only images on) is an image
       # too; the viewer plays it (#64).
       visual_files {
-        ... on VideoFile { duration }
+        ... on VideoFile { duration width height }
       }
       studio { ...StudioRef }
       performers { ...PerformerRef }

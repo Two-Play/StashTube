@@ -1836,6 +1836,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get imageVideoPause => 'Pause';
 
   @override
+  String get imagesPlayAsShorts => 'Play as shorts';
+
+  @override
+  String get imagesClips => 'Clips';
+
+  @override
   String get imageInfo => 'Image info';
 
   @override

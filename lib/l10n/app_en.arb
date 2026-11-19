@@ -1134,6 +1134,8 @@
   "imageVideoUnmute": "Unmute",
   "imageVideoPlay": "Play",
   "imageVideoPause": "Pause",
+  "imagesPlayAsShorts": "Play as shorts",
+  "imagesClips": "Clips",
   "imageInfo": "Image info",
   "@imageInfo": {
     "description": "Tooltip of the image viewer's info button and title of its sheet."

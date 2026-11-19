@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -11,6 +13,8 @@ import '../../data/models/list_queries.dart';
 import '../../l10n/l10n.dart';
 import '../../data/providers.dart';
 import '../../data/repositories/stash_session.dart';
+import '../../widgets/app_orientation.dart';
+import '../../widgets/layout_freeze.dart';
 import '../player/player_providers.dart';
 import '../shell/navigation.dart';
 import 'gallery_page.dart';
@@ -67,6 +71,28 @@ class _ImageViewerPageState extends ConsumerState<ImageViewerPage> with SingleTi
   /// The image [_videoPlayer] plays; null: none (stopped).
   String? _videoId;
 
+  /// A phone may turn sideways while a wide video shows (else the app
+  /// stays portrait there); the lists behind keep their layout meanwhile.
+  bool _turnable = false;
+
+  static const _anyOrientation = [
+    DeviceOrientation.portraitUp,
+    DeviceOrientation.landscapeLeft,
+    DeviceOrientation.landscapeRight,
+  ];
+
+  void _setTurnable(bool turnable) {
+    if (turnable == _turnable || !AppOrientation.isPhone) return;
+    _turnable = turnable;
+    if (turnable) {
+      shellLayoutHold.hold();
+      unawaited(AppOrientation.turnTo(_anyOrientation));
+    } else {
+      // Upright again first, then the lists may lay out anew.
+      unawaited(AppOrientation.turnTo(null).whenComplete(() => shellLayoutHold.releaseLater(const Duration(seconds: 1))));
+    }
+  }
+
   @override
   void initState() {
     super.initState();
@@ -76,6 +102,7 @@ class _ImageViewerPageState extends ConsumerState<ImageViewerPage> with SingleTi
   @override
   void dispose() {
     SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
+    _setTurnable(false);
     _videoPlayer?.dispose();
     _dismiss.dispose();
     _pageController.dispose();
@@ -181,6 +208,7 @@ class _ImageViewerPageState extends ConsumerState<ImageViewerPage> with SingleTi
   void _syncVideo(ImageItem? current) {
     final url = current?.imageUrl;
     final id = current != null && current.isVideo && url != null ? current.id : null;
+    _setTurnable(id != null && (current!.aspect ?? 0) > 1.05);
     if (id == _videoId) return;
     _videoId = id;
     if (id == null || url == null) {
@@ -196,6 +224,16 @@ class _ImageViewerPageState extends ConsumerState<ImageViewerPage> with SingleTi
       ..open(Media(url, httpHeaders: ref.read(authHeadersProvider).forUrl(url))).ignore();
   }
 
+  /// The list's clips as shorts, from [clip]; in the current tab, behind the
+  /// viewer, which closes.
+  void _playAsShorts(ImageItem clip) {
+    final state = ref.read(imageListProvider(widget.query)).current;
+    if (state == null) return;
+    _videoPlayer?.pause();
+    openImageClipsAsShorts(ref, widget.query, state, at: clip, title: context.l10n.imagesClips);
+    Navigator.of(context).pop();
+  }
+
   @override
   Widget build(BuildContext context) {
     final items = ref.watch(imageListProvider(widget.query)).current?.items ?? const <ImageItem>[];
@@ -208,20 +246,25 @@ class _ImageViewerPageState extends ConsumerState<ImageViewerPage> with SingleTi
       physics: _zoomed ? const NeverScrollableScrollPhysics() : null,
       itemCount: items.length,
       onPageChanged: _onPageChanged,
-      itemBuilder: (_, i) => GestureDetector(
-        onTap: () => setState(() => _showOverlay = !_showOverlay),
-        child: items[i].isVideo
-            ? ImageVideoPage(
-                image: items[i],
-                controller: items[i].id == _videoId ? _videoController : null,
-              )
-            : _ZoomableImage(
+      itemBuilder: (_, i) => items[i].isVideo
+          // Its own taps: double taps skip instead of zooming.
+          ? ImageVideoPage(
+              image: items[i],
+              controller: items[i].id == _videoId ? _videoController : null,
+              onTap: () => setState(() => _showOverlay = !_showOverlay),
+              onZoomChanged: (zoomed) {
+                if (zoomed != _zoomed) setState(() => _zoomed = zoomed);
+              },
+            )
+          : GestureDetector(
+              onTap: () => setState(() => _showOverlay = !_showOverlay),
+              child: _ZoomableImage(
                 image: items[i],
                 onZoomChanged: (zoomed) {
                   if (zoomed != _zoomed) setState(() => _zoomed = zoomed);
                 },
               ),
-      ),
+            ),
     );
     final overlay = AnimatedOpacity(
       opacity: _showOverlay ? 1 : 0,
@@ -234,6 +277,7 @@ class _ImageViewerPageState extends ConsumerState<ImageViewerPage> with SingleTi
           total: items.length,
           video: current != null && current.id == _videoId ? _videoPlayer : null,
           onInfo: current == null ? null : () => _showInfo(current),
+          onPlayAsShorts: current == null || !current.isVideo ? null : () => _playAsShorts(current),
         ),
       ),
     );
@@ -386,7 +430,14 @@ class _ZoomableImageState extends State<_ZoomableImage> with SingleTickerProvide
 }
 
 class _Overlay extends ConsumerWidget {
-  const _Overlay({required this.image, required this.position, required this.total, this.video, this.onInfo});
+  const _Overlay({
+    required this.image,
+    required this.position,
+    required this.total,
+    this.video,
+    this.onInfo,
+    this.onPlayAsShorts,
+  });
 
   final ImageItem? image;
   final int position;
@@ -394,6 +445,9 @@ class _Overlay extends ConsumerWidget {
 
   /// The current page's video player, if it is a video.
   final Player? video;
+
+  /// For a video: the list's clips as shorts.
+  final VoidCallback? onPlayAsShorts;
   final VoidCallback? onInfo;
 
   @override
@@ -428,6 +482,12 @@ class _Overlay extends ConsumerWidget {
                     style: const TextStyle(color: Colors.white),
                   ),
                 ),
+                if (onPlayAsShorts != null)
+                  IconButton(
+                    icon: const Icon(Icons.slow_motion_video, color: Colors.white),
+                    tooltip: l.imagesPlayAsShorts,
+                    onPressed: onPlayAsShorts,
+                  ),
                 if (onInfo != null)
                   IconButton(
                     icon: const Icon(Icons.info_outline, color: Colors.white),

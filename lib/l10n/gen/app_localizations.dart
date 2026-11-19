@@ -2972,6 +2972,18 @@ abstract class AppLocalizations {
   /// **'Pause'**
   String get imageVideoPause;
 
+  /// No description provided for @imagesPlayAsShorts.
+  ///
+  /// In en, this message translates to:
+  /// **'Play as shorts'**
+  String get imagesPlayAsShorts;
+
+  /// No description provided for @imagesClips.
+  ///
+  /// In en, this message translates to:
+  /// **'Clips'**
+  String get imagesClips;
+
   /// Tooltip of the image viewer's info button and title of its sheet.
   ///
   /// In en, this message translates to:

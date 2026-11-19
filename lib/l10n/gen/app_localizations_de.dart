@@ -1843,6 +1843,12 @@ class AppLocalizationsDe extends AppLocalizations {
   String get imageVideoPause => 'Pause';
 
   @override
+  String get imagesPlayAsShorts => 'Als Shorts abspielen';
+
+  @override
+  String get imagesClips => 'Clips';
+
+  @override
   String get imageInfo => 'Bildinfo';
 
   @override

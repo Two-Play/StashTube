@@ -43,11 +43,12 @@ void main() {
     expect(imageFrom().isVideo, isFalse);
     final clip = imageFrom({
       'visual_files': [
-        {'__typename': 'VideoFile', 'duration': 12.5},
+        {'__typename': 'VideoFile', 'duration': 12.5, 'width': 1920, 'height': 1080},
       ],
     });
     expect(clip.isVideo, isTrue);
     expect(clip.videoDuration, 12.5);
+    expect(clip.aspect, 1920 / 1080);
     final still = imageFrom({
       'visual_files': [
         {'__typename': 'ImageFile'},

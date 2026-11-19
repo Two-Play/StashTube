@@ -174,10 +174,23 @@ class _ImageGridViewState extends ConsumerState<ImageGridView> {
             if (value.current case final state?)
               SliverToBoxAdapter(
                 child: Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
-                  child: Text(
-                    context.l10n.imagesCount(state.totalCount),
-                    style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+                  padding: const EdgeInsets.fromLTRB(16, 0, 8, 4),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          context.l10n.imagesCount(state.totalCount),
+                          style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+                        ),
+                      ),
+                      // Video files among the images (a gallery's clips, #64).
+                      if (state.items.any((i) => i.isVideo && i.imageUrl != null))
+                        TextButton.icon(
+                          onPressed: () => openImageClipsAsShorts(ref, _query, state, title: context.l10n.imagesClips),
+                          icon: const Icon(Icons.slow_motion_video),
+                          label: Text(context.l10n.imagesPlayAsShorts),
+                        ),
+                    ],
                   ),
                 ),
               ),

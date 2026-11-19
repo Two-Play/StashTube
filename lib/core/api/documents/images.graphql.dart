@@ -298,6 +298,20 @@ const documentNodeQueryFindImages = DocumentNode(
                                     selectionSet: null,
                                   ),
                                   FieldNode(
+                                    name: NameNode(value: 'width'),
+                                    alias: null,
+                                    arguments: [],
+                                    directives: [],
+                                    selectionSet: null,
+                                  ),
+                                  FieldNode(
+                                    name: NameNode(value: 'height'),
+                                    alias: null,
+                                    arguments: [],
+                                    directives: [],
+                                    selectionSet: null,
+                                  ),
+                                  FieldNode(
                                     name: NameNode(value: '__typename'),
                                     alias: null,
                                     arguments: [],
@@ -1000,6 +1014,8 @@ class Query$FindImages$findImages$images$visual_files$$VideoFile
     implements Query$FindImages$findImages$images$visual_files {
   Query$FindImages$findImages$images$visual_files$$VideoFile({
     required this.duration,
+    required this.width,
+    required this.height,
     this.$__typename = 'VideoFile',
   });
 
@@ -1007,14 +1023,22 @@ class Query$FindImages$findImages$images$visual_files$$VideoFile
     Map<String, dynamic> json,
   ) {
     final l$duration = json['duration'];
+    final l$width = json['width'];
+    final l$height = json['height'];
     final l$$__typename = json['__typename'];
     return Query$FindImages$findImages$images$visual_files$$VideoFile(
       duration: (l$duration as num).toDouble(),
+      width: (l$width as int),
+      height: (l$height as int),
       $__typename: (l$$__typename as String),
     );
   }
 
   final double duration;
+
+  final int width;
+
+  final int height;
 
   final String $__typename;
 
@@ -1022,6 +1046,10 @@ class Query$FindImages$findImages$images$visual_files$$VideoFile
     final _resultData = <String, dynamic>{};
     final l$duration = duration;
     _resultData['duration'] = l$duration;
+    final l$width = width;
+    _resultData['width'] = l$width;
+    final l$height = height;
+    _resultData['height'] = l$height;
     final l$$__typename = $__typename;
     _resultData['__typename'] = l$$__typename;
     return _resultData;
@@ -1030,8 +1058,10 @@ class Query$FindImages$findImages$images$visual_files$$VideoFile
   @override
   int get hashCode {
     final l$duration = duration;
+    final l$width = width;
+    final l$height = height;
     final l$$__typename = $__typename;
-    return Object.hashAll([l$duration, l$$__typename]);
+    return Object.hashAll([l$duration, l$width, l$height, l$$__typename]);
   }
 
   @override
@@ -1046,6 +1076,16 @@ class Query$FindImages$findImages$images$visual_files$$VideoFile
     final l$duration = duration;
     final lOther$duration = other.duration;
     if (l$duration != lOther$duration) {
+      return false;
+    }
+    final l$width = width;
+    final lOther$width = other.width;
+    if (l$width != lOther$width) {
+      return false;
+    }
+    final l$height = height;
+    final lOther$height = other.height;
+    if (l$height != lOther$height) {
       return false;
     }
     final l$$__typename = $__typename;

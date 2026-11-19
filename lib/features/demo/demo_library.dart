@@ -248,7 +248,8 @@ class DemoLibrary {
     // Video files in a gallery, as Stash shows them from a library with only
     // images on (#64): images whose file is a video.
     final clips = [
-      ('short-wake-up', 'Wake-up clip'),
+      // A wide one too, which the viewer lets a phone turn sideways for.
+      ('riverside', 'Riverside clip'),
       ('short-stretch', 'Stretch clip'),
       ('short-butterfly', 'Butterfly clip'),
     ];
