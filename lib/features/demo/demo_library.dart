@@ -235,8 +235,52 @@ class DemoLibrary {
       );
     }
     _galleries.add(
-      _Gallery('1', 'Stills', studioId: '2', performerIds: ['1'], details: _credit, cover: media.images.firstOrNull),
+      _Gallery(
+        '1',
+        'Stills',
+        studioId: '2',
+        performerIds: ['1'],
+        details: _credit,
+        cover: media.images.firstOrNull == null ? null : 'images/${media.images.first}.jpg',
+      ),
     );
+
+    // Video files in a gallery, as Stash shows them from a library with only
+    // images on (#64): images whose file is a video.
+    final clips = [
+      ('short-wake-up', 'Wake-up clip'),
+      ('short-stretch', 'Stretch clip'),
+      ('short-butterfly', 'Butterfly clip'),
+    ];
+    for (final (i, (file, title)) in clips.indexed) {
+      final clip = media.clips[file];
+      if (clip == null) continue;
+      _images.add(
+        _Image(
+          '${_images.length + 1}',
+          file,
+          title: title,
+          studioId: '2',
+          galleryIds: ['2'],
+          performerIds: const ['1'],
+          tagIds: [tag('Animation'), tag('Short')],
+          createdAt: _now.subtract(Duration(minutes: 30 * (i + 1))),
+          clip: clip,
+        ),
+      );
+    }
+    if (_images.any((i) => i.clip != null)) {
+      _galleries.add(
+        _Gallery(
+          '2',
+          'Clips',
+          studioId: '2',
+          performerIds: ['1'],
+          details: _credit,
+          cover: 'covers/${clips.first.$1}.jpg',
+        ),
+      );
+    }
   }
 
   String _newId() => '${_nextId++}';
@@ -462,7 +506,7 @@ class DemoLibrary {
     'details': g.details,
     'urls': g.urls,
     'image_count': (Map<String, dynamic> _) => _images.where((i) => i.galleryIds.contains(g.id)).length,
-    'paths': {'__typename': 'GalleryPathsType', 'cover': g.cover == null ? '' : _media('images/${g.cover}.jpg')},
+    'paths': {'__typename': 'GalleryPathsType', 'cover': g.cover == null ? '' : _media(g.cover!)},
     'files': const <Object>[],
     'folder': null,
     'studio': (Map<String, dynamic> _) => _studios.where((s) => s.id == g.studioId).map(_studioObject).firstOrNull,
@@ -486,15 +530,27 @@ class DemoLibrary {
     'updated_at': i.createdAt.toUtc().toIso8601String(),
     // The stills are 640 × 360 JPEGs (tool/demo/make_demo_assets.sh).
     'visual_files': [
-      {
-        '__typename': 'ImageFile',
-        'path': '/demo/images/${i.file}.jpg',
-        'basename': '${i.file}.jpg',
-        'size': _imageSize,
-        'format': 'jpeg',
-        'width': 640,
-        'height': 360,
-      },
+      if (i.clip case final clip?)
+        {
+          '__typename': 'VideoFile',
+          'path': '/demo/scenes/${i.file}.mp4',
+          'basename': '${i.file}.mp4',
+          'size': clip.size,
+          'format': 'mp4',
+          'width': clip.width,
+          'height': clip.height,
+          'duration': clip.duration,
+        }
+      else
+        {
+          '__typename': 'ImageFile',
+          'path': '/demo/images/${i.file}.jpg',
+          'basename': '${i.file}.jpg',
+          'size': _imageSize,
+          'format': 'jpeg',
+          'width': 640,
+          'height': 360,
+        },
     ],
     'tags': (Map<String, dynamic> _) => [
       for (final id in i.tagIds) ..._tags.where((t) => t.id == id).map(_tagObject),
@@ -504,8 +560,8 @@ class DemoLibrary {
     ],
     'paths': {
       '__typename': 'ImagePathsType',
-      'thumbnail': _media('images/${i.file}.jpg'),
-      'image': _media('images/${i.file}.jpg'),
+      'thumbnail': _media(i.clip == null ? 'images/${i.file}.jpg' : 'covers/${i.file}.jpg'),
+      'image': _media(i.clip == null ? 'images/${i.file}.jpg' : 'scenes/${i.file}.mp4'),
     },
     'studio': (Map<String, dynamic> _) => _studios.where((s) => s.id == i.studioId).map(_studioObject).firstOrNull,
     'performers': (Map<String, dynamic> _) => [
@@ -1226,10 +1282,14 @@ class _Image {
     this.rating100,
     this.performerIds = const [],
     this.tagIds = const [],
+    this.clip,
   });
 
   final String id;
   final String file;
+
+  /// Set for a video file shown as an image (#64): `scenes/<file>.mp4`.
+  final DemoClip? clip;
   final List<String> performerIds;
   final List<String> tagIds;
   final String title;
