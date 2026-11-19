@@ -61,16 +61,16 @@ void main() {
   testWidgets('after an update: shown once', (tester) async {
     final c = await pump(tester);
     expect(find.text(l.whatsNewTitle), findsOneWidget);
-    expect(find.text(l.whatsNew3Title), findsOneWidget, reason: 'the newest first');
+    expect(find.text(l.whatsNew4Title), findsOneWidget, reason: 'the newest first');
     expect(find.byIcon(Icons.auto_awesome), findsNothing);
-    expect(find.byIcon(Icons.fingerprint), findsOneWidget, reason: 'the biometrics item has its icon');
+    expect(find.byIcon(Icons.slow_motion_video), findsOneWidget, reason: 'the clips item has its icon');
     final entry = changelog(l).first;
-    expect(entry.more, hasLength(4));
+    expect(entry.more, hasLength(2));
     final more = entry.more.first.text;
     expect(find.text(more, skipOffstage: false), findsNothing, reason: 'the rest waits behind "show more"');
-    await tester.ensureVisible(find.text(l.whatsNewShowMore(4)));
+    await tester.ensureVisible(find.text(l.whatsNewShowMore(2)));
     await tester.pumpAndSettle();
-    await tester.tap(find.text(l.whatsNewShowMore(4)));
+    await tester.tap(find.text(l.whatsNewShowMore(2)));
     await tester.pumpAndSettle();
     expect(find.text(more, skipOffstage: false), findsOneWidget);
     expect(c.read(whatsNewSeenProvider), latestChangelogId(l));

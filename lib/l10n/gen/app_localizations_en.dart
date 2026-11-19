@@ -2704,6 +2704,18 @@ class AppLocalizationsEn extends AppLocalizations {
   String get whatsNewSubtitle => 'What the latest updates brought';
 
   @override
+  String get whatsNew4Title =>
+      'Videos in galleries, sticky filters and quicker taps';
+
+  @override
+  String get whatsNew4 =>
+      'Video files in galleries play in the image viewer, with zoom, double tap to skip and hold for 2×; wide clips turn with the phone.\nPlay a gallery\'s clips as shorts, from the grid or the viewer.\nFilter and sort bars stay at the top of every list, and a Back to top button jumps up long lists.\nDouble tap You in the tab bar to switch servers; swipe an image up for its info.\nFavorites: double tap All for all favorite performers, or a performer for their channel.\nTag pages have filters.';
+
+  @override
+  String get whatsNew4More =>
+      'Double tap to skip: switching sides takes a new double tap.\nThe Back to top button can be turned off in Settings → Appearance.';
+
+  @override
   String get whatsNew3Title =>
       'Back where you were, favorites and a safer app lock';
 

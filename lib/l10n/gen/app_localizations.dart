@@ -4490,6 +4490,24 @@ abstract class AppLocalizations {
   /// **'What the latest updates brought'**
   String get whatsNewSubtitle;
 
+  /// No description provided for @whatsNew4Title.
+  ///
+  /// In en, this message translates to:
+  /// **'Videos in galleries, sticky filters and quicker taps'**
+  String get whatsNew4Title;
+
+  /// No description provided for @whatsNew4.
+  ///
+  /// In en, this message translates to:
+  /// **'Video files in galleries play in the image viewer, with zoom, double tap to skip and hold for 2×; wide clips turn with the phone.\nPlay a gallery\'s clips as shorts, from the grid or the viewer.\nFilter and sort bars stay at the top of every list, and a Back to top button jumps up long lists.\nDouble tap You in the tab bar to switch servers; swipe an image up for its info.\nFavorites: double tap All for all favorite performers, or a performer for their channel.\nTag pages have filters.'**
+  String get whatsNew4;
+
+  /// No description provided for @whatsNew4More.
+  ///
+  /// In en, this message translates to:
+  /// **'Double tap to skip: switching sides takes a new double tap.\nThe Back to top button can be turned off in Settings → Appearance.'**
+  String get whatsNew4More;
+
   /// No description provided for @whatsNew3Title.
   ///
   /// In en, this message translates to:

@@ -2715,6 +2715,18 @@ class AppLocalizationsDe extends AppLocalizations {
   String get whatsNewSubtitle => 'Was die letzten Updates gebracht haben';
 
   @override
+  String get whatsNew4Title =>
+      'Videos in Galerien, feste Filterleisten und schnellere Gesten';
+
+  @override
+  String get whatsNew4 =>
+      'Videodateien in Galerien laufen im Bildbetrachter, mit Zoom, Doppeltipp zum Spulen und Halten für 2×; breite Clips drehen sich mit dem Handy.\nDie Clips einer Galerie als Shorts abspielen, aus dem Raster oder dem Bildbetrachter.\nFilter- und Sortierleisten bleiben in jeder Liste oben, und ein „Nach oben“-Button springt in langen Listen zurück.\nDoppeltipp auf „Du“ in der Tab-Leiste wechselt den Server; ein Bild nach oben wischen zeigt seine Infos.\nFavoriten: Doppeltipp auf „Alle“ zeigt alle Lieblingsdarsteller, auf einen Darsteller seinen Kanal.\nTag-Seiten haben Filter.';
+
+  @override
+  String get whatsNew4More =>
+      'Doppeltipp zum Spulen: Beim Seitenwechsel braucht es einen neuen Doppeltipp.\nDer „Nach oben“-Button lässt sich unter Einstellungen → Darstellung ausschalten.';
+
+  @override
   String get whatsNew3Title =>
       'Zurück an derselben Stelle, Favoriten und eine sicherere App-Sperre';
 
